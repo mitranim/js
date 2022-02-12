@@ -1,0 +1,1 @@
+Shortcut for allocating an array with a sanity check. Same as `Array(N)` but ensures that the input is a {{link lang isNat natural_number}} suitable for array length. Avoids unintentionally passing any non-natural input such as `Array(-1)`. Allows {{link lang isNil nil}}, replacing it with `0`.

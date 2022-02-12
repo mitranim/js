@@ -1,0 +1,14 @@
+.DS_Store
+
+/*
+!/.*rc
+!/.*ignore
+!/*.mjs
+!/*.md
+!/makefile
+
+!/doc
+!/docs
+!/test
+
+mock_*

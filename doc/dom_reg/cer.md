@@ -1,0 +1,1 @@
+Internal shim for `customElements` with a similarly-shaped API. In browsers, this package patches the `customElements` global, duplicating `.define` calls to `cer`. This allows tracking which classes and tags have already been defined, enabling idempotent registration.

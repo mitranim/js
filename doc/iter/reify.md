@@ -1,0 +1,1 @@
+Takes an arbitrary value and attempts to deeply materialize it. Any {{link lang isIterator iterators}}, or {{link lang isList lists}} that contain iterators, or lists that contain lists that contain iterators, etc., are converted to arrays. Does not inspect other data structures such as {{link lang isSet sets}} or {{link lang isDict dicts}}.

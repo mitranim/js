@@ -1,0 +1,1 @@
+Like [`Array.prototype.slice`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice) but allows arbitrary {{link lang isSeq sequences}} compatible with {{link iter arr}}.

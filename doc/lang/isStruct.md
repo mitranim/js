@@ -1,0 +1,1 @@
+True if value is a non-iterable object. Excludes both {{link lang isIter sync_iterables}} and {{link lang isIterAsync async_iterables}}. Note that {{link lang isDict dicts}} are automatically structs, but not all structs are dicts.
