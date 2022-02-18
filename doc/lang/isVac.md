@@ -1,1 +1,1 @@
-Short for "is vacuous" or "is vacated". Could also be called "is falsy deep". True if the input is {{link lang falsy}} or a {{link lang isList list}} where all values are vacuous, recursively. Does not iterate non-lists. Also see complementary function {{link iter vac}}.
+Short for "is vacuous" or "is vacated". Could also be called "is falsy deep". True if the input is {{link lang falsy}} or a {{link lang isList list}} where all values are vacuous, recursively. Does not iterate non-lists. Also see complementary function {{link lang vac}}.

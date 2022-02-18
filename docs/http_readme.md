@@ -5,16 +5,19 @@
 * Fluent builder-style API.
 * Interoperable with built-ins.
 * Shortcuts for common actions, such as:
-  * Building HTTP requests.
+  * Building HTTP requests via [#`ReqBui`](#class-reqbui).
     * A builder-style API is more concise and flexible than the native one.
-  * Handling HTTP errors in responses.
+  * Handling HTTP errors in responses via [#`Res`](#class-res).
     * Constructing descriptive exceptions with HTTP status and response text.
+  * Routing incoming HTTP requests via [#`Rou`](#class-rou).
+
+HTTP request/response utils are ported and reworked from https://github.com/mitranim/xhttp. Routing utils are ported and reworked from https://github.com/mitranim/imperouter.
 
 ## TOC
 
 * [#Usage](#usage)
-* [#Misc](#misc)
 * [#API](#api)
+* [#Misc](#misc)
   * [#`function jsonDecode`](#function-jsondecode)
   * [#`function jsonEncode`](#function-jsonencode)
   * [#`class Err`](#class-err)
@@ -26,17 +29,11 @@
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
 ```
-
-## Misc
-
-`Req..headers` is a null-prototype dict, rather than `Headers`, for performance and compatibility reasons. In Deno, many operations involving `Headers` are stupidly slow. Using plain dicts for headers seems to performs better, and is automatically compatible with object rest/spread and `Object.assign`.
-
-Each header is stored as a single string. When appending, values are joined with `, `. This matches the limitations of the `Headers` and `fetch` APIs, which don't seem to support multiple occurrences of the same header.
 
 ## API
 
@@ -72,7 +69,7 @@ class Err extends Error {
 
 Links: [source](../http.mjs#L37); [test/example](../test/http_test.mjs#L118).
 
-Same as `new` [#`ReqBui`](#class-reqbui) but syntactically shorter.
+Same as `new` [#`ReqBui`](#class-reqbui) but syntactically shorter and a function.
 
 ### `class ReqBui`
 
@@ -105,7 +102,7 @@ class ReqBui extends RequestInit {
   Mutates the request by applying the given options and returns the same
   reference. Automatically merges headers.
   */
-  add(init?: RequestInit): ReqBui
+  mut(init?: RequestInit): ReqBui
 
   // Shortcut for `new Request(this.url, this)`.
   req(): Request
@@ -160,8 +157,8 @@ class ReqBui extends RequestInit {
   headAppend(key: string, val?: string): ReqBui
   headAppendAll(key: string, val?: string[]): ReqBui
   headAppendAny(key: string, val?: string | string[]): ReqBui
+  headMut(src: Headers | Record<string, string>): ReqBui
   headDelete(key: string): ReqBui
-  headAdd(src: Headers | Record<string, string>): ReqBui
 
   // Class used for responses. Can override in subclass.
   get Res(): {new(): Res}
@@ -230,3 +227,11 @@ The following APIs are exported but undocumented. Check [http.mjs](../http.mjs).
   * [`function resNotFound`](../http.mjs#L292)
   * [`function resEmpty`](../http.mjs#L297)
   * [`function resErr`](../http.mjs#L299)
+  * [`const bodyFuns`](../http.mjs#L318)
+
+
+## Misc
+
+`Req..headers` is a null-prototype dict, rather than `Headers`, for performance and compatibility reasons. In Deno, many operations involving `Headers` are stupidly slow. Using plain dicts for headers seems to performs better, and is automatically compatible with object rest/spread and `Object.assign`.
+
+Each header is stored as a single string. When appending, values are joined with `, `. This matches the limitations of the `Headers` and `fetch` APIs, which don't seem to support multiple occurrences of the same header.

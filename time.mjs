@@ -26,7 +26,7 @@ export function dur(val) {return new Dur(val)}
 export class Dur {
   constructor(val) {
     this.clear()
-    if (l.isSome(val)) this.mut(val)
+    if (l.isSome(val)) this.reset(val)
   }
 
   clear() {
@@ -58,15 +58,16 @@ export class Dur {
   hasDate() {return !!(this.years || this.months || this.days)}
   hasTime() {return !!(this.hours || this.minutes || this.seconds)}
 
-  mut(val) {
+  // Perf note: specialized `.setDur` would be several times faster than
+  // `.resetFromStruct`, but the costs are minor and not worth the lines.
+  reset(val) {
     if (l.isNil(val)) return this.clear()
-    if (l.isStr(val)) return this.setStr(val)
-    if (l.isInst(val, Dur)) return this.setDur(val)
-    if (l.isStruct(val)) return this.setStruct(val)
+    if (l.isStr(val)) return this.resetFromStr(val)
+    if (l.isStruct(val)) return this.resetFromStruct(val)
     throw l.errInst(val, this)
   }
 
-  setStr(val) {
+  resetFromStr(val) {
     l.reqStr(val)
     if (!val) return this.clear()
 
@@ -83,18 +84,7 @@ export class Dur {
     return this
   }
 
-  setDur(val) {
-    l.reqInst(val, Dur)
-    this.years = val.years
-    this.months = val.months
-    this.days = val.days
-    this.hours = val.hours
-    this.minutes = val.minutes
-    this.seconds = val.seconds
-    return this
-  }
-
-  setStruct(val) {
+  resetFromStruct(val) {
     l.reqStruct(val)
     this.years = l.laxInt(val.years)
     this.months = l.laxInt(val.months)
@@ -102,6 +92,15 @@ export class Dur {
     this.hours = l.laxInt(val.hours)
     this.minutes = l.laxInt(val.minutes)
     this.seconds = l.laxInt(val.seconds)
+    return this
+  }
+
+  mut(val) {return l.isNil(val) ? this : this.mutFromStruct(val)}
+
+  mutFromStruct(val) {
+    for (const key of l.structKeys(val)) {
+      if (l.hasOwn(this, key)) this[key] = l.laxInt(val[key])
+    }
     return this
   }
 
@@ -115,11 +114,16 @@ export class Dur {
 
   toJSON() {return this.isZero() ? null : this.toString()}
   valueOf() {return this.toString()}
-  get [Symbol.toStringTag]() {return this.constructor.name}
 
   static isValid(val) {return l.isSome(val) && l.toInst(val, this).isValid()}
+
+  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
+/*
+Our regex ensures that captured groups are ±integers, which means we can skip
+checks for invalid inputs.
+*/
 function toInt(val) {return l.isNil(val) ? 0 : Number.parseInt(val)}
 
 function suff(val, suf) {return val ? (val + suf) : ``}

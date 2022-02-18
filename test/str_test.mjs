@@ -45,8 +45,8 @@ function testEquiv(one, two) {
 }
 
 // TODO consider moving to `test.mjs`.
-function mockInst(cls, ...vals) {
-  return Object.assign(Object.create(cls.prototype), ...vals)
+function mockInst(cls, ...val) {
+  return Object.assign(Object.create(cls.prototype), ...val)
 }
 
 /* Test */
@@ -648,60 +648,60 @@ t.test(function test_uuid() {
 })
 
 t.test(function test_StrMap() {
-  // Delegates to `.add` which is tested below. This is a sanity check.
+  // Delegates to `.mut` which is tested below. This is a sanity check.
   t.test(function test_constructor() {
     testStrMapReset(s.strMap)
   })
 
-  // Mostly delegates to `.add` which is tested below.
+  // Mostly delegates to `.mut` which is tested below.
+  t.test(function test_reset() {
+    testStrMapReset(function make(val) {
+      return s.strMap().reset(val)
+    })
+
+    testStrMapReset(function make(val) {
+      return s.strMap({seven: `eight`}).reset(val)
+    })
+
+    testMap(s.strMap({one: `two`}).reset(), [])
+    testMap(s.strMap({one: `two`}).reset({}), [])
+    testMap(s.strMap({one: `two`}).reset([]), [])
+    testMap(s.strMap({one: `two`}).reset(s.strMap()), [])
+  })
+
   t.test(function test_mut() {
     testStrMapReset(function make(val) {
       return s.strMap().mut(val)
     })
 
-    testStrMapReset(function make(val) {
-      return s.strMap({seven: `eight`}).mut(val)
-    })
-
-    testMap(s.strMap({one: `two`}).mut(), [])
-    testMap(s.strMap({one: `two`}).mut({}), [])
-    testMap(s.strMap({one: `two`}).mut([]), [])
-    testMap(s.strMap({one: `two`}).mut(s.strMap()), [])
-  })
-
-  t.test(function test_add() {
-    testStrMapReset(function make(val) {
-      return s.strMap().add(val)
-    })
-
     testMap(
       s.strMap({one: `two`, three: [`four`, `five`]})
-        .add([[`one`, `six`], [`three`, [`seven`]], [`eight`, [`nine`]]]),
+        .mut([[`one`, `six`], [`three`, [`seven`]], [`eight`, [`nine`]]]),
       [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`]]],
     )
 
     testMap(
       s.strMap({one: `two`, three: [`four`, `five`]})
-        .add({one: `six`, three: [`seven`], eight: `nine`}),
+        .mut({one: `six`, three: [`seven`], eight: `nine`}),
       [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`]]],
     )
 
     testMap(
       s.strMap({one: `two`, three: [`four`, `five`]})
-        .add(new Map().set(`one`, `six`).set(`three`, [`seven`]).set(`eight`, `nine`)),
+        .mut(new Map().set(`one`, `six`).set(`three`, [`seven`]).set(`eight`, `nine`)),
       [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`]]],
     )
 
     testMap(
       s.strMap({one: `two`, three: [`four`, `five`]})
-        .add(s.strMap({one: `six`, three: [`seven`], eight: `nine`})),
+        .mut(s.strMap({one: `six`, three: [`seven`], eight: `nine`})),
       [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`]]],
     )
 
-    testMap(s.strMap({one: `two`}).add(), [[`one`, [`two`]]])
-    testMap(s.strMap({one: `two`}).add({}), [[`one`, [`two`]]])
-    testMap(s.strMap({one: `two`}).add([]), [[`one`, [`two`]]])
-    testMap(s.strMap({one: `two`}).add(s.strMap()), [[`one`, [`two`]]])
+    testMap(s.strMap({one: `two`}).mut(), [[`one`, [`two`]]])
+    testMap(s.strMap({one: `two`}).mut({}), [[`one`, [`two`]]])
+    testMap(s.strMap({one: `two`}).mut([]), [[`one`, [`two`]]])
+    testMap(s.strMap({one: `two`}).mut(s.strMap()), [[`one`, [`two`]]])
   })
 
   t.test(function test_has() {
@@ -911,9 +911,9 @@ t.test(function test_StrMap() {
     test(s.strMap({one: `two`, three: `four`}).clear())
   })
 
-  t.test(function test_dict() {
+  t.test(function test_toDict() {
     function test(val) {
-      const out = s.strMap(val).dict()
+      const out = s.strMap(val).toDict()
       t.is(Object.getPrototypeOf(out), null)
       t.eq(out, val)
     }
@@ -923,9 +923,9 @@ t.test(function test_StrMap() {
     test({one: `two`, three: `four`})
   })
 
-  t.test(function test_dictAll() {
+  t.test(function test_toDictAll() {
     function test(val) {
-      const out = s.strMap(val).dictAll()
+      const out = s.strMap(val).toDictAll()
       t.is(Object.getPrototypeOf(out), null)
       t.eq(out, val)
     }
@@ -961,7 +961,7 @@ t.test(function test_StrMap() {
 
   t.test(function test_toJSON() {
     function test(src) {
-      t.eq(s.strMap(src).toJSON(), s.strMap(src).dictAll())
+      t.eq(s.strMap(src).toJSON(), s.strMap(src).toDictAll())
     }
 
     test()

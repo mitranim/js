@@ -27,6 +27,88 @@ export function isDomHandler(val) {return l.hasMeth(val, `handleEvent`)}
 export function reqDomHandler(val) {return l.req(val, isDomHandler)}
 export function optDomHandler(val) {return l.opt(val, isDomHandler)}
 
+export function mutDoc(head, body) {
+  DocHeadMut.main.mut(head)
+  DocBodyMut.main.mut(body)
+}
+
+export class DocHeadMut extends WeakSet {
+  get head() {return document.head}
+  get title() {return document.title}
+  set title(val) {document.title = val}
+
+  mut(src) {
+    l.reqInst(src, HTMLHeadElement)
+    const set = new Set(src.children)
+
+    for (const val of copy(this.head.children)) {
+      if (this.has(val) && !set.has(val)) val.remove()
+    }
+
+    for (const val of set) this.append(val)
+  }
+
+  append(val) {
+    if (val instanceof HTMLTitleElement) {
+      this.title = val.textContent
+    }
+    else {
+      this.add(val)
+      this.head.append(val)
+    }
+  }
+}
+
+DocHeadMut.main = /* @__PURE__ */ new DocHeadMut()
+
+export class DocBodyMut {
+  get foc() {return DocFoc.main}
+  get doc() {return document}
+
+  mut(val) {
+    l.reqInst(val, HTMLBodyElement)
+    this.foc.stash()
+    this.doc.body = val
+    this.foc.pop()
+  }
+}
+
+DocBodyMut.main = /* @__PURE__ */ new DocBodyMut()
+
+/*
+Short for "document focus". Can stash/pop the path to the focused node, which is
+useful when replacing the document body. Array subclasses have performance
+issues, but this is not a bottleneck.
+*/
+export class DocFoc extends Array {
+  get doc() {return document}
+
+  clear() {this.length = 0}
+
+  pop() {try {this.apply()} finally {this.clear()}}
+
+  apply() {
+    let val = this.doc
+    for (const ind of this) if (!(val = val.childNodes[ind])) return
+    if (l.hasMeth(val, `focus`)) val.focus()
+  }
+
+  stash() {
+    this.clear()
+    let val = this.doc.activeElement
+    while (val && val.parentNode) {
+      this.push(indexOf(val.parentNode.childNodes, val))
+      val = val.parentNode
+    }
+    this.reverse()
+  }
+}
+
+DocFoc.main = /* @__PURE__ */ new DocFoc()
+
+function copy(val) {return Array.prototype.slice.call(val)}
+function indexOf(list, val) {return Array.prototype.indexOf.call(list, val)}
+
 export function eventStop(val) {
   if (optEvent(val)) {
     val.preventDefault()

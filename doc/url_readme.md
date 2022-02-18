@@ -34,6 +34,8 @@
 * Tuned for [#performance](#perf).
 * Browser compatibility: evergreen, Safari 11+.
 
+Ported and reworked from https://github.com/mitranim/ur which is also available separately.
+
 ## TOC
 
 * [#Why](#why)
@@ -94,12 +96,12 @@ Example parsing:
 ```js
 const url = u.url(`https://example.com/path?key=val#hash`)
 
-url.pathname         // '/path'
-url.search           // 'key=val'
-url.hash             // 'hash'
-url.query.get(`key`) // 'val'
-url.query.dict()     // {key: 'val'}
-url.query.dictAll()  // {key: ['val']}
+url.pathname          // '/path'
+url.search            // 'key=val'
+url.hash              // 'hash'
+url.query.get(`key`)  // 'val'
+url.query.toDict()    // {key: 'val'}
+url.query.toDictAll() // {key: ['val']}
 ```
 
 Example segmented path:
@@ -119,7 +121,7 @@ u.url(`/api`).addPath(`msgs`, 123, `get`) + ``
 Example query dict support:
 
 ```js
-u.url(`/profile`).addQuery({action: `edit`}) + ``
+u.url(`/profile`).mutQuery({action: `edit`}) + ``
 // `'/profile?action=edit'
 ```
 

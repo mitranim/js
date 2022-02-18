@@ -1,0 +1,12 @@
+Signature: `(tar, src) => tar`.
+
+Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign). Differences:
+
+  * Much faster.
+  * Takes only two args.
+  * Sanity-checked:
+    * Target must be a {{link lang isStruct struct}}.
+    * Source must be nil or a {{link lang isStruct struct}}.
+    * Throws on invalid inputs.
+
+Similar to {{link obj patch}} but doesn't check for inherited and non-enumerable properties. Simpler, dumber, faster.

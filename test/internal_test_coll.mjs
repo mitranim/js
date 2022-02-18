@@ -105,6 +105,7 @@ export function deoptNativeListHof(fun) {
 export function deoptWith(fun) {
   i.reify(fun(l.add))
   i.reify(fun(l.sub))
+  i.reify(fun(l.id))
 }
 
 export function deoptArrayFrom(cls) {
@@ -117,4 +118,16 @@ export function deoptArrayFrom(cls) {
   l.reqArr(cls.from(numSet, l.dec))
   l.reqArr(cls.from(numSet, l.id))
   l.reqArr(cls.from(numSet, l.nop))
+}
+
+export function deoptHofFun(ctx, fun) {
+  fun(ctx, l.inc)
+  fun(ctx, l.dec)
+  fun(ctx, l.id)
+}
+
+export function deoptHofMeth(ctx, fun) {
+  fun.call(ctx, l.inc)
+  fun.call(ctx, l.dec)
+  fun.call(ctx, l.id)
 }

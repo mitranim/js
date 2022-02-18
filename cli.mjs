@@ -74,7 +74,7 @@ export class Flag extends s.StrMap {
   constructor(val) {
     super()
     this.args = []
-    if (l.isSome(val)) this.add(val)
+    this.mut(val)
   }
 
   boolOpt(key) {
@@ -87,12 +87,12 @@ export class Flag extends s.StrMap {
     return val === `` || s.bool(val)
   }
 
-  add(val) {
-    if (l.isArr(val)) return this.addArr(val)
-    return super.add(val)
+  mut(val) {
+    if (l.isArr(val)) return this.mutFromArr(val)
+    return super.mut(val)
   }
 
-  addArr(val) {
+  mutFromArr(val) {
     l.reqArr(val)
 
     let flag

@@ -2,10 +2,13 @@
 
 [obj.mjs](../obj.mjs) provides tools for manipulating JS objects and plain dicts.
 
+Port and rework of https://github.com/mitranim/fpx.
+
 ## TOC
 
   * [#`function fixProto`](#function-fixproto)
-  * [#`function mut`](#function-mut)
+  * [#`function assign`](#function-assign)
+  * [#`function patch`](#function-patch)
   * [#`function mapDict`](#function-mapdict)
   * [#`function pick`](#function-pick)
   * [#`function omit`](#function-omit)
@@ -16,14 +19,14 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/obj.mjs'
 ```
 
 ## API
 
 ### `function fixProto`
 
-Links: [source](../obj.mjs#L4); [test/example](../test/obj_test.mjs#L13).
+Links: [source](../obj.mjs#L4); [test/example](../test/obj_test.mjs#L34).
 
 Workaround for subclass bugs in some engines.
 
@@ -41,27 +44,53 @@ class Abort extends AbortController {
 }
 ```
 
-### `function mut`
+The following version is shorter but more confusing if you don't know full semantics of JS classes:
 
-Links: [source](../obj.mjs#L12); [test/example](../test/obj_test.mjs#L33).
+```js
+class Abort extends AbortController {
+  constructor() {o.fixProto(super(), new.target)}
+}
+```
+
+### `function assign`
+
+Links: [source](../obj.mjs#L10); [test/example](../test/obj_test.mjs#L50).
 
 Signature: `(tar, src) => tar`.
 
 Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign). Differences:
 
-  * Supports only one source argument.
   * Much faster.
-  * Has sanity checks:
-    * Target must be a [struct](lang_readme.md#function-isstruct). Throws if target is a function or iterable.
-    * Source must be nil or a struct. Throws if source is an iterable, non-nil primitive, etc.
+  * Takes only two args.
+  * Sanity-checked:
+    * Target must be a [struct](lang_readme.md#function-isstruct).
+    * Source must be nil or a [struct](lang_readme.md#function-isstruct).
+    * Throws on invalid inputs.
+
+Similar to [#`patch`](#function-patch) but doesn't check for inherited and non-enumerable properties. Simpler, dumber, faster.
+
+### `function patch`
+
+Links: [source](../obj.mjs#L16); [test/example](../test/obj_test.mjs#L159).
+
+Signature: `(tar, src) => tar`.
+
+Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign). Differences:
+
+  * Much faster.
+  * Takes only two args.
+  * Sanity-checked:
+    * Target must be a [struct](lang_readme.md#function-isstruct).
+    * Source must be nil or a [struct](lang_readme.md#function-isstruct).
+    * Throws on invalid inputs.
     * Does not override inherited properties.
     * Does not override own non-enumerable properties.
 
-The refusal to override inherited and non-enumerable properties is good for some use cases, and bad for others. This is not just a faster sanity-checking substitute for `Object.assign`. It has different behaviors. Pick the right one for your use case.
+When overriding inherited and non-enumerable properties is desirable, use [#`assign`](#function-assign).
 
 ### `function mapDict`
 
-Links: [source](../obj.mjs#L20); [test/example](../test/obj_test.mjs#L274).
+Links: [source](../obj.mjs#L24); [test/example](../test/obj_test.mjs#L322).
 
 Signature: `({[Key: A]}, A => B) => {[Key: B]}`.
 
@@ -69,7 +98,7 @@ Similar to [`map`](iter_readme.md#function-map) but for dicts. Creates a version
 
 ### `function pick`
 
-Links: [source](../obj.mjs#L27); [test/example](../test/obj_test.mjs#L289).
+Links: [source](../obj.mjs#L31); [test/example](../test/obj_test.mjs#L337).
 
 Signature: `({[Key: A]}, A => bool) => {[Key: A]}`.
 
@@ -77,7 +106,7 @@ Similar to [`filter`](iter_readme.md#function-filter) but for dicts. Returns a v
 
 ### `function omit`
 
-Links: [source](../obj.mjs#L37); [test/example](../test/obj_test.mjs#L299).
+Links: [source](../obj.mjs#L41); [test/example](../test/obj_test.mjs#L347).
 
 Signature: `({[Key: A]}, A => bool) => {[Key: A]}`.
 
@@ -85,7 +114,7 @@ Similar to [`reject`](iter_readme.md#function-reject) but for dicts. Returns a v
 
 ### `function pickKeys`
 
-Links: [source](../obj.mjs#L39); [test/example](../test/obj_test.mjs#L309).
+Links: [source](../obj.mjs#L43); [test/example](../test/obj_test.mjs#L357).
 
 Signature: `({[Key: A]}, keys) => {[Key: A]}`.
 
@@ -93,7 +122,7 @@ Returns a version of the given dict, keeping only the given properties. Keys can
 
 ### `function omitKeys`
 
-Links: [source](../obj.mjs#L46); [test/example](../test/obj_test.mjs#L327).
+Links: [source](../obj.mjs#L50); [test/example](../test/obj_test.mjs#L375).
 
 Signature: `({[Key: A]}, keys) => {[Key: A]}`.
 
@@ -103,9 +132,9 @@ Returns a version of the given dict without the given properties. Keys must be a
 
 The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
 
-  * [`class StrictPh`](../obj.mjs#L72)
-  * [`const strictPh`](../obj.mjs#L92)
-  * [`function strict`](../obj.mjs#L94)
-  * [`class Strict`](../obj.mjs#L96)
-  * [`class MemGet`](../obj.mjs#L102)
-  * [`function memGet`](../obj.mjs#L109)
+  * [`class StrictPh`](../obj.mjs#L76)
+  * [`function strict`](../obj.mjs#L98)
+  * [`class Strict`](../obj.mjs#L100)
+  * [`class MemGet`](../obj.mjs#L106)
+  * [`function memGet`](../obj.mjs#L110)
+  * [`class MemTag`](../obj.mjs#L112)

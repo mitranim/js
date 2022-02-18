@@ -7,8 +7,8 @@ class Person {
 }
 
 const coll = new co.Coll()
-  .push(new Person({name: `Mira`}))
-  .push(new Person({name: `Kara`}))
+  .add(new Person({name: `Mira`}))
+  .add(new Person({name: `Kara`}))
 
 console.log(coll)
 

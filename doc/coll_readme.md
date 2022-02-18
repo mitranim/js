@@ -1,8 +1,8 @@
 ## Overview
 
-{{codeHead}} provides extended versions of JS data structure classes such as `Array`, `Set`, `Map`, providing better APIs or additional APIs.
+{{codeHead}} provides extended versions of JS data classes such as `Set` and `Map`, with better and/or additional APIs.
 
-This module is currently incomplete. It's being ported from `github.com/mitranim/jol`, with various changes along the way.
+Port and rework of https://github.com/mitranim/jol.
 
 ## TOC
 

@@ -64,8 +64,8 @@ import * as s from '{{url}}/str.mjs'
 
 * Written carefully and with benchmarks.
 * Balances optimization and code compactness.
-* Avoids ludicrous inefficiencies.
-* Benchmarked only in V8 for now (engine used in Deno / Node / Chrome).
+* Tries to avoid ludicrous inefficiencies.
+* Benchmarked only in V8 for now. (Engine used in Deno / Node / Chrome.)
 
 ## License
 

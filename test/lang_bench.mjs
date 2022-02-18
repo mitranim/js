@@ -1,3 +1,6 @@
+/* eslint-disable no-self-assign */
+// deno-lint-ignore-file no-self-assign
+
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
@@ -13,9 +16,6 @@ const someStr = `hello world`
 class DateSub extends Date {
   constructor(val) {
     super(val)
-
-    // eslint-disable-next-line no-self-assign
-    // deno-lint-ignore no-self-assign
     this.toISOString = this.toISOString
   }
 }
@@ -146,6 +146,9 @@ t.bench(function bench_hasOwnEnum_hit() {l.nop(l.hasOwnEnum(someDateSub, `toISOS
 t.bench(function bench_reqGet_hit_inherit() {l.nop(l.reqGet(someDate, `toISOString`))})
 t.bench(function bench_reqGet_hit_own() {l.nop(l.reqGet(someDateSub, `toISOString`))})
 t.bench(function bench_reqGet_hit_own_shallow() {l.nop(l.reqGet(shallow, `toISOString`))})
+
+const funs = [l.isNum, l.isStr, l.isFun, l.isBool]
+t.bench(function bench_reqOneOf() {l.nop(l.reqOneOf(false, funs))})
 
 const emptyDict = {}
 const emptyArr = []

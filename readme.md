@@ -46,14 +46,14 @@ Alternatives that suck:
 Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import everything at once:
 
 ```js
-import * as a from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/all.mjs'
+import * as a from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/all.mjs'
 ```
 
 Otherwise, import specific modules you need. See the list below. Example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/lang.mjs'
-import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/str.mjs'
+import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/lang.mjs'
+import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/str.mjs'
 ```
 
 ## Features
@@ -68,6 +68,8 @@ import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/str.mjs'
   * [`http`](docs/http_readme.md): shortcuts for the native fetch/Request/Response APIs.
   * [`dom`](docs/dom_readme.md): shortcuts for working with the DOM.
   * [`dom_reg`](docs/dom_reg_readme.md): shortcuts for registering custom DOM elements.
+  * [`ren_dom`](docs/ren_dom_readme.md): simple system for rendering DOM nodes in the browser.
+  * [`obs`](docs/obs_readme.md): observables via proxies.
   * [`cli`](docs/cli_readme.md): essential tools for CLI apps.
   * [`test`](docs/test_readme.md): tools for testing and benchmarking.
 
@@ -75,8 +77,8 @@ import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/str.mjs'
 
 * Written carefully and with benchmarks.
 * Balances optimization and code compactness.
-* Avoids ludicrous inefficiencies.
-* Benchmarked only in V8 for now (engine used in Deno / Node / Chrome).
+* Tries to avoid ludicrous inefficiencies.
+* Benchmarked only in V8 for now. (Engine used in Deno / Node / Chrome.)
 
 ## License
 

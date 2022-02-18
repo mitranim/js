@@ -98,8 +98,7 @@ export function reqJunk(val) {return isJunk(val) ? val : convFun(val, isJunk)}
 export function optJunk(val) {return isNil(val) ? val : reqJunk(val)}
 export function onlyJunk(val) {return isJunk(val) ? val : undefined}
 
-// export function isComp(val) {return isSome(val) && (isObj(val) || isFun(val))}
-export function isComp(val) {return (isObj(val) || isFun(val))}
+export function isComp(val) {return isObj(val) || isFun(val)}
 export function reqComp(val) {return isComp(val) ? val : convFun(val, isComp)}
 export function optComp(val) {return isNil(val) ? val : reqComp(val)}
 export function onlyComp(val) {return isComp(val) ? val : undefined}
@@ -246,6 +245,7 @@ export function reqVac(val) {return isVac(val) ? val : convFun(val, isVac)}
 export function optVac(val) {return isNil(val) ? val : reqVac(val)}
 export function onlyVac(val) {return isVac(val) ? val : undefined}
 
+// TODO consider renaming to `isScalarOpt` and adding a non-nil version.
 export function isScalar(val) {
   if (isObj(val)) {
     const fun = get(val, `toString`)
@@ -268,6 +268,8 @@ export function reqArrOf(val, fun) {
   return val
 }
 
+export function optArrOf(val, fun) {return isNil(val) ? val : reqArrOf(fun)}
+
 export function isEmpty(val) {
   if (!isObj(val)) return true
   if (isList(val)) return val.length === 0
@@ -279,11 +281,23 @@ export function isInst(val, cls) {return isObj(val) && val instanceof cls}
 
 /* Assert */
 
-export function req(val, fun) {return reqValid(fun)(val) ? val : convFun(val, fun)}
+export function req(val, fun) {
+  if (reqValid(fun)(val)) return val
+  throw errFun(val, fun)
+}
+
+export function reqOneOf(val, funs) {
+  for (const fun of reqArr(funs)) if (fun(val)) return val
+  throw errOneOf(val, funs)
+}
 
 export function opt(val, fun) {
   reqValid(fun)
   return isNil(val) ? val : req(val, fun)
+}
+
+export function optOneOf(val, funs) {
+  return isNil(val) ? val : reqOneOf(val, funs)
 }
 
 export function reqInst(val, cls) {
@@ -307,7 +321,7 @@ export function toInstOpt(val, cls) {return isNil(val) ? val : toInst(val, cls)}
 
 export function render(val) {
   if (isStr(val)) return val
-  if (isInst(val, Date)) return renderDate(val)
+  if (isDate(val)) return renderDate(val)
   if (isSome(val) && isScalar(val)) return val + ``
   throw errConv(val, `string`)
 }
@@ -333,6 +347,7 @@ export function panic(val) {throw val}
 export function True() {return true}
 export function False() {return false}
 export function npo() {return Object.create(null)}
+export function vac(val) {return isVac(val) ? undefined : val}
 
 export function bind(fun, ...args) {return reqFun(fun).bind(this, ...args)}
 
@@ -375,13 +390,17 @@ function reqValid(fun) {
   return fun
 }
 
-export function convFun(val, fun) {throw errType(val, showFunName(fun))}
+export function convFun(val, fun) {throw errFun(val, fun)}
+export function errFun(val, fun) {return errType(val, showFunName(fun))}
 export function errType(val, msg) {return TypeError(`expected variant of ${msg}, got ${show(val)}`)}
 export function errConv(val, msg) {return TypeError(msgConv(val, msg))}
 export function errSynt(val, msg) {return SyntaxError(msgConv(val, msg))}
 export function errInst(val, inst) {return errConv(val, inst.constructor.name)}
 export function msgConv(val, msg) {return `unable to convert ${show(val)} to ${msg}`}
+export function msgType(val, msg) {return `expected variant of ${msg}, got ${show(val)}`}
 export function errIn(val, key) {return TypeError(`unable to find ${show(key)} in ${show(val)}`)}
+
+function errOneOf(val, funs) {return TypeError(msgType(val, `[` + showFuns(funs) + `]`))}
 
 export function convType(val, src, msg) {
   if (isSome(val)) return val
@@ -394,6 +413,7 @@ export function convSynt(val, src, msg) {
 }
 
 function showFun(val) {return `[function ${val.name || val}]`}
+function showFuns(funs) {return funs.map(showFunName).join(`, `)}
 function showFunName(fun) {return fun.name || showFun(fun)}
 
 function showObj(val) {
@@ -414,7 +434,8 @@ export function get(val, key) {return isComp(val) && key in val ? val[key] : und
 export function reqIn(ref, key) {if (!hasIn(ref, key)) throw errIn(ref, key)}
 export function reqGet(ref, key) {return reqIn(ref, key), ref[key]}
 
-function getCon(val) {return get(val, `constructor`)}
+function getProto(val) {return isObj(val) ? Object.getPrototypeOf(val) : undefined}
+function getCon(val) {return get(getProto(val), `constructor`)}
 function getName(val) {return get(val, `name`)}
 function getLength(val) {return get(val, `length`)}
 function getSize(val) {return get(val, `size`)}

@@ -22,7 +22,7 @@ const mapLong = freeze(s.strMap(arrLong))
 
 const reqBuiNoHead = freeze(h.reqBui())
 const reqBuiEmptyHead = freeze(h.reqBui().headSet(`one`, ``).headDelete(`one`))
-const reqBuiLongHead = freeze(h.reqBui().headAdd(structLong))
+const reqBuiLongHead = freeze(h.reqBui().headMut(structLong))
 
 /* Bench */
 
@@ -41,14 +41,14 @@ t.bench(function bench_map_from_struct() {l.nop(s.strMap(structLong))})
 t.bench(function bench_map_from_arr() {l.nop(s.strMap(arrLong))})
 t.bench(function bench_map_from_headers() {l.nop(s.strMap(headersLong))})
 t.bench(function bench_map_from_map() {l.nop(s.strMap(mapLong))})
-t.bench(function bench_map_to_dict() {l.nop(mapLong.dict())})
-t.bench(function bench_map_to_dictAll() {l.nop(mapLong.dictAll())})
+t.bench(function bench_map_toDict() {l.nop(mapLong.toDict())})
+t.bench(function bench_map_toDictAll() {l.nop(mapLong.toDictAll())})
 
 t.bench(function bench_reqBui_empty() {l.nop(h.reqBui())})
-t.bench(function bench_reqBui_head_from_struct() {l.nop(h.reqBui().headAdd(structLong))})
-t.bench(function bench_reqBui_head_from_arr() {l.nop(h.reqBui().headAdd(arrLong))})
-t.bench(function bench_reqBui_head_from_headers() {l.nop(h.reqBui().headAdd(headersLong))})
-t.bench(function bench_reqBui_head_from_map() {l.nop(h.reqBui().headAdd(mapLong))})
+t.bench(function bench_reqBui_head_from_struct() {l.nop(h.reqBui().headMut(structLong))})
+t.bench(function bench_reqBui_head_from_arr() {l.nop(h.reqBui().headMut(arrLong))})
+t.bench(function bench_reqBui_head_from_headers() {l.nop(h.reqBui().headMut(headersLong))})
+t.bench(function bench_reqBui_head_from_map() {l.nop(h.reqBui().headMut(mapLong))})
 t.bench(function bench_reqBui_head_to_headers() {l.nop(new Headers(reqBuiLongHead.headers))})
 t.bench(function bench_reqBui_head_idemp() {l.nop(reqBuiEmptyHead.heads())})
 
@@ -131,5 +131,15 @@ t.bench(function bench_request_with_ReqBui() {
     .req()
   )
 })
+
+/*
+Our routing pattern encourages passing regexps to methods. This verifies that
+using a regexp literal doesn't have a huge instantiation cost. Regexp literals
+are not immutable constants. Each regexp is stateful via `.lastIndex` and
+possibly more. But they seem to be lightweight. The actual regexp state is
+probably created once per literal, not per instance.
+*/
+t.bench(function bench_RegExp_inline() {l.nop(/^[/]test[/]?/)})
+t.bench(function bench_RegExp_source() {l.nop(/^[/]test[/]?/.source)})
 
 if (import.meta.main) t.deopt(), t.benches()

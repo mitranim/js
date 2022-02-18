@@ -13,3 +13,11 @@ class Abort extends AbortController {
   }
 }
 ```
+
+The following version is shorter but more confusing if you don't know full semantics of JS classes:
+
+```js
+class Abort extends AbortController {
+  constructor() {o.fixProto(super(), new.target)}
+}
+```

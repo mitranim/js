@@ -6,7 +6,28 @@ import * as o from '../obj.mjs'
 /* Util */
 
 function unreachable() {throw Error(`unreachable`)}
+
 const inherit = Object.create
+
+class Empty {}
+
+class Fat {
+  constructor() {
+    this.one = 10
+    this.two = 20
+    Object.defineProperty(this, `three`, {
+      value: 30,
+      writable: true,
+      enumerable: false,
+      configurable: true,
+    })
+  }
+
+  method() {return 40}
+  get getter() {return 50}
+  get getterSetter() {return 60}
+  set getterSetter(_) {unreachable()}
+}
 
 /* Test */
 
@@ -18,10 +39,7 @@ t.test(function test_fixProto() {
   class UnfixedSub extends BrokenSuper {}
 
   class FixedSub extends BrokenSuper {
-    constructor() {
-      super()
-      o.fixProto(this, new.target)
-    }
+    constructor() {o.fixProto(super(), new.target)}
   }
 
   t.is(Object.getPrototypeOf(new BrokenSuper()), BrokenSuper.prototype)
@@ -29,132 +47,162 @@ t.test(function test_fixProto() {
   t.is(Object.getPrototypeOf(new FixedSub()), FixedSub.prototype)
 })
 
-// Adapted from `github.com/mitranim/jol`.
-t.test(function test_mut() {
-  t.test(function test_invalid() {
-    t.throws(() => o.mut(),             TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut(null, {}),     TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut(10, {}),       TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut(`one`, {}),    TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut(`one`, `one`), TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut([], {}),       TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut([], []),       TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut(l.nop, {}),    TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut(l.nop, l.nop), TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut({}, 10),       TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut({}, `one`),    TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut({}, []),       TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut({}, l.nop),    TypeError, `expected variant of isStruct`)
-    t.throws(() => o.mut({}, []),       TypeError, `expected variant of isStruct`)
+t.test(function test_assign() {
+  testMut(o.assign)
+
+  function mutate(tar, src) {t.is(o.assign(tar, src), tar)}
+
+  t.test(function test_shadowing() {
+    t.test(function test_getters_and_setters() {
+      t.throws(() => o.assign(new Fat(), {getter: 10}), TypeError, `Cannot set property getter of #<Fat> which has only a getter`)
+      t.throws(() => o.assign(new Fat(), {getterSetter: 10}), Error, `unreachable`)
+    })
+
+    const tar = new Fat()
+
+    const src = {
+      constructor: 70,
+      toString: 80,
+      method: 90,
+      two: 100,
+      three: 110,
+      four: 120,
+    }
+
+    mutate(tar, src)
+
+    t.eq(
+      Object.getOwnPropertyNames(tar),
+      [...new Set([
+        ...Object.getOwnPropertyNames(new Fat()),
+        ...Object.keys(src),
+      ])],
+    )
+
+    // This doesn't include `.three` which is non-enumerable.
+    t.eq({...tar}, {
+      ...new Fat(),
+      constructor: 70,
+      toString: 80,
+      method: 90,
+      two: 100,
+      four: 120,
+    })
+
+    // Has to be checked separately because non-enumerable.
+    t.is(tar.three, src.three)
   })
+})
+
+// Commonalities between `assign` and `patch`.
+function testMut(fun) {
+  t.test(function test_invalid() {
+    t.throws(() => fun(),             TypeError, `expected variant of isStruct`)
+    t.throws(() => fun(null, {}),     TypeError, `expected variant of isStruct`)
+    t.throws(() => fun(10, {}),       TypeError, `expected variant of isStruct`)
+    t.throws(() => fun(`one`, {}),    TypeError, `expected variant of isStruct`)
+    t.throws(() => fun(`one`, `one`), TypeError, `expected variant of isStruct`)
+    t.throws(() => fun([], {}),       TypeError, `expected variant of isStruct`)
+    t.throws(() => fun([], []),       TypeError, `expected variant of isStruct`)
+    t.throws(() => fun(l.nop, {}),    TypeError, `expected variant of isStruct`)
+    t.throws(() => fun(l.nop, l.nop), TypeError, `expected variant of isStruct`)
+    t.throws(() => fun({}, 10),       TypeError, `expected variant of isStruct`)
+    t.throws(() => fun({}, `one`),    TypeError, `expected variant of isStruct`)
+    t.throws(() => fun({}, []),       TypeError, `expected variant of isStruct`)
+    t.throws(() => fun({}, l.nop),    TypeError, `expected variant of isStruct`)
+    t.throws(() => fun({}, []),       TypeError, `expected variant of isStruct`)
+  })
+
+  function mutate(tar, src) {t.is(fun(tar, src), tar)}
 
   t.test(function test_returns_target() {
-    class Mock {}
-    const tar = new Mock()
-    t.is(o.mut(tar, {}), tar)
+    mutate({})
+    mutate({}, {})
+    mutate(new class Empty {}(), {})
   })
 
-  t.test(function test_allow_nil() {
-    class Mock {}
-
+  t.test(function test_from_nil() {
     function test(val) {
-      const tar = new Mock()
-      t.is(o.mut(tar, val), tar)
-      t.eq({}, {...tar})
+      const tar = new Empty()
+      mutate(tar, val)
+      t.eq({...tar}, {...val})
     }
 
     test(null)
     test(undefined)
   })
 
-  t.test(function test_allow_plainest_dict() {
-    class Mock {}
-    const tar = new Mock()
-    t.is(o.mut(tar, inherit(null, {one: {value: 10, enumerable: true}})), tar)
-    t.eq({one: 10}, {...tar})
+  t.test(function test_from_npo() {
+    const tar = new Empty()
+    mutate(tar, inherit(null, {one: {value: 10, enumerable: true}}))
+    t.eq({...tar}, {one: 10})
   })
 
-  t.test(function test_allow_plain_dict() {
-    class Mock {}
-    const tar = new Mock()
-    t.is(o.mut(tar, {one: 10}), tar)
-    t.eq({one: 10}, {...tar})
+  t.test(function test_from_dict() {
+    const tar = new Empty()
+    mutate(tar, {one: 10})
+    t.eq({...tar}, {one: 10})
   })
 
-  t.test(function test_allow_subclass() {
+  t.test(function test_from_subclass() {
     class Sup {}
     const tar = new Sup()
 
     class Sub extends Sup {}
     const src = Object.assign(new Sub(), {one: 10})
 
-    t.is(o.mut(tar, src), tar)
-    t.eq({one: 10}, {...tar})
+    mutate(tar, src)
+    t.eq({...tar}, {one: 10})
   })
+}
+
+t.test(function test_patch() {
+  testMut(o.patch)
+
+  function mutate(tar, src) {t.is(o.patch(tar, src), tar)}
 
   t.test(function test_no_shadowing() {
     t.test(function test_plain_object() {
-      const ref = {one: 10, two: 20}
+      const tar = {one: 10, two: 20}
 
-      t.is(o.mut(ref, {constructor: 30, toString: 40, two: 50, three: 60}), ref)
+      mutate(tar, {constructor: 30, toString: 40, two: 50, three: 60})
 
-      t.eq(Object.getOwnPropertyNames(ref), [`one`, `two`, `three`])
-      t.eq(ref, {one: 10, two: 50, three: 60})
+      t.eq(Object.getOwnPropertyNames(tar), [`one`, `two`, `three`])
+      t.eq(tar, {one: 10, two: 50, three: 60})
 
-      t.is(ref.constructor, Object)
-      t.is(ref.toString, Object.prototype.toString)
+      t.is(tar.constructor, Object)
+      t.is(tar.toString, Object.prototype.toString)
     })
 
     t.test(function test_custom_class() {
-      class Mock {
-        constructor() {
-          this.one = 10
-          this.two = 20
-          Object.defineProperty(this, `three`, {
-            value: 30,
-            writable: true,
-            enumerable: false,
-            configurable: true,
-          })
-        }
+      const tar = new Fat()
 
-        method() {return 40}
-        get getter() {return 50}
-        get getterSetter() {return 60}
-        set getterSetter(_) {unreachable()}
-      }
+      mutate(tar, {
+        constructor:  70,
+        toString:     80,
+        method:       90,
+        getter:       100,
+        getterSetter: 110,
+        two:          120,
+        three:        130,
+        four:         140,
+      })
 
-      const ref = new Mock()
+      t.eq(Object.getOwnPropertyNames(tar), [`one`, `two`, `three`, `four`])
+      t.eq({...tar}, {one: 10, two: 120, four: 140})
 
-      t.is(
-        o.mut(ref, {
-          constructor:  70,
-          toString:     80,
-          method:       90,
-          getter:       100,
-          getterSetter: 110,
-          two:          120,
-          three:        130,
-          four:         140,
-        }),
-        ref,
-      )
-
-      t.eq(Object.getOwnPropertyNames(ref), [`one`, `two`, `three`, `four`])
-      t.eq({...ref}, {one: 10, two: 120, four: 140})
-
-      t.is(ref.constructor, Mock)
-      t.is(ref.toString, Object.prototype.toString)
-      t.is(ref.three, 30)
-      t.is(ref.method(), 40)
-      t.is(ref.getter, 50)
-      t.is(ref.getterSetter, 60)
+      t.is(tar.constructor, Fat)
+      t.is(tar.toString, Object.prototype.toString)
+      t.is(tar.three, 30)
+      t.is(tar.method(), 40)
+      t.is(tar.getter, 50)
+      t.is(tar.getterSetter, 60)
     })
   })
 })
 
-t.test(function test_mem() {
-  t.test(function test_mem_only_ancestor() {
+t.test(function test_memGet() {
+  t.test(function test_only_ancestor() {
     const [Anc, Mid, Des] = testInitMem()
     o.memGet(Anc)
 
@@ -176,7 +224,7 @@ t.test(function test_mem() {
     testClearPrototype(Anc, Mid, Des)
   })
 
-  t.test(function test_mem_only_descendant() {
+  t.test(function test_only_descendant() {
     const [Anc, Mid, Des] = testInitMem()
     o.memGet(Des)
 
@@ -198,7 +246,7 @@ t.test(function test_mem() {
     testClearPrototype(Anc, Mid, Des)
   })
 
-  t.test(function test_mem_all() {
+  t.test(function test_all() {
     const [Anc, Mid, Des] = testInitMem()
     o.memGet(Anc)
     o.memGet(Mid)
@@ -228,7 +276,7 @@ t.test(function test_mem() {
     testClearPrototype(Anc, Mid, Des)
   })
 
-  t.test(function test_mem_set() {
+  t.test(function test_set() {
     const [Anc, Mid, Des] = testInitMem()
     o.memGet(Anc)
 

@@ -1,5 +1,3 @@
-// deno-lint-ignore-file constructor-super
-
 import * as l from './lang.mjs'
 
 const G = globalThis
@@ -76,32 +74,21 @@ export class HTMLTrackElement extends (G.HTMLTrackElement || H) {constructor() {
 export class HTMLUListElement extends (G.HTMLUListElement || H) {constructor() {reg(new.target), super()}}
 export class HTMLVideoElement extends (G.HTMLVideoElement || H) {constructor() {reg(new.target), super()}}
 
-export function reg(cls) {
-  if (!cer.hasCls(cls) && !isClsNameBase(cls.name)) {
-    customElements.define(clsTagSalted(cls), cls, clsExt(cls))
-  }
-  return cls
-}
+export function reg(cls) {return cer.reg(cls)}
 
 export class CustomElementRegistry {
-  constructor() {
+  constructor(ref) {
+    this.ref = optDefiner(ref)
     this.tagToCls = new Map()
     this.clsToTag = new Map()
+    this.baseTags = new Map()
   }
 
   /* Standard behaviors */
 
-  define(tag, cls) {
-    l.reqStr(tag)
-    l.reqCls(cls)
-
-    if (this.hasTag(tag)) {
-      throw Error(`redundant registration of ${l.show(tag)}`)
-    }
-    if (this.hasCls(cls)) {
-      throw Error(`redundant registration of ${l.show(cls)}`)
-    }
-
+  define(tag, cls, opt) {
+    this.redundant(tag, cls)
+    if (this.ref) this.ref.define(tag, cls, opt)
     this.tagToCls.set(tag, cls)
     this.clsToTag.set(cls, tag)
   }
@@ -113,11 +100,58 @@ export class CustomElementRegistry {
 
   /* Non-standard behaviors */
 
+  reg(cls) {
+    if (!this.hasCls(cls)) {
+      this.define(this.clsTagSalted(cls), cls, this.clsOpt(cls))
+    }
+    return cls
+  }
+
   hasTag(val) {return this.tagToCls.has(val)}
   tagCls(val) {return this.tagToCls.get(val)}
 
   hasCls(val) {return this.clsToTag.has(val)}
   clsTag(val) {return this.clsToTag.get(val)}
+
+  // Avoids breakage due to class name collisions.
+  clsTagSalted(cls) {
+    const base = clsTag(cls)
+    let tag = base
+    let ind = 0
+    while (this.hasTag(tag)) tag = base + `-` + ind++
+    return tag
+  }
+
+  clsOpt(cls) {
+    const tag = this.clsTagBase(cls)
+    return tag ? {extends: tag} : undefined
+  }
+
+  clsTagBase(cls) {
+    const name = clsNameBase(cls, RE_BASE)
+    if (!name) return ``
+
+    if (!this.baseTags.has(name)) {
+      const mat = name.match(RE_BASE)
+      this.baseTags.set(name, mat ? mat[1].toLowerCase() : ``)
+    }
+
+    return this.baseTags.get(name)
+  }
+
+  setBase(key, val) {return this.baseTags.set(key, val), this}
+
+  redundant(tag, cls) {
+    l.reqStr(tag)
+    l.reqCls(cls)
+
+    if (this.hasTag(tag)) {
+      throw Error(`redundant registration of ${l.show(tag)}`)
+    }
+    if (this.hasCls(cls)) {
+      throw Error(`redundant registration of ${l.show(cls)}`)
+    }
+  }
 
   clear() {
     this.tagToCls.clear()
@@ -127,35 +161,23 @@ export class CustomElementRegistry {
 }
 
 // Short for "custom element registry". Mostly for internal use.
-export const cer = new CustomElementRegistry()
+export const cer = /* @__PURE__ */ new CustomElementRegistry(G.customElements)
+  // Unambiguous cases.
+  .setBase(`HTMLAnchorElement`, `a`)
+  .setBase(`HTMLQuoteElement`, `blockquote`)
+  .setBase(`HTMLDListElement`, `dl`)
+  .setBase(`HTMLImageElement`, `img`)
+  .setBase(`HTMLOListElement`, `ol`)
+  .setBase(`HTMLParagraphElement`, `p`)
+  .setBase(`HTMLTableCaptionElement`, `caption`)
+  .setBase(`HTMLTableRowElement`, `tr`)
+  .setBase(`HTMLUListElement`, `ul`)
+  // Ambiguous cases.
+  .setBase(`HTMLTableColElement`, `col`)       // All: col, colgroup.
+  .setBase(`HTMLTableSectionElement`, `tbody`) // All: thead, tbody, tfoot.
+  .setBase(`HTMLTableCellElement`, `td`)       // All: th, td.
 
-export const customElements = cerPatch(G.customElements) || cer
-
-function cerPatch(ref) {
-  if (!ref) return undefined
-
-  const defineBase = ref.define
-
-  ref.define = function define(tag, cls, opt) {
-    defineBase.call(this, tag, cls, opt)
-    cer.define(tag, cls, opt)
-  }
-
-  return ref
-}
-
-function isClsNameBase(name) {return name.endsWith(`Element`)}
-
-// Avoids breakage due to class name collisions.
-function clsTagSalted(cls) {
-  const base = clsTag(cls)
-  let tag = base
-  let ind = 0
-  while (cer.hasTag(tag)) tag = base + `-` + ind++
-  return tag
-}
-
-function clsTag(cls) {
+export function clsTag(cls) {
   const words = toWords(cls.name)
   switch (words.length) {
     case 0: return ``
@@ -164,57 +186,31 @@ function clsTag(cls) {
   }
 }
 
-function clsExt(cls) {
-  const tag = clsTagBase(cls)
-  return tag ? {extends: tag} : undefined
-}
+function clsNameBase(cls, reg) {
+  l.reqReg(reg)
 
-function clsTagBase(cls) {
-  const name = clsNameBase(cls)
-  if (!name) return ``
-
-  if (!baseTags.has(name)) {
-    const mat = name.match(/^HTML(\w+)Element$/)
-    baseTags.set(name, mat ? mat[1].toLowerCase() : ``)
-  }
-
-  return baseTags.get(name)
-}
-
-function clsNameBase(cls) {
   while (l.isFun(cls)) {
     const {name} = cls
-    if (isClsNameBase(name)) return window[name] ? name : ``
+    if (reg.test(name)) return name
     cls = Object.getPrototypeOf(cls)
   }
+
   return ``
 }
 
-export const baseTags = /* @__PURE__ */ new Map()
-  // Unambiguous cases.
-  .set(`HTMLAnchorElement`, `a`)
-  .set(`HTMLQuoteElement`, `blockquote`)
-  .set(`HTMLDListElement`, `dl`)
-  .set(`HTMLImageElement`, `img`)
-  .set(`HTMLOListElement`, `ol`)
-  .set(`HTMLParagraphElement`, `p`)
-  .set(`HTMLTableCaptionElement`, `caption`)
-  .set(`HTMLTableRowElement`, `tr`)
-  .set(`HTMLUListElement`, `ul`)
-  // Ambiguous cases.
-  .set(`HTMLTableColElement`, `col`)       // All: col, colgroup.
-  .set(`HTMLTableSectionElement`, `tbody`) // All: thead, tbody, tfoot.
-  .set(`HTMLTableCellElement`, `td`)       // All: th, td.
+const RE_BASE = /^HTML(\w*)Element$/
 
 /*
 Simpler and more restrictive compared to the word regexp in `str.mjs`.
-Specialized for HTML custom element tags, which allow only lowercase Latin
-letters, digits, hyphens.
+Specialized for converting class names to HTML custom element tags, which allow
+only lowercase Latin letters, digits, hyphens. Not equivalent to the algorithm
+for converting camel to kebab for dataset attrs.
 */
 function toWords(str) {
   return (str && str.match(/[A-Za-z0-9]+?(?=[^a-z0-9]|$)/g)) || []
 }
 
-function toKebab(words) {
-  return words.join(`-`).toLowerCase()
-}
+function toKebab(words) {return words.join(`-`).toLowerCase()}
+
+function isDefiner(val) {return l.hasMeth(val, `define`)}
+function optDefiner(val) {return l.opt(val, isDefiner)}

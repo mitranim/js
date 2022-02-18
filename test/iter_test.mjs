@@ -251,45 +251,6 @@ t.test(function test_reify() {
   t.is(ref[2][0], i.reify(ref)[2][0])
 })
 
-t.test(function test_vac() {
-  function test(val, exp) {t.is(i.vac(val), exp)}
-  function empty(val) {test(val, undefined)}
-  function full(val) {test(val, val)}
-  testVac(empty, full)
-})
-
-// Copied between this and lang test. TODO figure out how to dedup.
-function testVac(empty, full) {
-  empty()
-  empty(null)
-  empty(false)
-  empty(0)
-  empty(NaN)
-  empty(``)
-  empty([])
-  empty([``])
-  empty([0])
-  empty([NaN])
-  empty([false])
-  empty([[]])
-  empty([[[]]])
-  empty([[[], NaN]])
-  empty([[[]], false])
-  empty([[[0]], false])
-  empty([[[0], NaN], false])
-
-  full(true)
-  full(10)
-  full(`str`)
-  full({})
-  full([10])
-  full([true])
-  full([{}])
-  full([[], {}])
-  full([[[true]]])
-  full([[], [[true]]])
-}
-
 t.test(function test_indexOf() {
   t.test(function test_invalid() {
     t.throws(() => i.indexOf(`str`), TypeError, `expected variant of isList, got "str"`)
@@ -939,11 +900,11 @@ t.test(function test_zip() {
   })
 })
 
-t.test(function test_mapFrom() {
-  t.eq(i.mapFrom(), new Map())
-  t.eq(i.mapFrom(10, 20), new Map().set(10, 20))
-  t.eq(i.mapFrom(10, 20, 30), new Map().set(10, 20).set(30))
-  t.eq(i.mapFrom(10, 20, 30, 40), new Map().set(10, 20).set(30, 40))
+t.test(function test_mapOf() {
+  t.eq(i.mapOf(), new Map())
+  t.eq(i.mapOf(10, 20), new Map().set(10, 20))
+  t.eq(i.mapOf(10, 20, 30), new Map().set(10, 20).set(30))
+  t.eq(i.mapOf(10, 20, 30, 40), new Map().set(10, 20).set(30, 40))
 })
 
 t.test(function test_range() {

@@ -9,8 +9,8 @@ import * as u from '../url.mjs'
 
 const URL_LONG = `scheme://user:pass@host:123/path?key=val#hash`
 
-function mockInst(cls, ...vals) {return Object.assign(Object.create(cls.prototype), ...vals)}
-function mockReqBui(...vals) {return mockInst(h.ReqBui, ...vals)}
+function mockInst(cls, ...val) {return Object.assign(Object.create(cls.prototype), ...val)}
+function mockReqBui(...val) {return mockInst(h.ReqBui, ...val)}
 function mockReq() {return new Request(URL_LONG, {method: h.POST})}
 function mockRou() {return new h.Rou(mockReq())}
 function simpleReq(url, meth) {return new Request(url, {method: meth})}
@@ -129,7 +129,7 @@ Requires async support from our testing library.
 In the meantime, those features are tested in apps.
 */
 t.test(function test_ReqBui() {
-  // Constructor just calls `.add` which is tested below.
+  // Constructor just calls `.mut` which is tested below.
   t.test(function test_constructor() {
     t.is(h.reqBui().constructor, h.ReqBui)
 
@@ -140,11 +140,11 @@ t.test(function test_ReqBui() {
     t.eq(new h.ReqBui({one: 10, two: 20}), mockReqBui({one: 10, two: 20}))
   })
 
-  t.test(function test_add() {
+  t.test(function test_mut() {
     t.test(function test_same_reference() {
       function test(src, val) {
         const ref = h.reqBui(src)
-        t.is(ref.add(val), ref)
+        t.is(ref.mut(val), ref)
       }
 
       test(undefined, undefined)
@@ -160,7 +160,7 @@ t.test(function test_ReqBui() {
         const ref = h.reqBui(src)
         const prev = ref.headers
 
-        ref.add(add)
+        ref.mut(add)
         const next = ref.headers
 
         t.eq(next, exp)
@@ -172,7 +172,7 @@ t.test(function test_ReqBui() {
         }
       }
 
-      // Delegates to `.headAdd`, which is tested separately.
+      // Delegates to `.headMut`, which is tested separately.
       test({}, {}, undefined)
       test({headers: {}}, {}, undefined)
       test({headers: {one: `10`}}, {}, {one: `10`})
@@ -184,22 +184,22 @@ t.test(function test_ReqBui() {
     })
 
     t.eq(
-      h.reqBui().add({one: 10, two: 20}),
+      h.reqBui().mut({one: 10, two: 20}),
       mockReqBui({one: 10, two: 20}),
     )
 
     t.eq(
-      h.reqBui({one: 10}).add({two: 20}),
+      h.reqBui({one: 10}).mut({two: 20}),
       mockReqBui({one: 10, two: 20}),
     )
 
     t.eq(
-      h.reqBui({one: 10, two: 20}).add({two: 30, three: 40}),
+      h.reqBui({one: 10, two: 20}).mut({two: 30, three: 40}),
       mockReqBui({one: 10, two: 30, three: 40}),
     )
 
     t.eq(
-      h.reqBui({one: 10, headers: {two: `20`}}).add({three: 30, headers: {four: `40`}}),
+      h.reqBui({one: 10, headers: {two: `20`}}).mut({three: 30, headers: {four: `40`}}),
       mockReqBui({one: 10, three: 30, headers: {two: `20`, four: `40`}}),
     )
   })
@@ -254,7 +254,7 @@ t.test(function test_ReqBui() {
   })
 
   t.test(function test_inp() {
-    t.throws(() => h.reqBui().inp({}), TypeError, `expected variant of isBody, got {}`)
+    t.throws(() => h.reqBui().inp({}), TypeError, `expected variant of [isUint8Array, isReadableStream, isFormData, isScalar], got {}`)
 
     t.eq(h.reqBui().inp(), mockReqBui({body: undefined}))
     t.eq(h.reqBui().inp(`str`), mockReqBui({body: `str`}))
@@ -289,8 +289,6 @@ t.test(function test_ReqBui() {
 
   // Incomplete.
   t.test(function test_req() {
-    t.throws(() => h.reqBui().req(), TypeError, `Invalid URL`)
-
     t.notEq(
       h.reqBui().to(`https://example.com`).req(),
       new Request(`https://example.com/one`),
@@ -318,10 +316,12 @@ t.test(function test_ReqBui() {
 
   t.test(function test_heads() {
     const ref = h.reqBui()
-    t.eq(ref.heads(), {})
     t.is(ref.heads(), ref.heads())
     t.is(ref.heads(), ref.headers)
-    t.is(Object.getPrototypeOf(ref.heads()), null)
+    t.is(ref.headers, ref.heads())
+    t.is(ref.headers, ref.headers)
+    t.eq(ref.headers, {})
+    t.is(Object.getPrototypeOf(ref.headers), null)
   })
 
   t.test(function test_headHas() {
@@ -478,12 +478,12 @@ t.test(function test_ReqBui() {
     test({one: `two`, three: `four`}, `one`, {three: `four`})
   })
 
-  t.test(function test_headAdd() {
-    t.throws(() => h.reqBui().headAdd(10), TypeError, `unable to convert 10 to head`)
-    t.throws(() => h.reqBui().headAdd(`str`), TypeError, `unable to convert "str" to head`)
+  t.test(function test_headMut() {
+    t.throws(() => h.reqBui().headMut(10), TypeError, `unable to convert 10 to head`)
+    t.throws(() => h.reqBui().headMut(`str`), TypeError, `unable to convert "str" to head`)
 
     function test(src, add, exp) {
-      const ref = mockReqBui({headers: src}).headAdd(add)
+      const ref = mockReqBui({headers: src}).headMut(add)
       t.eq(ref.headers, exp)
       if (ref.headers) t.isnt(ref.headers, exp)
     }

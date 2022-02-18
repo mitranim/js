@@ -1,128 +1,171 @@
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
+import * as d from '../dom.mjs'
 import * as dr from '../dom_reg.mjs'
 
-t.test(function test_cer() {
-  class Elem {}
-  dr.cer.define(`some-elem`, Elem)
+/* Util */
 
-  testCerMatch(Elem, `some-elem`)
-  testCerSize(1)
-
-  t.throws(() => dr.cer.define(`some-elem`, Elem), Error, `redundant registration of "some-elem"`)
-  t.throws(() => dr.cer.define(`some-elem`, Object), Error, `redundant registration of "some-elem"`)
-})
-
-// The test is incomplete: in environments that support the `customElements`
-// global, we should also verify that this re-exports it _and_ patches it.
-t.test(function test_customElements() {
-  t.is(dr.customElements, globalThis.customElements ?? dr.cer)
-})
-
-t.test(function test_reg() {
-  dr.cer.clear()
-
-  t.test(function test_nop_for_base() {
-    dr.reg(dr.HTMLElement)
-    t.no(dr.cer.hasCls(dr.HTMLElement))
-
-    dr.reg(dr.HTMLDetailsElement)
-    t.no(dr.cer.hasCls(dr.HTMLDetailsElement))
-  })
-
-  t.test(function test_multiple_sequential_regs() {
-    class Details extends dr.HTMLDetailsElement {}
-
-    function test0() {
-      dr.reg(Details)
-      testCerMatch(Details, `a-details`)
-      testCerSize(1)
-    }
-
-    test0()
-    test0()
-    test0()
-
-    class SomeBtn extends dr.HTMLButtonElement {}
-
-    function test1() {
-      l.nop(new SomeBtn())
-      testCerMatch(SomeBtn, `some-btn`)
-      testCerSize(2)
-    }
-
-    test1()
-    test1()
-    test1()
-
-    t.throws(() => dr.customElements.define(`some-btn`, SomeBtn), Error, `redundant registration of "some-btn"`)
-
-    class SubBtn123 extends SomeBtn {}
-
-    function test2() {
-      l.nop(new SubBtn123())
-      testCerMatch(SubBtn123, `sub-btn123`)
-      testCerSize(3)
-    }
-
-    test2()
-    test2()
-    test2()
-  })
-
-  t.test(function test_salting() {
-    dr.cer.clear()
-    testCerSize(0)
-
-    {
-      class SomeBtn extends dr.HTMLButtonElement {}
-      dr.reg(SomeBtn)
-
-      testCerMatch(SomeBtn, `some-btn`)
-      testCerSize(1)
-    }
-
-    {
-      class SomeBtn extends dr.HTMLButtonElement {}
-      dr.reg(SomeBtn)
-
-      testCerMatch(SomeBtn, `some-btn-0`)
-      testCerSize(2)
-    }
-
-    {
-      class SomeBtn extends dr.HTMLButtonElement {}
-      dr.reg(SomeBtn)
-
-      testCerMatch(SomeBtn, `some-btn-1`)
-      testCerSize(3)
-    }
-  })
-})
-
-function testCerMatch(cls, tag) {
-  t.ok(dr.cer.hasTag(tag))
-  t.ok(dr.cer.hasCls(cls))
-  t.is(dr.cer.clsTag(cls), tag)
-  t.is(dr.cer.tagCls(tag), cls)
+function testCerMatch(cer, cls, tag) {
+  t.ok(cer.hasTag(tag))
+  t.ok(cer.hasCls(cls))
+  t.is(cer.clsTag(cls), tag)
+  t.is(cer.tagCls(tag), cls)
 }
 
-function testCerSize(len) {
-  t.is(dr.cer.clsToTag.size, len)
-  t.is(dr.cer.tagToCls.size, len)
+function testCerSize(cer, len) {
+  t.is(cer.clsToTag.size, len)
+  t.is(cer.tagToCls.size, len)
 }
 
-// TODO: test all base classes exported by this package. Can probably find them
-// by iterating module exports.
+/*
+Not part of public module because it would be a waste of code.
+This "inheritance" between registries is relevant only for testing.
+*/
+function makeCer() {
+  const out = new dr.CustomElementRegistry()
+  out.baseTags = new Map(dr.cer.baseTags)
+  return out
+}
+
+/* Test */
+
+/*
+TODO: consider testing all base classes exported by this package. Can probably
+find them by iterating module exports.
+*/
 t.test(function test_HTMLElement() {
-  dr.cer.clear()
-
   class Sub extends dr.HTMLElement {}
   l.nop(new Sub())
+  testCerMatch(dr.cer, Sub, `a-sub`)
 
-  testCerMatch(Sub, `a-sub`)
-  testCerSize(1)
+  /*
+  Verifies registration via global `customElements`.
+  Without it, calling `new` would produce an exception.
+  */
+  if (d.HAS_DOM) {
+    t.is(new Sub().outerHTML, `<a-sub></a-sub>`)
+  }
+})
+
+/*
+`CustomElementRegistry..reg` is checked more thoroughly below.
+This is a sanity check to verify that the global function uses
+this on the default instance.
+*/
+t.test(function test_reg() {
+  class SomeDetails extends dr.HTMLDetailsElement {}
+  dr.reg(SomeDetails)
+  testCerMatch(dr.cer, SomeDetails, `some-details`)
+})
+
+
+// `CustomElementRegistry` is tested below. This is a sanity check.
+t.test(function test_cer() {
+  l.reqInst(dr.cer, dr.CustomElementRegistry)
+})
+
+t.test(function test_CustomElementRegistry() {
+  t.test(function test_misc() {
+    const cer = makeCer()
+
+    class SomeLink extends dr.HTMLAnchorElement {}
+
+    function test() {
+      t.is(cer.clsTag(SomeLink), undefined)
+      t.is(cer.clsTagSalted(SomeLink), `some-link`)
+      t.eq(cer.clsOpt(SomeLink), {extends: `a`})
+    }
+
+    test()
+    cer.clear()
+    test()
+  })
+
+  t.test(function test_define() {
+    const cer = makeCer()
+
+    class Elem {}
+    cer.define(`some-elem`, Elem)
+
+    testCerMatch(cer, Elem, `some-elem`)
+    testCerSize(cer, 1)
+
+    t.throws(() => cer.define(`some-elem`, Elem), Error, `redundant registration of "some-elem"`)
+    t.throws(() => cer.define(`some-elem`, Object), Error, `redundant registration of "some-elem"`)
+  })
+
+  t.test(function test_reg() {
+    t.test(function test_multiple_sequential_regs() {
+      const cer = makeCer()
+
+      class Details extends dr.HTMLDetailsElement {}
+
+      function test0() {
+        cer.reg(Details)
+        testCerMatch(cer, Details, `a-details`)
+        testCerSize(cer, 1)
+      }
+
+      test0()
+      test0()
+      test0()
+
+      class SomeBtn extends dr.HTMLButtonElement {}
+
+      function test1() {
+        cer.reg(SomeBtn)
+        testCerMatch(cer, SomeBtn, `some-btn`)
+        testCerSize(cer, 2)
+      }
+
+      test1()
+      test1()
+      test1()
+
+      t.throws(() => cer.define(`some-btn`, SomeBtn), Error, `redundant registration of "some-btn"`)
+
+      class SubBtn123 extends SomeBtn {}
+
+      function test2() {
+        cer.reg(SubBtn123)
+        testCerMatch(cer, SubBtn123, `sub-btn123`)
+        testCerSize(cer, 3)
+      }
+
+      test2()
+      test2()
+      test2()
+    })
+
+    t.test(function test_salting() {
+      const cer = makeCer()
+
+      {
+        class SomeBtn extends dr.HTMLButtonElement {}
+        cer.reg(SomeBtn)
+
+        testCerMatch(cer, SomeBtn, `some-btn`)
+        testCerSize(cer, 1)
+      }
+
+      {
+        class SomeBtn extends dr.HTMLButtonElement {}
+        cer.reg(SomeBtn)
+
+        testCerMatch(cer, SomeBtn, `some-btn-0`)
+        testCerSize(cer, 2)
+      }
+
+      {
+        class SomeBtn extends dr.HTMLButtonElement {}
+        cer.reg(SomeBtn)
+
+        testCerMatch(cer, SomeBtn, `some-btn-1`)
+        testCerSize(cer, 3)
+      }
+    })
+  })
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

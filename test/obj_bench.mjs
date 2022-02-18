@@ -34,6 +34,8 @@ class Shallow {
 const shallowLax = new Shallow()
 const shallowStrict = o.strict(new Shallow())
 
+function isEven(val) {return !(val % 2)}
+
 /* Bench */
 
 t.bench(function bench_cls_def() {
@@ -73,9 +75,10 @@ t.bench(function bench_Object_getPrototypeOf() {
   l.nop(Object.getPrototypeOf(shallowLax))
 })
 
-t.bench(function bench_assign_Object_assign() {l.reqDict(Object.assign(Object.create(null), itc.numDict))})
-t.bench(function bench_assign_our_mut() {l.reqDict(o.mut(Object.create(null), itc.numDict))})
-t.bench(function bench_assign_lodash_assign() {l.reqDict(lo.assign(Object.create(null), itc.numDict))})
+t.bench(function bench_assign_Object_assign() {l.reqDict(Object.assign(l.npo(), itc.numDict))})
+t.bench(function bench_assign_our_assign() {l.reqDict(o.assign(l.npo(), itc.numDict))})
+t.bench(function bench_assign_our_patch() {l.reqDict(o.patch(l.npo(), itc.numDict))})
+t.bench(function bench_assign_lodash_assign() {l.reqDict(lo.assign(l.npo(), itc.numDict))})
 
 itc.deoptDictHof(o.mapDict)
 itc.deoptDictHof(lo.mapValues)
@@ -100,7 +103,3 @@ t.bench(function bench_object_freeze_new() {l.nop(freeze({}))})
 t.bench(function bench_object_freeze_frozen() {l.nop(freeze(frozen))})
 
 if (import.meta.main) t.deopt(), t.benches()
-
-/* Util */
-
-function isEven(val) {return !(val % 2)}

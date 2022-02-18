@@ -25,7 +25,7 @@ class ReqBui extends RequestInit {
   Mutates the request by applying the given options and returns the same
   reference. Automatically merges headers.
   */
-  add(init?: RequestInit): ReqBui
+  mut(init?: RequestInit): ReqBui
 
   // Shortcut for `new Request(this.url, this)`.
   req(): Request
@@ -80,8 +80,8 @@ class ReqBui extends RequestInit {
   headAppend(key: string, val?: string): ReqBui
   headAppendAll(key: string, val?: string[]): ReqBui
   headAppendAny(key: string, val?: string | string[]): ReqBui
+  headMut(src: Headers | Record<string, string>): ReqBui
   headDelete(key: string): ReqBui
-  headAdd(src: Headers | Record<string, string>): ReqBui
 
   // Class used for responses. Can override in subclass.
   get Res(): {new(): Res}

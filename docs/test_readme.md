@@ -31,6 +31,8 @@ Features:
     * Tested in Deno with `--allow-hrtime`.
   * Non-verbose. Tests are silent by default.
 
+Ported from https://github.com/mitranim/test which is also available separately.
+
 ## TOC
 
 * [#Limitations](#limitations)
@@ -59,7 +61,7 @@ Timing precision varies by JS engine and environment.
 Simple testing example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/test.mjs'
 
 t.test(function test_some_feature() {
   t.eq(someFunction(someInputs), `expected result`)
@@ -69,7 +71,7 @@ t.test(function test_some_feature() {
 Simple benchmarking example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/test.mjs'
 
 t.bench(function bench_some_feature() {
   someFunction(someInputs)
@@ -82,7 +84,7 @@ t.benches()
 Complex example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/test.mjs'
 
 // Optional CLI flag parsing.
 const cli = t.Args.os()
@@ -146,7 +148,7 @@ The following APIs are exported but undocumented. Check [test.mjs](../test.mjs).
   * [`function inst`](../test.mjs#L539)
   * [`function throws`](../test.mjs#L548)
   * [`function equal`](../test.mjs#L608)
-  * [`function now`](../test.mjs#L712)
-  * [`function nowAvg`](../test.mjs#L719)
-  * [`function isRunner`](../test.mjs#L737)
-  * [`function isReporter`](../test.mjs#L739)
+  * [`function now`](../test.mjs#L722)
+  * [`function nowAvg`](../test.mjs#L729)
+  * [`function isRunner`](../test.mjs#L747)
+  * [`function isReporter`](../test.mjs#L749)

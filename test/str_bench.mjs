@@ -40,7 +40,10 @@ const draftCtx = freeze(new class {
   four() {return `20`}
 }())
 
-// More limited than the version we actually export.
+/*
+More limited than the version we actually export.
+Performance should be fairly similar. If not, that's a bug.
+*/
 function draftRenderSimple(src, ctx) {
   l.reqComp(ctx)
   return l.laxStr(src).replace(s.RE_EMBED, function replace(_, key) {
@@ -65,9 +68,15 @@ function joinOptDumb(val, sep) {
 
 function joinLinesOptDumb(val) {return joinOptDumb(val, `\n`)}
 
-function spacedDumb(...vals) {
-  return vals.map(l.renderLax).filter(l.id).join(` `)
+function spacedDumb(...val) {
+  return val.map(l.renderLax).filter(l.id).join(` `)
 }
+
+/*
+Measurably faster than our exported version, but not available in dominant
+Safari versions at the time of this writing.
+*/
+function uuidCryptoShort() {return crypto.randomUUID().replaceAll(`-`, ``)}
 
 /* Bench */
 
@@ -124,6 +133,8 @@ t.bench(function bench_join_spaced_current() {l.nop(s.spaced(...multi))})
 t.bench(function bench_rndHex() {l.nop(s.rndHex(16))})
 t.bench(function bench_uuidArr() {l.nop(s.uuidArr())})
 t.bench(function bench_uuid() {l.nop(s.uuid())})
+t.bench(function bench_uuid_crypto_long() {l.nop(crypto.randomUUID())})
+t.bench(function bench_uuid_crypto_short() {l.nop(uuidCryptoShort())})
 
 const mapMut = new Map().set(`one`, `two`).set(`three`, `four`)
 const strMapMut = s.strMap().set(`one`, `two`).set(`three`, `four`)
@@ -132,6 +143,8 @@ strMapMut.clear()
 t.bench(function bench_map_clear_without_size_check() {l.nop(mapMut.clear())})
 t.bench(function bench_map_clear_with_size_check() {l.nop(mapMut.size && mapMut.clear())})
 t.bench(function bench_map_clear_StrMap() {l.nop(strMapMut.clear())})
+
+t.bench(function bench_str_map_new() {l.nop(new s.StrMap())})
 
 t.bench(function bench_draft_new_empty() {l.nop(new s.Draft())})
 

@@ -29,12 +29,12 @@ export function toUrl(val) {return l.toInst(val, Url)}
 export function urlJoin(val, ...vals) {return Url.join(val, ...vals)}
 
 export class Search extends s.StrMap {
-  add(val) {
-    if (l.isStr(val)) return this.addStr(val)
-    return super.add(val)
+  mut(val) {
+    if (l.isStr(val)) return this.mutFromStr(val)
+    return super.mut(val)
   }
 
-  addStr(val) {
+  mutFromStr(val) {
     val = unSearch(val, this.constructor.name)
     for (val of s.split(val, `&`)) {
       const ind = val.indexOf(`=`)
@@ -77,7 +77,7 @@ export class Url {
     this[pathnameKey] = ``
     this[searchKey] = ``
     this[hashKey] = ``
-    if (!isEmpty(val)) this.mut(val)
+    if (!isEmpty(val)) this.reset(val)
   }
 
   get scheme() {return this[schemeKey]}
@@ -121,7 +121,7 @@ export class Url {
 
   set searchParams(val) {
     if (l.isNil(val) || l.isStr(val)) this.search = val
-    else this.searchParams.mut(val)
+    else this.searchParams.reset(val)
   }
 
   get query() {return this.searchParams}
@@ -161,7 +161,7 @@ export class Url {
 
   // TODO: when scheme or slash is missing, auth and host should be excluded.
   get href() {return `${this.protocol}${this.authFull()}${this.hostPath()}${this.searchFull()}${this.hashFull()}`}
-  set href(val) {this.mut(val)}
+  set href(val) {this.reset(val)}
 
   setScheme(val) {return this.scheme = val, this}
   setSlash(val) {return this.slash = val, this}
@@ -173,7 +173,7 @@ export class Url {
   setSearch(val) {return this.search = val, this}
   setSearchParams(val) {return this.searchParams = val, this}
   setQuery(val) {return this.searchParams = val, this}
-  addQuery(val) {return this.searchParams.add(val), this}
+  mutQuery(val) {return this.searchParams.mut(val), this}
   setHash(val) {return this.hash = val, this}
   setHashExact(val) {return this[hashKey] = toHash(val), this}
   setProtocol(val) {return this.protocol = val, this}
@@ -216,8 +216,8 @@ export class Url {
   authFull() {return s.optSuf(this.auth(), `@`)}
   rel() {return this.pathname + this.searchFull() + this.hashFull()}
 
-  setPath(...vals) {return this.setPathname().addPath(...vals)}
-  addPath(...vals) {return vals.forEach(this.addSeg, this), this}
+  setPath(...val) {return this.setPathname().addPath(...val)}
+  addPath(...val) {return val.forEach(this.addSeg, this), this}
 
   addSeg(seg) {
     const val = l.renderLax(seg)
@@ -226,16 +226,24 @@ export class Url {
     return this
   }
 
-  mut(val) {
+  setPathOpt(...val) {return val.forEach(this.setSegOpt, this), this}
+  addPathOpt(...val) {return val.forEach(this.addSegOpt, this), this}
+
+  addSegOpt(seg) {
+    this[pathnameKey] = s.inter(this[pathnameKey], `/`, l.renderLax(seg))
+    return this
+  }
+
+  reset(val) {
     if (l.isNil(val)) return this.clear()
-    if (l.isStr(val)) return this.setStr(val)
-    if (isURL(val)) return this.setURL(val)
-    if (isUrl(val)) return this.setUrl(val)
-    if (isLoc(val)) return this.setStr(val.href)
+    if (l.isStr(val)) return this.resetFromStr(val)
+    if (isURL(val)) return this.resetFromURL(val)
+    if (isUrl(val)) return this.resetFromUrl(val)
+    if (isLoc(val)) return this.resetFromStr(val.href)
     throw l.errInst(val, this)
   }
 
-  setStr(val) {
+  resetFromStr(val) {
     const gr = urlParse(val)
     this[schemeKey] = l.laxStr(gr.scheme)
     this[slashKey] = l.laxStr(gr.slash)
@@ -249,7 +257,7 @@ export class Url {
     return this
   }
 
-  setURL(val) {
+  resetFromURL(val) {
     l.req(val, isURL)
     this[schemeKey] = s.stripSuf(val.protocol, `:`)
     this[slashKey] = val.href.startsWith(val.protocol + `//`) ? `//` : ``
@@ -258,12 +266,12 @@ export class Url {
     this[hostnameKey] = val.hostname
     this[portKey] = val.port
     this[pathnameKey] = val.pathname
-    this.searchParams.mut(val.searchParams)
+    this.searchParams.reset(val.searchParams)
     this[hashKey] = unHash(val.hash)
     return this
   }
 
-  setUrl(val) {
+  resetFromUrl(val) {
     l.req(val, isUrl)
     this[schemeKey] = val[schemeKey]
     this[slashKey] = val[slashKey]
@@ -297,7 +305,6 @@ export class Url {
 
   get Search() {return Search}
   get [Symbol.toStringTag]() {return this.constructor.name}
-  [Symbol.toPrimitive]() {return this.toString()}
 
   static join(val, ...vals) {return new this(val).addPath(...vals)}
 }

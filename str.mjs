@@ -155,10 +155,7 @@ Features:
   * Parsing of bool and numeric values.
 */
 export class StrMap extends Map {
-  constructor(val) {
-    super()
-    if (l.isSome(val)) this.add(val)
-  }
+  constructor(val) {super().mut(val)}
 
   has(key) {return super.has(l.reqStr(key))}
   get(key) {return this.has(key) ? super.get(key)[0] : undefined}
@@ -192,44 +189,43 @@ export class StrMap extends Map {
 
   clear() {return (super.size && super.clear()), this}
 
-  mut(val) {
-    if (l.isInst(val, StrMap)) return this.setStrMap(val)
-    return this.clear().add(val)
+  reset(val) {
+    if (l.isInst(val, StrMap)) return this.resetFromStrMap(val)
+    return this.clear().mut(val)
   }
 
-  setStrMap(src) {
+  resetFromStrMap(src) {
     l.reqInst(src, StrMap)
     this.clear()
     for (const [key, val] of src) super.set(key, val.slice())
     return this
   }
 
-  add(val) {
+  mut(val) {
     if (l.isNil(val)) return this
-    if (l.isIter(val)) return this.addIter(val)
-    if (l.isStruct(val)) return this.addStruct(val)
+    if (l.isIter(val)) return this.mutFromIter(val)
+    if (l.isStruct(val)) return this.mutFromStruct(val)
     throw l.errInst(val, this)
   }
 
-  addIter(src) {
+  mutFromIter(src) {
     l.reqIter(src)
     for (const [key, val] of src) this.appendAny(key, val)
     return this
   }
 
-  addStruct(val) {
-    l.reqStruct(val)
-    for (const key of Object.keys(val)) this.appendAny(key, val[key])
+  mutFromStruct(val) {
+    for (const key of l.structKeys(val)) this.appendAny(key, val[key])
     return this
   }
 
-  dict() {
+  toDict() {
     const out = l.npo()
     for (const [key, val] of this.entries()) if (val.length) out[key] = val[0]
     return out
   }
 
-  dictAll() {
+  toDictAll() {
     const out = l.npo()
     for (const [key, val] of this.entries()) out[key] = val
     return out
@@ -248,7 +244,7 @@ export class StrMap extends Map {
   nat(key) {return nat(this.get(key))}
 
   clone() {return new this.constructor(this)}
-  toJSON() {return this.dictAll()}
+  toJSON() {return this.toDictAll()}
 
   get [Symbol.toStringTag]() {return this.constructor.name}
 }
@@ -380,11 +376,17 @@ export function joinLinesLax(val) {return joinLax(val, `\n`)}
 export function joinLinesOpt(val) {return joinOpt(val, `\n`)}
 export function joinLinesOptLax(val) {return joinOptLax(val, `\n`)}
 
-export function spaced(...vals) {return joinOptLax(vals, ` `)}
+export function spaced(...val) {return joinOptLax(val, ` `)}
+export function dashed(...val) {return joinOptLax(val, `-`)}
 
 export function isSubpath(sup, sub) {
   l.reqStr(sup), l.reqStr(sub)
   return sup === sub || sub.startsWith(sup) && stripPre(sub, sup).startsWith(`/`)
+}
+
+export function rndHex(len) {
+  if (!l.reqNat(len)) return ``
+  return arrHex(crypto.getRandomValues(new Uint8Array(len)))
 }
 
 // Stupidly inefficient, but all attempted alternatives were worse.
@@ -394,11 +396,6 @@ export function arrHex(val) {
   let ind = -1
   while (++ind < val.length) buf[ind] = val[ind].toString(16).padStart(2, `0`)
   return buf.join(``)
-}
-
-export function rndHex(len) {
-  if (!l.reqNat(len)) return ``
-  return arrHex(crypto.getRandomValues(new Uint8Array(len)))
 }
 
 export function uuid() {return arrHex(uuidArr())}
@@ -418,17 +415,9 @@ export function uuidArr() {
 }
 
 // See the warning on `Draft`.
-export function draftRender(src, ctx) {
-  return draftParse(src).render(ctx)
-}
-
-// See the warning on `Draft`.
-export function draftRenderAsync(src, ctx) {
-  return draftParse(src).renderAsync(ctx)
-}
-
-// See the warning on `Draft`.
 export function draftParse(val) {return new Draft().parse(val, RE_EMBED)}
+export function draftRender(src, ctx) {return draftParse(src).render(ctx)}
+export function draftRenderAsync(src, ctx) {return draftParse(src).renderAsync(ctx)}
 
 /*
 Word of warning. Most apps shouldn't use string templating. Whenever possible,
@@ -438,23 +427,23 @@ performance, doesn't need special build systems, and is compatible with common
 static analysis tools such as type checkers and linters. String-based
 templating should be used only when already committed to a dedicated markup
 language such as Markdown.
-
-TODO consider giving up on array subclassing due to V8 performance issues.
 */
-export class Draft extends Array {
-  clear() {return this.length = 0, this}
+export class Draft {
+  constructor(...val) {this.arr = val}
 
   // TODO consider merging with `renderAsync`, automatically switching to
-  // promises when the first promise is detected. Might be tricky to implement.
+  // promises when the first promise is detected. Might be tricky.
   render(ctx) {
     let out = ``
-    for (const val of this) out += isRen(val) ? val.render(ctx) : val
+    for (const val of this.arr) {
+      out += l.renderLax(isRen(val) ? val.render(ctx) : val)
+    }
     return out
   }
 
   renderAsync(ctx) {
     const seg = val => isRen(val) ? val.render(ctx) : val
-    return Promise.all(this.map(seg)).then(strConcatLax)
+    return Promise.all(this.arr.map(seg)).then(strConcatLax)
   }
 
   parse(src, reg) {
@@ -468,14 +457,16 @@ export class Draft extends Array {
 
     while ((mat = reg.exec(src))) {
       const {index} = mat
-      if (index > ind) this.push(src.slice(ind, index))
+      if (index > ind) this.arr.push(src.slice(ind, index))
       ind = index + mat[0].length
-      this.push(new this.Embed(mat[1]))
+      this.arr.push(new this.Embed(mat[1]))
     }
 
-    if (ind < src.length) this.push(src.slice(ind))
+    if (ind < src.length) this.arr.push(src.slice(ind))
     return this
   }
+
+  clear() {return this.arr.length = 0, this}
 
   get Embed() {return Embed}
   get [Symbol.toStringTag]() {return this.constructor.name}

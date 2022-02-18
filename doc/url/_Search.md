@@ -1,11 +1,11 @@
 Like [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) but much better. See [#Overview](#overview) for some differences.
 
 ```ts
-type StrLike          = boolean | number | string
-type SearchDictLax    = Record<string, string | string[]>
-type SearchDictSingle = Record<string, string>
-type SearchDictMulti  = Record<string, string[]>
-type SearchLike       = string | Search | URLSearchParams | SearchDictLax
+type StrLike       = boolean | number | string
+type StrDictLax    = Record<string, string | string[]>
+type StrDictSingle = Record<string, string>
+type StrDictMulti  = Record<string, string[]>
+type SearchLike    = string | Search | URLSearchParams | StrDictLax
 
 class Search extends Map<string, string[]> {
   constructor(src?: SearchLike)
@@ -37,13 +37,13 @@ class Search extends Map<string, string[]> {
   Mutates and returns the same reference.
   Passing nil is equivalent to `.clear`.
   */
-  mut(src?: SearchLike): Search
+  reset(src?: SearchLike): Search
 
   /*
   Appends the input's content to the current `Search` object.
   Mutates and returns the same reference.
   */
-  add(src?: SearchLike): Search
+  mut(src?: SearchLike): Search
 
   /*
   Combination of `.get` and type conversion.
@@ -59,8 +59,8 @@ class Search extends Map<string, string[]> {
   nat(key: string): number
 
   // Conversion to a traditional "query dictionary".
-  dict(): SearchDictSingle
-  dictAll(): SearchDictMulti
+  toDict(): StrDictSingle
+  toDictAll(): StrDictMulti
 
   /*
   Returns a cloned version.

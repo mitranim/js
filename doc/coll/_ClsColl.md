@@ -1,4 +1,4 @@
-Version of {{link coll Coll}} where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsColl`. Elements added with `.push` are idempotently instantiated.
+Variant of {{link coll Coll}} where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsColl`. Elements added with `.push` are idempotently instantiated.
 
 ```js
 class Person {
@@ -11,8 +11,8 @@ class Persons extends co.ClsColl {
 }
 
 const coll = new Persons()
-  .push({name: `Mira`})
-  .push({name: `Kara`})
+  .add({name: `Mira`})
+  .add({name: `Kara`})
 
 console.log(coll)
 

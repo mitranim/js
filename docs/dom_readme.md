@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as d from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/dom.mjs'
+import * as d from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/dom.mjs'
 ```
 
 ## API
@@ -36,17 +36,21 @@ The following APIs are exported but undocumented. Check [dom.mjs](../dom.mjs).
   * [`function isDomHandler`](../dom.mjs#L26)
   * [`function reqDomHandler`](../dom.mjs#L27)
   * [`function optDomHandler`](../dom.mjs#L28)
-  * [`function eventStop`](../dom.mjs#L30)
-  * [`function isEventModified`](../dom.mjs#L38)
-  * [`function nodeShow`](../dom.mjs#L42)
-  * [`function nodeHide`](../dom.mjs#L43)
-  * [`function nodeRemove`](../dom.mjs#L44)
-  * [`function nodeSel`](../dom.mjs#L45)
-  * [`function nodeSelAll`](../dom.mjs#L46)
-  * [`function isConnected`](../dom.mjs#L48)
-  * [`function isDisconnected`](../dom.mjs#L49)
-  * [`function addEvents`](../dom.mjs#L51)
-  * [`function removeEvents`](../dom.mjs#L56)
-  * [`function clip`](../dom.mjs#L61)
-  * [`function clipNode`](../dom.mjs#L72)
-  * [`function selectText`](../dom.mjs#L74)
+  * [`function mutDoc`](../dom.mjs#L30)
+  * [`class DocHeadMut`](../dom.mjs#L35)
+  * [`class DocBodyMut`](../dom.mjs#L64)
+  * [`class DocFoc`](../dom.mjs#L83)
+  * [`function eventStop`](../dom.mjs#L112)
+  * [`function isEventModified`](../dom.mjs#L120)
+  * [`function nodeShow`](../dom.mjs#L124)
+  * [`function nodeHide`](../dom.mjs#L125)
+  * [`function nodeRemove`](../dom.mjs#L126)
+  * [`function nodeSel`](../dom.mjs#L127)
+  * [`function nodeSelAll`](../dom.mjs#L128)
+  * [`function isConnected`](../dom.mjs#L130)
+  * [`function isDisconnected`](../dom.mjs#L131)
+  * [`function addEvents`](../dom.mjs#L133)
+  * [`function removeEvents`](../dom.mjs#L138)
+  * [`function clip`](../dom.mjs#L143)
+  * [`function clipNode`](../dom.mjs#L154)
+  * [`function selectText`](../dom.mjs#L156)

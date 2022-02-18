@@ -63,15 +63,15 @@ t.bench(function bench_new_Search() {l.nop(u.search())})
 t.bench(function bench_new_URL() {l.nop(new URL(`a:`))}) // Unfair but blame the dumb API.
 t.bench(function bench_new_Url() {l.nop(u.url())})
 
+t.bench(function bench_Search_reset_str() {l.nop(mutSearch.reset(searchLong))})
+t.bench(function bench_Search_reset_Params() {l.nop(mutSearch.reset(decParamsLong))})
+t.bench(function bench_Search_reset_Search() {l.nop(mutSearch.reset(decSearchLong))})
+t.bench(function bench_Search_reset_struct() {l.nop(mutSearch.reset(searchStructLong))})
+
 t.bench(function bench_Search_mut_str() {l.nop(mutSearch.mut(searchLong))})
 t.bench(function bench_Search_mut_Params() {l.nop(mutSearch.mut(decParamsLong))})
 t.bench(function bench_Search_mut_Search() {l.nop(mutSearch.mut(decSearchLong))})
 t.bench(function bench_Search_mut_struct() {l.nop(mutSearch.mut(searchStructLong))})
-
-t.bench(function bench_Search_add_str() {l.nop(mutSearch.add(searchLong))})
-t.bench(function bench_Search_add_Params() {l.nop(mutSearch.add(decParamsLong))})
-t.bench(function bench_Search_add_Search() {l.nop(mutSearch.add(decSearchLong))})
-t.bench(function bench_Search_add_struct() {l.nop(mutSearch.add(searchStructLong))})
 
 t.bench(function bench_search_decode_Params() {l.nop(new URLSearchParams(searchLong))})
 t.bench(function bench_search_decode_Search() {l.nop(u.search(searchLong))})
@@ -93,9 +93,9 @@ t.bench(function bench_search_walk_Search() {
   for (const [key, val] of decSearchLong) l.nop(key, val)
 })
 
-t.bench(function bench_Url_mut_str() {l.nop(mutUrl.mut(urlLong))})
-t.bench(function bench_Url_mut_URL() {l.nop(mutUrl.mut(decURLLong))})
-t.bench(function bench_Url_mut_Url() {l.nop(mutUrl.mut(decUrlLong))})
+t.bench(function bench_Url_reset_str() {l.nop(mutUrl.reset(urlLong))})
+t.bench(function bench_Url_reset_URL() {l.nop(mutUrl.reset(decURLLong))})
+t.bench(function bench_Url_reset_Url() {l.nop(mutUrl.reset(decUrlLong))})
 
 t.bench(function bench_url_decode_long_URL() {l.nop(new URL(urlLong))})
 t.bench(function bench_url_decode_long_Url() {l.nop(u.url(urlLong))})

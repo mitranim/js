@@ -62,19 +62,45 @@ t.test(function test_Dur() {
   })
 
   // TODO consider porting bigger test from `github.com/mitranim/gt`.
-  t.test(function test_decoding_valid() {testDurMutStr(ti.dur)})
-  t.test(function test_mut_str() {testDurMut(testDurMutStr)})
+  t.test(function test_decoding_valid() {testDurResetFromStr(ti.dur)})
+  t.test(function test_reset_from_str() {testDurReset(testDurResetFromStr)})
 
-  t.test(function test_from_struct() {testDurMutStruct(ti.dur)})
-  t.test(function test_mut_struct() {testDurMut(testDurMutStruct)})
+  t.test(function test_from_struct() {testDurResetFromStruct(ti.dur)})
+  t.test(function test_reset_from_struct() {testDurReset(testDurResetFromStruct)})
 
   t.test(function test_from_dur() {
-    testDurMutStruct(function make(src) {return ti.dur(ti.dur(src))})
+    testDurResetFromStruct(function make(src) {return ti.dur(ti.dur(src))})
   })
 
-  t.test(function test_mut_dur() {
-    testDurMutStruct(function make(src) {return ti.dur().mut(ti.dur(src))})
-    testDurMutStruct(function make(src) {return ti.dur(src).mut(ti.dur(src))})
+  t.test(function test_reset_from_dur() {
+    testDurResetFromStruct(function make(src) {return ti.dur().reset(ti.dur(src))})
+    testDurResetFromStruct(function make(src) {return ti.dur(src).reset(ti.dur(src))})
+  })
+
+  t.test(function test_mut() {
+    t.throws(() => ti.dur().mut({years: `10`}), TypeError, `expected variant of isInt, got "10"`)
+
+    function test(ref, inp, exp) {
+      t.is(ref.mut(inp), ref)
+      t.eq(ref, exp)
+    }
+
+    test(ti.dur(), undefined, ti.dur())
+    test(ti.dur(), {months: 20}, ti.dur({months: 20}))
+    test(ti.dur({years: 10}), {months: 20}, ti.dur({years: 10, months: 20}))
+    test(ti.dur({years: 10}), {years: 20, months: 30}, ti.dur({years: 20, months: 30}))
+    test(ti.dur({years: 10}), {years: undefined}, ti.dur())
+    test(ti.dur({years: 10, months: 20}), {years: undefined}, ti.dur({months: 20}))
+
+    for (const val of durNonZeros) {
+      test(ti.dur(), val, ti.dur(val))
+    }
+
+    for (const outer of durNonZeros) {
+      for (const inner of durNonZeros) {
+        test(ti.dur(outer), inner, ti.dur({...outer, ...inner}))
+      }
+    }
   })
 
   t.test(function test_isZero() {
@@ -104,16 +130,16 @@ t.test(function test_Dur() {
   })
 })
 
-function testDurMut(fun) {
-  fun(function make(src) {return ti.dur().mut(src)})
-  fun(function make(src) {return ti.dur(src).mut(src)})
+function testDurReset(fun) {
+  fun(function make(src) {return ti.dur().reset(src)})
+  fun(function make(src) {return ti.dur(src).reset(src)})
 
   for (const val of durNonZeros) {
-    fun(function make(src) {return ti.dur(val).mut(src)})
+    fun(function make(src) {return ti.dur(val).reset(src)})
   }
 }
 
-function testDurMutStr(make) {
+function testDurResetFromStr(make) {
   function test(src, str, fields) {
     t.is(make(src).toString(), str)
     t.eq({...make(src)}, fields)
@@ -147,7 +173,7 @@ function testDurMutStr(make) {
   )
 }
 
-function testDurMutStruct(make) {
+function testDurResetFromStruct(make) {
   t.throws(() => make({years: `10`}), TypeError, `expected variant of isInt, got "10"`)
   t.throws(() => make({months: `10`}), TypeError, `expected variant of isInt, got "10"`)
   t.throws(() => make({days: `10`}), TypeError, `expected variant of isInt, got "10"`)

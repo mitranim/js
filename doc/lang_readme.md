@@ -3,8 +3,13 @@
 {{codeHead}} provides tools essential for all other code. Stuff that should be built into the language.
 
 * Type checks and assertions.
-  * Performant, terse, minifiable, descriptive.
+  * Terse.
+  * Performant.
+  * Minifiable.
+  * Descriptive.
 * Sensible type conversions.
+
+Port and rework of https://github.com/mitranim/fpx.
 
 ## TOC
 

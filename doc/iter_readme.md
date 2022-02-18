@@ -11,6 +11,8 @@ Differences from Lodash:
   * Supports arbitrary iterables and iterators, including sets and maps.
   * Much smaller and simpler.
 
+Port and rework of https://github.com/mitranim/fpx.
+
 ## TOC
 
 * [#Usage](#usage)

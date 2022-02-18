@@ -1,10 +1,10 @@
 Like [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) but much better. See [#Overview](#overview) for some differences.
 
 ```ts
-type UrlLike       = string | Url | URL | Location
-type StrLike       = boolean | number | string
-type SearchDictLax = Record<string, string | string[]>
-type SearchLike    = string | Search | URLSearchParams | SearchDictLax
+type UrlLike    = string | Url | URL | Location
+type StrLike    = boolean | number | string
+type StrDictLax = Record<string, string | string[]>
+type SearchLike = string | Search | URLSearchParams | StrDictLax
 
 class Url {
   constructor(src?: UrlLike)
@@ -67,15 +67,15 @@ class Url {
 
   // Replace `.pathname` with slash-separated segments.
   // Empty or non-stringable segments cause an exception.
-  setPath(...vals: StrLike[]): Url
+  setPath(...val: StrLike[]): Url
 
   // Like `.setPath` but appends to an existing path.
-  addPath(...vals: StrLike[]): Url
+  addPath(...val: StrLike[]): Url
 
   // Reinitializes the `Url` object from the input.
   // Mutates and returns the same reference.
   // Passing nil is equivalent to `.clear`.
-  mut(src?: UrlLike): Url
+  reset(src?: UrlLike): Url
 
   // Clears all properties. Mutates and returns the same reference.
   clear(): Url
@@ -95,10 +95,9 @@ class Url {
   // As a special case, empty url is considered null.
   toJSON(): string | null
 
-  // All of these are equivalent to `.toString()`. This object may be considered
+  // Equivalent to `.toString()`. This object may be considered
   // a primitive/scalar, equivalent to a string in some contexts.
   valueOf(): string
-  [Symbol.toPrimitive](hint?: string): string
 
   // Class used internally for instantiating `.searchParams`.
   // Can override in subclass.

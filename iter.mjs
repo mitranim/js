@@ -9,7 +9,13 @@ export function arrOf(seq, fun) {
 
 export function more(val) {return val.next().done === false}
 export function alloc(len) {return Array(l.laxNat(len))}
-export function arr(val) {return l.isArr(val) ? val : slice(val)}
+
+export function arr(val) {
+  if (l.isNil(val)) return []
+  if (l.isArr(val)) return val
+  return slice(val)
+}
+
 export function arrCopy(val) {return maybeCopy(val, arr(val))}
 
 function maybeCopy(src, out) {return l.is(src, out) ? reslice(out) : out}
@@ -37,7 +43,7 @@ export function keys(val) {
 
 // Doesn't prealloc because performance improvement would be minimal.
 function copy(src, fun) {const out = []; fun(src, out); return out}
-function setValues(val, out) {for (val of val) out.push(val)}
+function setValues(val, out) {for (val of val.values()) out.push(val)}
 function mapKeys(val, out) {for (val of val.keys()) out.push(val)}
 
 export function values(val) {
@@ -94,8 +100,6 @@ function structEntries(src) {
 export function reify(val) {return hasIter(val) ? map(val, reify) : val}
 
 function hasIter(val) {return l.isList(val) ? some(val, hasIter) : l.isIterator(val)}
-
-export function vac(val) {return l.isVac(val) ? undefined : val}
 
 export function indexOf(val, elem) {
   if (l.opt(val, l.isList)) {
@@ -285,8 +289,9 @@ export function zip(src) {
   return out
 }
 
-// TODO consider renaming to `makeMap` or `newMap`.
-export function mapFrom(...args) {
+export function setOf(...val) {return new Set(val)}
+
+export function mapOf(...args) {
   const out = new Map()
   let ind = 0
   while (ind < args.length) out.set(args[ind++], args[ind++])

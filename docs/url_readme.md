@@ -34,6 +34,8 @@
 * Tuned for [#performance](#perf).
 * Browser compatibility: evergreen, Safari 11+.
 
+Ported and reworked from https://github.com/mitranim/ur which is also available separately.
+
 ## TOC
 
 * [#Why](#why)
@@ -93,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/url.mjs'
 ```
 
 Example parsing:
@@ -101,12 +103,12 @@ Example parsing:
 ```js
 const url = u.url(`https://example.com/path?key=val#hash`)
 
-url.pathname         // '/path'
-url.search           // 'key=val'
-url.hash             // 'hash'
-url.query.get(`key`) // 'val'
-url.query.dict()     // {key: 'val'}
-url.query.dictAll()  // {key: ['val']}
+url.pathname          // '/path'
+url.search            // 'key=val'
+url.hash              // 'hash'
+url.query.get(`key`)  // 'val'
+url.query.toDict()    // {key: 'val'}
+url.query.toDictAll() // {key: ['val']}
 ```
 
 Example segmented path:
@@ -126,7 +128,7 @@ u.url(`/api`).addPath(`msgs`, 123, `get`) + ``
 Example query dict support:
 
 ```js
-u.url(`/profile`).addQuery({action: `edit`}) + ``
+u.url(`/profile`).mutQuery({action: `edit`}) + ``
 // `'/profile?action=edit'
 ```
 
@@ -141,7 +143,7 @@ u.url(`/profile`).addQuery({action: `edit`}) + ``
 
 Links: [source](../url.mjs#L23); [test/example](../test/url_test.mjs#L8).
 
-Same as `new` [#`Search`](#class-search) but syntactically shorter.
+Same as `new` [#`Search`](#class-search) but syntactically shorter and a function.
 
 ### `function toSearch`
 
@@ -153,7 +155,7 @@ Idempotently converts input to [#`Search`](#class-search) via [`toInst`](lang_re
 
 Links: [source](../url.mjs#L26); [test/example](../test/url_test.mjs#L31).
 
-Same as `new` [#`Url`](#class-url) but syntactically shorter.
+Same as `new` [#`Url`](#class-url) but syntactically shorter and a function.
 
 ### `function toUrl`
 
@@ -169,21 +171,28 @@ Shortcut for `Url.join`. Correctly appends to URL path without mangling the othe
 
 ```js
 u.urlJoin(`/persons?key=val#hash`, `3f55a4`, `get`)
-// Url { pathname: `/persons/3f55a4/get?key=val#hash` }
+
+/*
+Url {
+  pathname: `/persons/3f55a4/get`,
+  search: `key=val`,
+  hash: `hash`,
+}
+*/
 ```
 
 ### `class Search`
 
-Links: [source](../url.mjs#L31); [test/example](../test/url_test.mjs#L64).
+Links: [source](../url.mjs#L31); [test/example](../test/url_test.mjs#L67).
 
 Like [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) but much better. See [#Overview](#overview) for some differences.
 
 ```ts
-type StrLike          = boolean | number | string
-type SearchDictLax    = Record<string, string | string[]>
-type SearchDictSingle = Record<string, string>
-type SearchDictMulti  = Record<string, string[]>
-type SearchLike       = string | Search | URLSearchParams | SearchDictLax
+type StrLike       = boolean | number | string
+type StrDictLax    = Record<string, string | string[]>
+type StrDictSingle = Record<string, string>
+type StrDictMulti  = Record<string, string[]>
+type SearchLike    = string | Search | URLSearchParams | StrDictLax
 
 class Search extends Map<string, string[]> {
   constructor(src?: SearchLike)
@@ -215,13 +224,13 @@ class Search extends Map<string, string[]> {
   Mutates and returns the same reference.
   Passing nil is equivalent to `.clear`.
   */
-  mut(src?: SearchLike): Search
+  reset(src?: SearchLike): Search
 
   /*
   Appends the input's content to the current `Search` object.
   Mutates and returns the same reference.
   */
-  add(src?: SearchLike): Search
+  mut(src?: SearchLike): Search
 
   /*
   Combination of `.get` and type conversion.
@@ -237,8 +246,8 @@ class Search extends Map<string, string[]> {
   nat(key: string): number
 
   // Conversion to a traditional "query dictionary".
-  dict(): SearchDictSingle
-  dictAll(): SearchDictMulti
+  toDict(): StrDictSingle
+  toDictAll(): StrDictMulti
 
   /*
   Returns a cloned version.
@@ -299,15 +308,15 @@ new URLSearchParams(new u.Search(`one=two&one=three&four=five`))
 
 ### `class Url`
 
-Links: [source](../url.mjs#L69); [test/example](../test/url_test.mjs#L279).
+Links: [source](../url.mjs#L69); [test/example](../test/url_test.mjs#L282).
 
 Like [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) but much better. See [#Overview](#overview) for some differences.
 
 ```ts
-type UrlLike       = string | Url | URL | Location
-type StrLike       = boolean | number | string
-type SearchDictLax = Record<string, string | string[]>
-type SearchLike    = string | Search | URLSearchParams | SearchDictLax
+type UrlLike    = string | Url | URL | Location
+type StrLike    = boolean | number | string
+type StrDictLax = Record<string, string | string[]>
+type SearchLike = string | Search | URLSearchParams | StrDictLax
 
 class Url {
   constructor(src?: UrlLike)
@@ -370,15 +379,15 @@ class Url {
 
   // Replace `.pathname` with slash-separated segments.
   // Empty or non-stringable segments cause an exception.
-  setPath(...vals: StrLike[]): Url
+  setPath(...val: StrLike[]): Url
 
   // Like `.setPath` but appends to an existing path.
-  addPath(...vals: StrLike[]): Url
+  addPath(...val: StrLike[]): Url
 
   // Reinitializes the `Url` object from the input.
   // Mutates and returns the same reference.
   // Passing nil is equivalent to `.clear`.
-  mut(src?: UrlLike): Url
+  reset(src?: UrlLike): Url
 
   // Clears all properties. Mutates and returns the same reference.
   clear(): Url
@@ -398,10 +407,9 @@ class Url {
   // As a special case, empty url is considered null.
   toJSON(): string | null
 
-  // All of these are equivalent to `.toString()`. This object may be considered
+  // Equivalent to `.toString()`. This object may be considered
   // a primitive/scalar, equivalent to a string in some contexts.
   valueOf(): string
-  [Symbol.toPrimitive](hint?: string): string
 
   // Class used internally for instantiating `.searchParams`.
   // Can override in subclass.
@@ -435,16 +443,16 @@ The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
   * [`const RE_ORIGIN`](../url.mjs#L19)
   * [`const RE_PATHNAME`](../url.mjs#L20)
   * [`const RE_HASH`](../url.mjs#L21)
-  * [`const schemeKey`](../url.mjs#L305)
-  * [`const slashKey`](../url.mjs#L306)
-  * [`const usernameKey`](../url.mjs#L307)
-  * [`const passwordKey`](../url.mjs#L308)
-  * [`const hostnameKey`](../url.mjs#L309)
-  * [`const portKey`](../url.mjs#L310)
-  * [`const pathnameKey`](../url.mjs#L311)
-  * [`const searchKey`](../url.mjs#L312)
-  * [`const hashKey`](../url.mjs#L313)
-  * [`function urlParse`](../url.mjs#L315)
-  * [`function isUrlLike`](../url.mjs#L369)
-  * [`function searchDec`](../url.mjs#L379)
-  * [`function searchEnc`](../url.mjs#L385)
+  * [`const schemeKey`](../url.mjs#L312)
+  * [`const slashKey`](../url.mjs#L313)
+  * [`const usernameKey`](../url.mjs#L314)
+  * [`const passwordKey`](../url.mjs#L315)
+  * [`const hostnameKey`](../url.mjs#L316)
+  * [`const portKey`](../url.mjs#L317)
+  * [`const pathnameKey`](../url.mjs#L318)
+  * [`const searchKey`](../url.mjs#L319)
+  * [`const hashKey`](../url.mjs#L320)
+  * [`function urlParse`](../url.mjs#L322)
+  * [`function isUrlLike`](../url.mjs#L376)
+  * [`function searchDec`](../url.mjs#L386)
+  * [`function searchEnc`](../url.mjs#L392)

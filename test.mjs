@@ -600,10 +600,10 @@ Returns true if the inputs have an equivalent structure. Supports plain dicts,
 arrays, maps, sets, and arbitrary objects with enumerable properties.
 
 This is confined to the testing module, instead of being part of the "normal"
-API, because deeply traversing and comparing data structures is a currently
-popular JS antipattern that should be discouraged, not encouraged. The
-existence of this function proves the occasional need, but live apps should
-avoid wasting performance on this.
+API, because deeply traversing and comparing data structures is a popular JS
+antipattern that should be discouraged, not encouraged. The existence of this
+function proves the occasional need, but live apps should avoid wasting
+performance on this.
 */
 export function equal(one, two) {
   return Object.is(one, two) || (
@@ -637,11 +637,21 @@ function equalList(one, two) {
 
 function equalSet(one, two) {
   if (one.size !== two.size) return false
-  for (const val of Set.prototype.values.call(one)) {
-    if (!two.has(val)) return false
+
+outer:
+  for (const valOne of setVals(one)) {
+    if (two.has(valOne)) continue outer
+
+    for (const valTwo of setVals(two)) {
+      if (equal(valOne, valTwo)) continue outer
+    }
+
+    return false
   }
   return true
 }
+
+function setVals(val) {return Set.prototype.values.call(val)}
 
 function equalMap(one, two) {
   if (one.size !== two.size) return false

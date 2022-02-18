@@ -10,14 +10,9 @@ function nop() {}
 
 function advanceTime() {
   const start = t.now()
-
-  // Not required in Deno. Required in Chrome.
-  let i = 0
-  while (++i < 1024) t.now()
-
-  const end = t.now()
-
-  if (!(start < end)) throw Error(`failed to advance time`)
+  let cycles = -1
+  while (++cycles < 4096) if (t.now() > start) return
+  throw Error(`failed to advance time after ${cycles} cycles`)
 }
 
 // Tool for tracking call levels.
@@ -248,9 +243,14 @@ t.test(function test_TimeRunner() {
 })
 
 t.test(function test_CountRunner() {
-  // For faster testing.
+  /*
+  Use fewer cycles for faster testing, but still enough for a positive time
+  delta. In envs with better timer precision, a handful of cycles is enough. In
+  envs with worse precision, such as browsers, the number is much larger and
+  may vary. This needs a better solution.
+  */
   const defaultSize = t.CountRunner.defaultWarmupSize
-  t.CountRunner.defaultWarmupSize = 8
+  t.CountRunner.defaultWarmupSize = 16384
 
   try {
     t.throws(() => new t.CountRunner(`str`), TypeError, `expected variant of isIntPos, got "str"`)

@@ -31,6 +31,8 @@ Features:
     * Tested in Deno with `--allow-hrtime`.
   * Non-verbose. Tests are silent by default.
 
+Ported from https://github.com/mitranim/test which is also available separately.
+
 ## TOC
 
 * [#Limitations](#limitations)

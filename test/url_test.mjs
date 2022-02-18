@@ -59,6 +59,9 @@ t.test(function test_urlJoin() {
   testStr(u.urlJoin(`one`, `two`), `one/two`)
   testStr(u.urlJoin(`/one`, `two`), `/one/two`)
   testStr(u.urlJoin(`/one?two=three#four`, `five`, `six`), `/one/five/six?two=three#four`)
+  testStr(u.urlJoin(`./one?two=three#four`, `five`, `six`), `./one/five/six?two=three#four`)
+  testStr(u.urlJoin(`../one?two=three#four`, `five`, `six`), `../one/five/six?two=three#four`)
+  testStr(u.urlJoin(`../one/two?three=four#five`, `six`), `../one/two/six?three=four#five`)
 })
 
 t.test(function test_Search() {
@@ -127,28 +130,28 @@ t.test(function test_Search() {
     t.is(u.search(`one=two`).toStringFull(), `?one=two`)
   })
 
-  t.test(function test_mut_str() {
+  t.test(function test_reset_from_str() {
+    testSearchResetWith(l.id)
+  })
+
+  t.test(function test_mut_from_str() {
     testSearchMutWith(l.id)
   })
 
-  t.test(function test_add_str() {
-    testSearchAddWith(l.id)
+  t.test(function test_reset_from_Search() {
+    testSearchResetWith(u.search)
   })
 
-  t.test(function test_mut_Search() {
+  t.test(function test_mut_from_Search() {
     testSearchMutWith(u.search)
   })
 
-  t.test(function test_add_Search() {
-    testSearchAddWith(u.search)
+  t.test(function test_reset_from_URLSearchParams() {
+    testSearchResetWith(function parse(src) {return new URLSearchParams(src)})
   })
 
-  t.test(function test_mut_URLSearchParams() {
+  t.test(function test_mut_from_URLSearchParams() {
     testSearchMutWith(function parse(src) {return new URLSearchParams(src)})
-  })
-
-  t.test(function test_add_URLSearchParams() {
-    testSearchAddWith(function parse(src) {return new URLSearchParams(src)})
   })
 
   t.test(function test_toURLSearchParams() {
@@ -258,22 +261,22 @@ t.test(function test_Search() {
   })
 })
 
+function testSearchResetWith(fun) {
+  testReset(u.search(),          fun(),                      ``)
+  testReset(u.search(),          fun(``),                    ``)
+  testReset(u.search(),          fun(`one=two`),             `one=two`)
+  testReset(u.search(`one=two`), fun(`one=three`),           `one=three`)
+  testReset(u.search(`one=two`), fun(`three=four`),          `three=four`)
+  testReset(u.search(`one=two`), fun(`three=four&five=six`), `three=four&five=six`)
+}
+
 function testSearchMutWith(fun) {
   testMut(u.search(),          fun(),                      ``)
   testMut(u.search(),          fun(``),                    ``)
   testMut(u.search(),          fun(`one=two`),             `one=two`)
-  testMut(u.search(`one=two`), fun(`one=three`),           `one=three`)
-  testMut(u.search(`one=two`), fun(`three=four`),          `three=four`)
-  testMut(u.search(`one=two`), fun(`three=four&five=six`), `three=four&five=six`)
-}
-
-function testSearchAddWith(fun) {
-  testAdd(u.search(),          fun(),                      ``)
-  testAdd(u.search(),          fun(``),                    ``)
-  testAdd(u.search(),          fun(`one=two`),             `one=two`)
-  testAdd(u.search(`one=two`), fun(`one=three`),           `one=two&one=three`)
-  testAdd(u.search(`one=two`), fun(`three=four`),          `one=two&three=four`)
-  testAdd(u.search(`one=two`), fun(`three=four&five=six`), `one=two&three=four&five=six`)
+  testMut(u.search(`one=two`), fun(`one=three`),           `one=two&one=three`)
+  testMut(u.search(`one=two`), fun(`three=four`),          `one=two&three=four`)
+  testMut(u.search(`one=two`), fun(`three=four&five=six`), `one=two&three=four&five=six`)
 }
 
 t.test(function test_Url() {
@@ -542,6 +545,16 @@ t.test(function test_Url() {
     test(`scheme://user:pass@domain/path?key=val#hash`, `/path`)
     test(`scheme://user:pass@domain/?key=val#hash`, `/`)
     test(`scheme://user:pass@domain?key=val#hash`, ``)
+
+    test(`./one`, `./one`)
+    test(`../one`, `../one`)
+    test(`one/../two`, `one/../two`)
+    test(`/one/../two`, `/one/../two`)
+    test(`./one/../two`, `./one/../two`)
+    test(`../one/../two`, `../one/../two`)
+
+    test(`scheme://user:pass@domain/../one`, `/../one`)
+    test(`scheme://user:pass@domain/one/../two`, `/one/../two`)
   })
 
   t.test(function test_setPathname() {
@@ -640,8 +653,8 @@ t.test(function test_Url() {
     test(`?one=two`, u.search(`three=four`), `?three=four`)
   })
 
-  t.test(function test_addQuery() {
-    function test(src, val, exp) {testStr(u.url(src).addQuery(val), exp)}
+  t.test(function test_mutQuery() {
+    function test(src, val, exp) {testStr(u.url(src).mutQuery(val), exp)}
 
     test(``, u.search(`key=val`), `?key=val`)
     test(`?one=two`, u.search(`three=four`), `?one=two&three=four`)
@@ -1257,25 +1270,25 @@ t.test(function test_Url() {
     })
   })
 
-  t.test(function test_setStr() {
+  t.test(function test_resetFromStr() {
     const src = `https://user:pass@host:123/path?key=val#hash`
     const tar = u.url()
-    tar.setStr(src)
+    tar.resetFromStr(src)
     t.is(tar.href, src)
   })
 
-  t.test(function test_setURL() {
+  t.test(function test_resetFromURL() {
     const src = new URL(`https://user:pass@host:123/path?key=val#hash`)
     const tar = u.url()
-    tar.setURL(src)
+    tar.resetFromURL(src)
     t.is(src.href, `https://user:pass@host:123/path?key=val#hash`)
     t.is(tar.href, `https://user:pass@host:123/path?key=val#hash`)
   })
 
-  t.test(function test_setUrl() {
+  t.test(function test_resetFromUrl() {
     const src = u.url(`https://user:pass@host:123/path?key=val#hash`)
     const tar = u.url()
-    tar.setUrl(src)
+    tar.resetFromUrl(src)
     t.is(src.href, `https://user:pass@host:123/path?key=val#hash`)
     t.is(tar.href, `https://user:pass@host:123/path?key=val#hash`)
   })
@@ -1289,13 +1302,13 @@ function testEmpty(test) {
 
 function testStr(src, exp) {t.is(src.toString(), exp)}
 
-function testMut(ref, src, exp) {
-  t.is(ref.mut(src), ref)
+function testReset(ref, src, exp) {
+  t.is(ref.reset(src), ref)
   testStr(ref, exp)
 }
 
-function testAdd(ref, src, exp) {
-  t.is(ref.add(src), ref)
+function testMut(ref, src, exp) {
+  t.is(ref.mut(src), ref)
   testStr(ref, exp)
 }
 

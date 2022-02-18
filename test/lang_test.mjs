@@ -799,7 +799,6 @@ t.test(function test_isVac() {
   testVac(empty, full)
 })
 
-// Copied between this and iter test. TODO figure out how to dedup.
 function testVac(empty, full) {
   empty()
   empty(null)
@@ -990,6 +989,44 @@ t.test(function test_req() {
   })
 })
 
+t.test(function test_reqOneOf() {
+  testOneOf(l.reqOneOf)
+
+  t.throws(() => l.reqOneOf(undefined, []), TypeError, `expected variant of [], got undefined`)
+  t.throws(() => l.reqOneOf(undefined, [l.isStr]), TypeError, `expected variant of [isStr], got undefined`)
+})
+
+function testOneOf(fun) {
+  t.throws(() => fun(10), TypeError, `expected variant of isArr, got undefined`)
+  t.throws(() => fun(10, {}), TypeError, `expected variant of isArr, got {}`)
+  t.throws(() => fun(10, []), TypeError, `expected variant of [], got 10`)
+  t.throws(() => fun(10, [l.isStr]), TypeError, `expected variant of [isStr], got 10`)
+  t.throws(() => fun(10, [l.isStr, l.isBool]), TypeError, `expected variant of [isStr, isBool], got 10`)
+
+  function test(val, funs) {t.is(fun(val, funs), val)}
+
+  test(undefined, [l.isNil])
+  test(10, [l.isNum])
+  test(`str`, [l.isStr])
+  test({}, [l.isObj])
+
+  for (const val of [undefined, null]) {
+    for (const funs of [[l.isNil], [l.isNil, l.isStr], [l.isStr, l.isNil]]) {
+      test(val, funs)
+    }
+  }
+
+  for (const val of [10, `str`, {}]) {
+    for (const funs of [
+      [l.isStr, l.isNum, l.isObj],
+      [l.isStr, l.isObj, l.isNum],
+      [l.isObj, l.isStr, l.isNum],
+    ]) {
+      test(val, funs)
+    }
+  }
+}
+
 t.test(function test_opt() {
   t.test(function test_invalid() {
     t.throws(() => l.opt(10, undefined), TypeError, `expected validator function, got undefined`)
@@ -1016,12 +1053,19 @@ t.test(function test_opt() {
   })
 })
 
-t.test(function test_reqInst() {
-  // t.test(function test_invalid() {
-  //   t.throws(l.reqInst,           TypeError, `expected variant of isCls, got undefined`)
-  //   t.throws(() => l.reqInst({}), TypeError, `expected variant of isCls, got undefined`)
-  // })
+t.test(function test_optOneOf() {
+  testOneOf(l.optOneOf)
 
+  function test(val, funs) {t.is(l.optOneOf(val, funs), val)}
+
+  for (const val of [undefined, null]) {
+    for (const funs of [undefined, [], [l.isStr]]) {
+      test(val, funs)
+    }
+  }
+})
+
+t.test(function test_reqInst() {
   t.test(function test_rejected() {
     t.throws(() => l.reqInst(undefined, Object), TypeError, `expected instance of Object, got undefined`)
     t.throws(() => l.reqInst(`str`,     String), TypeError, `expected instance of String, got "str"`)
@@ -1462,6 +1506,13 @@ t.test(function test_npo() {
   t.eq(l.npo(), Object.create(null))
   t.is(Object.getPrototypeOf(l.npo()), null)
   t.isnt(l.npo(), l.npo())
+})
+
+t.test(function test_vac() {
+  function test(val, exp) {t.is(l.vac(val), exp)}
+  function empty(val) {test(val, undefined)}
+  function full(val) {test(val, val)}
+  testVac(empty, full)
 })
 
 t.test(function test_toInst() {

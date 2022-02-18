@@ -1,13 +1,15 @@
-import '../cli_emptty.mjs'
-import * as fs from '../fs_deno_async.mjs'
+/* global Deno */
+
+import * as io from '../io_deno.mjs'
 import * as l from '../lang.mjs'
 import * as s from '../str.mjs'
 import * as cl from '../cli.mjs'
 import * as co from '../coll.mjs'
 import * as o from '../obj.mjs'
 import * as i from '../iter.mjs'
+import * as u from '../url.mjs'
 
-const VER = `0.1.0`
+const VER = s.trim(Deno.readTextFileSync(`ver`))
 const CLI = cl.Flag.os()
 const WATCH = CLI.boolOpt(`watch`)
 const RE_WATCH = /(?:^doc[/](?:\w+[/])*)\w+[.]md|(?:\w+[.]mjs$)/
@@ -27,6 +29,8 @@ const FEATS = [
   [`http`, `shortcuts for the native fetch/Request/Response APIs.`],
   [`dom`, `shortcuts for working with the DOM.`],
   [`dom_reg`, `shortcuts for registering custom DOM elements.`],
+  [`ren_dom`, `simple system for rendering DOM nodes in the browser.`],
+  [`obs`, `observables via proxies.`],
   [`cli`, `essential tools for CLI apps.`],
   [`test`, `tools for testing and benchmarking.`],
 ]
@@ -36,15 +40,15 @@ class Pkg extends o.MemGet {
     super()
     this.feats = new co.Coll()
     for (const [name, desc] of feats) {
-      this.feats.push(new Feat(this, name, desc))
+      this.feats.add(new Feat(this, name, desc))
     }
   }
 
   get base() {return `https://cdn.jsdelivr.net/gh/mitranim/js`}
   get ver() {return VER}
-  get url() {return s.str(this.base, `@`, this.ver)}
-  get readmeSrcPath() {return fs.join(DIR_DOC_SRC, `readme.md`)}
-  get readmeSrcText() {return fs.readText(this.readmeSrcPath).then(s.trim)}
+  get url() {return s.inter(this.base, `@`, this.ver)}
+  get readmeSrcPath() {return io.join(DIR_DOC_SRC, `readme.md`)}
+  get readmeSrcText() {return io.readText(this.readmeSrcPath).then(s.trim)}
   get readmeOutPath() {return `readme.md`}
   get readmeOutText() {return this.$readmeOutText()}
   get features() {return s.joinLinesOpt(i.map(this.feats, toHeadlineBullet))}
@@ -52,6 +56,8 @@ class Pkg extends o.MemGet {
   async $readmeOutText() {return s.draftRenderAsync((await this.readmeSrcText), this)}
 
   link(feat, ident, text) {return this.feat(feat).identDocLinkFull(ident, text)}
+
+  featLink(name, text) {return this.feat(name).featLink(text)}
 
   feat(name) {
     return (
@@ -72,18 +78,18 @@ class Feat extends o.MemGet {
   pk() {return this.name}
 
   get codePath() {return s.str(this.name, `.mjs`)}
-  get docCodePath() {return pathJoin(`..`, this.codePath)}
+  get docCodePath() {return u.urlJoin(`..`, this.codePath)}
   get codeHead() {return mdLink(this.codePath, this.docCodePath)}
-  get codeText() {return fs.readText(this.codePath)}
+  get codeText() {return io.readText(this.codePath)}
   get codeLines() {return this.$codeLines()}
-  get testPath() {return fs.join(DIR_TEST, s.str(this.name, `_test.mjs`))}
-  get docTestPath() {return pathJoin(`..`, this.testPath)}
-  get testText() {return fs.readText(this.testPath)}
+  get testPath() {return io.join(DIR_TEST, s.str(this.name, `_test.mjs`))}
+  get docTestPath() {return u.urlJoin(`..`, this.testPath)}
+  get testText() {return io.readText(this.testPath)}
   get testLines() {return this.$testLines()}
   get readmeName() {return s.str(this.name, `_readme.md`)}
-  get readmeSrcPath() {return fs.join(DIR_DOC_SRC, this.readmeName)}
-  get readmeSrcText() {return fs.readText(this.readmeSrcPath).then(s.trim)}
-  get readmeOutPath() {return fs.join(DIR_DOC_OUT, this.readmeName)}
+  get readmeSrcPath() {return io.join(DIR_DOC_SRC, this.readmeName)}
+  get readmeSrcText() {return io.readText(this.readmeSrcPath).then(s.trim)}
+  get readmeOutPath() {return io.join(DIR_DOC_OUT, this.readmeName)}
   get readmeOutText() {return this.$readmeOutText()}
   get idents() {return this.$idents()}
   get identTestLines() {return this.$identTestLines()}
@@ -98,6 +104,8 @@ class Feat extends o.MemGet {
   get identsWithDoc() {return this.$identsWithDoc()}
   get identsWithoutDoc() {return this.$identsWithoutDoc()}
   get docLink() {return mdLink(coded(this.name), this.readmeOutPath)}
+  get docRelPath() {return u.urlJoin(`..`, this.readmeName)}
+  get docRelLink() {return mdLink(coded(this.name), this.docRelPath)}
   get headline() {return s.str(this.docLink, s.optPre(this.desc, `: `))}
 
   async $codeLines() {return s.lines(await this.codeText)}
@@ -108,7 +116,7 @@ class Feat extends o.MemGet {
     const buf = new co.Coll()
     for (const [ind, text] of (await this.codeLines).entries()) {
       const mat = text.match(/^export\s+(?:async\s+)?(\w+)\s+(\w+)\b/)
-      if (mat) buf.push(new Ident(this, ind, mat[1], mat[2]))
+      if (mat) buf.add(new Ident(this, ind, mat[1], mat[2]))
     }
     return buf
   }
@@ -165,19 +173,32 @@ ${s.joinLines(i.map(idents, toUndocBullet))}
 `
   }
 
+  identAddr(name) {
+    return s.inter(l.show(this.codePath), ` → `, l.show(l.reqStr(name)))
+  }
+
   async ident(name) {
     return (
       (await this.idents).get(name) ??
-      l.panic(Error(`unable to find ident ${l.show(this.name)}.${l.show(name)}`))
+      l.panic(Error(`unable to find ident ${this.identAddr(name)}`))
     )
   }
 
   async identDocLinkFull(name, text) {
-    return (await this.ident(name)).docPkgLink(text)
+    return (await this.ident(name)).pkgIdentLink(text)
   }
 
-  async link(name, text) {
-    return (await this.ident(name)).docFeatLink(text)
+  link(feat, name, text) {
+    if (feat === this.name) return this.identLink(name, text)
+    return this.pkg.link(feat, name, text)
+  }
+
+  async identLink(name, text) {
+    return (await this.ident(name)).featIdentLink(text)
+  }
+
+  featLink(text) {
+    return text ? mdLink(text, this.docRelPath) : this.docRelLink
   }
 }
 
@@ -203,9 +224,9 @@ class Ident extends o.MemGet {
   get testHead() {return this.$testHead()}
   get doc() {return this.$doc()}
   get docName() {return s.str(toDocName(this.name), `.md`)}
-  get docPath() {return fs.join(DIR_DOC_SRC, this.feat.name, this.docName)}
+  get docPath() {return io.join(DIR_DOC_SRC, this.feat.name, this.docName)}
   get docHead() {return this.$docHead()}
-  get docSrcText() {return fs.readTextOpt(this.docPath).then(s.trim)}
+  get docSrcText() {return io.readTextOpt(this.docPath).then(s.trim)}
   get docOutText() {return this.$docOutText()}
   get docLink() {return mdLinkInter(this.head)}
   get docShortLink() {return mdLink(s.str(`#`, this.codedName), mdHash(this.head))}
@@ -213,13 +234,11 @@ class Ident extends o.MemGet {
   get hasDoc() {return this.$hasDoc()}
   get undocHead() {return mdLink(this.head, this.codeLink)}
   get docPkgLinkPath() {return s.str(this.feat.readmeName, mdHash(this.head))}
+  get addr() {return this.feat.identAddr(this.name)}
 
-  link(feat, name, text) {
-    if (feat === this.feat.name) return this.feat.link(name, text)
-    return this.feat.pkg.link(feat, name, text)
-  }
+  link(...val) {return this.feat.link(...val)}
 
-  docPkgLink(text) {
+  pkgIdentLink(text) {
     return (
       text
       ? mdLink(text, this.docPkgLinkPath)
@@ -227,13 +246,15 @@ class Ident extends o.MemGet {
     )
   }
 
-  docFeatLink(text) {
+  featIdentLink(text) {
     return (
       text
       ? mdLink(s.str(`#`, text), mdHash(this.head))
       : this.docShortLink
     )
   }
+
+  featLink(name, text) {return this.feat.pkg.featLink(name, text)}
 
   async $testRow() {return l.reqNat(await this.testLine) + 1}
   async $testLink() {return s.str(this.feat.docTestPath, `#L`, (await this.testRow))}
@@ -244,7 +265,7 @@ class Ident extends o.MemGet {
     return (
       (await this.feat.identTestLines).get(name) ??
       // Documented features must be tested.
-      l.panic(Error(`unable to find test for ${l.show(name)}`))
+      l.panic(Error(`unable to find test for ${this.addr}`))
     )
   }
 
@@ -262,9 +283,7 @@ class Ident extends o.MemGet {
   async $docOutText() {return s.draftRenderAsync((await this.docSrcText), this)}
 
   async reqDoc() {
-    if (!(await this.hasDoc)) {
-      throw Error(s.san`missing doc for ${l.show(this.feat.codePath)}.${l.show(this.name)}`)
-    }
+    if (!(await this.hasDoc)) throw Error(s.san`missing doc for ${this.addr}`)
     return this.doc
   }
 }
@@ -281,13 +300,9 @@ function mdLink(text, link) {return s.str(`[`, text, `](`, link, `)`)}
 function mdLinkInter(text) {return mdLink(s.str(`#`, text), mdHash(text))}
 function mdHash(val) {return `#` + s.words(val.toLowerCase()).lowerKebab()}
 function coded(...val) {return s.str('`', ...val, '`')}
-function allow(path) {return RE_WATCH.test(fs.maybeRel(path))}
+function allow(path) {return RE_WATCH.test(io.maybeRel(path))}
 function runTimed() {return cl.timed(run, `doc`)}
 function runTimedOpt() {return runTimed().catch(console.error)}
-
-// Not exported because this is a hazard if misused for URLs.
-function pathJoin(...vals) {return vals.reduce(pathAdd)}
-function pathAdd(one, two) {return s.inter(one, `/`, two)}
 
 function toDocName(val) {
   l.reqStr(val)
@@ -302,7 +317,7 @@ async function main() {
 
   await runTimedOpt()
 
-  for await (const _ of fs.watch(allow)) {
+  for await (const _ of io.watch(allow)) {
     cl.emptty()
     await runTimedOpt()
   }
@@ -314,7 +329,7 @@ async function run() {
 }
 
 async function runFeat(val) {
-  await fs.writeText(val.readmeOutPath, await val.readmeOutText)
+  await io.writeText(val.readmeOutPath, await val.readmeOutText)
 }
 
 if (import.meta.main) await main()

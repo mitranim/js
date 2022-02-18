@@ -345,6 +345,13 @@ t.bench(function bench_last_dict_with_our_last() {l.nop(i.last(itc.numDict))})
 t.bench(function bench_last_set_with_our_last() {l.nop(i.last(itc.numSet))})
 t.bench(function bench_last_map_with_our_last() {l.nop(i.last(itc.numMap))})
 
+// Missing: benches for arrays which are actually nested.
+const arrEmpty = []
+const arrShort = [10]
+t.bench(function bench_arr_flat_native_empty() {l.nop(arrEmpty.flat(Infinity))})
+t.bench(function bench_arr_flat_native_short_flat() {l.nop(arrShort.flat(Infinity))})
+t.bench(function bench_arr_flat_native_long_flat() {l.nop(itc.numList.flat(Infinity))})
+
 if (import.meta.main) t.deopt(), t.benches()
 
 /* Util */

@@ -37,7 +37,7 @@ export class Err extends Error {
 export function reqBui(val) {return new ReqBui(val)}
 
 export class ReqBui {
-  constructor(val) {this.add(val)}
+  constructor(val) {this.mut(val)}
 
   async fetch() {return new this.Res(await fetch(this.url, this))}
   async fetchOk() {return (await this.fetch()).okRes()}
@@ -63,15 +63,15 @@ export class ReqBui {
 
   req() {return new Request(this.url, this)}
 
-  add(val) {
+  mut(val) {
     if (l.isNil(val)) return this
-    if (l.isStruct(val)) return this.addStruct(val)
+    if (l.isStruct(val)) return this.mutFromStruct(val)
     throw l.errInst(val, this)
   }
 
-  addStruct(val) {
+  mutFromStruct(val) {
     for (const key of l.structKeys(val)) {
-      if (key === `headers`) this.headAdd(val[key])
+      if (key === `headers`) this.headMut(val[key])
       else this[key] = val[key]
     }
     return this
@@ -134,19 +134,19 @@ export class ReqBui {
     return this
   }
 
-  headAdd(val) {
+  headMut(val) {
     if (l.isNil(val)) return this
-    if (l.isIter(val)) return this.headAddIter(val)
-    if (l.isStruct(val)) return this.headAddStruct(val)
+    if (l.isIter(val)) return this.headMutFromIter(val)
+    if (l.isStruct(val)) return this.headMutFromStruct(val)
     throw l.errConv(val, `head`)
   }
 
-  headAddIter(src) {
+  headMutFromIter(src) {
     for (const [key, val] of l.reqIter(src)) this.headAppendAny(key, val)
     return this
   }
 
-  headAddStruct(src) {
+  headMutFromStruct(src) {
     for (const key of l.structKeys(src)) this.headAppendAny(key, src[key])
     return this
   }
@@ -297,13 +297,11 @@ export function resNotFound(rou) {
 export function resEmpty() {return new Response()}
 
 export function resErr(err) {
-  return new Response(err?.stack || err?.message || `unknown error`, {status: 500})
+  return new Response(
+    (err && (err.stack || err.message)) || `unknown error`,
+    {status: 500},
+  )
 }
-
-function isBody(val) {
-  return l.isInst(val, Uint8Array) || l.isInst(val, ReadableStream) || l.isScalar(val)
-}
-function reqBody(val) {return l.req(val, isBody)}
 
 // Semi-placeholder. May tighten up.
 function isHeadKey(val) {return l.isStr(val) && val !== ``}
@@ -315,3 +313,10 @@ function reqMethod(val) {return isMethod(val) ? val : l.convFun(val, isMethod)}
 
 function isPattern(val) {return l.isStr(val) || l.isReg(val)}
 function reqPattern(val) {return isPattern(val) ? val : l.convFun(val, isPattern)}
+
+function reqBody(val) {return l.reqOneOf(val, bodyFuns)}
+export const bodyFuns = [isUint8Array, isReadableStream, isFormData, l.isScalar]
+
+function isUint8Array(val) {return l.isInst(val, Uint8Array)}
+function isReadableStream(val) {return l.isInst(val, ReadableStream)}
+function isFormData(val) {return typeof FormData === `function` && l.isInst(val, FormData)}

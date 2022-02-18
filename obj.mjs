@@ -7,9 +7,13 @@ export function fixProto(ref, cls) {
   }
 }
 
-// TODO consider renaming to `patch`.
-// TODO consider providing dumb and fast `assign`.
-export function mut(tar, src) {
+export function assign(tar, src) {
+  l.reqStruct(tar)
+  for (const key of l.structKeys(src)) tar[key] = src[key]
+  return tar
+}
+
+export function patch(tar, src) {
   l.reqStruct(tar)
   for (const key of l.structKeys(src)) {
     if (!(key in tar) || l.hasOwnEnum(tar, key)) tar[key] = src[key]
@@ -89,9 +93,9 @@ export class StrictPh {
   get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
-export const strictPh = new StrictPh()
+StrictPh.main = /* @__PURE__ */ new StrictPh()
 
-export function strict(val) {return new Proxy(val, strictPh)}
+export function strict(val) {return new Proxy(val, StrictPh.main)}
 
 export class Strict {
   constructor() {return strict(this)}
@@ -100,19 +104,24 @@ export class Strict {
 }
 
 export class MemGet extends Strict {
-  // deno-lint-ignore constructor-super
   constructor() {memGet(new.target), super()}
 }
 
-const memGetTags = /* @__PURE__ */ new WeakSet()
+export function memGet(cls) {return MemTag.main.get(cls)}
 
-export function memGet(cls) {
-  if (!memGetTags.has(cls)) {
-    patchCls(cls, memGetAt)
-    memGetTags.add(cls)
+export class MemTag extends WeakSet {
+  get(cls) {
+    if (!this.has(cls)) {
+      patchCls(cls, memGetAt)
+      this.add(cls)
+    }
+    return cls
   }
-  return cls
+
+  get [Symbol.toStringTag]() {return this.constructor.name}
 }
+
+MemTag.main = /* @__PURE__ */ new MemTag()
 
 /* Internal */
 

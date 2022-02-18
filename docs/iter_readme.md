@@ -11,6 +11,8 @@ Differences from Lodash:
   * Supports arbitrary iterables and iterators, including sets and maps.
   * Much smaller and simpler.
 
+Port and rework of https://github.com/mitranim/fpx.
+
 ## TOC
 
 * [#Usage](#usage)
@@ -27,7 +29,6 @@ Differences from Lodash:
   * [#`function valuesCopy`](#function-valuescopy)
   * [#`function entries`](#function-entries)
   * [#`function reify`](#function-reify)
-  * [#`function vac`](#function-vac)
   * [#`function indexOf`](#function-indexof)
   * [#`function includes`](#function-includes)
   * [#`function concat`](#function-concat)
@@ -63,18 +64,19 @@ Differences from Lodash:
   * [#`function partition`](#function-partition)
   * [#`function sum`](#function-sum)
   * [#`function zip`](#function-zip)
-  * [#`function mapFrom`](#function-mapfrom)
+  * [#`function mapOf`](#function-mapof)
   * [#`function range`](#function-range)
   * [#`function span`](#function-span)
   * [#`function times`](#function-times)
   * [#`function repeat`](#function-repeat)
   * [#`function set`](#function-set)
   * [#`function setCopy`](#function-setcopy)
+  * [#Undocumented](#undocumented)
 
 ## Usage
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.0/iter.mjs'
+import * as i from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/iter.mjs'
 ```
 
 ## Perf
@@ -107,7 +109,7 @@ Shortcut for allocating an array with a sanity check. Same as `Array(N)` but ens
 
 ### `function arr`
 
-Links: [source](../iter.mjs#L12); [test/example](../test/iter_test.mjs#L67).
+Links: [source](../iter.mjs#L13); [test/example](../test/iter_test.mjs#L67).
 
 Converts an arbitrary [sequence](lang_readme.md#function-isseq) to an array. Allows the following inputs:
 
@@ -120,19 +122,19 @@ Unlike [#`values`](#function-values), `arr` rejects other inputs such as non-nil
 
 ### `function arrCopy`
 
-Links: [source](../iter.mjs#L13); [test/example](../test/iter_test.mjs#L99).
+Links: [source](../iter.mjs#L19); [test/example](../test/iter_test.mjs#L99).
 
 Like [#`arr`](#function-arr), converts an arbitrary sequence to an array. Unlike `arr,` always makes a copy. Mutating the output doesn't affect the original.
 
 ### `function slice`
 
-Links: [source](../iter.mjs#L18); [test/example](../test/iter_test.mjs#L113).
+Links: [source](../iter.mjs#L24); [test/example](../test/iter_test.mjs#L113).
 
 Like [`Array.prototype.slice`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice) but allows arbitrary [sequences](lang_readme.md#function-isseq) compatible with [#`arr`](#function-arr).
 
 ### `function keys`
 
-Links: [source](../iter.mjs#L27); [test/example](../test/iter_test.mjs#L145).
+Links: [source](../iter.mjs#L33); [test/example](../test/iter_test.mjs#L145).
 
 Takes an arbitrary input and returns an array of its keys:
 
@@ -145,7 +147,7 @@ Takes an arbitrary input and returns an array of its keys:
 
 ### `function values`
 
-Links: [source](../iter.mjs#L43); [test/example](../test/iter_test.mjs#L168).
+Links: [source](../iter.mjs#L49); [test/example](../test/iter_test.mjs#L168).
 
 Takes an arbitrary input and returns an array of its values:
 
@@ -159,13 +161,13 @@ Takes an arbitrary input and returns an array of its values:
 
 ### `function valuesCopy`
 
-Links: [source](../iter.mjs#L66); [test/example](../test/iter_test.mjs#L188).
+Links: [source](../iter.mjs#L72); [test/example](../test/iter_test.mjs#L188).
 
 Variant of [#`values`](#function-values) that always makes a copy. Mutating the output doesn't affect the original.
 
 ### `function entries`
 
-Links: [source](../iter.mjs#L68); [test/example](../test/iter_test.mjs#L210).
+Links: [source](../iter.mjs#L74); [test/example](../test/iter_test.mjs#L210).
 
 Takes an arbitrary input and returns an array of its entries (key-value tuples):
 
@@ -178,19 +180,13 @@ Takes an arbitrary input and returns an array of its entries (key-value tuples):
 
 ### `function reify`
 
-Links: [source](../iter.mjs#L94); [test/example](../test/iter_test.mjs#L229).
+Links: [source](../iter.mjs#L100); [test/example](../test/iter_test.mjs#L229).
 
 Takes an arbitrary value and attempts to deeply materialize it. Any [iterators](lang_readme.md#function-isiterator), or [lists](lang_readme.md#function-islist) that contain iterators, or lists that contain lists that contain iterators, etc., are converted to arrays. Does not inspect other data structures such as [sets](lang_readme.md#function-isset) or [dicts](lang_readme.md#function-isdict).
 
-### `function vac`
-
-Links: [source](../iter.mjs#L98); [test/example](../test/iter_test.mjs#L254).
-
-Complements [`isVac`](lang_readme.md#function-isvac). Returns `undefined` if the input is vacuous, otherwise returns the input as-is.
-
 ### `function indexOf`
 
-Links: [source](../iter.mjs#L100); [test/example](../test/iter_test.mjs#L293).
+Links: [source](../iter.mjs#L104); [test/example](../test/iter_test.mjs#L254).
 
 Like [`Array.prototype.indexOf`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf). Differences:
 
@@ -199,7 +195,7 @@ Like [`Array.prototype.indexOf`](https://developer.mozilla.org/en-US/docs/Web/Ja
 
 ### `function includes`
 
-Links: [source](../iter.mjs#L108); [test/example](../test/iter_test.mjs#L314).
+Links: [source](../iter.mjs#L112); [test/example](../test/iter_test.mjs#L275).
 
 Like [`Array.prototype.includes`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes). Differences:
 
@@ -208,7 +204,7 @@ Like [`Array.prototype.includes`](https://developer.mozilla.org/en-US/docs/Web/J
 
 ### `function concat`
 
-Links: [source](../iter.mjs#L109); [test/example](../test/iter_test.mjs#L333).
+Links: [source](../iter.mjs#L113); [test/example](../test/iter_test.mjs#L294).
 
 Like [`Array.prototype.concat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat). Differences:
 
@@ -221,19 +217,19 @@ Note: for individual elements, use [#`append`](#function-append) and
 
 ### `function append`
 
-Links: [source](../iter.mjs#L110); [test/example](../test/iter_test.mjs#L351).
+Links: [source](../iter.mjs#L114); [test/example](../test/iter_test.mjs#L312).
 
 Takes an arbitrary iterable compatible with [#`values`](#function-values) and appends an arbitrary value, returning the resulting array.
 
 ### `function prepend`
 
-Links: [source](../iter.mjs#L111); [test/example](../test/iter_test.mjs#L366).
+Links: [source](../iter.mjs#L115); [test/example](../test/iter_test.mjs#L327).
 
 Takes an arbitrary iterable compatible with [#`values`](#function-values) and prepends an arbitrary value, returning the resulting array.
 
 ### `function len`
 
-Links: [source](../iter.mjs#L113); [test/example](../test/iter_test.mjs#L401).
+Links: [source](../iter.mjs#L117); [test/example](../test/iter_test.mjs#L362).
 
 Universal length measurement:
 
@@ -246,13 +242,13 @@ Universal length measurement:
 
 ### `function hasLen`
 
-Links: [source](../iter.mjs#L137); [test/example](../test/iter_test.mjs#L405).
+Links: [source](../iter.mjs#L141); [test/example](../test/iter_test.mjs#L366).
 
 Shortcut for [#`len`](#function-len) > 0.
 
 ### `function each`
 
-Links: [source](../iter.mjs#L139); [test/example](../test/iter_test.mjs#L437).
+Links: [source](../iter.mjs#L143); [test/example](../test/iter_test.mjs#L398).
 
 Signature: `(Iter<A>, A => void) => void`.
 
@@ -264,7 +260,7 @@ Similar to `Array.prototype.forEach`, `Set.prototype.forEach`, `Map.prototype.fo
 
 ### `function map`
 
-Links: [source](../iter.mjs#L144); [test/example](../test/iter_test.mjs#L458).
+Links: [source](../iter.mjs#L148); [test/example](../test/iter_test.mjs#L419).
 
 Signature: `(Iter<A>, A => B) => B[]`.
 
@@ -276,7 +272,7 @@ Similar to [`Array.prototype.map`](https://developer.mozilla.org/en-US/docs/Web/
 
 ### `function mapMut`
 
-Links: [source](../iter.mjs#L146); [test/example](../test/iter_test.mjs#L491).
+Links: [source](../iter.mjs#L150); [test/example](../test/iter_test.mjs#L452).
 
 Similar to [`Array.prototype.map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map). Differences:
 
@@ -287,13 +283,13 @@ For a non-mutating version, see [#`map`](#function-map).
 
 ### `function mapCompact`
 
-Links: [source](../iter.mjs#L154); [test/example](../test/iter_test.mjs#L507).
+Links: [source](../iter.mjs#L158); [test/example](../test/iter_test.mjs#L468).
 
 Equivalent to `f.compact(f.map(val, fun))`. See [#`map`](#function-map) and [#`compact`](#function-compact).
 
 ### `function filter`
 
-Links: [source](../iter.mjs#L156); [test/example](../test/iter_test.mjs#L520).
+Links: [source](../iter.mjs#L160); [test/example](../test/iter_test.mjs#L481).
 
 Signature: `(Iter<A>, A => bool) => A[]`.
 
@@ -305,19 +301,19 @@ Similar to [`Array.prototype.filter`](https://developer.mozilla.org/en-US/docs/W
 
 ### `function reject`
 
-Links: [source](../iter.mjs#L163); [test/example](../test/iter_test.mjs#L536).
+Links: [source](../iter.mjs#L167); [test/example](../test/iter_test.mjs#L497).
 
 Opposite of [#`filter`](#function-filter). Equivalent to `f.filter(val, f.not(fun))`.
 
 ### `function compact`
 
-Links: [source](../iter.mjs#L165); [test/example](../test/iter_test.mjs#L552).
+Links: [source](../iter.mjs#L169); [test/example](../test/iter_test.mjs#L513).
 
 Equivalent to `f.filter(val, f.id)`. Takes an arbitrary iterable and returns an array of its truthy [#`values`](#function-values), discarding falsy values.
 
 ### `function remove`
 
-Links: [source](../iter.mjs#L171); [test/example](../test/iter_test.mjs#L564).
+Links: [source](../iter.mjs#L175); [test/example](../test/iter_test.mjs#L525).
 
 Signature: `(Iter<A>, A) => A[]`.
 
@@ -325,7 +321,7 @@ Takes an arbitrary iterable and an element to remove. Returns an array of the it
 
 ### `function fold`
 
-Links: [source](../iter.mjs#L175); [test/example](../test/iter_test.mjs#L581).
+Links: [source](../iter.mjs#L179); [test/example](../test/iter_test.mjs#L542).
 
 Signature: `(src: Iter<A>, acc: B, fun: (B, A) => B) => B`.
 
@@ -340,7 +336,7 @@ Similar to [`Array.prototype.reduce`](https://developer.mozilla.org/en-US/docs/W
 
 ### `function find`
 
-Links: [source](../iter.mjs#L181); [test/example](../test/iter_test.mjs#L597).
+Links: [source](../iter.mjs#L185); [test/example](../test/iter_test.mjs#L558).
 
 Signature: `(Iter<A>, A => bool) => A`.
 
@@ -352,7 +348,7 @@ Similar to [`Array.prototype.find`](https://developer.mozilla.org/en-US/docs/Web
 
 ### `function procure`
 
-Links: [source](../iter.mjs#L187); [test/example](../test/iter_test.mjs#L612).
+Links: [source](../iter.mjs#L191); [test/example](../test/iter_test.mjs#L573).
 
 Signature: `(src: Iter<A>, fun: A => B) => B`.
 
@@ -360,7 +356,7 @@ Similar to [#`find`](#function-find), but returns the first truthy result of cal
 
 ### `function every`
 
-Links: [source](../iter.mjs#L193); [test/example](../test/iter_test.mjs#L629).
+Links: [source](../iter.mjs#L197); [test/example](../test/iter_test.mjs#L590).
 
 Signature: `(Iter<A>, A => bool) => bool`.
 
@@ -372,7 +368,7 @@ Similar to [`Array.prototype.every`](https://developer.mozilla.org/en-US/docs/We
 
 ### `function some`
 
-Links: [source](../iter.mjs#L199); [test/example](../test/iter_test.mjs#L648).
+Links: [source](../iter.mjs#L203); [test/example](../test/iter_test.mjs#L609).
 
 Signature: `(Iter<A>, A => bool) => bool`.
 
@@ -384,37 +380,37 @@ Similar to [`Array.prototype.some`](https://developer.mozilla.org/en-US/docs/Web
 
 ### `function head`
 
-Links: [source](../iter.mjs#L205); [test/example](../test/iter_test.mjs#L667).
+Links: [source](../iter.mjs#L209); [test/example](../test/iter_test.mjs#L628).
 
 Takes an arbitrary iterable compatible with [#`values`](#function-values) and returns its first element or `undefined`.
 
 ### `function last`
 
-Links: [source](../iter.mjs#L214); [test/example](../test/iter_test.mjs#L677).
+Links: [source](../iter.mjs#L218); [test/example](../test/iter_test.mjs#L638).
 
 Takes an arbitrary iterable compatible with [#`values`](#function-values) and returns its last element or `undefined`.
 
 ### `function init`
 
-Links: [source](../iter.mjs#L215); [test/example](../test/iter_test.mjs#L687).
+Links: [source](../iter.mjs#L219); [test/example](../test/iter_test.mjs#L648).
 
 Short for "initial". Takes an arbitrary iterable compatible with [#`values`](#function-values) and returns an array of all its values except last.
 
 ### `function tail`
 
-Links: [source](../iter.mjs#L216); [test/example](../test/iter_test.mjs#L697).
+Links: [source](../iter.mjs#L220); [test/example](../test/iter_test.mjs#L658).
 
 Takes an arbitrary iterable compatible with [#`values`](#function-values) and returns an array of all its values except first.
 
 ### `function take`
 
-Links: [source](../iter.mjs#L217); [test/example](../test/iter_test.mjs#L707).
+Links: [source](../iter.mjs#L221); [test/example](../test/iter_test.mjs#L668).
 
 Takes an arbitrary iterable compatible with [#`values`](#function-values) and returns N values from the start.
 
 ### `function count`
 
-Links: [source](../iter.mjs#L219); [test/example](../test/iter_test.mjs#L739).
+Links: [source](../iter.mjs#L223); [test/example](../test/iter_test.mjs#L700).
 
 Signature: `(src: Iter<A>, fun: A => B) => nat`.
 
@@ -422,7 +418,7 @@ Takes an arbitrary iterable compatible with [#`values`](#function-values), calls
 
 ### `function compare`
 
-Links: [source](../iter.mjs#L227); [test/example](../test/iter_test.mjs#L754).
+Links: [source](../iter.mjs#L231); [test/example](../test/iter_test.mjs#L715).
 
 Signature: `(a, b) => -1 | 0 | 1`.
 
@@ -430,7 +426,7 @@ Equivalent to the [default JS sort comparison algorithm](https://tc39.github.io/
 
 ### `function compareFin`
 
-Links: [source](../iter.mjs#L238); [test/example](../test/iter_test.mjs#L764).
+Links: [source](../iter.mjs#L242); [test/example](../test/iter_test.mjs#L725).
 
 Signature: `(a, b) => -1 | 0 | 1` where arguments are [nil](lang_readme.md#function-isnil) or [finite](lang_readme.md#function-isfin).
 
@@ -438,7 +434,7 @@ Sort comparison for finite numbers. Usable for [`Array.prototype.sort`](https://
 
 ### `function sort`
 
-Links: [source](../iter.mjs#L246); [test/example](../test/iter_test.mjs#L776).
+Links: [source](../iter.mjs#L250); [test/example](../test/iter_test.mjs#L737).
 
 Signature: `(src: Iter<A>, fun?: (prev: A, next: A) => -1 | 0 | 1) => A[]`.
 
@@ -452,7 +448,7 @@ The comparison function is optional. If omitted, default JS sorting is used.
 
 ### `function reverse`
 
-Links: [source](../iter.mjs#L247); [test/example](../test/iter_test.mjs#L808).
+Links: [source](../iter.mjs#L251); [test/example](../test/iter_test.mjs#L769).
 
 Similar to [`Array.prototype.reverse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reverse). Differences:
 
@@ -462,17 +458,17 @@ Similar to [`Array.prototype.reverse`](https://developer.mozilla.org/en-US/docs/
 
 ### `function index`
 
-Links: [source](../iter.mjs#L249); [test/example](../test/iter_test.mjs#L826).
+Links: [source](../iter.mjs#L253); [test/example](../test/iter_test.mjs#L787).
 
 Signature: `(Iter<A>, A => Key | any) => {[Key: A]}`.
 
-Takes an arbitrary iterable compatible with [#`values`](#function-values) and returns an index where its values are _keyed_ by the given function, hence the name. The function is called for each value. If the function returns a [valid_key](lang_readme.md#function-iskey), the key-value pair is added to the index. Invalid keys are ignored. If the function returns the same key for multiple values, previous values are lost.
+Takes an arbitrary iterable compatible with [#`values`](#function-values) and returns an index where its values are _indexed_ by the given function, hence the name. The function is called for each value. If the function returns a [valid_key](lang_readme.md#function-iskey), the key-value pair is added to the index. Invalid keys are ignored. If the function returns the same key for multiple values, previous values are lost.
 
 Similar to Lodash's `_.keyBy`. Compare [#`group`](#function-group) which keeps all values for each group, rather than only the last.
 
 ### `function group`
 
-Links: [source](../iter.mjs#L259); [test/example](../test/iter_test.mjs#L871).
+Links: [source](../iter.mjs#L263); [test/example](../test/iter_test.mjs#L832).
 
 Signature: `(Iter<A>, A => Key | any) => {[Key: A[]]}`.
 
@@ -482,7 +478,7 @@ Compare [#`index`](#function-index), which keeps only the last value for each gr
 
 ### `function partition`
 
-Links: [source](../iter.mjs#L269); [test/example](../test/iter_test.mjs#L897).
+Links: [source](../iter.mjs#L273); [test/example](../test/iter_test.mjs#L858).
 
 Signature: `(Iter<A>, A => bool) => [A[], A[]]`.
 
@@ -490,7 +486,7 @@ Partitions the [#`values`](#function-values) of a given iterable, returning a tu
 
 ### `function sum`
 
-Links: [source](../iter.mjs#L277); [test/example](../test/iter_test.mjs#L914).
+Links: [source](../iter.mjs#L281); [test/example](../test/iter_test.mjs#L875).
 
 Signature: `(Iter<A>) => fin`.
 
@@ -498,7 +494,7 @@ Sums all finite [#`values`](#function-values) of an arbitrary iterable, ignoring
 
 ### `function zip`
 
-Links: [source](../iter.mjs#L282); [test/example](../test/iter_test.mjs#L925).
+Links: [source](../iter.mjs#L286); [test/example](../test/iter_test.mjs#L886).
 
 Signature: `(Iter<[Key, A]>) => {[Key: A]}`.
 
@@ -510,15 +506,15 @@ Similar to [`Object.fromEntries`](https://developer.mozilla.org/en-US/docs/Web/J
   * Returns a [null_prototype_object](lang_readme.md#function-npo).
   * Slightly slower.
 
-### `function mapFrom`
+### `function mapOf`
 
-Links: [source](../iter.mjs#L289); [test/example](../test/iter_test.mjs#L942).
+Links: [source](../iter.mjs#L294); [test/example](../test/iter_test.mjs#L903).
 
-Syntactic shortcut for creating a `Map` with inline keys and values. Shorter and less noisy than either `new Map` with an array of entries or chained `.set` calls.
+Syntactic shortcut for creating a `Map` with inline keys and values. Shorter and less noisy than either `new Map` with an array of entries or chained `.set` calls. The name mirrors `Array.of`.
 
 ### `function range`
 
-Links: [source](../iter.mjs#L296); [test/example](../test/iter_test.mjs#L949).
+Links: [source](../iter.mjs#L301); [test/example](../test/iter_test.mjs#L910).
 
 Signature: `(min: int, max: int) => int[]`.
 
@@ -526,7 +522,7 @@ Returns an array of contiguous integers in the range of `[min, max)`. The first 
 
 ### `function span`
 
-Links: [source](../iter.mjs#L307); [test/example](../test/iter_test.mjs#L964).
+Links: [source](../iter.mjs#L312); [test/example](../test/iter_test.mjs#L925).
 
 Signature: `nat => nat[]`.
 
@@ -534,7 +530,7 @@ Returns an array of the given length, where values are integers from 0. Shortcut
 
 ### `function times`
 
-Links: [source](../iter.mjs#L308); [test/example](../test/iter_test.mjs#L975).
+Links: [source](../iter.mjs#L313); [test/example](../test/iter_test.mjs#L936).
 
 Signature: `(len: nat, fun: nat => A) => A[]`.
 
@@ -542,7 +538,7 @@ Takes an array length and a mapping function. Returns an array of the given leng
 
 ### `function repeat`
 
-Links: [source](../iter.mjs#L309); [test/example](../test/iter_test.mjs#L996).
+Links: [source](../iter.mjs#L314); [test/example](../test/iter_test.mjs#L957).
 
 Signature: `(len: nat, val: A) => A[]`.
 
@@ -550,7 +546,7 @@ Returns an array of the given length where each element is the given value. Equi
 
 ### `function set`
 
-Links: [source](../iter.mjs#L310); [test/example](../test/iter_test.mjs#L1008).
+Links: [source](../iter.mjs#L315); [test/example](../test/iter_test.mjs#L969).
 
 Converts an arbitrary input to a native [`Set`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set). Similar to `new Set`. Differences:
 
@@ -560,6 +556,12 @@ Converts an arbitrary input to a native [`Set`](https://developer.mozilla.org/en
 
 ### `function setCopy`
 
-Links: [source](../iter.mjs#L311); [test/example](../test/iter_test.mjs#L1032).
+Links: [source](../iter.mjs#L316); [test/example](../test/iter_test.mjs#L993).
 
 Similar to [#`set`](#function-set): converts an arbitrary input to a set. Difference: always makes a copy. If the original was a set, it's unaffected by mutations of the output.
+
+### Undocumented
+
+The following APIs are exported but undocumented. Check [iter.mjs](../iter.mjs).
+
+  * [`function setOf`](../iter.mjs#L292)
