@@ -29,6 +29,7 @@ Features:
   * Benchmarks support warmup for stable results.
   * Benchmark precision is tuned to 1/10th of a nanosecond.
     * Tested in Deno with `--allow-hrtime`.
+  * Supports async tests.
   * Non-verbose. Tests are silent by default.
 
 Ported from https://github.com/mitranim/test which is also available separately.
@@ -44,8 +45,9 @@ Ported from https://github.com/mitranim/test which is also available separately.
 ## Limitations
 
 * Undocumented, or rather documented only through comments. Read the source. Docs are planned but not written yet.
-* Only synchronous. Async support is planned but not implemented.
-* No support for additional messages accompanying failed tests.
+* Benchmarks are only synchronous. Async support is planned but not implemented.
+  * Tests can be sync or async.
+* Almost no support for additional messages accompanying failed tests.
 * No support for timeouts. A hanged test stays hanged.
 
 ## Gotchas
@@ -61,7 +63,7 @@ Timing precision varies by JS engine and environment.
 Simple testing example:
 
 ```js
-import * as t from '{{url}}/test.mjs'
+import * as t from '{{featUrl}}'
 
 t.test(function test_some_feature() {
   t.eq(someFunction(someInputs), `expected result`)
@@ -71,7 +73,7 @@ t.test(function test_some_feature() {
 Simple benchmarking example:
 
 ```js
-import * as t from '{{url}}/test.mjs'
+import * as t from '{{featUrl}}'
 
 t.bench(function bench_some_feature() {
   someFunction(someInputs)
@@ -84,7 +86,7 @@ t.benches()
 Complex example:
 
 ```js
-import * as t from '{{url}}/test.mjs'
+import * as t from '{{featUrl}}'
 
 // Optional CLI flag parsing.
 const cli = t.Args.os()

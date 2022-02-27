@@ -9,7 +9,6 @@ function unreachable() {throw Error(`unreachable`)}
 function* gen() {unreachable()}
 async function* agen() {unreachable()}
 const inherit = Object.create
-function nop() {}
 function True() {return true}
 function False() {return false}
 
@@ -19,86 +18,110 @@ function False() {return false}
 t.test(function test_show() {
   function test(src, exp) {t.is(l.show(src), exp)}
 
-  test(undefined,                   `undefined`)
-  test(null,                        `null`)
-  test(0,                           `0`)
-  test(NaN,                         `NaN`)
-  test(Infinity,                    `Infinity`)
-  test(-10,                         `-10`)
-  test(10,                          `10`)
-  test(``,                          `""`)
-  test(`str`,                       `"str"`)
-  test({},                          `{}`)
-  test(inherit(null),               `{}`)
-  test(inherit(inherit(null)),      `{}`)
-  test({one: `two`, three: `four`}, `{"one":"two","three":"four"}`)
-  test([],                          `[]`)
-  test([10, `str`],                 `[10,"str"]`)
-  test(args,                        `[function args]`)
-  test(gen(),                       `[object Generator]`)
-  test(agen(),                      `[object AsyncGenerator]`)
-  test(class Cls {},                `[function Cls]`)
-  test(new class {}(),              `[object Object]`)
-  test(Error(`msg`),                `Error: msg`)
-  test(TypeError(`msg`),            `TypeError: msg`)
-  test(SyntaxError(`msg`),          `SyntaxError: msg`)
+  test(undefined,                                 `undefined`)
+  test(null,                                      `null`)
+  test(0,                                         `0`)
+  test(NaN,                                       `NaN`)
+  test(Infinity,                                  `Infinity`)
+  test(-10,                                       `-10`)
+  test(10,                                        `10`)
+  test(``,                                        `""`)
+  test(`str`,                                     `"str"`)
+  test(Symbol(`str`),                             `Symbol(str)`)
+  test({},                                        `{}`)
+  test(inherit(null),                             `{}`)
+  test(inherit(inherit(null)),                    `{}`)
+  test({one: `two`, three: `four`},               `{"one":"two","three":"four"}`)
+  test([],                                        `[]`)
+  test([10, `str`],                               `[10,"str"]`)
+  test(args,                                      `[function args]`)
+  test(gen(),                                     `[object Generator]`)
+  test(agen(),                                    `[object AsyncGenerator]`)
+  test(class Cls {},                              `[function Cls]`)
+  test(new class {}(),                            `[object Object]`)
+  test(new class extends Array {}(),              `[]`)
+  test(new class extends Array {}(10, `str`),     `[10,"str"]`)
+  test(new class Cls extends Array {}(),          `[]`)
+  test(new class Cls extends Array {}(10, `str`), `[10,"str"]`)
+  test(Error(`msg`),                              `Error: msg`)
+  test(TypeError(`msg`),                          `TypeError: msg`)
+  test(SyntaxError(`msg`),                        `SyntaxError: msg`)
 
   function testCls(cls) {test(new cls(), `[object Cls]`)}
 
   testCls(class Cls {})
-  testCls(class Cls extends Array {})
   testCls(class Cls extends Set {})
   testCls(class Cls extends Map {})
 
   testCls(class Cls               {get [Symbol.toStringTag]() {return this.constructor.name}})
-  testCls(class Cls extends Array {get [Symbol.toStringTag]() {return this.constructor.name}})
   testCls(class Cls extends Set   {get [Symbol.toStringTag]() {return this.constructor.name}})
   testCls(class Cls extends Map   {get [Symbol.toStringTag]() {return this.constructor.name}})
 
   testCls(class Cls               {toString() {unreachable()}})
-  testCls(class Cls extends Array {toString() {unreachable()}})
   testCls(class Cls extends Set   {toString() {unreachable()}})
   testCls(class Cls extends Map   {toString() {unreachable()}})
 
   testCls(class Cls               {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
-  testCls(class Cls extends Array {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
   testCls(class Cls extends Set   {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
   testCls(class Cls extends Map   {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
 
   // For comparison, inane behavior we dislike:
-  t.is(`` + {}, `[object Object]`)
-  t.is(`` + [], ``)
-  t.is(`` + new class Cls extends Set {}(), `[object Set]`)
-  t.is(`` + new class Cls extends Map {}(), `[object Map]`)
+  t.is(String({}), `[object Object]`)
+  t.is(String([]), ``)
+  t.is(String(new class Cls extends Set {}()), `[object Set]`)
+  t.is(String(new class Cls extends Map {}()), `[object Map]`)
 })
 
 t.test(function test_render() {
   t.throws(() => l.render(), TypeError, `unable to convert undefined to string`)
   t.throws(() => l.render(null), TypeError, `unable to convert null to string`)
-  t.throws(() => l.render({}), TypeError, `unable to convert {} to string`)
-  t.throws(() => l.render(inherit(null)), TypeError, `unable to convert {} to string`)
-  t.throws(() => l.render(inherit(inherit(null))), TypeError, `unable to convert {} to string`)
-  t.throws(() => l.render({one: `two`, three: `four`}), TypeError, `unable to convert {"one":"two","three":"four"} to string`)
-  t.throws(() => l.render([]), TypeError, `unable to convert [] to string`)
-  t.throws(() => l.render([10, `str`]), TypeError, `unable to convert [10,"str"] to string`)
-  t.throws(() => l.render(args), TypeError, `unable to convert [function args] to string`)
-  t.throws(() => l.render(gen()), TypeError, `unable to convert [object Generator] to string`)
-  t.throws(() => l.render(agen()), TypeError, `unable to convert [object AsyncGenerator] to string`)
-  t.throws(() => l.render(class Cls {}), TypeError, `unable to convert [function Cls] to string`)
-  t.throws(() => l.render(new class {}), TypeError, `unable to convert [object Object] to string`)
-  t.throws(() => l.render(new class Cls {}), TypeError, `unable to convert [object Cls] to string`)
-  t.throws(() => l.render(new class Cls extends Array {}), TypeError, `unable to convert [object Cls] to string`)
+  t.throws(() => l.render(Symbol(`str`)), TypeError, `unable to convert Symbol(str) to string`)
 
-  t.is(l.render(0), `0`)
-  t.is(l.render(NaN), `NaN`)
-  t.is(l.render(Infinity), `Infinity`)
-  t.is(l.render(-10), `-10`)
-  t.is(l.render(10), `10`)
-  t.is(l.render(``), ``)
-  t.is(l.render(`str`), `str`)
-  t.is(l.render(new Date(1024)), `1970-01-01T00:00:01.024Z`)
-  t.is(l.render({toString() {return `blah`}}), `blah`)
+  testRender(l.render)
 })
+
+t.test(function test_renderLax() {
+  t.is(l.renderLax(), ``)
+  t.is(l.renderLax(null), ``)
+
+  testRender(l.renderLax)
+})
+
+function testRender(fun) {
+  t.throws(() => fun({}), TypeError, `unable to convert {} to string`)
+  t.throws(() => fun(inherit(null)), TypeError, `unable to convert {} to string`)
+  t.throws(() => fun(inherit(inherit(null))), TypeError, `unable to convert {} to string`)
+  t.throws(() => fun({one: `two`, three: `four`}), TypeError, `unable to convert {"one":"two","three":"four"} to string`)
+  t.throws(() => fun([]), TypeError, `unable to convert [] to string`)
+  t.throws(() => fun([10, `str`]), TypeError, `unable to convert [10,"str"] to string`)
+  t.throws(() => fun(args), TypeError, `unable to convert [function args] to string`)
+  t.throws(() => fun(gen()), TypeError, `unable to convert [object Generator] to string`)
+  t.throws(() => fun(agen()), TypeError, `unable to convert [object AsyncGenerator] to string`)
+  t.throws(() => fun(class Cls {}), TypeError, `unable to convert [function Cls] to string`)
+  t.throws(() => fun(new class {}), TypeError, `unable to convert [object Object] to string`)
+  t.throws(() => fun(new class Cls {}), TypeError, `unable to convert [object Cls] to string`)
+  t.throws(() => fun(new class Cls extends Array {}), TypeError, `unable to convert [] to string`)
+
+  t.is(fun(0), `0`)
+  t.is(fun(NaN), `NaN`)
+  t.is(fun(Infinity), `Infinity`)
+  t.is(fun(-10), `-10`)
+  t.is(fun(10), `10`)
+  t.is(fun(``), ``)
+  t.is(fun(`str`), `str`)
+  t.is(fun(new Date(1024)), `1970-01-01T00:00:01.024Z`)
+  t.is(fun({toString() {return `blah`}}), `blah`)
+
+  class Cents extends Number {
+    toString() {
+      return (this / 100).toLocaleString(`en-US`, {useGrouping: false})
+    }
+  }
+
+  t.is(fun(new Cents(100)), `1`)
+  t.is(fun(new Cents(2000)), `20`)
+  t.is(fun(new Cents(3400)), `34`)
+}
 
 t.test(function test_truthy() {
   t.is(l.truthy(), !!(undefined))
@@ -394,14 +417,14 @@ t.test(function test_isComp() {
 
   t.ok(l.isComp({}))
   t.ok(l.isComp([]))
-  t.ok(l.isComp(nop))
+  t.ok(l.isComp(l.nop))
   t.ok(l.isComp(/_/))
 })
 
 t.test(function test_isPrim() {
   t.no(l.isPrim({}))
   t.no(l.isPrim([]))
-  t.no(l.isPrim(nop))
+  t.no(l.isPrim(l.nop))
   t.no(l.isPrim(/_/))
 
   t.ok(l.isPrim())
@@ -480,7 +503,7 @@ t.test(function test_isObj() {
   t.no(l.isObj())
   t.no(l.isObj(null))
   t.no(l.isObj(``))
-  t.no(l.isObj(nop))
+  t.no(l.isObj(l.nop))
 
   t.ok(l.isObj({}))
   t.ok(l.isObj([]))
@@ -496,17 +519,22 @@ t.test(function test_isStruct() {
   t.no(l.isStruct())
   t.no(l.isStruct(null))
   t.no(l.isStruct(``))
-  t.no(l.isStruct(nop))
+  t.no(l.isStruct(l.nop))
   t.no(l.isStruct([]))
   t.no(l.isStruct(new String()))
   t.no(l.isStruct(gen()))
-  t.no(l.isStruct(agen()))
 
   t.ok(l.isStruct({}))
   t.ok(l.isStruct(/_/))
   t.ok(l.isStruct(inherit({})))
   t.ok(l.isStruct(new Number()))
   t.ok(l.isStruct(new Boolean()))
+
+  /*
+  Most of the code using `isStruct` doesn't care about this,
+  and would be slowed down. Code that does care has to opt in.
+  */
+  t.ok(l.isStruct(agen()))
 })
 
 t.test(function test_isArr() {
@@ -593,8 +621,8 @@ t.test(function test_isIter() {
   t.no(l.isIter({length: 0}))
   t.no(l.isIter({size: 0}))
   t.no(l.isIter({}))
-  t.no(l.isIter({next: nop}))
-  t.no(l.isIter({[Symbol.asyncIterator]: nop}))
+  t.no(l.isIter({next: l.nop}))
+  t.no(l.isIter({[Symbol.asyncIterator]: l.nop}))
 
   t.ok(l.isIter(gen()))
   t.ok(l.isIter([]))
@@ -603,7 +631,7 @@ t.test(function test_isIter() {
   t.ok(l.isIter(args()))
   t.ok(l.isIter(new String()))
   t.ok(l.isIter(new String(`str`)))
-  t.ok(l.isIter({[Symbol.iterator]: nop}))
+  t.ok(l.isIter({[Symbol.iterator]: l.nop}))
 })
 
 t.test(function test_isIterAsync() {
@@ -617,10 +645,10 @@ t.test(function test_isIterAsync() {
   t.no(l.isIterAsync(new Map()))
   t.no(l.isIterAsync(args()))
   t.no(l.isIterAsync(agen))
-  t.no(l.isIterAsync({[Symbol.iterator]: nop}))
+  t.no(l.isIterAsync({[Symbol.iterator]: l.nop}))
 
   t.ok(l.isIterAsync(agen()))
-  t.ok(l.isIterAsync({[Symbol.asyncIterator]: nop}))
+  t.ok(l.isIterAsync({[Symbol.asyncIterator]: l.nop}))
 })
 
 t.test(function test_isIterator() {
@@ -638,15 +666,15 @@ t.test(function test_isIterator() {
   t.no(l.isIterator({length: 0}))
   t.no(l.isIterator({size: 0}))
   t.no(l.isIterator({}))
-  t.no(l.isIterator({next: nop}))
-  t.no(l.isIterator({[Symbol.iterator]: nop}))
-  t.no(l.isIterator({[Symbol.asyncIterator]: nop}))
-  t.no(l.isIterator({[Symbol.asyncIterator]: nop, next: nop}))
+  t.no(l.isIterator({next: l.nop}))
+  t.no(l.isIterator({[Symbol.iterator]: l.nop}))
+  t.no(l.isIterator({[Symbol.asyncIterator]: l.nop}))
+  t.no(l.isIterator({[Symbol.asyncIterator]: l.nop, next: l.nop}))
   t.no(l.isIterator(agen))
   t.no(l.isIterator(agen()))
 
   t.ok(l.isIterator(gen()))
-  t.ok(l.isIterator({[Symbol.iterator]: nop, next: nop}))
+  t.ok(l.isIterator({[Symbol.iterator]: l.nop, next: l.nop}))
 })
 
 t.test(function test_isIteratorAsync() {
@@ -664,15 +692,15 @@ t.test(function test_isIteratorAsync() {
   t.no(l.isIteratorAsync({length: 0}))
   t.no(l.isIteratorAsync({size: 0}))
   t.no(l.isIteratorAsync({}))
-  t.no(l.isIteratorAsync({next: nop}))
-  t.no(l.isIteratorAsync({[Symbol.iterator]: nop}))
-  t.no(l.isIteratorAsync({[Symbol.asyncIterator]: nop}))
-  t.no(l.isIteratorAsync({[Symbol.iterator]: nop, next: nop}))
+  t.no(l.isIteratorAsync({next: l.nop}))
+  t.no(l.isIteratorAsync({[Symbol.iterator]: l.nop}))
+  t.no(l.isIteratorAsync({[Symbol.asyncIterator]: l.nop}))
+  t.no(l.isIteratorAsync({[Symbol.iterator]: l.nop, next: l.nop}))
   t.no(l.isIteratorAsync(agen))
   t.no(l.isIteratorAsync(gen()))
 
   t.ok(l.isIteratorAsync(agen()))
-  t.ok(l.isIteratorAsync({[Symbol.asyncIterator]: nop, next: nop}))
+  t.ok(l.isIteratorAsync({[Symbol.asyncIterator]: l.nop, next: l.nop}))
 })
 
 t.test(function test_isGen() {
@@ -692,46 +720,46 @@ t.test(function test_isGen() {
   t.no(l.isGen({length: 0}))
   t.no(l.isGen({size: 0}))
   t.no(l.isGen({}))
-  t.no(l.isGen({next: nop}))
-  t.no(l.isGen({[Symbol.iterator]: nop}))
+  t.no(l.isGen({next: l.nop}))
+  t.no(l.isGen({[Symbol.iterator]: l.nop}))
 
   t.no(l.isGen({
-    [Symbol.iterator]: nop,
-    next: nop,
+    [Symbol.iterator]: l.nop,
+    next: l.nop,
   }))
 
   t.no(l.isGen({
-    [Symbol.iterator]: nop,
-    next: nop,
-    return: nop,
+    [Symbol.iterator]: l.nop,
+    next: l.nop,
+    return: l.nop,
   }))
 
   t.no(l.isGen({
-    [Symbol.iterator]: nop,
-    next: nop,
-    throw: nop,
+    [Symbol.iterator]: l.nop,
+    next: l.nop,
+    throw: l.nop,
   }))
 
   t.no(l.isGen({
-    [Symbol.iterator]: nop,
-    return: nop,
-    throw: nop,
+    [Symbol.iterator]: l.nop,
+    return: l.nop,
+    throw: l.nop,
   }))
 
   t.no(l.isGen({
-    [Symbol.asyncIterator]: nop,
-    next: nop,
-    return: nop,
-    throw: nop,
+    [Symbol.asyncIterator]: l.nop,
+    next: l.nop,
+    return: l.nop,
+    throw: l.nop,
   }))
 
   t.ok(l.isGen(gen()))
 
   t.ok(l.isGen({
-    [Symbol.iterator]: nop,
-    next: nop,
-    return: nop,
-    throw: nop,
+    [Symbol.iterator]: l.nop,
+    next: l.nop,
+    return: l.nop,
+    throw: l.nop,
   }))
 })
 
@@ -751,7 +779,7 @@ t.test(function test_isDict() {
   t.no(l.isDict(undefined))
   t.no(l.isDict(null))
   t.no(l.isDict(``))
-  t.no(l.isDict(nop))
+  t.no(l.isDict(l.nop))
   t.no(l.isDict([]))
   t.no(l.isDict(/_/))
   t.no(l.isDict(inherit({})))
@@ -831,6 +859,9 @@ function testVac(empty, full) {
 }
 
 t.test(function test_isScalar() {
+  t.no(l.isScalar())
+  t.no(l.isScalar(null))
+  t.no(l.isScalar(Symbol()))
   t.no(l.isScalar(inherit(null)))
   t.no(l.isScalar({}))
   t.no(l.isScalar([]))
@@ -840,11 +871,9 @@ t.test(function test_isScalar() {
   t.no(l.isScalar(new Map()))
   t.no(l.isScalar(new Set()))
   t.no(l.isScalar(Promise.resolve()))
-  t.no(l.isScalar(nop))
+  t.no(l.isScalar(l.nop))
   t.no(l.isScalar(class Cls {}))
 
-  t.ok(l.isScalar())
-  t.ok(l.isScalar(null))
   t.ok(l.isScalar(false))
   t.ok(l.isScalar(true))
   t.ok(l.isScalar(0))
@@ -854,7 +883,6 @@ t.test(function test_isScalar() {
   t.ok(l.isScalar(10n))
   t.ok(l.isScalar(``))
   t.ok(l.isScalar(`str`))
-  t.ok(l.isScalar(Symbol()))
   t.ok(l.isScalar(new Boolean()))
   t.ok(l.isScalar(new Number()))
   t.ok(l.isScalar(new String()))
@@ -872,7 +900,7 @@ t.test(function test_isInst() {
   // t.throws(() => l.isInst({}), TypeError, `expected variant of isCls, got undefined`)
   // t.throws(() => l.isInst({}, `str`), TypeError, `expected variant of isCls, got "str"`)
   // t.throws(() => l.isInst({}, () => {}), TypeError, `expected variant of isCls, got [function () => {}]`)
-  // t.throws(() => l.isInst(nop, Function), TypeError, `expected variant of isCls, got [function Function]`)
+  // t.throws(() => l.isInst(l.nop, Function), TypeError, `expected variant of isCls, got [function Function]`)
 
   t.no(l.isInst(null,   Object))
   t.no(l.isInst(Object, Object))
@@ -962,11 +990,71 @@ t.test(function test_hasMeth() {
   t.ok(l.hasMeth([], `toString`))
   t.ok(l.hasMeth(new Number(10), `toString`))
   t.ok(l.hasMeth(new String(`str`), `toString`))
-  t.ok(l.hasMeth(nop, `toString`))
-  t.ok(l.hasMeth(nop, `call`))
-  t.ok(l.hasMeth(nop, `bind`))
+  t.ok(l.hasMeth(l.nop, `toString`))
+  t.ok(l.hasMeth(l.nop, `call`))
+  t.ok(l.hasMeth(l.nop, `bind`))
   t.ok(l.hasMeth({key() {}}, `key`))
 })
+
+t.test(function test_setProto() {
+  class BrokenSuper {
+    constructor() {return Object.create(BrokenSuper.prototype)}
+  }
+
+  class UnfixedSub extends BrokenSuper {}
+
+  class FixedSub extends BrokenSuper {
+    constructor() {l.setProto(super(), new.target)}
+  }
+
+  t.is(Object.getPrototypeOf(new BrokenSuper()), BrokenSuper.prototype)
+  t.is(Object.getPrototypeOf(new UnfixedSub()), BrokenSuper.prototype)
+  t.is(Object.getPrototypeOf(new FixedSub()), FixedSub.prototype)
+})
+
+t.test(function test_npo() {
+  testNpo(l.npo())
+  t.isnt(l.npo(), l.npo())
+})
+
+function testNpo(val) {
+  t.is(Object.getPrototypeOf(val), null)
+  testEmpty(val)
+}
+
+t.test(function test_Emp() {
+  t.test(function test_proto() {
+    const val = l.Emp.prototype
+
+    t.is(Object.getPrototypeOf(val), null)
+
+    t.no(val instanceof Object)
+
+    t.eq(Object.getOwnPropertyDescriptors(val), {
+      constructor: {
+        value: l.Emp,
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      },
+    })
+
+    t.no(`toString` in val)
+  })
+
+  t.inst(new l.Emp(), l.Emp)
+  testEmpty(new l.Emp())
+
+  class Sub extends l.Emp {}
+  t.inst(new Sub(), Sub)
+  testEmpty(new Sub())
+})
+
+function testEmpty(val) {
+  t.no(val instanceof Object)
+  t.own(val, {})
+  t.no(`toString` in val)
+}
 
 t.test(function test_req() {
   t.test(function test_invalid() {
@@ -1500,12 +1588,6 @@ t.test(function test_dec() {
   t.is(l.dec(NaN), NaN - 1)
   t.is(l.dec(-2), -2 - 1)
   t.is(l.dec(2), 2 - 1)
-})
-
-t.test(function test_npo() {
-  t.eq(l.npo(), Object.create(null))
-  t.is(Object.getPrototypeOf(l.npo()), null)
-  t.isnt(l.npo(), l.npo())
 })
 
 t.test(function test_vac() {

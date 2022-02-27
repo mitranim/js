@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as ti from '{{url}}/time.mjs'
+import * as ti from '{{featUrl}}'
 ```
 
 ## API

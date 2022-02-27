@@ -1,8 +1,6 @@
 ## Overview
 
-{{codeHead}} provides tools for manipulating JS objects and plain dicts.
-
-Port and rework of https://github.com/mitranim/fpx.
+{{codeHead}} provides tools for manipulating JS objects in weird ways.
 
 ## TOC
 
@@ -11,7 +9,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as o from '{{url}}/obj.mjs'
+import * as o from '{{featUrl}}'
 ```
 
 ## API

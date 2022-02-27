@@ -7,7 +7,7 @@ Reference: https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 JS doesn't support multiline regexes. To read and edit this, manually reformat
 into multiline, then combine back into one line.
 */
-export const RE_URL = /^(?:(?<scheme>[A-Za-z][\w+.-]*):(?:(?<slash>[/][/])(?:(?<username>[^\s/?#@:]*)(?::(?<password>[^\s/?#@]*))?@)?(?<hostname>[^\s/?#:]*)(?::(?<port>\d*))?)?)?(?<pathname>[^\s?#]*)(?:[?](?<search>[^\s#]*))?(?:[#](?<hash>[^\s]*))?$/
+export const RE_URL = /^(?:(?<scheme>[A-Za-z][\w+.-]*):(?:(?<slash>[/][/])(?:(?<username>[^\s/?#@:]*)(?::(?<password>[^\s/?#@]*))?@)?(?<hostname>[^\s/?#:]*)(?::(?<port>\d*))?)?)?(?<pathname>[^\s?#]*)(?:[?](?<query>[^\s#]*))?(?:[#](?<hash>[^\s]*))?$/
 export const RE_SCHEME = /^[A-Za-z][\w+.-]*$/
 export const RE_SLASH = /^[/]*$/
 export const RE_PROTOCOL = /^(?:(?<scheme>[A-Za-z][\w+.-]*):(?<slash>[/][/])?)?$/
@@ -20,15 +20,15 @@ export const RE_ORIGIN = /^(?:(?<scheme>[A-Za-z][\w+.-]*):(?:(?<slash>[/][/])(?:
 export const RE_PATHNAME = /^[^\s?#]*$/
 export const RE_HASH = /^\S*$/
 
-export function search(val) {return new Search(val)}
-export function toSearch(val) {return l.toInst(val, Search)}
+export function query(val) {return new Query(val)}
+export function toQuery(val) {return l.toInst(val, Query)}
 
 export function url(val) {return new Url(val)}
 export function toUrl(val) {return l.toInst(val, Url)}
 
 export function urlJoin(val, ...vals) {return Url.join(val, ...vals)}
 
-export class Search extends s.StrMap {
+export class Query extends s.StrMap {
   mut(val) {
     if (l.isStr(val)) return this.mutFromStr(val)
     return super.mut(val)
@@ -43,8 +43,8 @@ export class Search extends s.StrMap {
     return this
   }
 
-  dec(val) {return searchDec(val)}
-  enc(val) {return searchEnc(val)}
+  dec(val) {return queryDec(val)}
+  enc(val) {return queryEnc(val)}
 
   toURLSearchParams() {
     const out = new URLSearchParams()
@@ -52,6 +52,7 @@ export class Search extends s.StrMap {
     return out
   }
 
+  // TODO consider another method that ALWAYS prepends `?`.
   toStringFull() {return toSearchFull(this.toString())}
 
   toString() {
@@ -66,8 +67,16 @@ export class Search extends s.StrMap {
   toJSON() {return this.toString() || null}
 }
 
-export class Url {
+/*
+Our lexicon is somewhere between IETF
+
+Reference:
+
+  https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
+*/
+export class Url extends l.Emp {
   constructor(val) {
+    super()
     this[schemeKey] = ``
     this[slashKey] = ``
     this[usernameKey] = ``
@@ -75,7 +84,7 @@ export class Url {
     this[hostnameKey] = ``
     this[portKey] = ``
     this[pathnameKey] = ``
-    this[searchKey] = ``
+    this[queryKey] = ``
     this[hashKey] = ``
     if (!isEmpty(val)) this.reset(val)
   }
@@ -109,23 +118,23 @@ export class Url {
   get pathname() {return this[pathnameKey]}
   set pathname(val) {this[pathnameKey] = toPathname(val)}
 
-  get search() {return this[searchKey] + ``}
-  set search(val) {this[searchKey] = encodeURI(unSearch(l.laxStr(val), this.Search.name))}
+  get search() {return String(this[queryKey])}
+  set search(val) {this[queryKey] = encodeURI(unSearch(l.laxStr(val), this.Query.name))}
 
-  get searchParams() {
-    let val = this[searchKey]
-    const cls = this.Search
-    if (!l.isInst(val, cls)) this[searchKey] = val = new cls(val)
+  get query() {
+    let val = this[queryKey]
+    const cls = this.Query
+    if (!l.isInst(val, cls)) this[queryKey] = val = new cls(val)
     return val
   }
 
-  set searchParams(val) {
+  set query(val) {
     if (l.isNil(val) || l.isStr(val)) this.search = val
-    else this.searchParams.reset(val)
+    else this.query.reset(val)
   }
 
-  get query() {return this.searchParams}
-  set query(val) {this.searchParams = val}
+  get searchParams() {return this.query}
+  set searchParams(val) {this.query = val}
 
   get hash() {return this[hashKey]}
   set hash(val) {this[hashKey] = unHash(toHash(val))}
@@ -133,34 +142,33 @@ export class Url {
   get protocol() {return this.schemeFull() + this.slash}
 
   set protocol(val) {
-    const gr = reqGroups(val, RE_PROTOCOL, `protocol`)
-    this.slash = gr.slash
-    this.scheme = gr.scheme
+    const gro = reqGroups(val, RE_PROTOCOL, `protocol`)
+    this.slash = gro.slash
+    this.scheme = gro.scheme
   }
 
   get host() {return s.optSuf(this.hostname, this.portFull())}
 
   set host(val) {
     if (val && !this[slashKey]) throw errSlash(`host`)
-    const gr = reqGroups(val, RE_HOST, `host`)
-    this[hostnameKey] = l.laxStr(gr.hostname)
-    this[portKey] = l.laxStr(gr.port)
+    const gro = reqGroups(val, RE_HOST, `host`)
+    this[hostnameKey] = l.laxStr(gro.hostname)
+    this[portKey] = l.laxStr(gro.port)
   }
 
   get origin() {return s.optPre(this.host, this.protocol)}
 
   set origin(val) {
-    const gr = reqGroups(val, RE_ORIGIN, `origin`)
-    this[hostnameKey] = l.laxStr(gr.hostname)
-    this[portKey] = l.laxStr(gr.port)
-    this.username = l.laxStr(gr.username)
-    this.password = l.laxStr(gr.password)
-    this.slash = l.laxStr(gr.slash)
-    this.scheme = l.laxStr(gr.scheme)
+    const gro = reqGroups(val, RE_ORIGIN, `origin`)
+    this[hostnameKey] = l.laxStr(gro.hostname)
+    this[portKey] = l.laxStr(gro.port)
+    this.username = l.laxStr(gro.username)
+    this.password = l.laxStr(gro.password)
+    this.slash = l.laxStr(gro.slash)
+    this.scheme = l.laxStr(gro.scheme)
   }
 
-  // TODO: when scheme or slash is missing, auth and host should be excluded.
-  get href() {return `${this.protocol}${this.authFull()}${this.hostPath()}${this.searchFull()}${this.hashFull()}`}
+  get href() {return this.clean() + this.searchFull() + this.hashFull()}
   set href(val) {this.reset(val)}
 
   setScheme(val) {return this.scheme = val, this}
@@ -172,8 +180,8 @@ export class Url {
   setPathname(val) {return this.pathname = val, this}
   setSearch(val) {return this.search = val, this}
   setSearchParams(val) {return this.searchParams = val, this}
-  setQuery(val) {return this.searchParams = val, this}
-  mutQuery(val) {return this.searchParams.mut(val), this}
+  setQuery(val) {return this.query = val, this}
+  mutQuery(val) {return this.query.mut(val), this}
   setHash(val) {return this.hash = val, this}
   setHashExact(val) {return this[hashKey] = toHash(val), this}
   setProtocol(val) {return this.protocol = val, this}
@@ -188,9 +196,9 @@ export class Url {
   withHostname(val) {return this.clone().setHostname(val)}
   withPort(val) {return this.clone().setPort(val)}
   withPathname(val) {return this.clone().setPathname(val)}
-  withSearch(val) {return this.withSearchParams(val)}
-  withSearchParams(val) {return this.withoutSearchParams().setQuery(val)}
-  withQuery(val) {return this.withSearchParams(val)}
+  withSearch(val) {return this.withoutQuery().setSearch(val)}
+  withSearchParams(val) {return this.withQuery(val)}
+  withQuery(val) {return this.withoutQuery().setQuery(val)}
   withHash(val) {return this.clone().setHash(val)}
   withHashExact(val) {return this.clone().setHashExact(val)}
   withProtocol(val) {return this.clone().setProtocol(val)}
@@ -198,11 +206,11 @@ export class Url {
   withOrigin(val) {return this.clone().setOrigin(val)}
   withHref(val) {return this.clone().setHref(val)}
 
-  withoutSearchParams() {
-    const val = this[searchKey]
-    this[searchKey] = ``
+  withoutQuery() {
+    const val = this[queryKey]
+    this[queryKey] = ``
     try {return this.clone()}
-    finally {this[searchKey] = val}
+    finally {this[queryKey] = val}
   }
 
   schemeFull() {return s.optSuf(this[schemeKey], `:`)}
@@ -216,6 +224,14 @@ export class Url {
   authFull() {return s.optSuf(this.auth(), `@`)}
   rel() {return this.pathname + this.searchFull() + this.hashFull()}
 
+  /*
+  Very similar to `.origin` but includes auth and pathname. This omits only
+  query and hash. See https://en.wikipedia.org/wiki/Clean_URL which seems to
+  describe the same concept.
+  */
+  clean() {return this.protocol + this.authFull() + this.hostPath()}
+
+  withPath(...val) {return this.clone().setPath(...val)}
   setPath(...val) {return this.setPathname().addPath(...val)}
   addPath(...val) {return val.forEach(this.addSeg, this), this}
 
@@ -234,26 +250,28 @@ export class Url {
     return this
   }
 
+  // TODO: consider supporting `window.Location` for better performance.
+  // Benchmark first. Avoid code bloat.
   reset(val) {
     if (l.isNil(val)) return this.clear()
     if (l.isStr(val)) return this.resetFromStr(val)
     if (isURL(val)) return this.resetFromURL(val)
     if (isUrl(val)) return this.resetFromUrl(val)
-    if (isLoc(val)) return this.resetFromStr(val.href)
+    if (isUrlLike(val)) return this.resetFromStr(val.href)
     throw l.errInst(val, this)
   }
 
   resetFromStr(val) {
-    const gr = urlParse(val)
-    this[schemeKey] = l.laxStr(gr.scheme)
-    this[slashKey] = l.laxStr(gr.slash)
-    this[usernameKey] = l.laxStr(gr.username)
-    this[passwordKey] = l.laxStr(gr.password)
-    this[hostnameKey] = l.laxStr(gr.hostname)
-    this[portKey] = l.laxStr(gr.port)
-    this[pathnameKey] = l.laxStr(gr.pathname)
-    this.search = l.laxStr(gr.search)
-    this[hashKey] = l.laxStr(gr.hash)
+    const gro = urlParse(val)
+    this[schemeKey] = l.laxStr(gro.scheme)
+    this[slashKey] = l.laxStr(gro.slash)
+    this[usernameKey] = l.laxStr(gro.username)
+    this[passwordKey] = l.laxStr(gro.password)
+    this[hostnameKey] = l.laxStr(gro.hostname)
+    this[portKey] = l.laxStr(gro.port)
+    this[pathnameKey] = l.laxStr(gro.pathname)
+    this.search = l.laxStr(gro.query)
+    this[hashKey] = l.laxStr(gro.hash)
     return this
   }
 
@@ -266,7 +284,7 @@ export class Url {
     this[hostnameKey] = val.hostname
     this[portKey] = val.port
     this[pathnameKey] = val.pathname
-    this.searchParams.reset(val.searchParams)
+    this.query.reset(val.searchParams)
     this[hashKey] = unHash(val.hash)
     return this
   }
@@ -280,7 +298,7 @@ export class Url {
     this[hostnameKey] = val[hostnameKey]
     this[portKey] = val[portKey]
     this[pathnameKey] = val[pathnameKey]
-    this.searchParams = val[searchKey]
+    this.query = val[queryKey]
     this[hashKey] = val[hashKey]
     return this
   }
@@ -293,7 +311,7 @@ export class Url {
     this[hostnameKey] = ``
     this[portKey] = ``
     this[pathnameKey] = ``
-    this[searchKey] = ``
+    this[queryKey] = ``
     this[hashKey] = ``
   }
 
@@ -303,8 +321,7 @@ export class Url {
   toJSON() {return this.toString() || null}
   valueOf() {return this.href}
 
-  get Search() {return Search}
-  get [Symbol.toStringTag]() {return this.constructor.name}
+  get Query() {return Query}
 
   static join(val, ...vals) {return new this(val).addPath(...vals)}
 }
@@ -316,7 +333,7 @@ export const passwordKey = Symbol.for(`password`)
 export const hostnameKey = Symbol.for(`hostname`)
 export const portKey = Symbol.for(`port`)
 export const pathnameKey = Symbol.for(`pathname`)
-export const searchKey = Symbol.for(`search`)
+export const queryKey = Symbol.for(`query`)
 export const hashKey = Symbol.for(`hash`)
 
 export function urlParse(val) {return reqGroups(val, RE_URL, `URL`)}
@@ -341,7 +358,7 @@ function toPathname(val) {return toStrWith(val, RE_PATHNAME, `pathname`)}
 function toHash(val) {return toStrWith(val, RE_HASH, `hash`)}
 
 function encodePort(val) {
-  if (l.isNat(val)) return val + ``
+  if (l.isNat(val)) return String(val)
   return toStrWith(val, RE_PORT, `port`)
 }
 
@@ -373,23 +390,19 @@ function reqSlash(val, slash, msg) {
   return val
 }
 
-export function isUrlLike(val) {
-  return l.isStr(val) || isURL(val) || isUrl(val) || isLoc(val)
-}
-
 function isEmpty(val) {return l.isNil(val) || val === ``}
 function isURL(val) {return l.isInst(val, URL)}
 function isUrl(val) {return l.isInst(val, Url)}
-function isLoc(val) {return typeof Location === `function` && l.isInst(val, Location)}
+function isUrlLike(val) {return l.isStruct(val) && `href` in val}
 
 // Needs optimization. This is currently our bottleneck.
-export function searchDec(val) {
+export function queryDec(val) {
   if (val.includes(`+`)) val = val.replace(/[+]/g, ` `)
   return decodeURIComponent(val)
 }
 
 // Needs optimization. This is currently one of our bottlenecks.
-export function searchEnc(val) {
+export function queryEnc(val) {
   val = encodeURIComponent(val)
   if (val.includes(`%20`)) val = val.replace(/%20/g, `+`)
   return val

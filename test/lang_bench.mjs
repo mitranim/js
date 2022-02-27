@@ -10,7 +10,7 @@ import * as l from '../lang.mjs'
 const someArr = []
 const someProm = Promise.resolve()
 const someDate = new Date(1024)
-const dictEmpty = Object.freeze(l.npo())
+const dictEmpty = Object.freeze(Object.create(null))
 const someStr = `hello world`
 
 class DateSub extends Date {
@@ -29,6 +29,13 @@ class Shallow {
 }
 
 const shallow = new Shallow()
+
+/*
+Word of warning: class prototypes are never null and never completely empty.
+It's possible to use symbolic and private methods to avoid collision with
+properties, but the prototype always has `.constructor`.
+*/
+class EmpSub extends l.Emp {}
 
 /* Util */
 
@@ -104,6 +111,10 @@ t.bench(function bench_isList_nil() {l.nop(l.isList())})
 t.bench(function bench_isList_miss() {l.nop(l.isList(someProm))})
 t.bench(function bench_isList_hit() {l.nop(l.isList(someArr))})
 
+t.bench(function bench_isStruct_nil() {l.nop(l.isStruct())})
+t.bench(function bench_isStruct_miss() {l.nop(l.isStruct(someArr))})
+t.bench(function bench_isStruct_hit() {l.nop(l.isStruct(someDate))})
+
 t.bench(function bench_isPromise_asm_nil() {l.nop(isPromiseAsm())})
 t.bench(function bench_isPromise_asm_miss() {l.nop(isPromiseAsm(someArr))})
 t.bench(function bench_isPromise_asm_hit() {l.nop(isPromiseAsm(someProm))})
@@ -170,5 +181,17 @@ t.bench(function bench_keys_nil_tricky() {l.nop(keysTricky())})
 
 t.bench(function bench_keys_empty_dumb() {l.nop(keysDumb(dictEmpty))})
 t.bench(function bench_keys_empty_tricky() {l.nop(keysTricky(dictEmpty))})
+
+const empty = Object.create(null)
+t.bench(function bench_empty_Object_create_null() {l.nop(Object.create(null))})
+t.bench(function bench_empty_Object_create_Object_create_null() {l.nop(Object.create(empty))})
+t.bench(function bench_empty_npo() {l.nop(l.npo())})
+t.bench(function bench_empty_Emp_new() {l.nop(new l.Emp())})
+t.bench(function bench_empty_Emp_sub_new() {l.nop(new EmpSub())})
+
+const emptyNotFrozen = new l.Emp()
+const emptyFrozen = Object.freeze(new l.Emp())
+t.bench(function bench_Object_isFrozen_miss() {l.nop(Object.isFrozen(emptyNotFrozen))})
+t.bench(function bench_Object_isFrozen_hit() {l.nop(Object.isFrozen(emptyFrozen))})
 
 if (import.meta.main) t.deopt(), t.benches()

@@ -4,7 +4,7 @@ Like [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) but much bett
 type UrlLike    = string | Url | URL | Location
 type StrLike    = boolean | number | string
 type StrDictLax = Record<string, string | string[]>
-type SearchLike = string | Search | URLSearchParams | StrDictLax
+type QueryLike  = string | Query | URLSearchParams | StrDictLax
 
 class Url {
   constructor(src?: UrlLike)
@@ -19,8 +19,8 @@ class Url {
   port:         string
   pathname:     string
   search:       string // Without leading '?'.
-  searchParams: Search
-  query:        Search
+  searchParams: Query
+  query:        Query
   hash:         string // Without leading '#'.
   protocol:     string
   host:         string
@@ -38,8 +38,8 @@ class Url {
   setPort         (val?: number | string): Url
   setPathname     (val?: string): Url
   setSearch       (val?: string): Url
-  setSearchParams (val?: SearchLike): Url
-  setQuery        (val?: SearchLike): Url
+  setSearchParams (val?: QueryLike): Url
+  setQuery        (val?: QueryLike): Url
   setHash         (val?: string): Url
   setHashExact    (val?: string): Url
   setProtocol     (val?: string): Url
@@ -56,8 +56,8 @@ class Url {
   withPort         (val?: number | string): Url
   withPathname     (val?: string): Url
   withSearch       (val?: string): Url
-  withSearchParams (val?: SearchLike): Url
-  withQuery        (val?: SearchLike): Url
+  withSearchParams (val?: QueryLike): Url
+  withQuery        (val?: QueryLike): Url
   withHash         (val?: string): Url
   withHashExact    (val?: string): Url
   withProtocol     (val?: string): Url
@@ -101,7 +101,7 @@ class Url {
 
   // Class used internally for instantiating `.searchParams`.
   // Can override in subclass.
-  get Search(): {new(): Search}
+  get Query(): {new(): Query}
 
   // Shortcut for `new this(val).setPath(...vals)`.
   static join(val: UrlLike, ...vals: StrLike[]): Url

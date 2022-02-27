@@ -8,7 +8,7 @@ import './time_bench.mjs'
 import './url_bench.mjs'
 import './http_bench.mjs'
 import './arr_bench.mjs'
-import './ren_dom_bench.mjs'
+import './ren_base_bench.mjs'
 import './cli_bench.mjs'
 import './test_bench.mjs'
 

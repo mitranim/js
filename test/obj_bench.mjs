@@ -32,9 +32,40 @@ class Shallow {
 }
 
 const shallowLax = new Shallow()
-const shallowStrict = o.strict(new Shallow())
+const shallowStrict = o.StrictPh.of(new Shallow())
 
-function isEven(val) {return !(val % 2)}
+class NonEnumDefprop {
+  constructor(val) {
+    Object.defineProperty(this, `key`, {
+      value: val,
+      writable: true,
+      enumerable: false,
+      configurable: true,
+    })
+  }
+
+  set(val) {return this.key = val, this}
+  get() {return this.key}
+}
+
+const keySym = Symbol.for(`key`)
+
+class NonEnumSym {
+  constructor(val) {this[keySym] = val}
+  set(val) {return this[keySym] = val, this}
+  get() {return this[keySym]}
+}
+
+class NonEnumPriv {
+  #val = undefined
+  constructor(val) {this.#val = val}
+  set(val) {return this.#val = val, this}
+  get() {return this.#val}
+}
+
+const nonEnumDefprop = new NonEnumDefprop(10).set(20).set(30)
+const nonEnumSym = new NonEnumSym(10).set(20).set(30)
+const nonEnumPriv = new NonEnumPriv(10).set(20).set(30)
 
 /* Bench */
 
@@ -75,31 +106,41 @@ t.bench(function bench_Object_getPrototypeOf() {
   l.nop(Object.getPrototypeOf(shallowLax))
 })
 
-t.bench(function bench_assign_Object_assign() {l.reqDict(Object.assign(l.npo(), itc.numDict))})
-t.bench(function bench_assign_our_assign() {l.reqDict(o.assign(l.npo(), itc.numDict))})
-t.bench(function bench_assign_our_patch() {l.reqDict(o.patch(l.npo(), itc.numDict))})
-t.bench(function bench_assign_lodash_assign() {l.reqDict(lo.assign(l.npo(), itc.numDict))})
-
-itc.deoptDictHof(o.mapDict)
-itc.deoptDictHof(lo.mapValues)
-itc.deoptDictHof(o.pick)
-itc.deoptDictHof(lo.pickBy)
-itc.deoptDictHof(o.omit)
-itc.deoptDictHof(lo.omitBy)
-t.bench(function bench_map_dict_our_mapDict() {l.reqDict(o.mapDict(itc.numDict, l.inc))})
-t.bench(function bench_map_dict_lodash_mapValues() {l.reqDict(lo.mapValues(itc.numDict, l.inc))})
-t.bench(function bench_pick_our_pick() {l.reqDict(o.pick(itc.numDict, isEven))})
-t.bench(function bench_pick_lodash_pickBy() {l.reqDict(lo.pickBy(itc.numDict, isEven))})
-t.bench(function bench_omit_our_omit() {l.reqDict(o.omit(itc.numDict, isEven))})
-t.bench(function bench_omit_lodash_omitBy() {l.reqDict(lo.omitBy(itc.numDict, isEven))})
-
-t.bench(function bench_pickKeys_our_pickKeys() {l.reqDict(o.pickKeys(itc.numDict, itc.knownKeys))})
-t.bench(function bench_pickKeys_lodash_pick() {l.reqDict(lo.pick(itc.numDict, itc.knownKeys))})
-t.bench(function bench_omitKeys_our_omitKeys() {l.reqDict(o.omitKeys(itc.numDict, itc.knownKeys))})
-t.bench(function bench_omitKeys_lodash_omit() {l.reqDict(lo.omit(itc.numDict, itc.knownKeys))})
+t.bench(function bench_assign_Object_assign() {l.reqStruct(Object.assign(l.npo(), itc.numDict))})
+t.bench(function bench_assign_our_assign() {l.reqStruct(o.assign(l.npo(), itc.numDict))})
+t.bench(function bench_assign_our_patch() {l.reqStruct(o.patch(l.npo(), itc.numDict))})
+t.bench(function bench_assign_lodash_assign() {l.reqStruct(lo.assign(l.npo(), itc.numDict))})
 
 const frozen = freeze({})
 t.bench(function bench_object_freeze_new() {l.nop(freeze({}))})
 t.bench(function bench_object_freeze_frozen() {l.nop(freeze(frozen))})
+
+/*
+Results in V8 at the time of writing:
+
+  * `Object.defineProperty` is incredibly slow to execute.
+  * Other differences are insignificant.
+
+Conclusion: hide fields via symbols or #private, not `Object.defineProperty`.
+*/
+t.bench(function bench_non_enum_construct_defprop() {l.nop(new NonEnumDefprop(10))})
+t.bench(function bench_non_enum_construct_sym() {l.nop(new NonEnumSym(10))})
+t.bench(function bench_non_enum_construct_priv() {l.nop(new NonEnumPriv(10))})
+
+t.bench(function bench_non_enum_set_defprop() {l.nop(nonEnumDefprop.set(40))})
+t.bench(function bench_non_enum_set_sym() {l.nop(nonEnumSym.set(40))})
+t.bench(function bench_non_enum_set_priv() {l.nop(nonEnumPriv.set(40))})
+
+t.bench(function bench_non_enum_get_defprop() {l.nop(nonEnumDefprop.get())})
+t.bench(function bench_non_enum_get_sym() {l.nop(nonEnumSym.get())})
+t.bench(function bench_non_enum_get_priv() {l.nop(nonEnumPriv.get())})
+
+t.bench(function bench_non_enum_construct_get_defprop() {l.nop(new NonEnumDefprop(10).get())})
+t.bench(function bench_non_enum_construct_get_sym() {l.nop(new NonEnumSym(10).get())})
+t.bench(function bench_non_enum_construct_get_priv() {l.nop(new NonEnumPriv(10).get())})
+
+t.bench(function bench_non_enum_construct_set_get_defprop() {l.nop(new NonEnumDefprop(10).set(20).get())})
+t.bench(function bench_non_enum_construct_set_get_sym() {l.nop(new NonEnumSym(10).set(20).get())})
+t.bench(function bench_non_enum_construct_set_get_priv() {l.nop(new NonEnumPriv(10).set(20).get())})
 
 if (import.meta.main) t.deopt(), t.benches()

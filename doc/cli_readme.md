@@ -22,7 +22,7 @@
 CLI args:
 
 ```js
-import * as cl from '{{url}}/cli.mjs'
+import * as cl from '{{featUrl}}'
 
 const cli = cl.Flag.os()
 
@@ -33,7 +33,7 @@ console.log(...cli.args)
 Console clearing:
 
 ```js
-import * as cl from '{{url}}/cli.mjs'
+import * as cl from '{{featUrl}}'
 
 cl.emptty()
 ```

@@ -23,10 +23,7 @@ restrictive APIs, and traversing data structures to freeze them is a massive
 waste of performance. We encourage assertions, but this is much more
 restrictive and expensive. It should be done in tests only.
 */
-function freeze(val) {
-  if (l.isComp(val)) i.each(Object.freeze(val), freeze)
-  return val
-}
+function freeze(val) {return i.each(val, freeze), Object.freeze(val)}
 
 /* Test */
 
@@ -187,5 +184,153 @@ function testDurResetFromStruct(make) {
   test({years: 10, months: 20})
   durNonZeros.forEach(test)
 }
+
+t.test(function test_DateShort() {
+  testDateShortString(ti.DateShort)
+
+  t.test(function test_toJSON() {
+    function test(src, exp) {
+      t.is(JSON.stringify(new ti.DateShort(src)), JSON.stringify(exp))
+    }
+
+    test(`0001-01-01`, `0001-01-01T00:00:00.000Z`)
+    test(`1234-05-06`, `1234-05-06T00:00:00.000Z`)
+    test(`2345-01-23T07:53:21.000Z`, `2345-01-23T07:53:21.000Z`)
+  })
+})
+
+t.test(function test_DateShortJson() {
+  testDateShortString(ti.DateShortJson)
+
+  t.test(function test_toJSON() {
+    testDateShort(function test(src, exp) {
+      t.is(JSON.stringify(new ti.DateShortJson(src)), JSON.stringify(exp))
+    })
+  })
+})
+
+function testDateShortString(cls) {
+  testDateShort(function test(src, exp) {
+    t.is(new cls(src).toString(), exp)
+  })
+}
+
+function testDateShort(test) {
+  test(`0001-01-01`, `0001-01-01`)
+  test(`1234-05-06`, `1234-05-06`)
+  test(`12345-06-07`, `12345-06-07`)
+  test(`123456-07-08`, `123456-07-08`)
+  test(`2345-01-23T07:53:21.000Z`, `2345-01-23`)
+}
+
+t.test(function test_Pico() {
+  const val = new ti.Pico(1_234_567_890_123)
+
+  t.is(val.pico(), 1_234_567_890_123)
+  t.is(val.nano(), 1_234_567_890.123)
+  t.is(val.micro(), 1_234_567.890_123)
+  t.is(val.milli(), 1_234.567_890_123)
+  t.is(val.sec(), 1.234_567_890_123)
+
+  t.is(val.picoStr(), `1234567890123 ps`)
+  t.is(val.nanoStr(), `1234567890.123 ns`)
+  t.is(val.microStr(), `1234567.890123 µs`)
+  t.is(val.milliStr(), `1234.567890123 ms`)
+  t.is(val.secStr(), `1.234567890123 s`)
+
+  t.is(val.toString(), val.picoStr())
+})
+
+t.test(function test_Nano() {
+  const val = new ti.Nano(1_234_567_890_123)
+
+  t.is(val.pico(), 1_234_567_890_123_000)
+  t.is(val.nano(), 1_234_567_890_123)
+  t.is(val.micro(), 1_234_567_890.123)
+  t.is(val.milli(), 1_234_567.890_123)
+  t.is(val.sec(), 1_234.567_890_123)
+
+  t.is(val.picoStr(), `1234567890123000 ps`)
+  t.is(val.nanoStr(), `1234567890123 ns`)
+  t.is(val.microStr(), `1234567890.123 µs`)
+  t.is(val.milliStr(), `1234567.890123 ms`)
+  t.is(val.secStr(), `1234.567890123 s`)
+
+  t.is(val.toString(), val.nanoStr())
+})
+
+t.test(function test_Micro() {
+  const val = new ti.Micro(1_234_567_890_123)
+
+  t.is(val.pico(), 1_234_567_890_123_000_000)
+  t.is(val.nano(), 1_234_567_890_123_000)
+  t.is(val.micro(), 1_234_567_890_123)
+  t.is(val.milli(), 1_234_567_890.123)
+  t.is(val.sec(), 1_234_567.890_123)
+
+  t.is(val.picoStr(), `1234567890123000000 ps`)
+  t.is(val.nanoStr(), `1234567890123000 ns`)
+  t.is(val.microStr(), `1234567890123 µs`)
+  t.is(val.milliStr(), `1234567890.123 ms`)
+  t.is(val.secStr(), `1234567.890123 s`)
+
+  t.is(val.toString(), val.microStr())
+})
+
+t.test(function test_Milli() {
+  const val = new ti.Milli(1_234_567_890_123)
+
+  t.is(val.pico(), 1_234_567_890_123_000_000_000)
+  t.is(val.nano(), 1_234_567_890_123_000_000)
+  t.is(val.micro(), 1_234_567_890_123_000)
+  t.is(val.milli(), 1_234_567_890_123)
+  t.is(val.sec(), 1_234_567_890.123)
+
+  t.is(val.picoStr(), `1234567890123000000000 ps`)
+  t.is(val.nanoStr(), `1234567890123000000 ns`)
+  t.is(val.microStr(), `1234567890123000 µs`)
+  t.is(val.milliStr(), `1234567890123 ms`)
+  t.is(val.secStr(), `1234567890.123 s`)
+
+  t.is(val.toString(), val.milliStr())
+})
+
+t.test(function test_Sec() {
+  const val = new ti.Sec(1_234_567_890_123)
+
+  t.is(val.pico(), 1_234_567_890_123_000_000_000_000)
+  t.is(val.nano(), 1_234_567_890_123_000_000_000)
+  t.is(val.micro(), 1_234_567_890_123_000_000)
+  t.is(val.milli(), 1_234_567_890_123_000)
+  t.is(val.sec(), 1_234_567_890_123)
+
+  t.is(val.minute(), val.sec() / 60)
+  t.is(val.hour(), val.sec() / (60 * 60))
+
+  t.is(val.picoStr(), `1234567890123000000000000 ps`)
+  t.is(val.nanoStr(), `1234567890123000000000 ns`)
+  t.is(val.microStr(), `1234567890123000000 µs`)
+  t.is(val.milliStr(), `1234567890123000 ms`)
+  t.is(val.secStr(), `1234567890123 s`)
+
+  t.is(val.toString(), val.secStr())
+
+  t.test(function test_dur() {
+    t.eq(
+      new ti.Sec(0).dur(),
+      new ti.Dur(),
+    )
+
+    t.eq(
+      val.dur(),
+      new ti.Dur().setHours(342935525).setMinutes(2).setSeconds(3),
+    )
+
+    t.eq(
+      new ti.Sec(-val).dur(),
+      new ti.Dur().setHours(-342935525).setMinutes(-2).setSeconds(-3),
+    )
+  })
+})
 
 if (import.meta.main) console.log(`[test] ok!`)

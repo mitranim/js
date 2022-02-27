@@ -6,7 +6,7 @@ import * as i from '../iter.mjs'
 /* Util */
 
 function args() {return arguments}
-function arrgs(...args) {return args}
+function arrgs(...val) {return val}
 function toArgs(val) {return args(...(val ?? []))}
 function unreachable() {throw Error(`unreachable`)}
 async function* agen() {unreachable()}
@@ -29,6 +29,13 @@ function testMaps(src, fun) {
 function testColls(list, dict, fun) {
   testSeqs(list, fun)
   testMaps(dict, fun)
+}
+
+function testDictFunBasics(fun) {
+  t.throws(() => fun({}), TypeError, `expected variant of isFun, got undefined`)
+  t.throws(() => fun([], l.nop), TypeError, `expected variant of isStruct, got []`)
+  t.throws(() => fun(`str`, l.nop), TypeError, `expected variant of isStruct, got "str"`)
+  t.is(Object.getPrototypeOf(fun(undefined, l.nop)), null)
 }
 
 /* Test */
@@ -56,9 +63,9 @@ t.test(function test_more() {
 })
 
 t.test(function test_alloc() {
+  t.throws(() => i.alloc(), TypeError, `expected variant of isNat, got undefined`)
   t.throws(() => i.alloc(`10`), TypeError, `expected variant of isNat, got "10"`)
 
-  t.eq(i.alloc(), [])
   t.eq(i.alloc(0), Array(0))
   t.eq(i.alloc(1), Array(1))
   t.eq(i.alloc(2), Array(2))
@@ -66,7 +73,7 @@ t.test(function test_alloc() {
 
 t.test(function test_arr() {
   t.test(function test_invalid() {
-    testNoAsyncIter(i.arr)
+    testNoAsyncIterator(i.arr)
     t.throws(() => i.arr(10),        TypeError, `unable to convert 10 to array`)
     t.throws(() => i.arr(`str`),     TypeError, `unable to convert "str" to array`)
     t.throws(() => i.arr(l.nop),     TypeError, `unable to convert [function nop] to array`)
@@ -80,34 +87,18 @@ t.test(function test_arr() {
     test(null)
   })
 
-  t.test(function test_same_reference() {
-    function test(ref) {t.is(i.arr(ref), ref)}
-    test([])
-    test([10, 20, 30])
-  })
-
   testSeqs(
     [10, 20, 30],
-    function testSeq(make) {t.eq(i.arr(make()), [10, 20, 30])},
+    function testSeq(make) {
+      const src = make()
+      const out = i.arr(src)
+      t.isnt(src, out)
+      t.eq(out, [10, 20, 30])
+    },
   )
 
   // This is considered a list.
   t.eq(i.arr(new String(`str`)), [`s`, `t`, `r`])
-})
-
-// Delegates to `slice`. We only need to check the basics.
-t.test(function test_arrCopy() {
-  function test(val, exp) {
-    const out = i.arrCopy(val)
-    t.isnt(out, val)
-    t.eq(out, exp)
-  }
-
-  test(undefined, [])
-  test(null, [])
-
-  testSeqs([],           function testSeq(make) {test(make(), [])})
-  testSeqs([10, 20, 30], function testSeq(make) {test(make(), [10, 20, 30])})
 })
 
 t.test(function test_slice() {
@@ -139,18 +130,17 @@ t.test(function test_slice() {
 })
 
 /*
-This test doesn't use `testColls` or `testSeqs` because unlike most other
-functions, this one doesn't treat sets equivalently to arrays.
+Doesn't use `testColls` or `testSeqs` because list "keys" are indexes
+while set "keys" are values.
 */
 t.test(function test_keys() {
   testFunEmptyList(i.keys)
-  testNoAsyncIter(i.keys)
+  testNoIterator(i.keys)
 
   function test(src, exp) {t.eq(i.keys(src), exp)}
 
   test([10, 20],                      [0, 1])
   test(args(10, 20),                  [0, 1])
-  test(copygen([10, 20]),             [0, 1])
   test(new Set([10, 20]),             [10, 20])
   test({one: 10, two: 20},            [`one`, `two`])
   test(new Map([[10, 20], [30, 40]]), [10, 30])
@@ -161,61 +151,62 @@ t.test(function test_keys() {
   test({keys, [Symbol.iterator]: l.nop}, [10, 20])
 })
 
-/*
-This test doesn't use `testColls` or `testSeqs` because unlike most other
-functions, this one doesn't treat sets equivalently to arrays.
-*/
 t.test(function test_values() {
-  testFunEmptyList(i.values)
-  testNoAsyncIter(i.values)
+  testValues(i.values, l.nop)
 
-  function test(src, exp) {t.eq(i.values(src), exp)}
+  t.test(function test_reference() {
+    function same(val) {t.is(i.values(val), val)}
+    function diff(val) {t.isnt(i.values(val), val)}
 
-  test([10, 20],                      [10, 20])
-  test(args(10, 20),                  [10, 20])
-  test(copygen([10, 20]),             [10, 20])
-  test(new Set([10, 20]),             [10, 20])
-  test({one: 10, two: 20},            [10, 20])
-  test(new Map([[10, 20], [30, 40]]), [20, 40])
+    same([])
+    same([10, 20])
 
-  function values() {return [10, 20]}
-
-  test({values}, [values])
-  test({values, [Symbol.iterator]: l.nop}, [10, 20])
+    diff(new class extends Array {}())
+  })
 })
 
-// Delegates to `values`. We only need to check copying.
 t.test(function test_valuesCopy() {
-  testFunEmptyList(i.valuesCopy)
-
-  function test(val, exp) {
-    const out = i.valuesCopy(val)
-    t.isnt(out, val)
-    t.eq(out, exp)
-  }
-
-  testColls([], {}, function testEmpty(make) {test(make(), [])})
-
-  testColls(
-    [10, 20, 30],
-    {one: 10, two: 20, three: 30},
-    function testColl(make) {test(make(), [10, 20, 30])},
-  )
+  testValues(i.valuesCopy, t.isnt)
 })
+
+function testValues(fun, backref) {
+  testFunEmptyList(fun)
+  testNoAsyncIterator(fun)
+
+  t.test(function test_all() {
+    function test(src, exp) {t.eq(fun(src), exp)}
+
+    testColls(
+      [10, 20],
+      {one: 10, two: 20},
+      function testColl(make) {
+        const src = make()
+        const out = fun(src)
+        t.eq(out, [10, 20])
+        backref(out, src)
+      }
+    )
+
+    function values() {return [10, 20]}
+
+    test({values}, [values])
+    test({values, [Symbol.iterator]: l.nop}, [10, 20])
+  })
+}
 
 /*
-This test doesn't use `testColls` or `testSeqs` because unlike most other
-functions, this one doesn't treat sets equivalently to arrays.
+Doesn't use `testColls` or `testSeqs` because different sequences have different
+"keys". See `test_keys`. Also for iterators we simply collect their values.
 */
 t.test(function test_entries() {
   testFunEmptyList(i.entries)
-  testNoAsyncIter(i.entries)
+  testNoAsyncIterator(i.entries)
 
   function test(src, exp) {t.eq(i.entries(src), exp)}
 
   test([10, 20],                      [[0, 10], [1, 20]])
   test(args(10, 20),                  [[0, 10], [1, 20]])
-  test(copygen([10, 20]),             [[0, 10], [1, 20]])
+  test(copygen([10, 20]),             [10, 20])
   test(new Set([10, 20]),             [[10, 10], [20, 20]])
   test({one: 10, two: 20},            [[`one`, 10], [`two`, 20]])
   test(new Map([[10, 20], [30, 40]]), [[10, 20], [30, 40]])
@@ -355,7 +346,16 @@ function testFunEmpty(fun, zero) {
   t.eq(fun(new Map()), zero)
 }
 
-function testNoAsyncIter(fun) {
+function testNoIterator(fun) {
+  testNoSyncIterator(fun)
+  testNoAsyncIterator(fun)
+}
+
+function testNoSyncIterator(fun) {
+  t.throws(() => fun(copygen([])), TypeError, `unable to convert [object Generator]`)
+}
+
+function testNoAsyncIterator(fun) {
   t.throws(() => fun(agen()), TypeError, `unable to convert [object AsyncGenerator]`)
 }
 
@@ -874,7 +874,7 @@ t.test(function test_partition() {
 
 t.test(function test_sum() {
   testFunEmpty(i.sum, 0)
-  testNoAsyncIter(i.sum)
+  testNoAsyncIterator(i.sum)
 
   testColls(
     [NaN, 0, false, 10, `20`, undefined, {}, -21],
@@ -884,7 +884,7 @@ t.test(function test_sum() {
 })
 
 t.test(function test_zip() {
-  testNoAsyncIter(i.zip)
+  testNoAsyncIterator(i.zip)
 
   testSeqs(
     [[10, 20], [NaN, 30], [undefined, 40], [{}, 50], [60, 70]],
@@ -966,11 +966,11 @@ t.test(function test_repeat() {
   t.eq(i.repeat(3, `val`), [`val`, `val`, `val`])
 })
 
-t.test(function test_set() {
-  testFunEmptySet(i.set)
+t.test(function test_setFrom() {
+  testFunEmptySet(i.setFrom)
 
   t.test(function test_same_reference() {
-    function test(ref) {t.is(i.set(ref), ref)}
+    function test(ref) {t.is(i.setFrom(ref), ref)}
 
     test(new Set())
     test(new Set([10, 20, 30]))
@@ -979,7 +979,7 @@ t.test(function test_set() {
   })
 
   t.test(function test_convert() {
-    function test(src, exp) {t.eq(i.set(src), exp)}
+    function test(src, exp) {t.eq(i.setFrom(src), exp)}
 
     testColls(
       [10, 20, 10, 30],
@@ -989,7 +989,7 @@ t.test(function test_set() {
   })
 })
 
-// Delegates to `i.set`. We only need to test the copying.
+// Delegates to `i.setFrom`. We only need to test the copying.
 t.test(function test_setCopy() {
   testFunEmptySet(i.setCopy)
 
@@ -1004,6 +1004,70 @@ t.test(function test_setCopy() {
     {one: 10, two: 20, three: 10, four: 30},
     function testColl(make) {test(make(), new Set([10, 20, 30]))},
   )
+})
+
+t.test(function test_mapDict() {
+  testDictFunBasics(i.mapDict)
+
+  t.eq(i.mapDict(undefined, l.id), {})
+  t.eq(i.mapDict({}, l.id), {})
+  t.eq(i.mapDict({one: 10, two: 20}, l.inc), {one: 11, two: 21})
+})
+
+t.test(function test_pick() {
+  testDictFunBasics(i.pick)
+
+  t.eq(i.pick(undefined,            l.True), {})
+  t.eq(i.pick({},                   l.True), {})
+  t.eq(i.pick({one: 10, two: 20},   l.True), {one: 10, two: 20})
+  t.eq(i.pick({one: 10, two: 20},   l.False), {})
+  t.eq(i.pick({one: 10, two: `20`}, l.isFin), {one: 10})
+})
+
+t.test(function test_omit() {
+  testDictFunBasics(i.omit)
+
+  t.eq(i.omit(undefined,            l.True), {})
+  t.eq(i.omit({},                   l.True), {})
+  t.eq(i.omit({one: 10, two: 20},   l.True), {})
+  t.eq(i.omit({one: 10, two: 20},   l.False), {one: 10, two: 20})
+  t.eq(i.omit({one: 10, two: `20`}, l.isFin), {two: `20`})
+})
+
+t.test(function test_pickKeys() {
+  t.throws(() => i.pickKeys([]),    TypeError, `expected variant of isStruct, got []`)
+  t.throws(() => i.pickKeys(`str`), TypeError, `expected variant of isStruct, got "str"`)
+
+  t.is(Object.getPrototypeOf(i.pickKeys()), null)
+
+  t.eq(i.pickKeys(), {})
+  t.eq(i.pickKeys(undefined, []), {})
+  t.eq(i.pickKeys({}, undefined), {})
+  t.eq(i.pickKeys({}, []), {})
+
+  t.eq(i.pickKeys({one: 10, two: 20, three: 30}, []), {})
+  t.eq(i.pickKeys({one: 10, two: 20, three: 30}, [`one`]), {one: 10})
+  t.eq(i.pickKeys({one: 10, two: 20, three: 30}, [`two`]), {two: 20})
+  t.eq(i.pickKeys({one: 10, two: 20, three: 30}, [`three`]), {three: 30})
+  t.eq(i.pickKeys({one: 10, two: 20, three: 30}, [`one`, `two`]), {one: 10, two: 20})
+})
+
+t.test(function test_omitKeys() {
+  t.throws(() => i.omitKeys([]),    TypeError, `expected variant of isStruct, got []`)
+  t.throws(() => i.omitKeys(`str`), TypeError, `expected variant of isStruct, got "str"`)
+
+  t.is(Object.getPrototypeOf(i.omitKeys()), null)
+
+  t.eq(i.omitKeys(), {})
+  t.eq(i.omitKeys(undefined, []), {})
+  t.eq(i.omitKeys({}, undefined), {})
+  t.eq(i.omitKeys({}, []), {})
+
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, []), {one: 10, two: 20, three: 30})
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`one`]), {two: 20, three: 30})
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`two`]), {one: 10, three: 30})
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`three`]), {one: 10, two: 20})
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`one`, `two`]), {three: 30})
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

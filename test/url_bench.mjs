@@ -10,7 +10,7 @@ const {freeze} = Object
 const searchLong = `one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven`
 const searchEncLong = `one=two+three&four=five?six&seven=eight%20nine`
 
-const searchStructLong = freeze({one: [`two`, `three`], four: `five`, five: `six`, seven: `eight`, nine: [`ten`, `eleven`]})
+const queryStructLong = freeze({one: [`two`, `three`], four: `five`, five: `six`, seven: `eight`, nine: [`ten`, `eleven`]})
 
 const urlLong = `https://user:pass@one.two.three/four/five/six?one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven#hash`
 const urlShort = `https://example.com`
@@ -21,20 +21,21 @@ const uriUnescapedLong = searchLong
 const uriEscapedLong = encodeURIComponent(uriUnsafeLong)
 
 const decParamsLong = new URLSearchParams(searchLong)
-const decSearchLong = u.search(searchLong)
+const decQueryLong = u.query(searchLong)
 const decURLLong = new URL(urlLong)
 const decUrlLong = u.url(urlLong)
 const decUrlLongUnsearched = freeze(u.url(urlLong))
 const decUrlShort = u.url(urlShort)
-const undecSearchLong = freeze(u.search(searchLong))
+const undecQueryLong = freeze(u.query(searchLong))
 
-const mutSearch = u.search()
+const mutQuery = u.query()
 const mutUrl = u.url()
 
 /* Util */
 
-class Match {
+class Match extends l.Emp {
   constructor(val) {
+    super()
     this.scheme = val.scheme
     this.slash = val.slash
     this.username = val.username
@@ -42,11 +43,9 @@ class Match {
     this.hostname = val.hostname
     this.port = val.port
     this.pathname = val.pathname
-    this.search = val.search
+    this.query = val.query
     this.hash = val.hash
   }
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
 /* Bench */
@@ -59,38 +58,38 @@ if (iit.more) {
 }
 
 t.bench(function bench_new_Params() {l.nop(new URLSearchParams())})
-t.bench(function bench_new_Search() {l.nop(u.search())})
+t.bench(function bench_new_Query() {l.nop(u.query())})
 t.bench(function bench_new_URL() {l.nop(new URL(`a:`))}) // Unfair but blame the dumb API.
 t.bench(function bench_new_Url() {l.nop(u.url())})
 
-t.bench(function bench_Search_reset_str() {l.nop(mutSearch.reset(searchLong))})
-t.bench(function bench_Search_reset_Params() {l.nop(mutSearch.reset(decParamsLong))})
-t.bench(function bench_Search_reset_Search() {l.nop(mutSearch.reset(decSearchLong))})
-t.bench(function bench_Search_reset_struct() {l.nop(mutSearch.reset(searchStructLong))})
+t.bench(function bench_Query_reset_str() {l.nop(mutQuery.reset(searchLong))})
+t.bench(function bench_Query_reset_Params() {l.nop(mutQuery.reset(decParamsLong))})
+t.bench(function bench_Query_reset_Query() {l.nop(mutQuery.reset(decQueryLong))})
+t.bench(function bench_Query_reset_struct() {l.nop(mutQuery.reset(queryStructLong))})
 
-t.bench(function bench_Search_mut_str() {l.nop(mutSearch.mut(searchLong))})
-t.bench(function bench_Search_mut_Params() {l.nop(mutSearch.mut(decParamsLong))})
-t.bench(function bench_Search_mut_Search() {l.nop(mutSearch.mut(decSearchLong))})
-t.bench(function bench_Search_mut_struct() {l.nop(mutSearch.mut(searchStructLong))})
+t.bench(function bench_Query_mut_str() {l.nop(mutQuery.mut(searchLong))})
+t.bench(function bench_Query_mut_Params() {l.nop(mutQuery.mut(decParamsLong))})
+t.bench(function bench_Query_mut_Query() {l.nop(mutQuery.mut(decQueryLong))})
+t.bench(function bench_Query_mut_struct() {l.nop(mutQuery.mut(queryStructLong))})
 
-t.bench(function bench_search_decode_Params() {l.nop(new URLSearchParams(searchLong))})
-t.bench(function bench_search_decode_Search() {l.nop(u.search(searchLong))})
+t.bench(function bench_query_decode_Params() {l.nop(new URLSearchParams(searchLong))})
+t.bench(function bench_query_decode_Query() {l.nop(u.query(searchLong))})
 
-t.bench(function bench_search_encode_Params() {l.nop(decParamsLong.toString())})
-t.bench(function bench_search_encode_Search() {l.nop(decSearchLong.toString())})
-t.bench(function bench_search_encode_Search_toStringFull() {l.nop(decSearchLong.toStringFull())})
+t.bench(function bench_query_encode_Params() {l.nop(decParamsLong.toString())})
+t.bench(function bench_query_encode_Query() {l.nop(decQueryLong.toString())})
+t.bench(function bench_query_encode_Query_toStringFull() {l.nop(decQueryLong.toStringFull())})
 
 const mutParamsForUpdate = new URLSearchParams(searchLong)
-const mutSearchForUpdate = u.search(searchLong)
-t.bench(function bench_search_update_Params() {l.nop(mutParamsForUpdate.append(`one`, `two`))})
-t.bench(function bench_search_update_Search() {l.nop(mutSearchForUpdate.append(`one`, `two`))})
+const mutQueryForUpdate = u.query(searchLong)
+t.bench(function bench_query_update_Params() {l.nop(mutParamsForUpdate.append(`one`, `two`))})
+t.bench(function bench_query_update_Query() {l.nop(mutQueryForUpdate.append(`one`, `two`))})
 
-t.bench(function bench_search_walk_Params() {
+t.bench(function bench_query_walk_Params() {
   for (const [key, val] of decParamsLong) l.nop(key, val)
 })
 
-t.bench(function bench_search_walk_Search() {
-  for (const [key, val] of decSearchLong) l.nop(key, val)
+t.bench(function bench_query_walk_Query() {
+  for (const [key, val] of decQueryLong) l.nop(key, val)
 })
 
 t.bench(function bench_Url_reset_str() {l.nop(mutUrl.reset(urlLong))})
@@ -154,9 +153,9 @@ const groups = urlLong.match(u.RE_URL).groups
 const match = new Match(groups)
 const dict = urlLong.match(u.RE_URL).groups
 const map = new Map(Object.entries(dict))
-t.bench(function bench_clone_search_Params() {l.nop(new URLSearchParams(decParamsLong))})
-t.bench(function bench_clone_search_Search_decoded() {l.nop(decSearchLong.clone())})
-t.bench(function bench_clone_search_Search_undecoded() {l.nop(undecSearchLong.clone())})
+t.bench(function bench_clone_query_Params() {l.nop(new URLSearchParams(decParamsLong))})
+t.bench(function bench_clone_query_Query_decoded() {l.nop(decQueryLong.clone())})
+t.bench(function bench_clone_query_Query_undecoded() {l.nop(undecQueryLong.clone())})
 t.bench(function bench_clone_url_URL() {l.nop(new URL(decURLLong))})
 t.bench(function bench_clone_url_Url() {l.nop(decUrlLong.clone())})
 t.bench(function bench_clone_match() {l.nop(new Match(match))})
@@ -213,6 +212,6 @@ t.bench(function bench_url_long_withHost() {l.nop(decUrlLong.withHost(``))})
 t.bench(function bench_url_long_withOrigin() {l.nop(decUrlLong.withOrigin(``))})
 t.bench(function bench_url_long_withHref() {l.nop(decUrlLong.withHref(``))})
 
-t.bench(function bench_search_encode_idemp() {l.nop(encodeURI(searchEncLong))})
+t.bench(function bench_query_encode_idemp() {l.nop(encodeURI(searchEncLong))})
 
 if (import.meta.main) t.deopt(), t.benches()

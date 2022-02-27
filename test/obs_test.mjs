@@ -1,10 +1,8 @@
-/*
-TODO more tests:
+/* eslint-disable no-self-assign */
+// deno-lint-ignore-file no-self-assign
 
-  * ob.mut
-  * ob.paused
-  * ob.deinitAll
-  * all classes
+/*
+The test is incomplete and being written gradually.
 */
 
 import './internal_test_init.mjs'
@@ -14,13 +12,15 @@ import * as ob from '../obs.mjs'
 
 /* Util */
 
-class Track {
-  constructor(tr, de) {
+class Track extends l.Emp {
+  constructor({tr = 0, de = 0} = {}) {
+    super()
+
     // Counts trigger calls.
-    this.tr = l.onlyInt(tr) ?? 0
+    this.tr = l.reqInt(tr)
 
     // Counts deinit calls.
-    this.de = l.onlyInt(de) ?? 0
+    this.de = l.reqInt(de)
 
     // Bind methods, keeping these properties non-enumerable.
     Object.defineProperty(this, `trig`, {value: this.trig.bind(this)})
@@ -29,8 +29,7 @@ class Track {
 
   trig() {this.tr++}
   deinit() {this.de++}
-  toString() {return `new Track(${this.tr}, ${this.de})`}
-  get [Symbol.toStringTag]() {return this.constructor.name}
+  toString() {return `new Track({tr: ${this.tr}, de: ${this.de}})`}
 }
 
 /* Test */
@@ -44,6 +43,15 @@ t.test(function test_isDe() {
   t.ok(ob.isDe(Object.assign(deinit, {deinit})))
 
   function deinit() {}
+})
+
+t.test(function test_deinit() {
+  ob.deinit()
+  ob.deinit({})
+
+  const counter = new Track()
+  t.is(ob.deinit(counter), undefined)
+  t.eq(counter, new Track({de: 1}))
 })
 
 t.test(function test_isObs() {
@@ -64,6 +72,7 @@ t.test(function test_isTrig() {
   t.no(ob.isTrig({}))
   t.no(ob.isTrig(l.nop))
 
+  t.ok(ob.isTrig(new Track()))
   t.ok(ob.isTrig({trig() {}}))
   t.ok(ob.isTrig(Object.create({trig() {}})))
 })
@@ -72,18 +81,148 @@ t.test(function test_isSub() {
   t.no(ob.isSub())
   t.no(ob.isSub({}))
 
+  t.ok(ob.isSub(l.nop))
+  t.ok(ob.isSub(new Track()))
   t.ok(ob.isSub({trig() {}}))
   t.ok(ob.isSub(Object.create({trig() {}})))
-  t.ok(ob.isSub(l.nop))
 })
 
-t.test(function test_deinit() {
-  ob.deinit()
-  ob.deinit({})
+t.test(function test_Sched() {
+  const sch = new ob.Sched()
 
-  const counter = new Track()
-  t.is(ob.deinit(counter), undefined)
-  t.eq(counter, new Track(0, 1))
+  t.test(function test_isPaused_resume_depth_1() {
+    t.no(sch.isPaused())
+
+    sch.pause()
+    t.ok(sch.isPaused())
+
+    sch.resume()
+    t.no(sch.isPaused())
+
+    sch.resume()
+    sch.resume()
+    sch.resume()
+    t.no(sch.isPaused())
+  })
+
+  t.test(function test_isPaused_resume_depth_2() {
+    t.no(sch.isPaused())
+
+    sch.pause()
+    t.ok(sch.isPaused())
+
+    sch.pause()
+    t.ok(sch.isPaused())
+
+    sch.resume()
+    t.ok(sch.isPaused())
+
+    sch.resume()
+    t.no(sch.isPaused())
+
+    sch.resume()
+    sch.resume()
+    sch.resume()
+    t.no(sch.isPaused())
+  })
+
+  // Our observables don't actually use this mode.
+  // When scheduler is unpaused, they bypass it.
+  t.test(function test_unpaused() {
+    t.eq(sch, new ob.Sched())
+
+    const track = new Track()
+    sch.add(track)
+
+    t.eq(sch, new ob.Sched([track]))
+    t.eq(track, new Track())
+
+    sch.run()
+
+    t.eq(sch, new ob.Sched())
+    t.eq(track, new Track({tr: 1}))
+  })
+
+  t.test(function test_pause_resume() {
+    t.eq(sch, new ob.Sched())
+    sch.pause()
+    sch.pause()
+    t.ok(sch.isPaused())
+
+    const track = new Track()
+    sch.add(track)
+
+    sch.resume()
+    t.eq(sch, new ob.Sched([track]).pause())
+    t.eq(track, new Track())
+
+    sch.resume()
+    t.eq(sch, new ob.Sched())
+    t.eq(track, new Track({tr: 1}))
+  })
+})
+
+t.test(function test_ImpObs() {
+  const obs = new ob.ImpObs()
+  const sub0 = new Track()
+  const sub1 = new Track()
+
+  t.test(function test_unpaused() {
+    obs.sub(sub0)
+    t.eq(obs, new ob.ImpObs([sub0]))
+    t.eq(sub0, new Track())
+
+    obs.sub(sub0)
+    t.eq(obs, new ob.ImpObs([sub0]))
+
+    obs.trig()
+    t.eq(obs, new ob.ImpObs([sub0]))
+    t.eq(sub0, new Track({tr: 1}))
+
+    obs.add(sub1)
+    t.eq(obs, new ob.ImpObs([sub0, sub1]))
+    t.eq(sub0, new Track({tr: 1}))
+    t.eq(sub1, new Track())
+
+    obs.trig()
+    t.eq(obs, new ob.ImpObs([sub0, sub1]))
+    t.eq(sub0, new Track({tr: 2}))
+    t.eq(sub1, new Track({tr: 1}))
+  })
+
+  t.test(function test_paused() {
+    const sch = ob.Sched.main
+    sch.pause()
+
+    function testPaused() {
+      obs.trig()
+      t.eq(sub0, new Track({tr: 2}))
+      t.eq(sub1, new Track({tr: 1}))
+    }
+
+    testPaused()
+    testPaused()
+    testPaused()
+
+    function testUnpaused() {
+      sch.resume()
+      t.eq(sub0, new Track({tr: 3}))
+      t.eq(sub1, new Track({tr: 2}))
+    }
+
+    testUnpaused()
+    testUnpaused()
+    testUnpaused()
+  })
+
+  t.test(function test_deinit() {
+    t.is(obs.size, 2)
+    obs.deinit()
+    t.is(obs.size, 0)
+
+    t.eq(sub0, new Track({tr: 3}))
+    t.eq(sub1, new Track({tr: 2}))
+  })
 })
 
 t.test(function test_de() {
@@ -96,73 +235,72 @@ t.test(function test_de() {
 
   ref.val = first
   t.is(ref.val, first)
-  t.eq(ref, {val: new Track(0, 0)})
+  t.eq(ref, {val: new Track()})
 
-  // Hide self-assign from linters.
-  ref.val = l.id(ref.val)
+  ref.val = ref.val
   t.is(ref.val, first)
-  t.eq(ref, {val: new Track(0, 0)})
+  t.eq(ref, {val: new Track()})
 
   ref.val = second
   t.is(ref.val, second)
-  t.eq(ref, {val: new Track(0, 0)})
-  t.eq(first, new Track(0, 1))
+  t.eq(ref, {val: new Track()})
+  t.eq(first, new Track({de: 1}))
 
   ref.deinit()
   t.is(ref.val, second)
-  t.eq(ref, {val: new Track(0, 1)})
+  t.eq(ref, {val: new Track({de: 1})})
 
   delete ref.val
   t.is(ref.val, undefined)
   t.is(l.hasOwn(ref, `val`), false)
-  t.eq(second, new Track(0, 2))
+  t.eq(second, new Track({de: 2}))
 
   t.is(ref.hidden, third)
-  t.eq(third, new Track(0, 0))
+  t.eq(third, new Track())
 })
 
 // The test is rudimentary, maybe about 5% complete.
 t.test(function test_obs() {
   t.test(function test_imperative() {
     const ref = ob.obs({})
-    const obs = ob.ph(ref)
+    const obs = ob.ph(ref).obs
     const first = new Track()
     const second = new Track()
 
     obs.sub(first.trig)
     obs.sub(second.trig)
-    t.eq(first, new Track(0, 0))
-    t.eq(second, new Track(0, 0))
+    t.eq(first, new Track())
+    t.eq(second, new Track())
 
     obs.trig()
-    t.eq(first, new Track(1, 0))
-    t.eq(second, new Track(1, 0))
+    t.eq(first, new Track({tr: 1}))
+    t.eq(second, new Track({tr: 1}))
 
     // Implicit trigger.
     ref.val = 10
-    t.eq(first, new Track(2, 0))
-    t.eq(second, new Track(2, 0))
+    t.eq(first, new Track({tr: 2}))
+    t.eq(second, new Track({tr: 2}))
 
     // Rudimentary change detection prevents another trigger.
     ref.val = 10
-    t.eq(first, new Track(2, 0))
-    t.eq(second, new Track(2, 0))
+    t.eq(first, new Track({tr: 2}))
+    t.eq(second, new Track({tr: 2}))
 
     obs.unsub(first.trig)
-    t.eq(first, new Track(2, 0))
-    t.eq(second, new Track(2, 0))
+    t.eq(first, new Track({tr: 2}))
+    t.eq(second, new Track({tr: 2}))
 
     ref.val = 20
-    t.eq(first, new Track(2, 0))
-    t.eq(second, new Track(3, 0))
+    t.eq(first, new Track({tr: 2}))
+    t.eq(second, new Track({tr: 3}))
 
     ref.deinit()
-    t.eq(first, new Track(2, 0))
-    t.eq(second, new Track(3, 0))
+    t.eq(first, new Track({tr: 2}))
+    t.eq(second, new Track({tr: 3}))
 
     obs.trig()
-    t.eq(first, new Track(2, 0))
-    t.eq(second, new Track(3, 0))
+    t.eq(first, new Track({tr: 2}))
+    t.eq(second, new Track({tr: 3}))
   })
 })
 

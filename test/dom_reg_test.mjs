@@ -166,6 +166,22 @@ t.test(function test_CustomElementRegistry() {
       }
     })
   })
+
+  t.test(function test_tag_ambiguity() {
+    const cer = makeCer()
+
+    class SomeBodyCell extends dr.HTMLTableCellElement {}
+
+    class SomeHeadCell extends dr.HTMLTableCellElement {
+      static tag() {return `th`}
+    }
+
+    t.is(cer.clsTagBase(SomeBodyCell), `td`)
+    t.eq(cer.clsOpt(SomeBodyCell), {extends: `td`})
+
+    t.is(cer.clsTagBase(SomeHeadCell), `th`)
+    t.eq(cer.clsOpt(SomeHeadCell), {extends: `th`})
+  })
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

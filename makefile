@@ -1,6 +1,6 @@
 MAKEFLAGS := --silent --always-make
 PAR := $(MAKE) -j 128
-DENO := deno run --no-check --unstable --allow-hrtime
+DENO := deno run -A --no-check --unstable --allow-hrtime
 RUN := $(if $(run),--run="$(run)",)
 FEAT := $(or $(feat),all_deno)
 VERB := $(if $(filter $(verb),true),--verb,)
@@ -8,6 +8,8 @@ PREC := $(if $(filter $(prec),true),--prec,)
 TEST := test/$(FEAT)_test.mjs $(VERB) $(RUN)
 BENCH := test/$(FEAT)_bench.mjs $(VERB) $(PREC) $(RUN)
 DOC := doc/doc.mjs
+
+# This is a "function" that must be defined with "=", not ":=".
 VER = $(or $(ver),$(shell cat ver))
 
 test_w:
@@ -23,7 +25,7 @@ bench:
 	$(DENO) $(BENCH)
 
 srv_w:
-	$(DENO) -A --watch test/srv.mjs
+	$(DENO) --watch test/srv.mjs
 
 lint_w:
 	watchexec -r -c -d=0 -e=mjs -n -- $(MAKE) lint
@@ -32,10 +34,10 @@ lint:
 	deno lint --rules-exclude=no-empty,require-yield,require-await,constructor-super
 
 doc_w:
-	$(DENO) -A --watch $(DOC) --watch
+	$(DENO) --watch $(DOC) --watch
 
 doc:
-	$(DENO) -A $(DOC)
+	$(DENO) $(DOC)
 
 watch:
 	$(PAR) test_w lint_w doc_w
@@ -58,7 +60,7 @@ untag:
 #   <commit>
 #   make tag push
 push:
-	git push origin $(VER)
+	git push origin $(VER) $$(git symbolic-ref --short HEAD)
 
 define PRE_COMMIT
 #!/bin/sh
@@ -67,7 +69,7 @@ make doc && git add readme.md docs/*.md
 endef
 export PRE_COMMIT
 
-# Should be run once, after cloning the repo. Requires Unix.
+# Should be run once, after cloning the repo.
 hook:
 	$(eval OUT := .git/hooks/pre-commit)
 	echo "$${PRE_COMMIT}" > $(OUT)

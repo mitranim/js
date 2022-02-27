@@ -5,10 +5,10 @@ type StrLike       = boolean | number | string
 type StrDictLax    = Record<string, string | string[]>
 type StrDictSingle = Record<string, string>
 type StrDictMulti  = Record<string, string[]>
-type SearchLike    = string | Search | URLSearchParams | StrDictLax
+type QueryLike     = string | Query | URLSearchParams | StrDictLax
 
-class Search extends Map<string, string[]> {
-  constructor(src?: SearchLike)
+class Query extends Map<string, string[]> {
+  constructor(src?: QueryLike)
 
   /*
   Similar to the corresponding methods of `URLSearchParams`, but with stricter
@@ -19,31 +19,31 @@ class Search extends Map<string, string[]> {
   has(key: string): boolean
   get(key: string): string | undefined
   getAll(key: string): string[]
-  set(key: string, val?: StrLike): Search
-  append(key: string, val?: StrLike): Search
+  set(key: string, val?: StrLike): Query
+  append(key: string, val?: StrLike): Query
   delete(key: string): boolean
 
   /*
   Common-sense methods missing from `URLSearchParams`.
   Names and signatures are self-explanatory.
   */
-  setAll(key: string, vals?: StrLike[]): Search
-  setAny(key: string, val?: StrLike | StrLike[]): Search
-  appendAll(key: string, vals?: StrLike[]): Search
-  appendAny(key: string, val?: StrLike | StrLike[]): Search
+  setAll(key: string, vals?: StrLike[]): Query
+  setAny(key: string, val?: StrLike | StrLike[]): Query
+  appendAll(key: string, vals?: StrLike[]): Query
+  appendAny(key: string, val?: StrLike | StrLike[]): Query
 
   /*
-  Reinitializes the `Search` object from the input.
+  Reinitializes the `Query` object from the input.
   Mutates and returns the same reference.
   Passing nil is equivalent to `.clear`.
   */
-  reset(src?: SearchLike): Search
+  reset(src?: QueryLike): Query
 
   /*
-  Appends the input's content to the current `Search` object.
+  Appends the input's content to the current `Query` object.
   Mutates and returns the same reference.
   */
-  mut(src?: SearchLike): Search
+  mut(src?: QueryLike): Query
 
   /*
   Combination of `.get` and type conversion.
@@ -67,11 +67,11 @@ class Search extends Map<string, string[]> {
   Future mutations are not shared.
   Cheaper than reparsing.
   */
-  clone(): Search
+  clone(): Query
 
   /*
   Converts to built-in search params.
-  Note that `new URLSearchParams(<u.Search>)` should be avoided.
+  Note that `new URLSearchParams(<u.Query>)` should be avoided.
   */
   toURLSearchParams(): URLSearchParams
 
@@ -92,29 +92,29 @@ class Search extends Map<string, string[]> {
 }
 ```
 
-Warning: while `Search` is mostly compatible with `URLSearchParams`, it has different iteration methods. The iteration methods of `URLSearchParams` are something bizarre and made-up just for this type:
+Warning: while `Query` is mostly compatible with `URLSearchParams`, it has different iteration methods. The iteration methods of `URLSearchParams` are something bizarre and made-up just for this type:
 
 ```js
 [...new URLSearchParams(`one=two&one=three&four=five`)]
 // [[`one`, `two`], [`one`, `three`], [`four`, `five`]]
 ```
 
-Meanwhile `Search` is `Map<string, string[]>`:
+Meanwhile `Query` is `Map<string, string[]>`:
 
 ```js
-[...new u.Search(`one=two&one=three&four=five`)]
+[...new u.Query(`one=two&one=three&four=five`)]
 // [[`one`, [`two`, `three`]], [`four`, [`five`]]]
 ```
 
 The following works properly:
 
 ```js
-new u.Search(new URLSearchParams(`one=two&one=three&four=five`))
-new u.Search(`one=two&one=three&four=five`).toURLSearchParams()
+new u.Query(new URLSearchParams(`one=two&one=three&four=five`))
+new u.Query(`one=two&one=three&four=five`).toURLSearchParams()
 ```
 
 But the following **does not work properly** and should be avoided:
 
 ```js
-new URLSearchParams(new u.Search(`one=two&one=three&four=five`))
+new URLSearchParams(new u.Query(`one=two&one=three&four=five`))
 ```

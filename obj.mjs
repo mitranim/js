@@ -1,11 +1,4 @@
 import * as l from './lang.mjs'
-import * as i from './iter.mjs'
-
-export function fixProto(ref, cls) {
-  if (Object.getPrototypeOf(ref) !== cls.prototype) {
-    Object.setPrototypeOf(ref, cls.prototype)
-  }
-}
 
 export function assign(tar, src) {
   l.reqStruct(tar)
@@ -16,43 +9,37 @@ export function assign(tar, src) {
 export function patch(tar, src) {
   l.reqStruct(tar)
   for (const key of l.structKeys(src)) {
-    if (!(key in tar) || l.hasOwnEnum(tar, key)) tar[key] = src[key]
+    if (!l.hasInherited(tar, key)) tar[key] = src[key]
   }
   return tar
 }
 
-export function mapDict(val, fun) {
-  l.reqFun(fun)
-  const out = l.npo()
-  for (const key of l.structKeys(val)) out[key] = fun(val[key])
-  return out
+export class Dict extends l.Emp {
+  constructor(val) {super().mut(val)}
+  mut(val) {return patch(this, val), this.reinit(), this}
+  reinit() {}
 }
 
-export function pick(val, fun) {
-  l.reqFun(fun)
-  const out = l.npo()
-  for (const key of l.structKeys(val)) {
-    const elem = val[key]
-    if (fun(elem)) out[key] = elem
+export class Strict extends l.Emp {
+  // eslint-disable-next-line constructor-super
+  constructor() {
+    super()
+    return this.StrictPh.of(this)
   }
-  return out
+
+  get StrictPh() {return StrictPh}
 }
 
-export function omit(val, fun) {return pick(val, l.not(fun))}
-
-export function pickKeys(val, keys) {
-  val = l.laxStruct(val)
-  const out = l.npo()
-  for (const key of i.values(keys)) if (l.hasOwnEnum(val, key)) out[key] = val[key]
-  return out
-}
-
-export function omitKeys(val, keys) {
-  val = l.laxStruct(val)
-  keys = i.set(keys)
-  const out = l.npo()
-  for (const key of l.structKeys(val)) if (!keys.has(key)) out[key] = val[key]
-  return out
+/*
+Short for "proxy handler". Simple shortcut for stateless proxy handler classes.
+Static method `.of` idempotently creates and reuses one "main" instance.
+Might export later.
+*/
+class Ph extends l.Emp {
+  static of(val) {
+    if (!l.hasOwn(this, `main`)) this.main = new this()
+    return new Proxy(val, this.main)
+  }
 }
 
 /*
@@ -73,7 +60,7 @@ manually, as opposed to letting the engine do it.
 
 Needs tests. Needs more profiling and tuning.
 */
-export class StrictPh {
+export class StrictPh extends Ph {
   get(tar, key, pro) {
     if (l.hasOwn(tar, key)) return tar[key]
 
@@ -89,39 +76,62 @@ export class StrictPh {
     if (desc.get) return desc.get.call(pro)
     return desc.value
   }
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
-StrictPh.main = /* @__PURE__ */ new StrictPh()
+export class WeakTag extends WeakSet {
+  goc(val) {
+    if (!this.has(val)) this.make(val), this.add(val)
+    return val
+  }
 
-export function strict(val) {return new Proxy(val, StrictPh.main)}
+  make() {}
+}
 
-export class Strict {
-  constructor() {return strict(this)}
+export function memGet(cls) {return MemTag.main.goc(cls)}
 
-  get [Symbol.toStringTag]() {return this.constructor.name}
+export class MemTag extends WeakTag {
+  make(cls) {patchCls(cls, memGetAt)}
 }
 
 export class MemGet extends Strict {
   constructor() {memGet(new.target), super()}
 }
+MemTag.main = /* @__PURE__ */ new MemTag()
 
-export function memGet(cls) {return MemTag.main.get(cls)}
+/*
+When used to proxy a class, this allows to call that class as a function,
+omitting `new`.
+*/
+export class ClsFunPh extends Ph {
+  apply(tar, _, args) {return new tar(...args)}
 
-export class MemTag extends WeakSet {
-  get(cls) {
-    if (!this.has(cls)) {
-      patchCls(cls, memGetAt)
-      this.add(cls)
-    }
-    return cls
-  }
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
+  static of(val) {return super.of(l.reqCls(val))}
 }
 
-MemTag.main = /* @__PURE__ */ new MemTag()
+/*
+This is the blackest of magicks.
+
+  * This is a proxy to a class.
+
+  * Unlike normal classes, this can be called as a function.
+
+  * Calling an INSTANCE method on the CLASS automatically makes a new instance
+    and calls the instance method on it.
+*/
+export class ClsInstPh extends ClsFunPh {
+  get(tar, key) {
+    if (key in tar.prototype && !(key in tar)) {
+      const ref = new tar()
+      return ref[key].bind(ref)
+    }
+    return tar[key]
+  }
+
+  apply(tar, _self, args) {
+    if (l.isInst(args[0], tar)) return args[0]
+    return new tar(...args)
+  }
+}
 
 /* Internal */
 
@@ -136,16 +146,6 @@ function patchCls(cls, fun) {
   return cls
 }
 
-function pub(ref, key, val) {
-  Object.defineProperty(ref, key, {
-    value: val,
-    writable: true,
-    enumerable: true,
-    configurable: true,
-  })
-  return val
-}
-
 function memGetAt(ref, key, desc) {
   const {get} = desc
   if (!get || desc.set || !desc.configurable) return
@@ -154,6 +154,16 @@ function memGetAt(ref, key, desc) {
   desc.set = function memSet(val) {pub(this, key, val)}
 
   Object.defineProperty(ref, key, desc)
+}
+
+function pub(ref, key, val) {
+  Object.defineProperty(ref, key, {
+    value: val,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  })
+  return val
 }
 
 function descIn(ref, key) {

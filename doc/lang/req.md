@@ -7,5 +7,5 @@ f.req({one: `two`}, f.isObj)
 // {one: `two`}
 
 f.req('str', f.isFun)
-// uncaught TypeError: expected "str" to satisfy test isFun
+// Uncaught TypeError: expected "str" to satisfy test isFun
 ```

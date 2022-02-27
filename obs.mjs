@@ -1,37 +1,55 @@
 import * as l from './lang.mjs'
 
-export function isDe(val) {return l.isComp(val) && l.hasMeth(val, `deinit`)}
-export function isObs(val) {return isDe(val) && isTrig(val) && l.hasMeth(val, `sub`) && l.hasMeth(val, `unsub`)}
-export function isTrig(val) {return l.isComp(val) && l.hasMeth(val, `trig`)}
-export function isSub(val) {return l.isFun(val) || isTrig(val)}
-export function isSubber(val) {return l.isFun(val) || (l.isComp(val) && l.hasMeth(val, `subTo`))}
-export function isRunTrig(val) {return l.isComp(val) && l.hasMeth(val, `run`) && isTrig(val)}
-
-export function reqDe(val) {return l.req(val, isDe)}
-export function reqObs(val) {return l.req(val, isObs)}
-export function reqTrig(val) {return l.req(val, isTrig)}
-export function reqSub(val) {return l.req(val, isSub)}
-export function reqSubber(val) {return l.req(val, isSubber)}
-export function reqRunTrig(val) {return l.req(val, isRunTrig)}
-
-export function ph(ref) {return ref ? ref[keyPh] : undefined}
-export function self(ref) {return ref ? ref[keySelf] || ref : undefined}
 export function deinit(val) {if (isDe(val)) val.deinit()}
 
-export function de(ref) {return new Proxy(ref, deinitPh)}
-export function obs(ref) {return pro(ref, new (getPh(ref) || ObsPh)())}
-export function comp(ref, fun) {return pro(ref, new (getPh(ref) || CompPh)(fun))}
-export function lazyComp(ref, fun) {return pro(ref, new (getPh(ref) || LazyCompPh)(fun))}
+export function isDe(val) {return l.isComp(val) && l.hasMeth(val, `deinit`)}
+export function reqDe(val) {return l.req(val, isDe)}
 
-export class Deinit {constructor() {return de(this)}}
-export class Obs {constructor() {return obs(this)}}
-export class Comp {constructor(fun) {return comp(this, fun)}}
-export class LazyComp {constructor(fun) {return lazyComp(this, fun)}}
+export function isObs(val) {return isDe(val) && isTrig(val) && l.hasMeth(val, `sub`) && l.hasMeth(val, `unsub`)}
+export function reqObs(val) {return l.req(val, isObs)}
 
-/* Secondary API (lower level, semi-undocumented) */
+export function isTrig(val) {return l.isComp(val) && l.hasMeth(val, `trig`)}
+export function reqTrig(val) {return l.req(val, isTrig)}
 
-export const ctx = /* @__PURE__ */ new class Ctx {
-  constructor() {this.subber = undefined}
+export function isSub(val) {return l.isFun(val) || isTrig(val)}
+export function reqSub(val) {return l.req(val, isSub)}
+
+export function isSubber(val) {return l.isFun(val) || (l.isComp(val) && l.hasMeth(val, `subTo`))}
+export function reqSubber(val) {return l.req(val, isSubber)}
+
+export function isRunTrig(val) {return l.isComp(val) && l.hasMeth(val, `run`) && isTrig(val)}
+export function reqRunTrig(val) {return l.req(val, isRunTrig)}
+
+export function ph(val) {return l.hasIn(val, keyPh) ? val[keyPh] : undefined}
+export function self(val) {return l.hasIn(val, keySelf) ? val[keySelf] : val}
+
+export const keyPh = Symbol.for(`ph`)
+export const keySelf = Symbol.for(`self`)
+
+export function de(val) {return new Proxy(val, DeinitPh.main)}
+export function obs(val) {return new Proxy(val, new ObsPh())}
+export function deObs(val) {return new Proxy(val, new DeObsPh())}
+
+export class StaticProxied extends l.Emp {
+  constructor() {
+    super()
+    return new Proxy(this, this.ph)
+  }
+}
+
+export class Proxied extends l.Emp {
+  constructor() {
+    super()
+    return new Proxy(this, new this.Ph())
+  }
+}
+
+export class De extends StaticProxied {get ph() {return DeinitPh.main}}
+export class Obs extends Proxied {get Ph() {return ObsPh}}
+export class DeObs extends Proxied {get Ph() {return DeObsPh}}
+
+export const ctx = /* @__PURE__ */ new class Ctx extends l.Emp {
+  constructor() {super().subber = undefined}
 
   sub(obs) {
     const val = this.subber
@@ -47,9 +65,88 @@ export const ctx = /* @__PURE__ */ new class Ctx {
   }
 }()
 
-export const keyPh = Symbol.for(`ph`)
-export const keySelf = Symbol.for(`self`)
+/*
+Extremely simple scheduler for our observables. Provides reentrant pause/resume
+and batch flushing. Note that even in the "unpaused" state, the scheduler
+doesn't immediately run its entries. Our observables simply bypass it when
+unpaused. Also note that this is fully synchronous. Compare the timed scheduler
+in `sched.mjs`.
+*/
+export class Sched extends Set {
+  constructor(val) {super(val).p = 0}
+  isPaused() {return this.p > 0}
+  pause() {return this.p++, this}
 
+  resume() {
+    if (!this.p) return this
+    this.p--
+    if (!this.p) this.run()
+    return this
+  }
+
+  run() {
+    for (const val of this) {
+      this.delete(val)
+      val.trig()
+    }
+    return this
+  }
+
+  paused(fun, ...val) {
+    this.pause()
+    try {return fun(...val)}
+    finally {this.resume()}
+  }
+
+  /*
+  Caution: this doesn't reset the `.p` counter because non-buggy callers must
+  always use try/finally for pause/unpause. If some code is calling `.deinit`
+  while the scheduler is paused, it should unpause the scheduler afterwards.
+  Resetting the counter here would be a surprise.
+  */
+  deinit() {this.clear()}
+}
+Sched.main = /* @__PURE__ */ new Sched()
+
+/*
+Extremely simple implementation of an observable in a "traditional" sense.
+Maintains and triggers subscribers. All functionality is imperative, not
+automatic. Satisfies the `isObs` interface. Not to be confused with `Obs`,
+which is an "automatically" observable object wrapped into a proxy that
+secretly uses `ImpObs`.
+
+Implicit observation and automatic triggers are provided by other classes using
+this as an inner component. See `Rec` and `ObsPh`.
+*/
+export class ImpObs extends Set {
+  sub(val) {this.add(reqSub(val))}
+  unsub(val) {this.delete(val)}
+
+  trig() {
+    const sch = Sched.main
+    if (sch.isPaused()) sch.add(this)
+    else for (const val of this) subTrig(val)
+  }
+
+  deinit() {for (const val of this) this.unsub(val)}
+}
+
+/*
+Name is short for "reactive" or "recurring", because it's both. Base class for
+implementing automatic subscriptions. Invoking `.run` sets up context via `ctx`
+and calls `.onRun`. During the call, observables may find the `Rec` instance in
+`ctx` and register themselves for future triggers. The link is two-way;
+observables must refer to `Rec` to trigger it, and `Rec` must refer to
+observables to unsubscribe when deinited. Rerunning `.run` clears previous
+observables.
+
+This is half of our "invisible magic" for automatic subscriptions. The other
+half is proxy handlers such as `ObsPh`, which trap property access such as
+`someObs.someField` and secretly use `ctx` to find the current "subber" such as
+`Rec` and establish subscriptions.
+
+`Rec` itself has a nop run. See subclasses.
+*/
 export class Rec extends Set {
   constructor() {
     super()
@@ -59,25 +156,31 @@ export class Rec extends Set {
 
   onRun() {}
 
-  run(...args) {
+  run() {
     if (this.act) throw Error(`unexpected overlapping rec.run`)
 
+    const sch = Sched.main
     const {subber} = ctx
     ctx.subber = this
-    this.act = true
 
-    this.new.clear()
-    sch.pause()
-
+    // The try pyramid demonstrates the need for Swift-like `defer`.
     try {
-      return this.onRun(...args)
-    }
-    finally {
-      ctx.subber = subber
-      this.forEach(recDelOld, this)
-      try {sch.resume()}
+      this.act = true
+
+      try {
+        this.new.clear()
+
+        try {
+          sch.pause()
+
+          try {return this.onRun()}
+          finally {sch.resume()}
+        }
+        finally {this.delOld()}
+      }
       finally {this.act = false}
     }
+    finally {ctx.subber = subber}
   }
 
   trig() {}
@@ -90,14 +193,14 @@ export class Rec extends Set {
     obs.sub(this)
   }
 
-  deinit() {this.forEach(recDel, this)}
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
+  del(obs) {this.delete(obs), obs.unsub(this)}
+  delOld() {for (const val of this) if (!this.new.has(val)) this.del(val)}
+  deinit() {for (const val of this) this.del(val)}
 }
 
 export class Moebius extends Rec {
   constructor(ref) {super().ref = reqRunTrig(ref)}
-  onRun(...args) {return this.ref.run(...args)}
+  onRun() {return this.ref.run()}
   trig() {if (!this.act) this.ref.trig()}
 }
 
@@ -107,221 +210,131 @@ export class Loop extends Rec {
   trig() {if (!this.act) this.run()}
 }
 
-export class DeinitPh {
+// Short for "proxy handler". Base for other handlers.
+export class Ph extends l.Emp {
+  /* Standard traps */
+
   has(tar, key) {
-    return key in tar || key === keyPh || key === keySelf || key === `deinit`
+    return (
+      key === keyPh ||
+      key === keySelf ||
+      key === `deinit` ||
+      key in tar
+    )
   }
 
   get(tar, key) {
     if (key === keyPh) return this
     if (key === keySelf) return tar
-    if (key === `deinit`) return dePhDeinit
-    return tar[key]
+    if (key === `deinit`) return this.proDeinit
+    return this.getIn(tar, key)
   }
 
   set(tar, key, val) {
-    set(tar, key, val)
+    this.didSet(tar, key, val)
     return true
   }
 
   deleteProperty(tar, key) {
-    del(tar, key)
+    this.didDel(tar, key)
     return true
   }
+
+  /* Extensions */
+
+  // Allows accidental `ph(ph(val))` to work.
+  get [keyPh]() {return this}
+
+  getIn(tar, key) {return tar[key]}
+
+  didSet(tar, key, val) {
+    const had = l.hasOwnEnum(tar, key)
+    const prev = tar[key]
+    tar[key] = val
+    if (Object.is(prev, val)) return false
+    if (had) this.drop(prev)
+    return true
+  }
+
+  didDel(ref, key) {
+    if (!l.hasOwn(ref, key)) return false
+
+    const had = l.hasOwnEnum(ref, key)
+    const val = ref[key]
+    delete ref[key]
+
+    if (had) this.drop(val)
+    return true
+  }
+
+  drop() {}
+
+  /*
+  This method is returned by the "get" trap and invoked on the proxy, not the
+  proxy handler. It assumes that `this` is the proxy. Placed on the handler's
+  prototype to make it possible to override in subclasses. The base
+  implementation simply tries to invoke the same method on the target.
+  */
+  proDeinit() {deinit(self(this))}
 }
 
-const deinitPh = new DeinitPh()
+export class DeinitPh extends Ph {
+  drop(val) {deinit(val)}
 
-export class ObsBase extends Set {
-  onInit() {}
-  onDeinit() {}
-
-  sub(val) {
-    const {size} = this
-    this.add(reqSub(val))
-    if (!size) this.onInit()
+  proDeinit() {
+    const val = self(this)
+    deinitAll(val)
+    deinit(val)
   }
-
-  unsub(val) {
-    const {size} = this
-    this.delete(val)
-    if (size && !this.size) this.onDeinit()
-  }
-
-  trig() {
-    if (sch.isPaused) {
-      sch.add(this)
-      return
-    }
-    this.forEach(subTrig)
-  }
-
-  deinit() {
-    this.forEach(this.unsub, this)
-  }
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
+DeinitPh.main = /* @__PURE__ */ new DeinitPh()
 
-export class ObsPh extends ObsBase {
-  constructor() {super().pro = undefined}
-
-  has() {return DeinitPh.prototype.has.apply(this, arguments)}
-
-  get(tar, key) {
-    if (key === keyPh) return this
-    if (key === keySelf) return tar
-    if (key === `deinit`) return phDeinit
-    if (!hidden(tar, key)) ctx.sub(this)
-    return tar[key]
-  }
+export class ObsPh extends Ph {
+  constructor() {super().obs = new this.ImpObs()}
 
   set(tar, key, val) {
-    if (set(tar, key, val)) this.trig()
+    if (this.didSet(tar, key, val)) this.obs.trig()
     return true
   }
 
   deleteProperty(tar, key) {
-    if (del(tar, key)) this.trig()
+    if (this.didDel(tar, key)) this.obs.trig()
     return true
   }
 
-  onInit() {
-    const {pro} = this
-    if (l.hasMeth(pro, `onInit`)) pro.onInit()
-  }
-
-  onDeinit() {
-    const {pro} = this
-    if (l.hasMeth(pro, `onDeinit`)) pro.onDeinit()
-  }
-}
-
-export class LazyCompPh extends ObsPh {
-  constructor(fun) {
-    super()
-    this.fun = l.reqFun(fun)
-    this.out = true // means "outdated"
-    this.cre = new CompRec(this)
-  }
-
-  get(tar, key) {
-    if (key === keyPh) return this
-    if (key === keySelf) return tar
-    if (key === `deinit`) return phDeinit
-
-    if (!hidden(tar, key)) {
-      ctx.sub(this)
-      if (this.out) {
-        this.out = false
-        this.cre.run()
-      }
-    }
-
+  getIn(tar, key) {
+    if (!hasHidden(tar, key)) ctx.sub(this.obs)
     return tar[key]
   }
 
-  // Invoked by `CompRec`.
-  run() {return this.fun.call(this.pro, this.pro)}
-  onTrig() {this.out = true}
-  onInit() {this.cre.init()}
-  onDeinit() {this.cre.deinit()}
+  /*
+  See comments on `Ph.prototype.proDeinit`. "this" is the proxy.
+  `ph(this)` gets the `ObsPh` instance to deinit the observable.
+  `self(this)` gets the target to deinit it, if appropriate.
+  */
+  proDeinit() {
+    ph(this).deinit()
+    deinit(self(this))
+  }
+
+  deinit() {this.obs.deinit()}
+
+  get ImpObs() {return ImpObs}
 }
 
-export class CompPh extends LazyCompPh {
-  onTrig() {this.cre.run()}
-}
+export class DeObsPh extends ObsPh {
+  drop(val) {DeinitPh.prototype.drop.call(this, val)}
 
-export class CompRec extends Moebius {
-  subTo(obs) {
-    reqObs(obs)
-    this.new.add(obs)
-    if (this.ref.size) {
-      this.add(obs)
-      obs.sub(this)
-    }
-  }
-
-  init() {
-    this.new.forEach(compRecSub, this)
-  }
-
-  trig() {
-    if (!this.act) this.ref.onTrig()
+  proDeinit() {
+    ph(this).deinit()
+    DeinitPh.prototype.proDeinit.call(this)
   }
 }
-
-export class Sched extends Set {
-  constructor() {super().p = 0}
-
-  get isPaused() {return this.p > 0}
-
-  pause() {this.p++}
-
-  resume() {
-    if (!this.p) return
-    this.p--
-    if (!this.p) this.forEach(schFlush, this)
-  }
-
-  paused(fun, ...val) {
-    this.pause()
-    try {return fun(...val)}
-    finally {this.resume()}
-  }
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
-}
-
-export const sch = /* @__PURE__ */ new Sched()
 
 /* Internal */
 
-function getPh(ref) {return ref.constructor && ref.constructor.ph}
-
-// // Dup from `lang.mjs`. Might export later.
-// function getProto(val) {return isObj(val) ? Object.getPrototypeOf(val) : undefined}
-// function getCon(val) {return get(getProto(val), `constructor`)}
-
-function pro(ref, ph) {
-  const pro = new Proxy(ref, ph)
-  ph.pro = pro
-  return pro
-}
-
-function set(ref, key, next) {
-  const de = l.hasOwnEnum(ref, key)
-  const prev = ref[key]
-  ref[key] = next
-  if (Object.is(prev, next)) return false
-  if (de) deinit(prev)
-  return true
-}
-
-function del(ref, key) {
-  if (!l.hasOwn(ref, key)) return false
-  const de = l.hasOwnEnum(ref, key)
-  const val = ref[key]
-  delete ref[key]
-  if (de) deinit(val)
-  return true
-}
-
-function dePhDeinit() {
-  deinitAll(this)
-  deinit(self(this))
-}
-
-function phDeinit() {
-  ph(this).deinit()
-  const ref = self(this)
-  deinitAll(ref)
-  deinit(ref)
-}
-
-function deinitAll(ref) {
-  l.reqComp(ref)
-  for (const key of l.structKeys(ref)) deinit(ref[key])
+export function deinitAll(val) {
+  for (const key of l.structKeys(val)) deinit(val[key])
 }
 
 function subTrig(val) {
@@ -329,23 +342,4 @@ function subTrig(val) {
   else val.trig()
 }
 
-function recDelOld(obs) {
-  if (!this.new.has(obs)) recDel.call(this, obs)
-}
-
-function recDel(obs) {
-  this.delete(obs)
-  obs.unsub(this)
-}
-
-function compRecSub(obs) {
-  this.add(obs)
-  obs.sub(this)
-}
-
-function schFlush(obs) {
-  this.delete(obs)
-  obs.trig()
-}
-
-function hidden(val, key) {return !l.hasOwnEnum(val, key) && key in val}
+function hasHidden(val, key) {return !l.hasOwnEnum(val, key) && key in val}

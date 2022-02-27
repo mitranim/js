@@ -10,6 +10,7 @@ import * as u from '../url.mjs'
 const URL_LONG = `scheme://user:pass@host:123/path?key=val#hash`
 
 function mockInst(cls, ...val) {return Object.assign(Object.create(cls.prototype), ...val)}
+function mockHttpBui(...val) {return mockInst(h.HttpBui, ...val)}
 function mockReqBui(...val) {return mockInst(h.ReqBui, ...val)}
 function mockReq() {return new Request(URL_LONG, {method: h.POST})}
 function mockRou() {return new h.Rou(mockReq())}
@@ -30,6 +31,30 @@ function testRes(res, exp) {
   }
 }
 
+function testHttpBui(act, exp) {
+  t.inst(act, h.HttpBui)
+  t.own(act, exp)
+}
+
+function testReqBui(act, exp) {
+  t.inst(act, h.ReqBui)
+  t.own(act, exp)
+}
+
+// Dup from `http_srv_test.mjs`, TODO dedup. Not intended for public API.
+async function readFull(src) {
+  let out = ``
+  for await (const val of src) out += toStr(val)
+  return out
+}
+
+function toStr(val) {
+  if (l.isInst(val, Uint8Array)) return new TextDecoder().decode(val)
+  return l.reqStr(val)
+}
+
+function testStr(src, exp) {t.is(src.toString(), exp)}
+
 /* Test */
 
 t.test(function test_GET() {t.is(h.GET, `GET`)})
@@ -39,7 +64,7 @@ t.test(function test_POST() {t.is(h.POST, `POST`)})
 t.test(function test_PUT() {t.is(h.PUT, `PUT`)})
 t.test(function test_PATCH() {t.is(h.PATCH, `PATCH`)})
 t.test(function test_DELETE() {t.is(h.DELETE, `DELETE`)})
-t.test(function test_CONTENT_TYPE() {t.is(h.CONTENT_TYPE, `content-type`)})
+t.test(function test_HEAD_CONTENT_TYPE() {t.is(h.HEAD_CONTENT_TYPE, `content-type`)})
 t.test(function test_TYPE_HTML() {t.is(h.TYPE_HTML, `text/html`)})
 t.test(function test_TYPE_JSON() {t.is(h.TYPE_JSON, `application/json`)})
 t.test(function test_TYPE_FORM() {t.is(h.TYPE_FORM, `application/x-www-form-urlencoded`)})
@@ -115,35 +140,17 @@ t.test(function test_hasStatus() {
   t.ok(h.hasStatus(new Response(``, {status: 400}), 400))
 })
 
-t.test(function test_reqBui() {
-  l.reqInst(h.reqBui(), h.ReqBui)
-})
-
-/*
-TODO:
-
-  * Test fetching from a local server in the same process.
-  * Test instantiation of responses.
-
-Requires async support from our testing library.
-In the meantime, those features are tested in apps.
-*/
-t.test(function test_ReqBui() {
+t.test(function test_HttpBui() {
   // Constructor just calls `.mut` which is tested below.
   t.test(function test_constructor() {
-    t.is(h.reqBui().constructor, h.ReqBui)
-
-    t.eq(h.reqBui(), mockReqBui())
-    t.eq(h.reqBui({one: 10, two: 20}), mockReqBui({one: 10, two: 20}))
-
-    t.eq(new h.ReqBui(), mockReqBui())
-    t.eq(new h.ReqBui({one: 10, two: 20}), mockReqBui({one: 10, two: 20}))
+    testHttpBui(new h.HttpBui(), {})
+    testHttpBui(new h.HttpBui({one: 10, two: 20}), {one: 10, two: 20})
   })
 
   t.test(function test_mut() {
     t.test(function test_same_reference() {
       function test(src, val) {
-        const ref = h.reqBui(src)
+        const ref = new h.HttpBui(src)
         t.is(ref.mut(val), ref)
       }
 
@@ -157,7 +164,7 @@ t.test(function test_ReqBui() {
       function test(src, add, exp) {
         if (add.headers) Object.freeze(add.headers)
 
-        const ref = h.reqBui(src)
+        const ref = new h.HttpBui(src)
         const prev = ref.headers
 
         ref.mut(add)
@@ -183,139 +190,53 @@ t.test(function test_ReqBui() {
       test({headers: {one: `10`}}, {headers: {one: `20`}}, {one: `10, 20`})
     })
 
-    t.eq(
-      h.reqBui().mut({one: 10, two: 20}),
-      mockReqBui({one: 10, two: 20}),
+    testHttpBui(
+      new h.HttpBui().mut({one: 10, two: 20}),
+      {one: 10, two: 20},
     )
 
-    t.eq(
-      h.reqBui({one: 10}).mut({two: 20}),
-      mockReqBui({one: 10, two: 20}),
+    testHttpBui(
+      new h.HttpBui({one: 10}).mut({two: 20}),
+      {one: 10, two: 20},
     )
 
-    t.eq(
-      h.reqBui({one: 10, two: 20}).mut({two: 30, three: 40}),
-      mockReqBui({one: 10, two: 30, three: 40}),
+    testHttpBui(
+      new h.HttpBui({one: 10, two: 20}).mut({two: 30, three: 40}),
+      {one: 10, two: 30, three: 40},
     )
 
-    t.eq(
-      h.reqBui({one: 10, headers: {two: `20`}}).mut({three: 30, headers: {four: `40`}}),
-      mockReqBui({one: 10, three: 30, headers: {two: `20`, four: `40`}}),
+    testHttpBui(
+      new h.HttpBui({one: 10, headers: {two: `20`}}).mut({three: 30, headers: {four: `40`}}),
+      {one: 10, three: 30, headers: {two: `20`, four: `40`}},
     )
-  })
-
-  t.test(function test_meth() {
-    t.eq(h.reqBui().meth(), mockReqBui({method: undefined}))
-    t.eq(h.reqBui().meth(``), mockReqBui({method: undefined}))
-    t.eq(h.reqBui().meth(`GET`), mockReqBui({method: `GET`}))
-    t.eq(h.reqBui().meth(`POST`), mockReqBui({method: `POST`}))
-    t.eq(h.reqBui().meth(`GET`).meth(`POST`), mockReqBui({method: `POST`}))
-    t.eq(h.reqBui().meth(`GET`).meth(), mockReqBui({method: undefined}))
-    t.eq(h.reqBui().meth(`GET`).meth(``), mockReqBui({method: undefined}))
-    t.eq(h.reqBui().meth().meth(`POST`), mockReqBui({method: `POST`}))
-  })
-
-  t.test(function test_methods() {
-    t.eq(h.reqBui().get(), mockReqBui({method: `GET`}))
-    t.eq(h.reqBui({method: `HEAD`}).get(), mockReqBui({method: `GET`}))
-
-    t.eq(h.reqBui().post(), mockReqBui({method: `POST`}))
-    t.eq(h.reqBui({method: `HEAD`}).post(), mockReqBui({method: `POST`}))
-
-    t.eq(h.reqBui().put(), mockReqBui({method: `PUT`}))
-    t.eq(h.reqBui({method: `HEAD`}).put(), mockReqBui({method: `PUT`}))
-
-    t.eq(h.reqBui().patch(), mockReqBui({method: `PATCH`}))
-    t.eq(h.reqBui({method: `HEAD`}).patch(), mockReqBui({method: `PATCH`}))
-
-    t.eq(h.reqBui().delete(), mockReqBui({method: `DELETE`}))
-    t.eq(h.reqBui({method: `HEAD`}).delete(), mockReqBui({method: `DELETE`}))
-  })
-
-  t.test(function test_to() {
-    t.throws(() => h.reqBui().to({}), TypeError, `expected variant of isScalar, got {}`)
-
-    t.eq(h.reqBui().to(), mockReqBui({url: undefined}))
-    t.eq(h.reqBui().to(new URL(URL_LONG)), mockReqBui({url: new URL(URL_LONG)}))
-    t.eq(h.reqBui().to(URL_LONG), mockReqBui({url: URL_LONG}))
-    t.eq(h.reqBui().to().to(URL_LONG), mockReqBui({url: URL_LONG}))
-    t.eq(h.reqBui().to(URL_LONG).to(), mockReqBui({url: undefined}))
-  })
-
-  t.test(function test_sig() {
-    t.throws(() => h.reqBui().sig(`str`), TypeError, `expected instance of AbortSignal, got "str"`)
-
-    const sig = new AbortController().signal
-
-    t.eq(h.reqBui().sig(), mockReqBui({signal: undefined}))
-    t.eq(h.reqBui().sig(sig), mockReqBui({signal: sig}))
-    t.eq(h.reqBui().sig(sig).sig(), mockReqBui({signal: undefined}))
-    t.is(h.reqBui().sig(sig).signal, sig)
-  })
-
-  t.test(function test_inp() {
-    t.throws(() => h.reqBui().inp({}), TypeError, `expected variant of [isUint8Array, isReadableStream, isFormData, isScalar], got {}`)
-
-    t.eq(h.reqBui().inp(), mockReqBui({body: undefined}))
-    t.eq(h.reqBui().inp(`str`), mockReqBui({body: `str`}))
-    t.eq(h.reqBui().inp(`str`).inp(), mockReqBui({body: undefined}))
-    t.eq(h.reqBui().inp(10), mockReqBui({body: 10}))
-    t.eq(h.reqBui().inp(new Uint8Array()), mockReqBui({body: new Uint8Array()}))
-  })
-
-  t.test(function test_json() {
-    t.eq(h.reqBui().json(), mockReqBui({body: `null`, headers: {'content-type': `application/json`}}))
-    t.eq(h.reqBui().json(10), mockReqBui({body: `10`, headers: {'content-type': `application/json`}}))
-    t.eq(h.reqBui().json(10).json(), mockReqBui({body: `null`, headers: {'content-type': `application/json`}}))
   })
 
   // Delegates to `.headSet` which is tested separately.
   t.test(function test_type() {
-    t.eq(h.reqBui().type(), mockReqBui())
-    t.eq(h.reqBui().type(`one`), mockReqBui({headers: {'content-type': `one`}}))
-    t.eq(h.reqBui().type(`one`).type(), mockReqBui({headers: {}}))
+    testHttpBui(new h.HttpBui().type(), {})
+    testHttpBui(new h.HttpBui().type(`one`), {headers: {'content-type': `one`}})
+    testHttpBui(new h.HttpBui().type(`one`).type(), {headers: {}})
   })
 
   t.test(function test_types() {
-    t.eq(h.reqBui().typeJson(), mockReqBui({headers: {'content-type': `application/json`}}))
-    t.eq(h.reqBui().typeJson().type(), mockReqBui({headers: {}}))
+    testHttpBui(new h.HttpBui().typeText(), {headers: {'content-type': `text/plain`}})
+    testHttpBui(new h.HttpBui().typeText().type(), {headers: {}})
 
-    t.eq(h.reqBui().typeForm(), mockReqBui({headers: {'content-type': `application/x-www-form-urlencoded`}}))
-    t.eq(h.reqBui().typeForm().type(), mockReqBui({headers: {}}))
+    testHttpBui(new h.HttpBui().typeHtml(), {headers: {'content-type': `text/html`}})
+    testHttpBui(new h.HttpBui().typeHtml().type(), {headers: {}})
 
-    t.eq(h.reqBui().typeMulti(), mockReqBui({headers: {'content-type': `multipart/form-data`}}))
-    t.eq(h.reqBui().typeMulti().type(), mockReqBui({headers: {}}))
-  })
+    testHttpBui(new h.HttpBui().typeJson(), {headers: {'content-type': `application/json`}})
+    testHttpBui(new h.HttpBui().typeJson().type(), {headers: {}})
 
-  // Incomplete.
-  t.test(function test_req() {
-    t.notEq(
-      h.reqBui().to(`https://example.com`).req(),
-      new Request(`https://example.com/one`),
-    )
+    testHttpBui(new h.HttpBui().typeForm(), {headers: {'content-type': `application/x-www-form-urlencoded`}})
+    testHttpBui(new h.HttpBui().typeForm().type(), {headers: {}})
 
-    t.eq(
-      h.reqBui().to(`https://example.com`).req(),
-      new Request(`https://example.com`),
-    )
-
-    t.eq(
-      h.reqBui().to(`https://example.com`).post().req(),
-      new Request(`https://example.com`, {method: `POST`}),
-    )
-
-    t.eq(
-      h.reqBui().to(`https://example.com`).post().json().req(),
-      new Request(`https://example.com`, {
-        method: `POST`,
-        headers: {'content-type': `application/json`},
-        body: `null`,
-      }),
-    )
+    testHttpBui(new h.HttpBui().typeMulti(), {headers: {'content-type': `multipart/form-data`}})
+    testHttpBui(new h.HttpBui().typeMulti().type(), {headers: {}})
   })
 
   t.test(function test_heads() {
-    const ref = h.reqBui()
+    const ref = new h.HttpBui()
     t.is(ref.heads(), ref.heads())
     t.is(ref.heads(), ref.headers)
     t.is(ref.headers, ref.heads())
@@ -325,10 +246,10 @@ t.test(function test_ReqBui() {
   })
 
   t.test(function test_headHas() {
-    t.throws(() => h.reqBui().headHas(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headHas(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headHas(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headHas(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
 
-    function test(src, key, exp) {t.is(mockReqBui({headers: src}).headHas(key), exp)}
+    function test(src, key, exp) {t.is(mockHttpBui({headers: src}).headHas(key), exp)}
     function none(src, key) {test(src, key, false)}
     function some(src, key) {test(src, key, true)}
 
@@ -343,10 +264,10 @@ t.test(function test_ReqBui() {
   })
 
   t.test(function test_headGet() {
-    t.throws(() => h.reqBui().headGet(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headGet(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headGet(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headGet(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
 
-    function test(src, key, exp) {t.is(mockReqBui({headers: src}).headGet(key), exp)}
+    function test(src, key, exp) {t.is(mockHttpBui({headers: src}).headGet(key), exp)}
     function none(src, key) {test(src, key, ``)}
 
     none(undefined, `one`)
@@ -364,112 +285,112 @@ t.test(function test_ReqBui() {
   })
 
   t.test(function test_headSet() {
-    t.throws(() => h.reqBui().headSet(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headSet(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => h.reqBui().headSet(`one`, []), TypeError, `unable to convert [] to string`)
+    t.throws(() => new h.HttpBui().headSet(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headSet(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headSet(`one`, []), TypeError, `unable to convert [] to string`)
 
-    testHead(h.reqBui().headSet(`one`), {})
-    testHead(h.reqBui().headSet(`one`, ``), {one: ``})
-    testHead(h.reqBui().headSet(`one`, ``).headSet(`one`), {})
-    testHead(h.reqBui().headSet(`one`, `two`), {one: `two`})
-    testHead(h.reqBui().headSet(`one`, `two`).headSet(`one`), {})
-    testHead(h.reqBui().headSet(`one`, `two`).headSet(`three`, `four`), {one: `two`, three: `four`})
-    testHead(h.reqBui().headSet(`one`, `two`).headSet(`three`, `four`).headSet(`one`), {three: `four`})
+    testHead(new h.HttpBui().headSet(`one`), {})
+    testHead(new h.HttpBui().headSet(`one`, ``), {one: ``})
+    testHead(new h.HttpBui().headSet(`one`, ``).headSet(`one`), {})
+    testHead(new h.HttpBui().headSet(`one`, `two`), {one: `two`})
+    testHead(new h.HttpBui().headSet(`one`, `two`).headSet(`one`), {})
+    testHead(new h.HttpBui().headSet(`one`, `two`).headSet(`three`, `four`), {one: `two`, three: `four`})
+    testHead(new h.HttpBui().headSet(`one`, `two`).headSet(`three`, `four`).headSet(`one`), {three: `four`})
 
-    testHead(h.reqBui().headSet(`one`, 10), {one: `10`})
-    testHead(h.reqBui().headSet(`location`, u.url(URL_LONG)), {location: URL_LONG})
+    testHead(new h.HttpBui().headSet(`one`, 10), {one: `10`})
+    testHead(new h.HttpBui().headSet(`location`, u.url(URL_LONG)), {location: URL_LONG})
   })
 
   t.test(function test_headSetAll() {
-    t.throws(() => h.reqBui().headSetAll(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headSetAll(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => h.reqBui().headSetAll(`one`, {}), TypeError, `expected variant of isArr, got {}`)
+    t.throws(() => new h.HttpBui().headSetAll(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headSetAll(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headSetAll(`one`, {}), TypeError, `expected variant of isArr, got {}`)
 
-    testHead(h.reqBui().headSetAll(`one`), {})
-    testHead(h.reqBui().headSetAll(`one`, [``]), {one: ``})
-    testHead(h.reqBui().headSetAll(`one`, [``, ``, ``]), {one: ``})
-    testHead(h.reqBui().headSetAll(`one`, [``, undefined, ``]), {one: ``})
-    testHead(h.reqBui().headSetAll(`one`, [`two`]), {one: `two`})
-    testHead(h.reqBui().headSetAll(`one`, [`two`, `three`]), {one: `two, three`})
-    testHead(h.reqBui().headSetAll(`one`, [`two`, ``, `three`]), {one: `two, three`})
-    testHead(h.reqBui().headSetAll(`one`, [`two`]).headSetAll(`one`), {})
-    testHead(h.reqBui().headSetAll(`one`, [`two`]).headSetAll(`one`, []), {})
+    testHead(new h.HttpBui().headSetAll(`one`), {})
+    testHead(new h.HttpBui().headSetAll(`one`, [``]), {one: ``})
+    testHead(new h.HttpBui().headSetAll(`one`, [``, ``, ``]), {one: ``})
+    testHead(new h.HttpBui().headSetAll(`one`, [``, undefined, ``]), {one: ``})
+    testHead(new h.HttpBui().headSetAll(`one`, [`two`]), {one: `two`})
+    testHead(new h.HttpBui().headSetAll(`one`, [`two`, `three`]), {one: `two, three`})
+    testHead(new h.HttpBui().headSetAll(`one`, [`two`, ``, `three`]), {one: `two, three`})
+    testHead(new h.HttpBui().headSetAll(`one`, [`two`]).headSetAll(`one`), {})
+    testHead(new h.HttpBui().headSetAll(`one`, [`two`]).headSetAll(`one`, []), {})
   })
 
   t.test(function test_headSetAny() {
-    t.throws(() => h.reqBui().headSetAny(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headSetAny(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => h.reqBui().headSetAny(`one`, {}), TypeError, `unable to convert {} to string`)
+    t.throws(() => new h.HttpBui().headSetAny(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headSetAny(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headSetAny(`one`, {}), TypeError, `unable to convert {} to string`)
 
-    testHead(h.reqBui().headSetAny(`one`), {})
-    testHead(h.reqBui().headSetAny(`one`, []), {})
-    testHead(h.reqBui().headSetAny(`one`, ``), {one: ``})
-    testHead(h.reqBui().headSetAny(`one`, [`two`]), {one: `two`})
-    testHead(h.reqBui().headSetAny(`one`, [`two`, `three`]), {one: `two, three`})
-    testHead(h.reqBui().headSetAny(`one`, [`two`, `three`]).headSetAny(`one`, `four`), {one: `four`})
+    testHead(new h.HttpBui().headSetAny(`one`), {})
+    testHead(new h.HttpBui().headSetAny(`one`, []), {})
+    testHead(new h.HttpBui().headSetAny(`one`, ``), {one: ``})
+    testHead(new h.HttpBui().headSetAny(`one`, [`two`]), {one: `two`})
+    testHead(new h.HttpBui().headSetAny(`one`, [`two`, `three`]), {one: `two, three`})
+    testHead(new h.HttpBui().headSetAny(`one`, [`two`, `three`]).headSetAny(`one`, `four`), {one: `four`})
   })
 
   t.test(function test_headSetOpt() {
-    t.throws(() => h.reqBui().headSetOpt(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headSetOpt(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => h.reqBui().headSetOpt(`one`, []), TypeError, `unable to convert [] to string`)
+    t.throws(() => new h.HttpBui().headSetOpt(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headSetOpt(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headSetOpt(`one`, []), TypeError, `unable to convert [] to string`)
 
-    testHead(h.reqBui().headSetOpt(`one`, ``), {})
-    testHead(h.reqBui().headSetOpt(`one`, `two`), {one: `two`})
-    testHead(h.reqBui().headSet(`one`, `two`).headSetOpt(`one`, undefined), {one: `two`})
-    testHead(h.reqBui().headSet(`one`, `two`).headSetOpt(`one`, ``), {one: `two`})
-    testHead(h.reqBui().headSet(`one`, `two`).headSetOpt(`one`, `three`), {one: `two`})
+    testHead(new h.HttpBui().headSetOpt(`one`, ``), {})
+    testHead(new h.HttpBui().headSetOpt(`one`, `two`), {one: `two`})
+    testHead(new h.HttpBui().headSet(`one`, `two`).headSetOpt(`one`, undefined), {one: `two`})
+    testHead(new h.HttpBui().headSet(`one`, `two`).headSetOpt(`one`, ``), {one: `two`})
+    testHead(new h.HttpBui().headSet(`one`, `two`).headSetOpt(`one`, `three`), {one: `two`})
   })
 
   t.test(function test_headAppend() {
-    t.throws(() => h.reqBui().headAppend(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headAppend(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => h.reqBui().headAppend(`one`, []), TypeError, `unable to convert [] to string`)
+    t.throws(() => new h.HttpBui().headAppend(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headAppend(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headAppend(`one`, []), TypeError, `unable to convert [] to string`)
 
-    testHead(h.reqBui().headAppend(`one`), {})
-    testHead(h.reqBui().headAppend(`one`, ``), {one: ``})
-    testHead(h.reqBui().headAppend(`one`, ``).headAppend(`one`, ``), {one: ``})
-    testHead(h.reqBui().headAppend(`one`, `two`).headAppend(`one`, ``), {one: `two`})
-    testHead(h.reqBui().headAppend(`one`, ``).headAppend(`one`, `two`), {one: `two`})
-    testHead(h.reqBui().headAppend(`one`, `two`).headAppend(`one`, `three`), {one: `two, three`})
+    testHead(new h.HttpBui().headAppend(`one`), {})
+    testHead(new h.HttpBui().headAppend(`one`, ``), {one: ``})
+    testHead(new h.HttpBui().headAppend(`one`, ``).headAppend(`one`, ``), {one: ``})
+    testHead(new h.HttpBui().headAppend(`one`, `two`).headAppend(`one`, ``), {one: `two`})
+    testHead(new h.HttpBui().headAppend(`one`, ``).headAppend(`one`, `two`), {one: `two`})
+    testHead(new h.HttpBui().headAppend(`one`, `two`).headAppend(`one`, `three`), {one: `two, three`})
   })
 
   t.test(function test_headAppendAll() {
-    t.throws(() => h.reqBui().headAppendAll(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headAppendAll(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => h.reqBui().headAppendAll(`one`, {}), TypeError, `expected variant of isArr, got {}`)
+    t.throws(() => new h.HttpBui().headAppendAll(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headAppendAll(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headAppendAll(`one`, {}), TypeError, `expected variant of isArr, got {}`)
 
-    testHead(h.reqBui().headAppendAll(`one`), {})
-    testHead(h.reqBui().headAppendAll(`one`, [``]), {one: ``})
-    testHead(h.reqBui().headAppendAll(`one`, [``, ``, ``]), {one: ``})
-    testHead(h.reqBui().headAppendAll(`one`, [``, undefined, ``]), {one: ``})
-    testHead(h.reqBui().headAppendAll(`one`, [`two`]), {one: `two`})
-    testHead(h.reqBui().headAppendAll(`one`, [`two`, `three`]), {one: `two, three`})
-    testHead(h.reqBui().headAppendAll(`one`, [`two`, ``, `three`]), {one: `two, three`})
-    testHead(h.reqBui().headAppendAll(`one`, [`two`]).headAppendAll(`one`), {one: `two`})
-    testHead(h.reqBui().headAppendAll(`one`, [`two`]).headAppendAll(`one`, []), {one: `two`})
-    testHead(h.reqBui().headAppendAll(`one`, [`two`]).headAppendAll(`one`, [`three`]), {one: `two, three`})
+    testHead(new h.HttpBui().headAppendAll(`one`), {})
+    testHead(new h.HttpBui().headAppendAll(`one`, [``]), {one: ``})
+    testHead(new h.HttpBui().headAppendAll(`one`, [``, ``, ``]), {one: ``})
+    testHead(new h.HttpBui().headAppendAll(`one`, [``, undefined, ``]), {one: ``})
+    testHead(new h.HttpBui().headAppendAll(`one`, [`two`]), {one: `two`})
+    testHead(new h.HttpBui().headAppendAll(`one`, [`two`, `three`]), {one: `two, three`})
+    testHead(new h.HttpBui().headAppendAll(`one`, [`two`, ``, `three`]), {one: `two, three`})
+    testHead(new h.HttpBui().headAppendAll(`one`, [`two`]).headAppendAll(`one`), {one: `two`})
+    testHead(new h.HttpBui().headAppendAll(`one`, [`two`]).headAppendAll(`one`, []), {one: `two`})
+    testHead(new h.HttpBui().headAppendAll(`one`, [`two`]).headAppendAll(`one`, [`three`]), {one: `two, three`})
   })
 
   t.test(function test_headAppendAny() {
-    t.throws(() => h.reqBui().headAppendAny(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headAppendAny(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => h.reqBui().headAppendAny(`one`, {}), TypeError, `unable to convert {} to string`)
+    t.throws(() => new h.HttpBui().headAppendAny(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headAppendAny(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headAppendAny(`one`, {}), TypeError, `unable to convert {} to string`)
 
-    testHead(h.reqBui().headAppendAny(`one`), {})
-    testHead(h.reqBui().headAppendAny(`one`, []), {})
-    testHead(h.reqBui().headAppendAny(`one`, ``), {one: ``})
-    testHead(h.reqBui().headAppendAny(`one`, [`two`]), {one: `two`})
-    testHead(h.reqBui().headAppendAny(`one`, [`two`, `three`]), {one: `two, three`})
-    testHead(h.reqBui().headAppendAny(`one`, [`two`, `three`]).headAppendAny(`one`, `four`), {one: `two, three, four`})
+    testHead(new h.HttpBui().headAppendAny(`one`), {})
+    testHead(new h.HttpBui().headAppendAny(`one`, []), {})
+    testHead(new h.HttpBui().headAppendAny(`one`, ``), {one: ``})
+    testHead(new h.HttpBui().headAppendAny(`one`, [`two`]), {one: `two`})
+    testHead(new h.HttpBui().headAppendAny(`one`, [`two`, `three`]), {one: `two, three`})
+    testHead(new h.HttpBui().headAppendAny(`one`, [`two`, `three`]).headAppendAny(`one`, `four`), {one: `two, three, four`})
   })
 
   t.test(function test_headDelete() {
-    t.throws(() => h.reqBui().headDelete(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => h.reqBui().headDelete(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
+    t.throws(() => new h.HttpBui().headDelete(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
+    t.throws(() => new h.HttpBui().headDelete(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
 
     function test(src, key, exp) {
-      t.eq(mockReqBui({headers: src}).headDelete(key).headers, exp)
+      t.eq(mockHttpBui({headers: src}).headDelete(key).headers, exp)
     }
 
     test(undefined, `one`, undefined)
@@ -479,11 +400,11 @@ t.test(function test_ReqBui() {
   })
 
   t.test(function test_headMut() {
-    t.throws(() => h.reqBui().headMut(10), TypeError, `unable to convert 10 to head`)
-    t.throws(() => h.reqBui().headMut(`str`), TypeError, `unable to convert "str" to head`)
+    t.throws(() => new h.HttpBui().headMut(10), TypeError, `unable to convert 10 to head`)
+    t.throws(() => new h.HttpBui().headMut(`str`), TypeError, `unable to convert "str" to head`)
 
     function test(src, add, exp) {
-      const ref = mockReqBui({headers: src}).headMut(add)
+      const ref = mockHttpBui({headers: src}).headMut(add)
       t.eq(ref.headers, exp)
       if (ref.headers) t.isnt(ref.headers, exp)
     }
@@ -524,6 +445,119 @@ t.test(function test_ReqBui() {
     test({one: `two`}, s.strMap({one: `three`}), {one: `two, three`})
     test({one: `two`}, s.strMap({one: [`three`, `four`]}), {one: `two, three, four`})
   })
+})
+
+t.test(function test_reqBui() {
+  l.reqInst(h.reqBui(), h.ReqBui)
+})
+
+/*
+TODO:
+
+  * Test fetching from a local server in the same process.
+  * Test instantiation of responses.
+
+Requires async support from our testing library.
+In the meantime, those features are tested in apps.
+*/
+t.test(function test_ReqBui() {
+  // Same as `HttpBui`. Just a sanity check.
+  t.test(function test_constructor() {
+    testReqBui(new h.ReqBui(), {})
+    testReqBui(new h.ReqBui({one: 10, two: 20}), {one: 10, two: 20})
+  })
+
+  t.test(function test_meth() {
+    testReqBui(h.reqBui().meth(), {method: undefined})
+    testReqBui(h.reqBui().meth(``), {method: undefined})
+    testReqBui(h.reqBui().meth(`GET`), {method: `GET`})
+    testReqBui(h.reqBui().meth(`POST`), {method: `POST`})
+    testReqBui(h.reqBui().meth(`GET`).meth(`POST`), {method: `POST`})
+    testReqBui(h.reqBui().meth(`GET`).meth(), {method: undefined})
+    testReqBui(h.reqBui().meth(`GET`).meth(``), {method: undefined})
+    testReqBui(h.reqBui().meth().meth(`POST`), {method: `POST`})
+  })
+
+  t.test(function test_methods() {
+    testReqBui(h.reqBui().get(), {method: `GET`})
+    testReqBui(h.reqBui({method: `HEAD`}).get(), {method: `GET`})
+
+    testReqBui(h.reqBui().post(), {method: `POST`})
+    testReqBui(h.reqBui({method: `HEAD`}).post(), {method: `POST`})
+
+    testReqBui(h.reqBui().put(), {method: `PUT`})
+    testReqBui(h.reqBui({method: `HEAD`}).put(), {method: `PUT`})
+
+    testReqBui(h.reqBui().patch(), {method: `PATCH`})
+    testReqBui(h.reqBui({method: `HEAD`}).patch(), {method: `PATCH`})
+
+    testReqBui(h.reqBui().delete(), {method: `DELETE`})
+    testReqBui(h.reqBui({method: `HEAD`}).delete(), {method: `DELETE`})
+  })
+
+  t.test(function test_to() {
+    t.throws(() => h.reqBui().to({}), TypeError, `expected variant of isScalar, got {}`)
+
+    testReqBui(h.reqBui().to(), {url: undefined})
+    testReqBui(h.reqBui().to(new URL(URL_LONG)), {url: new URL(URL_LONG)})
+    testReqBui(h.reqBui().to(URL_LONG), {url: URL_LONG})
+    testReqBui(h.reqBui().to().to(URL_LONG), {url: URL_LONG})
+    testReqBui(h.reqBui().to(URL_LONG).to(), {url: undefined})
+  })
+
+  t.test(function test_sig() {
+    t.throws(() => h.reqBui().sig(`str`), TypeError, `expected instance of AbortSignal, got "str"`)
+
+    const sig = new AbortController().signal
+
+    testReqBui(h.reqBui().sig(), {signal: undefined})
+    testReqBui(h.reqBui().sig(sig), {signal: sig})
+    testReqBui(h.reqBui().sig(sig).sig(), {signal: undefined})
+    t.is(h.reqBui().sig(sig).signal, sig)
+  })
+
+  t.test(function test_inp() {
+    t.throws(() => h.reqBui().inp({}), TypeError, `expected variant of [isScalar, isUint8Array, isReadableStream, isFormData], got {}`)
+
+    testReqBui(h.reqBui().inp(), {body: undefined})
+    testReqBui(h.reqBui().inp(`str`), {body: `str`})
+    testReqBui(h.reqBui().inp(`str`).inp(), {body: undefined})
+    testReqBui(h.reqBui().inp(10), {body: 10})
+    testReqBui(h.reqBui().inp(new Uint8Array()), {body: new Uint8Array()})
+  })
+
+  t.test(function test_json() {
+    testReqBui(h.reqBui().json(), {body: `null`, headers: {'content-type': `application/json`}})
+    testReqBui(h.reqBui().json(10), {body: `10`, headers: {'content-type': `application/json`}})
+    testReqBui(h.reqBui().json(10).json(), {body: `null`, headers: {'content-type': `application/json`}})
+  })
+
+  // Incomplete.
+  t.test(function test_req() {
+    t.notEq(
+      h.reqBui().to(`https://example.com`).req(),
+      new Request(`https://example.com/one`),
+    )
+
+    t.eq(
+      h.reqBui().to(`https://example.com`).req(),
+      new Request(`https://example.com`),
+    )
+
+    t.eq(
+      h.reqBui().to(`https://example.com`).post().req(),
+      new Request(`https://example.com`, {method: `POST`}),
+    )
+
+    t.eq(
+      h.reqBui().to(`https://example.com`).post().json().req(),
+      new Request(`https://example.com`, {
+        method: `POST`,
+        headers: {'content-type': `application/json`},
+        body: `null`,
+      }),
+    )
+  })
 
   t.test(function test_chain() {
     t.eq(
@@ -538,7 +572,7 @@ t.test(function test_ReqBui() {
         method: h.POST,
         body: `null`,
         headers: {
-          [h.CONTENT_TYPE]: h.TYPE_JSON,
+          [h.HEAD_CONTENT_TYPE]: h.TYPE_JSON,
           'x-session-id': `a4c187abf0ba4a5f94f50ed991da6225`,
         },
       }),
@@ -550,27 +584,37 @@ t.test(function test_ReqBui() {
 TODO:
 
   * Test fetching from a local server in the same process.
-  * Test instantiation of responses.
-  * Test equality of body content by reading streams.
+  * Test instantiation of responses by `ReqBui`.
   * Test proxying of read-only fields that can't be instantiated manually.
   * Test various async "ok" methods.
-
-Requires async support from our testing library.
-In the meantime, those features are tested in apps.
 */
-t.test(function test_Res() {
-  t.test(function test_constructor() {
-    const src = new Response(`hello world`, {status: 400})
-    const tar = new h.Res(src)
+await t.test(async function test_Res() {
+  await t.test(async function test_constructor() {
+    await t.test(async function test_from_Response() {
+      const src = new Response(`hello world`, {status: 400})
+      const tar = new h.Res(src)
+      await testResSimple(tar, src)
+    })
 
-    t.ok(!!tar.body)
+    await t.test(async function test_from_body_and_Response() {
+      const src = new Response(`goodbye world`, {status: 400})
+      const res = new h.Res(`hello world`, src)
+      await testResSimple(res, src)
+    })
 
-    t.is(tar.res, src)
-    t.is(tar.status, src.status)
-    t.is(tar.status, 400)
-    t.no(tar.ok)
+    await t.test(async function test_from_body_and_init() {
+      const res = new h.Res(`hello world`, {status: 400})
+      await testResSimple(res, res)
+    })
   })
 })
+
+async function testResSimple(res, src) {
+  t.is(await readFull(res.body), `hello world`)
+  t.is(res.res, src)
+  t.is(res.status, 400)
+  t.no(res.ok)
+}
 
 t.test(function test_Rou() {
   t.test(function test_new() {
@@ -752,6 +796,226 @@ t.test(function test_Rou() {
       t.is(new h.Rou(simpleReq(URL_LONG, h.HEAD)).preflight(over), `override`)
       t.is(new h.Rou(simpleReq(URL_LONG, h.OPTIONS)).preflight(over), `override`)
     })
+  })
+})
+
+/*
+TODO: verify that all event listeners are "once", and that we remove the
+listener when unlinking.
+*/
+t.test(function test_Ctx() {
+  // This also indirectly checks that the constructor calls `.link`.
+  t.throws(() => new h.Ctx(`str`), TypeError, `expected instance of AbortSignal, got "str"`)
+  t.throws(() => new h.Ctx({}), TypeError, `expected instance of AbortSignal, got instance of Object {}`)
+
+  t.inst(new h.Ctx(), AbortController)
+  t.inst(new h.Ctx().signal, AbortSignal)
+
+  testCtxDeinit(val => val.abort())
+  testCtxDeinit(val => val.deinit())
+
+  t.test(function test_link() {
+    t.throws(() => new h.Ctx().link(`str`), TypeError, `expected instance of AbortSignal, got "str"`)
+
+    t.test(function test_pre_abort() {
+      const abc = new AbortController()
+      abc.abort()
+      t.ok(abc.signal.aborted)
+
+      const ctx = new h.Ctx()
+      t.no(ctx.signal.aborted)
+
+      t.is(ctx.link(abc.signal), ctx)
+      t.ok(ctx.signal.aborted)
+    })
+
+    t.test(function test_post_abort() {
+      const abc = new AbortController()
+      t.no(abc.signal.aborted)
+
+      const ctx = new h.Ctx()
+      t.no(ctx.signal.aborted)
+
+      t.is(ctx.link(abc.signal), ctx)
+      t.no(ctx.signal.aborted)
+
+      abc.abort()
+      t.ok(abc.signal.aborted)
+      t.ok(ctx.signal.aborted)
+    })
+
+    t.test(function test_replace() {
+      const ctx = new h.Ctx()
+      const abc0 = new AbortController()
+      const abc1 = new AbortController()
+
+      ctx.link(abc0.signal)
+      ctx.link(abc1.signal)
+
+      abc0.abort()
+      t.ok(abc0.signal.aborted)
+      t.no(ctx.signal.aborted)
+
+      abc1.abort()
+      t.ok(abc1.signal.aborted)
+      t.ok(ctx.signal.aborted)
+    })
+
+    testCtxUnlink(val => val.link())
+  })
+
+  t.test(function test_unlink() {
+    testCtxUnlink(val => val.unlink())
+  })
+})
+
+function testCtxDeinit(fun) {
+  const ctx = new h.Ctx()
+  t.no(ctx.signal.aborted)
+
+  fun(ctx)
+  t.ok(ctx.signal.aborted)
+}
+
+function testCtxUnlink(fun) {
+  const abc = new AbortController()
+  const ctx = new h.Ctx()
+
+  ctx.link(abc.signal)
+  fun(ctx)
+
+  abc.abort()
+  t.ok(abc.signal.aborted)
+  t.no(ctx.signal.aborted)
+}
+
+/*
+Cookie names and values are allowed to contain whitespace, but not semicolons,
+even in quotes. So we don't have to handle that case.
+*/
+t.test(function test_cookieSplitPairs() {
+  function test(src, exp) {t.eq(h.cookieSplitPairs(src), exp)}
+
+  test(``, [])
+  test(`;`, [])
+  test(`one; two`, [`one`, `two`])
+  test(`one; two;`, [`one`, `two`])
+  test(`one ; two ;`, [`one`, `two`])
+  test(` one; two `, [`one`, `two`])
+  test(` one; two; `, [`one`, `two`])
+  test(` one=two; three=four; `, [`one=two`, `three=four`])
+})
+
+t.test(function test_cookieSplitPair() {
+  t.throws(() => h.cookieSplitPair(), TypeError, `expected variant of isStr, got undefined`)
+  t.throws(() => h.cookieSplitPair(``), TypeError, `unexpected empty cookie pair`)
+  t.throws(() => h.cookieSplitPair(10), TypeError, `expected variant of isStr, got 10`)
+  t.throws(() => h.cookieSplitPair(`;`), TypeError, `invalid cookie pair ";"`)
+
+  function test(src, exp) {t.eq(h.cookieSplitPair(src), exp)}
+
+  t.test(function test_only_value() {
+    test(`one`, [``, `one`])
+    test(`=one`, [``, `one`])
+    test(`one two`, [``, `one two`])
+    test(`=one two`, [``, `one two`])
+  })
+
+  t.test(function test_only_name() {
+    test(`=`, [``, ``])
+    test(`one=`, [`one`, ``])
+    test(`one two=`, [`one two`, ``])
+  })
+
+  t.test(function test_both() {
+    test(`one==`, [`one`, `=`])
+    test(`one=two`, [`one`, `two`])
+    test(` one = two `, [`one`, `two`])
+    test(`one two=three`, [`one two`, `three`])
+    test(`one two=three four`, [`one two`, `three four`])
+    test(`one=two=three`, [`one`, `two=three`])
+  })
+})
+
+t.test(function test_Cookie() {
+  t.test(function test_invalid() {
+    t.throws(() => h.cook().setName({}), TypeError, `expected variant of isCookieName, got {}`)
+    t.throws(() => h.cook().setName(`=`), TypeError, `expected variant of isCookieName, got "="`)
+    t.throws(() => h.cook().setName(`;`), TypeError, `expected variant of isCookieName, got ";"`)
+
+    t.throws(() => h.cook().setValue({}), TypeError, `expected variant of isCookieValue, got {}`)
+    t.throws(() => h.cook().setValue(`;`), TypeError, `expected variant of isCookieValue, got ";"`)
+
+    t.throws(() => h.cook().setPath({}), TypeError, `expected variant of isCookieAttr, got {}`)
+    t.throws(() => h.cook().setPath(`;`), TypeError, `expected variant of isCookieAttr, got ";"`)
+    t.throws(() => h.cook().setPath(` `), TypeError, `expected variant of isCookieAttr, got " "`)
+
+    t.throws(() => h.cook().setDomain({}), TypeError, `expected variant of isCookieAttr, got {}`)
+    t.throws(() => h.cook().setDomain(`;`), TypeError, `expected variant of isCookieAttr, got ";"`)
+    t.throws(() => h.cook().setDomain(` `), TypeError, `expected variant of isCookieAttr, got " "`)
+
+    t.throws(() => h.cook().setExpires({}), TypeError, `expected variant of isValidDate, got {}`)
+    t.throws(() => h.cook().setMaxAge({}), TypeError, `expected variant of isNat, got {}`)
+    t.throws(() => h.cook().setSecure({}), TypeError, `expected variant of isBool, got {}`)
+    t.throws(() => h.cook().setHttpOnly({}), TypeError, `expected variant of isBool, got {}`)
+
+    t.throws(() => h.cook().setSameSite({}), TypeError, `expected variant of isCookieAttr, got {}`)
+    t.throws(() => h.cook().setSameSite(`;`), TypeError, `expected variant of isCookieAttr, got ";"`)
+    t.throws(() => h.cook().setSameSite(` `), TypeError, `expected variant of isCookieAttr, got " "`)
+  })
+
+  t.test(function test_toString() {
+    testStr(h.cook(), ``)
+    testStr(h.cook().setName(`one`), ``)
+    testStr(h.cook().setName(`one`).setValue(), ``)
+    testStr(h.cook().setName(`one`).setValue(``), `one=`)
+
+    testStr(h.cook().lax(), ``)
+    testStr(h.cook().expired(), ``)
+    testStr(h.cook().durable(), ``)
+
+    testStr(h.cook().setName(`one`).expired(), `one=; max-age=0`)
+
+    const base = Object.freeze(h.cook().setName(`one`).setValue(`two`))
+
+    testStr(base, `one=two`)
+    testStr(base.clone().lax(), `one=two; same-site=lax`)
+    testStr(base.clone().expired(), `one=two; max-age=0`)
+    testStr(base.clone().durable(), `one=two; max-age=536112000`)
+    testStr(base.clone().setExpires(new Date(0)), `one=two; expires=Thu, 01 Jan 1970 00:00:00 GMT`)
+  })
+
+  // Uses `cookieSplitPair` which is tested separately.
+  // This is a sanity check.
+  t.test(function test_fromPair() {
+    t.throws(() => h.Cookie.fromPair(10), TypeError, `expected variant of isStr, got 10`)
+    t.throws(() => h.Cookie.fromPair(``), TypeError, `unexpected empty cookie pair`)
+    t.throws(() => h.Cookie.fromPair(`;`), TypeError, `invalid cookie pair ";"`)
+
+    t.eq(
+      h.Cookie.fromPair(`one two=three four`),
+      h.cook().setName(`one two`).setValue(`three four`),
+    )
+  })
+
+  // Uses `cookieSplitPairs` and `.fromPair` which are tested separately.
+  // This is a sanity check.
+  t.test(function test_fromPairs() {
+    t.eq(h.Cookie.fromPairs(``), [])
+    t.eq(h.Cookie.fromPairs(`    `), [])
+
+    t.eq(
+      h.Cookie.fromPairs(`one=two`),
+      [h.cook().setName(`one`).setValue(`two`)],
+    )
+
+    t.eq(
+      h.Cookie.fromPairs(`one=two; three=four`),
+      [
+        h.cook().setName(`one`).setValue(`two`),
+        h.cook().setName(`three`).setValue(`four`),
+      ],
+    )
   })
 })
 

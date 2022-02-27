@@ -149,7 +149,7 @@ t.bench(function bench_str_map_new() {l.nop(new s.StrMap())})
 t.bench(function bench_draft_new_empty() {l.nop(new s.Draft())})
 
 t.bench(function bench_draft_new_preparsed() {
-  l.nop(new s.Draft(
+  l.nop(s.Draft.of(
     `one `,
     new s.Embed(`two`),
     ` three `,

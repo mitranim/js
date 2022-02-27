@@ -1,32 +1,51 @@
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
 
+/*
+Implementation notes.
+
+The "make" functions in this module should avoid calling native array methods.
+It should use only `Array(N)`, `.length`, and the bracket notation. This avoids
+accidental deoptimization or specialization of native methods. Some of our test
+modules unconditionally deoptimize them anyway, but we may want to make that
+optional.
+
+We would prefer to freeze global values to prevent accidental misuse, but
+freezing arrays makes some native iteration methods dramatically slower.
+*/
 export const size = 1024
-export const numList = makeNumList(size)
-export const dictList = makeDictList(numList)
-export const mapList = makeMapList(numList)
+
+export const arrEmpty = []
+export const arrShort = [10, 20, 30]
+export const arrShortNested = makeArrNested(arrShort)
+
+export const numArr = makeNumArr(size)
+export const numArrNested = makeArrNested(numArr)
+
+export const dictArr = makeDictArr(numArr)
+export const mapArr = makeMapArr(numArr)
 export const numDict = makeNumDict(size)
-export const numSet = new Set(numList)
+export const numSet = new Set(numArr)
 export const numMap = makeNumMap(size)
-export const numArgs = function() {return arguments}(...numList)
-export const knownKeys = Object.keys(numList.slice(0, numList.length/2))
+export const numArgs = function() {return arguments}(...numArr)
+export const knownKeys = Object.keys(numArr.slice(0, numArr.length/2))
 export const numEntries = Object.entries(numDict)
 
-function makeNumList(len) {
+function makeNumArr(len) {
   const out = Array(len)
   let ind = -1
   while (++ind < out.length) out[ind] = (ind % 2) * ind
   return out
 }
 
-function makeDictList(vals) {
+function makeDictArr(vals) {
   const out = Array(vals.length)
   let ind = -1
   while (++ind < vals.length) out[ind] = {val: vals[ind]}
   return out
 }
 
-function makeMapList(vals) {
+function makeMapArr(vals) {
   const out = Array(vals.length)
   let ind = -1
   while (++ind < vals.length) out[ind] = new Map().set(`val`, vals[ind])
@@ -47,20 +66,33 @@ function makeNumMap(len) {
   return out
 }
 
-function nop() {}
+function makeArrNested(src) {
+  const out = Array(src.length)
+  let ind = -1
+  while (++ind < src.length) out[ind] = [src[ind]]
+  return out
+}
+
+/*
+Not redundant with `l.nop`. We use referentially different functions to increase
+the likelihood of deoptimization, which is useful for benchmarking.
+*/
+function nop1() {}
 
 export function* gen(iter) {if (iter) for (const val of iter) yield val}
 
 export function deoptDictHof(fun) {
   i.reify(fun(numDict, l.nop))
-  i.reify(fun(numDict, nop))
+  i.reify(fun(numDict, nop1))
   i.reify(fun({}, l.nop))
-  i.reify(fun({}, nop))
+  i.reify(fun({}, nop1))
 }
 
 export function deoptListHof(fun) {
-  i.reify(fun(numList, l.nop))
-  i.reify(fun(numList, nop))
+  i.reify(fun(numArr, l.nop))
+  i.reify(fun(numArr, nop1))
+  i.reify(fun(numArgs, l.nop))
+  i.reify(fun(numArgs, nop1))
 }
 
 // Semantically distinct. Implementation matches by accident.
@@ -68,12 +100,19 @@ export function deoptSeqFun(fun) {deoptSeqHof(fun)}
 
 export function deoptSeqHof(fun) {
   deoptListHof(fun)
-  i.reify(fun(numList.values(), l.nop))
-  i.reify(fun(numList.values(), nop))
-  i.reify(fun(numList.keys(), l.nop))
-  i.reify(fun(numList.keys(), nop))
+  i.reify(fun(numArr.values(), l.nop))
+  i.reify(fun(numArr.values(), nop1))
+  i.reify(fun(numArr.keys(), l.nop))
+  i.reify(fun(numArr.keys(), nop1))
   i.reify(fun(gen(), l.nop))
-  i.reify(fun(gen(), nop))
+  i.reify(fun(gen(), nop1))
+}
+
+export function deoptKeysFun(fun) {
+  i.reify(fun(numArr))
+  i.reify(fun(numSet))
+  i.reify(fun(numMap))
+  i.reify(fun(numDict))
 }
 
 // Semantically distinct. Implementation matches by accident.
@@ -82,24 +121,24 @@ export function deoptCollFun(fun) {deoptCollHof(fun)}
 export function deoptCollHof(fun) {
   deoptSeqHof(fun)
   i.reify(fun(numDict, l.nop))
-  i.reify(fun(numDict, nop))
+  i.reify(fun(numDict, nop1))
   i.reify(fun(numMap, l.nop))
-  i.reify(fun(numMap, nop))
+  i.reify(fun(numMap, nop1))
   i.reify(fun(numMap.values(), l.nop))
-  i.reify(fun(numMap.values(), nop))
+  i.reify(fun(numMap.values(), nop1))
   i.reify(fun(numMap.keys(), l.nop))
-  i.reify(fun(numMap.keys(), nop))
+  i.reify(fun(numMap.keys(), nop1))
   i.reify(fun(numMap.entries(), l.nop))
-  i.reify(fun(numMap.entries(), nop))
+  i.reify(fun(numMap.entries(), nop1))
 }
 
 export function deoptNativeListHof(fun) {
-  fun.call(numList, l.nop)
-  fun.call(numList, nop)
-  fun.call(dictList, l.nop)
-  fun.call(dictList, nop)
+  fun.call(numArr, l.nop)
+  fun.call(numArr, nop1)
+  fun.call(dictArr, l.nop)
+  fun.call(dictArr, nop1)
   fun.call(knownKeys, l.nop)
-  fun.call(knownKeys, nop)
+  fun.call(knownKeys, nop1)
 }
 
 export function deoptWith(fun) {
@@ -109,10 +148,10 @@ export function deoptWith(fun) {
 }
 
 export function deoptArrayFrom(cls) {
-  l.reqArr(cls.from(numList, l.inc))
-  l.reqArr(cls.from(numList, l.dec))
-  l.reqArr(cls.from(numList, l.id))
-  l.reqArr(cls.from(numList, l.nop))
+  l.reqArr(cls.from(numArr, l.inc))
+  l.reqArr(cls.from(numArr, l.dec))
+  l.reqArr(cls.from(numArr, l.id))
+  l.reqArr(cls.from(numArr, l.nop))
 
   l.reqArr(cls.from(numSet, l.inc))
   l.reqArr(cls.from(numSet, l.dec))
@@ -120,14 +159,14 @@ export function deoptArrayFrom(cls) {
   l.reqArr(cls.from(numSet, l.nop))
 }
 
-export function deoptHofFun(ctx, fun) {
-  fun(ctx, l.inc)
-  fun(ctx, l.dec)
-  fun(ctx, l.id)
+export function deoptHofFun(self, fun) {
+  fun(self, l.inc)
+  fun(self, l.dec)
+  fun(self, l.id)
 }
 
-export function deoptHofMeth(ctx, fun) {
-  fun.call(ctx, l.inc)
-  fun.call(ctx, l.dec)
-  fun.call(ctx, l.id)
+export function deoptHofMeth(self, fun) {
+  fun.call(self, l.inc)
+  fun.call(self, l.dec)
+  fun.call(self, l.id)
 }

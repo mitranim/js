@@ -5,27 +5,27 @@ import * as u from '../url.mjs'
 
 const LONG = `scheme://user:pass@host:123/path?key=val#hash`
 
-t.test(function test_search() {l.reqInst(u.search(), u.Search)})
+t.test(function test_query() {l.reqInst(u.query(), u.Query)})
 
-t.test(function test_toSearch() {
+t.test(function test_toQuery() {
   function same(val) {
-    l.reqInst(val, u.Search)
-    t.is(u.toSearch(val), val)
+    l.reqInst(val, u.Query)
+    t.is(u.toQuery(val), val)
   }
 
   function make(src) {
-    const out = u.toSearch(src)
-    l.reqInst(out, u.Search)
+    const out = u.toQuery(src)
+    l.reqInst(out, u.Query)
     t.isnt(out, src)
-    t.is(u.search(src).toString(), u.search(out).toString())
+    t.is(u.query(src).toString(), u.query(out).toString())
   }
 
   make(undefined)
   make(``)
   make(`one=two`)
 
-  same(u.search())
-  same(u.search(`one=two`))
+  same(u.query())
+  same(u.query(`one=two`))
 })
 
 t.test(function test_url() {l.reqInst(u.url(), u.Url)})
@@ -64,22 +64,22 @@ t.test(function test_urlJoin() {
   testStr(u.urlJoin(`../one/two?three=four#five`, `six`), `../one/two/six?three=four#five`)
 })
 
-t.test(function test_Search() {
+t.test(function test_Query() {
   t.test(function test_decoding() {
-    function test(src, exp) {t.eq(u.search(src), exp)}
-    function empty(src) {test(src, u.search())}
+    function test(src, exp) {t.eq(u.query(src), exp)}
+    function empty(src) {test(src, u.query())}
 
     empty(undefined)
     empty(null)
     empty(``)
     empty(`?`)
 
-    test(`one=two`, new u.Search({one: `two`}))
-    test(`?one=two`, new u.Search({one: [`two`]}))
+    test(`one=two`, new u.Query({one: `two`}))
+    test(`?one=two`, new u.Query({one: [`two`]}))
 
     test(
       `one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven`,
-      new u.Search({
+      new u.Query({
         one: [`two`, `three`],
         four: `five`,
         five: [`six`],
@@ -91,13 +91,13 @@ t.test(function test_Search() {
     t.test(function test_plus_decoding() {
       test(
         `one+two=three+four++five`,
-        new u.Search({'one two': `three four  five`}),
+        new u.Query({'one two': `three four  five`}),
       )
     })
   })
 
   t.test(function test_encoding() {
-    function test(src, exp) {testStr(u.search(src), exp)}
+    function test(src, exp) {testStr(u.query(src), exp)}
 
     function same(src) {test(src, src)}
 
@@ -112,22 +112,22 @@ t.test(function test_Search() {
 
     t.test(function test_date_encoding() {
       const val = new Date(1024)
-      testStr(u.search().append(`key`, val), `key=1970-01-01T00%3A00%3A01.024Z`)
-      testStr(u.search({key: val}), `key=1970-01-01T00%3A00%3A01.024Z`)
-      testStr(u.search([[`key`, val]]), `key=1970-01-01T00%3A00%3A01.024Z`)
+      testStr(u.query().append(`key`, val), `key=1970-01-01T00%3A00%3A01.024Z`)
+      testStr(u.query({key: val}), `key=1970-01-01T00%3A00%3A01.024Z`)
+      testStr(u.query([[`key`, val]]), `key=1970-01-01T00%3A00%3A01.024Z`)
     })
 
     t.test(function test_plus_encoding() {
       testStr(
-        u.search().append(`one two`, `three four  five`),
+        u.query().append(`one two`, `three four  five`),
         `one+two=three+four++five`,
       )
     })
   })
 
   t.test(function test_toStringFull() {
-    t.is(u.search().toStringFull(), ``)
-    t.is(u.search(`one=two`).toStringFull(), `?one=two`)
+    t.is(u.query().toStringFull(), ``)
+    t.is(u.query(`one=two`).toStringFull(), `?one=two`)
   })
 
   t.test(function test_reset_from_str() {
@@ -138,12 +138,12 @@ t.test(function test_Search() {
     testSearchMutWith(l.id)
   })
 
-  t.test(function test_reset_from_Search() {
-    testSearchResetWith(u.search)
+  t.test(function test_reset_from_Query() {
+    testSearchResetWith(u.query)
   })
 
-  t.test(function test_mut_from_Search() {
-    testSearchMutWith(u.search)
+  t.test(function test_mut_from_Query() {
+    testSearchMutWith(u.query)
   })
 
   t.test(function test_reset_from_URLSearchParams() {
@@ -156,7 +156,7 @@ t.test(function test_Search() {
 
   t.test(function test_toURLSearchParams() {
     function test(str) {
-      const src = u.search(str)
+      const src = u.query(str)
       const out = src.toURLSearchParams()
       const exp = new URLSearchParams(str)
 
@@ -175,20 +175,20 @@ t.test(function test_Search() {
   t.test(function test_keys() {
     function test(src, exp) {t.eq([...src.keys()], exp)}
 
-    test(u.search(), [])
+    test(u.query(), [])
 
     test(
-      u.search(`one=two&one=three&four=five&four=six&seven=eight`),
+      u.query(`one=two&one=three&four=five&four=six&seven=eight`),
       [`one`, `four`, `seven`],
     )
 
     test(
-      u.search().set(`one two`, `three four  five`),
+      u.query().set(`one two`, `three four  five`),
       [`one two`],
     )
 
     test(
-      u.search(`%F0%9F%99%82=%F0%9F%98%81`),
+      u.query(`%F0%9F%99%82=%F0%9F%98%81`),
       [`🙂`],
     )
 
@@ -202,20 +202,20 @@ t.test(function test_Search() {
   t.test(function test_values() {
     function test(src, exp) {t.eq([...src.values()], exp)}
 
-    test(u.search(), [])
+    test(u.query(), [])
 
     test(
-      u.search(`one=two&one=three&four=five&four=six&seven=eight`),
+      u.query(`one=two&one=three&four=five&four=six&seven=eight`),
       [[`two`, `three`], [`five`, `six`], [`eight`]],
     )
 
     test(
-      u.search().set(`one two`, `three four  five`),
+      u.query().set(`one two`, `three four  five`),
       [[`three four  five`]],
     )
 
     test(
-      u.search(`%F0%9F%99%82=%F0%9F%98%81`),
+      u.query(`%F0%9F%99%82=%F0%9F%98%81`),
       [[`😁`]],
     )
 
@@ -229,20 +229,20 @@ t.test(function test_Search() {
   t.test(function test_entries() {
     function test(src, exp) {t.eq([...src.entries()], exp)}
 
-    test(u.search(), [])
+    test(u.query(), [])
 
     test(
-      u.search(`one=two&one=three&four=five&four=six&seven=eight`),
+      u.query(`one=two&one=three&four=five&four=six&seven=eight`),
       [[`one`, [`two`, `three`]], [`four`, [`five`, `six`]], [`seven`, [`eight`]]],
     )
 
     test(
-      u.search().set(`one two`, `three four  five`),
+      u.query().set(`one two`, `three four  five`),
       [[`one two`, [`three four  five`]]],
     )
 
     test(
-      u.search(`%F0%9F%99%82=%F0%9F%98%81`),
+      u.query(`%F0%9F%99%82=%F0%9F%98%81`),
       [[`🙂`, [`😁`]]],
     )
 
@@ -254,29 +254,29 @@ t.test(function test_Search() {
   })
 
   t.test(function test_toJSON() {
-    t.is(u.search().toJSON(), null)
-    t.is(u.search(``).toJSON(), null)
-    t.is(u.search(`?`).toJSON(), null)
-    t.is(u.search(`one=two`).toJSON(), `one=two`)
+    t.is(u.query().toJSON(), null)
+    t.is(u.query(``).toJSON(), null)
+    t.is(u.query(`?`).toJSON(), null)
+    t.is(u.query(`one=two`).toJSON(), `one=two`)
   })
 })
 
 function testSearchResetWith(fun) {
-  testReset(u.search(),          fun(),                      ``)
-  testReset(u.search(),          fun(``),                    ``)
-  testReset(u.search(),          fun(`one=two`),             `one=two`)
-  testReset(u.search(`one=two`), fun(`one=three`),           `one=three`)
-  testReset(u.search(`one=two`), fun(`three=four`),          `three=four`)
-  testReset(u.search(`one=two`), fun(`three=four&five=six`), `three=four&five=six`)
+  testReset(u.query(),          fun(),                      ``)
+  testReset(u.query(),          fun(``),                    ``)
+  testReset(u.query(),          fun(`one=two`),             `one=two`)
+  testReset(u.query(`one=two`), fun(`one=three`),           `one=three`)
+  testReset(u.query(`one=two`), fun(`three=four`),          `three=four`)
+  testReset(u.query(`one=two`), fun(`three=four&five=six`), `three=four&five=six`)
 }
 
 function testSearchMutWith(fun) {
-  testMut(u.search(),          fun(),                      ``)
-  testMut(u.search(),          fun(``),                    ``)
-  testMut(u.search(),          fun(`one=two`),             `one=two`)
-  testMut(u.search(`one=two`), fun(`one=three`),           `one=two&one=three`)
-  testMut(u.search(`one=two`), fun(`three=four`),          `one=two&three=four`)
-  testMut(u.search(`one=two`), fun(`three=four&five=six`), `one=two&three=four&five=six`)
+  testMut(u.query(),          fun(),                      ``)
+  testMut(u.query(),          fun(``),                    ``)
+  testMut(u.query(),          fun(`one=two`),             `one=two`)
+  testMut(u.query(`one=two`), fun(`one=three`),           `one=two&one=three`)
+  testMut(u.query(`one=two`), fun(`three=four`),          `one=two&three=four`)
+  testMut(u.query(`one=two`), fun(`three=four&five=six`), `one=two&three=four&five=six`)
 }
 
 t.test(function test_Url() {
@@ -291,7 +291,7 @@ t.test(function test_Url() {
         [u.hostnameKey]: `four.five`,
         [u.portKey]: `123`,
         [u.pathnameKey]: `/six`,
-        [u.searchKey]: `seven=eight`,
+        [u.queryKey]: `seven=eight`,
         [u.hashKey]: `nine`,
       }),
     )
@@ -577,10 +577,10 @@ t.test(function test_Url() {
   })
 
   t.test(function test_search() {
-    t.throws(() => u.url().search = `#`, SyntaxError, `unable to convert "#" to Search`)
-    t.throws(() => u.url().search = `one#two`, SyntaxError, `unable to convert "one#two" to Search`)
+    t.throws(() => u.url().search = `#`, SyntaxError, `unable to convert "#" to Query`)
+    t.throws(() => u.url().search = `one#two`, SyntaxError, `unable to convert "one#two" to Query`)
     t.throws(() => u.url().search = 10, TypeError, `expected variant of isStr, got 10`)
-    t.throws(() => u.url().search = u.search(), TypeError, `expected variant of isStr, got [object Search]`)
+    t.throws(() => u.url().search = u.query(), TypeError, `expected variant of isStr, got [object Query]`)
     t.throws(() => u.url().search = u.url(), TypeError, `expected variant of isStr, got [object Url]`)
     t.throws(() => u.url().search = {key: `val`}, TypeError, `expected variant of isStr, got {"key":"val"}`)
 
@@ -596,7 +596,7 @@ t.test(function test_Url() {
 
   t.test(function test_setSearch() {
     t.throws(() => u.url().setSearch(10), TypeError, `expected variant of isStr, got 10`)
-    t.throws(() => u.url().setSearch(u.search()), TypeError, `expected variant of isStr, got [object Search]`)
+    t.throws(() => u.url().setSearch(u.query()), TypeError, `expected variant of isStr, got [object Query]`)
     t.throws(() => u.url().setSearch({key: `val`}), TypeError, `expected variant of isStr, got {"key":"val"}`)
 
     testUrlSearchSet(function test(src, val, exp) {
@@ -605,17 +605,17 @@ t.test(function test_Url() {
   })
 
   t.test(function test_searchParams() {
-    t.throws(() => u.url().searchParams = `#`, SyntaxError, `unable to convert "#" to Search`)
-    t.throws(() => u.url().searchParams = `one#two`, SyntaxError, `unable to convert "one#two" to Search`)
-    t.throws(() => u.url().searchParams = 10, TypeError, `unable to convert 10 to Search`)
+    t.throws(() => u.url().searchParams = `#`, SyntaxError, `unable to convert "#" to Query`)
+    t.throws(() => u.url().searchParams = `one#two`, SyntaxError, `unable to convert "one#two" to Query`)
+    t.throws(() => u.url().searchParams = 10, TypeError, `unable to convert 10 to Query`)
 
-    l.reqInst(u.url().searchParams, u.Search)
-    l.reqInst(u.url(`?key=val`).searchParams, u.Search)
-    t.eq(u.url(`?key=val`).searchParams, u.search(`key=val`))
+    l.reqInst(u.url().searchParams, u.Query)
+    l.reqInst(u.url(`?key=val`).searchParams, u.Query)
+    t.eq(u.url(`?key=val`).searchParams, u.query(`key=val`))
 
     function test(src, exp) {
-      t.is(u.url(src).searchParams + ``, exp)
-      t.eq(u.url(src).searchParams, u.search(exp))
+      t.is(u.url(src).searchParams.toString(), exp)
+      t.eq(u.url(src).searchParams, u.query(exp))
     }
 
     testUrlSearchGet(test)
@@ -633,9 +633,9 @@ t.test(function test_Url() {
     testUrlSearchSet(test)
 
     test(``, new URLSearchParams(`key=val`), `?key=val`)
-    test(``, u.search(`key=val`), `?key=val`)
+    test(``, u.query(`key=val`), `?key=val`)
     test(``, {key: `val`}, `?key=val`)
-    test(`?one=two`, u.search(`three=four`), `?three=four`)
+    test(`?one=two`, u.query(`three=four`), `?three=four`)
   })
 
   t.test(function test_query() {
@@ -649,15 +649,15 @@ t.test(function test_Url() {
   t.test(function test_setQuery() {
     function test(src, val, exp) {testStr(u.url(src).setQuery(val), exp)}
 
-    test(``, u.search(`key=val`), `?key=val`)
-    test(`?one=two`, u.search(`three=four`), `?three=four`)
+    test(``, u.query(`key=val`), `?key=val`)
+    test(`?one=two`, u.query(`three=four`), `?three=four`)
   })
 
   t.test(function test_mutQuery() {
     function test(src, val, exp) {testStr(u.url(src).mutQuery(val), exp)}
 
-    test(``, u.search(`key=val`), `?key=val`)
-    test(`?one=two`, u.search(`three=four`), `?one=two&three=four`)
+    test(``, u.query(`key=val`), `?key=val`)
+    test(`?one=two`, u.query(`three=four`), `?one=two&three=four`)
   })
 
   t.test(function test_hash() {
@@ -1066,6 +1066,24 @@ t.test(function test_Url() {
     test(`scheme://host?key=val#hash`, `?key=val#hash`)
     test(`scheme://host/path`, `/path`)
     test(`scheme://host/path?key=val#hash`, `/path?key=val#hash`)
+  })
+
+  t.test(function test_clean() {
+    function test(src, exp) {t.is(u.url(src).clean(), exp)}
+
+    test(``, ``)
+    test(`/path`, `/path`)
+
+    test(`scheme:`, `scheme:`)
+    test(`scheme:path`, `scheme:path`)
+    test(`scheme:path?key=val#hash`, `scheme:path`)
+
+    test(`scheme://`, `scheme://`)
+    test(`scheme://host`, `scheme://host`)
+    test(`scheme://host:123`, `scheme://host:123`)
+    test(`scheme://host:123/path`, `scheme://host:123/path`)
+    test(`scheme://user:pass@host:123/path`, `scheme://user:pass@host:123/path`)
+    test(`scheme://user:pass@host:123/path?key=val#hash`, `scheme://user:pass@host:123/path`)
   })
 
   // Delegates to `.addPath`. This is mostly a sanity check.

@@ -22,12 +22,12 @@
   * Query keys must be strings.
   * Invalid inputs for various URL components cause exceptions instead of being silently converted to garbage, truncated, or ignored.
 * Subclassable.
-  * Can subclass `Search` and override it for your `Url` variant.
+  * Can subclass `Query` and override it for your `Url` variant.
   * Can override any getter, setter, or method.
   * Compatible with proxies and `Object.create`.
   * No "illegal invocation" exceptions.
 * No special cases for "known" URL schemes.
-* `Search` is `Map<string, string[]>` as it should be.
+* `Query` is `Map<string, string[]>` as it should be.
 * Automatically stringable as it should be.
 * Decent test coverage.
 * Decent benchmark coverage.
@@ -43,12 +43,12 @@ Ported and reworked from https://github.com/mitranim/ur which is also available 
 * [#Usage](#usage)
 * [#Limitations](#limitations)
 * [#API](#api)
-  * [#`function search`](#function-search)
-  * [#`function toSearch`](#function-tosearch)
+  * [#`function query`](#function-query)
+  * [#`function toQuery`](#function-toquery)
   * [#`function url`](#function-url)
   * [#`function toUrl`](#function-tourl)
   * [#`function urlJoin`](#function-urljoin)
-  * [#`class Search`](#class-search)
+  * [#`class Query`](#class-query)
   * [#`class Url`](#class-url)
   * [#Undocumented](#undocumented)
 
@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.2/url.mjs'
 ```
 
 Example parsing:
@@ -114,42 +114,42 @@ url.query.toDictAll() // {key: ['val']}
 Example segmented path:
 
 ```js
-u.url(`https://example.com`).setPath(`/api/msgs`, 123, `get`) + ``
+u.url(`https://example.com`).setPath(`/api/msgs`, 123, `get`).toString()
 // 'https://example.com/api/msgs/123/get'
 ```
 
 Example without scheme/protocol:
 
 ```js
-u.url(`/api`).addPath(`msgs`, 123, `get`) + ``
+u.url(`/api`).addPath(`msgs`, 123, `get`).toString()
 // '/api/msgs/123/get'
 ```
 
 Example query dict support:
 
 ```js
-u.url(`/profile`).mutQuery({action: `edit`}) + ``
+u.url(`/profile`).mutQuery({action: `edit`}).toString()
 // `'/profile?action=edit'
 ```
 
 ## Limitations
 
 * `Url` lacks support for optional base URL. Constructor takes only 1 value.
-* `Search` iterates as `Map<string, string[]>`, not as `URLSearchParams`.
+* `Query` iterates as `Map<string, string[]>`, not as `URLSearchParams`.
 
 ## API
 
-### `function search`
+### `function query`
 
 Links: [source](../url.mjs#L23); [test/example](../test/url_test.mjs#L8).
 
-Same as `new` [#`Search`](#class-search) but syntactically shorter and a function.
+Same as `new` [#`Query`](#class-query) but syntactically shorter and a function.
 
-### `function toSearch`
+### `function toQuery`
 
 Links: [source](../url.mjs#L24); [test/example](../test/url_test.mjs#L10).
 
-Idempotently converts input to [#`Search`](#class-search) via [`toInst`](lang_readme.md#function-toinst). If already an instance, returns as-is. Otherwise uses `new`. Should be used when you don't intend to mutate the output.
+Idempotently converts input to [#`Query`](#class-query) via [`toInst`](lang_readme.md#function-toinst). If already an instance, returns as-is. Otherwise uses `new`. Should be used when you don't intend to mutate the output.
 
 ### `function url`
 
@@ -181,7 +181,7 @@ Url {
 */
 ```
 
-### `class Search`
+### `class Query`
 
 Links: [source](../url.mjs#L31); [test/example](../test/url_test.mjs#L67).
 
@@ -192,10 +192,10 @@ type StrLike       = boolean | number | string
 type StrDictLax    = Record<string, string | string[]>
 type StrDictSingle = Record<string, string>
 type StrDictMulti  = Record<string, string[]>
-type SearchLike    = string | Search | URLSearchParams | StrDictLax
+type QueryLike     = string | Query | URLSearchParams | StrDictLax
 
-class Search extends Map<string, string[]> {
-  constructor(src?: SearchLike)
+class Query extends Map<string, string[]> {
+  constructor(src?: QueryLike)
 
   /*
   Similar to the corresponding methods of `URLSearchParams`, but with stricter
@@ -206,31 +206,31 @@ class Search extends Map<string, string[]> {
   has(key: string): boolean
   get(key: string): string | undefined
   getAll(key: string): string[]
-  set(key: string, val?: StrLike): Search
-  append(key: string, val?: StrLike): Search
+  set(key: string, val?: StrLike): Query
+  append(key: string, val?: StrLike): Query
   delete(key: string): boolean
 
   /*
   Common-sense methods missing from `URLSearchParams`.
   Names and signatures are self-explanatory.
   */
-  setAll(key: string, vals?: StrLike[]): Search
-  setAny(key: string, val?: StrLike | StrLike[]): Search
-  appendAll(key: string, vals?: StrLike[]): Search
-  appendAny(key: string, val?: StrLike | StrLike[]): Search
+  setAll(key: string, vals?: StrLike[]): Query
+  setAny(key: string, val?: StrLike | StrLike[]): Query
+  appendAll(key: string, vals?: StrLike[]): Query
+  appendAny(key: string, val?: StrLike | StrLike[]): Query
 
   /*
-  Reinitializes the `Search` object from the input.
+  Reinitializes the `Query` object from the input.
   Mutates and returns the same reference.
   Passing nil is equivalent to `.clear`.
   */
-  reset(src?: SearchLike): Search
+  reset(src?: QueryLike): Query
 
   /*
-  Appends the input's content to the current `Search` object.
+  Appends the input's content to the current `Query` object.
   Mutates and returns the same reference.
   */
-  mut(src?: SearchLike): Search
+  mut(src?: QueryLike): Query
 
   /*
   Combination of `.get` and type conversion.
@@ -254,11 +254,11 @@ class Search extends Map<string, string[]> {
   Future mutations are not shared.
   Cheaper than reparsing.
   */
-  clone(): Search
+  clone(): Query
 
   /*
   Converts to built-in search params.
-  Note that `new URLSearchParams(<u.Search>)` should be avoided.
+  Note that `new URLSearchParams(<u.Query>)` should be avoided.
   */
   toURLSearchParams(): URLSearchParams
 
@@ -279,36 +279,36 @@ class Search extends Map<string, string[]> {
 }
 ```
 
-Warning: while `Search` is mostly compatible with `URLSearchParams`, it has different iteration methods. The iteration methods of `URLSearchParams` are something bizarre and made-up just for this type:
+Warning: while `Query` is mostly compatible with `URLSearchParams`, it has different iteration methods. The iteration methods of `URLSearchParams` are something bizarre and made-up just for this type:
 
 ```js
 [...new URLSearchParams(`one=two&one=three&four=five`)]
 // [[`one`, `two`], [`one`, `three`], [`four`, `five`]]
 ```
 
-Meanwhile `Search` is `Map<string, string[]>`:
+Meanwhile `Query` is `Map<string, string[]>`:
 
 ```js
-[...new u.Search(`one=two&one=three&four=five`)]
+[...new u.Query(`one=two&one=three&four=five`)]
 // [[`one`, [`two`, `three`]], [`four`, [`five`]]]
 ```
 
 The following works properly:
 
 ```js
-new u.Search(new URLSearchParams(`one=two&one=three&four=five`))
-new u.Search(`one=two&one=three&four=five`).toURLSearchParams()
+new u.Query(new URLSearchParams(`one=two&one=three&four=five`))
+new u.Query(`one=two&one=three&four=five`).toURLSearchParams()
 ```
 
 But the following **does not work properly** and should be avoided:
 
 ```js
-new URLSearchParams(new u.Search(`one=two&one=three&four=five`))
+new URLSearchParams(new u.Query(`one=two&one=three&four=five`))
 ```
 
 ### `class Url`
 
-Links: [source](../url.mjs#L69); [test/example](../test/url_test.mjs#L282).
+Links: [source](../url.mjs#L77); [test/example](../test/url_test.mjs#L282).
 
 Like [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) but much better. See [#Overview](#overview) for some differences.
 
@@ -316,7 +316,7 @@ Like [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) but much bett
 type UrlLike    = string | Url | URL | Location
 type StrLike    = boolean | number | string
 type StrDictLax = Record<string, string | string[]>
-type SearchLike = string | Search | URLSearchParams | StrDictLax
+type QueryLike  = string | Query | URLSearchParams | StrDictLax
 
 class Url {
   constructor(src?: UrlLike)
@@ -331,8 +331,8 @@ class Url {
   port:         string
   pathname:     string
   search:       string // Without leading '?'.
-  searchParams: Search
-  query:        Search
+  searchParams: Query
+  query:        Query
   hash:         string // Without leading '#'.
   protocol:     string
   host:         string
@@ -350,8 +350,8 @@ class Url {
   setPort         (val?: number | string): Url
   setPathname     (val?: string): Url
   setSearch       (val?: string): Url
-  setSearchParams (val?: SearchLike): Url
-  setQuery        (val?: SearchLike): Url
+  setSearchParams (val?: QueryLike): Url
+  setQuery        (val?: QueryLike): Url
   setHash         (val?: string): Url
   setHashExact    (val?: string): Url
   setProtocol     (val?: string): Url
@@ -368,8 +368,8 @@ class Url {
   withPort         (val?: number | string): Url
   withPathname     (val?: string): Url
   withSearch       (val?: string): Url
-  withSearchParams (val?: SearchLike): Url
-  withQuery        (val?: SearchLike): Url
+  withSearchParams (val?: QueryLike): Url
+  withQuery        (val?: QueryLike): Url
   withHash         (val?: string): Url
   withHashExact    (val?: string): Url
   withProtocol     (val?: string): Url
@@ -413,7 +413,7 @@ class Url {
 
   // Class used internally for instantiating `.searchParams`.
   // Can override in subclass.
-  get Search(): {new(): Search}
+  get Query(): {new(): Query}
 
   // Shortcut for `new this(val).setPath(...vals)`.
   static join(val: UrlLike, ...vals: StrLike[]): Url
@@ -443,16 +443,15 @@ The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
   * [`const RE_ORIGIN`](../url.mjs#L19)
   * [`const RE_PATHNAME`](../url.mjs#L20)
   * [`const RE_HASH`](../url.mjs#L21)
-  * [`const schemeKey`](../url.mjs#L312)
-  * [`const slashKey`](../url.mjs#L313)
-  * [`const usernameKey`](../url.mjs#L314)
-  * [`const passwordKey`](../url.mjs#L315)
-  * [`const hostnameKey`](../url.mjs#L316)
-  * [`const portKey`](../url.mjs#L317)
-  * [`const pathnameKey`](../url.mjs#L318)
-  * [`const searchKey`](../url.mjs#L319)
-  * [`const hashKey`](../url.mjs#L320)
-  * [`function urlParse`](../url.mjs#L322)
-  * [`function isUrlLike`](../url.mjs#L376)
-  * [`function searchDec`](../url.mjs#L386)
-  * [`function searchEnc`](../url.mjs#L392)
+  * [`const schemeKey`](../url.mjs#L329)
+  * [`const slashKey`](../url.mjs#L330)
+  * [`const usernameKey`](../url.mjs#L331)
+  * [`const passwordKey`](../url.mjs#L332)
+  * [`const hostnameKey`](../url.mjs#L333)
+  * [`const portKey`](../url.mjs#L334)
+  * [`const pathnameKey`](../url.mjs#L335)
+  * [`const queryKey`](../url.mjs#L336)
+  * [`const hashKey`](../url.mjs#L337)
+  * [`function urlParse`](../url.mjs#L339)
+  * [`function queryDec`](../url.mjs#L399)
+  * [`function queryEnc`](../url.mjs#L405)

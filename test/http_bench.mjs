@@ -72,7 +72,7 @@ t.bench(function bench_reqBui_literal() {
     method: h.POST,
     body: `null`,
     headers: {
-      [h.CONTENT_TYPE]: h.TYPE_JSON,
+      [h.HEAD_CONTENT_TYPE]: h.TYPE_JSON,
       'x-session-id': `a4c187abf0ba4a5f94f50ed991da6225`,
     },
   }))
@@ -92,7 +92,7 @@ t.bench(function bench_request_with_native_api_headers_struct() {
   l.nop(new Request(`https://example.com`, {
     method: h.POST,
     headers: {
-      [h.CONTENT_TYPE]: h.TYPE_JSON,
+      [h.HEAD_CONTENT_TYPE]: h.TYPE_JSON,
       'x-session-id': `a4c187abf0ba4a5f94f50ed991da6225`,
     },
     body: JSON.stringify(null),
@@ -103,7 +103,7 @@ t.bench(function bench_request_with_native_api_headers_arr() {
   l.nop(new Request(`https://example.com`, {
     method: h.POST,
     headers: [
-      [h.CONTENT_TYPE, h.TYPE_JSON],
+      [h.HEAD_CONTENT_TYPE, h.TYPE_JSON],
       [`x-session-id`, `a4c187abf0ba4a5f94f50ed991da6225`],
     ],
     body: JSON.stringify(null),
@@ -114,7 +114,7 @@ t.bench(function bench_request_with_native_api_headers_headers() {
   l.nop(new Request(`https://example.com`, {
     method: h.POST,
     headers: new Headers({
-      [h.CONTENT_TYPE]: h.TYPE_JSON,
+      [h.HEAD_CONTENT_TYPE]: h.TYPE_JSON,
       'x-session-id': `a4c187abf0ba4a5f94f50ed991da6225`,
     }),
     body: JSON.stringify(null),
@@ -141,5 +141,21 @@ probably created once per literal, not per instance.
 */
 t.bench(function bench_RegExp_inline() {l.nop(/^[/]test[/]?/)})
 t.bench(function bench_RegExp_source() {l.nop(/^[/]test[/]?/.source)})
+
+t.bench(function bench_Cookie_build() {
+  l.nop(h.cook().setName(`one`).setValue(`two`).lax().durable())
+})
+
+t.bench(function bench_Cookie_build_toString() {
+  l.nop(h.cook().setName(`one`).setValue(`two`).lax().durable().toString())
+})
+
+t.bench(function bench_Cookie_fromPair() {
+  l.nop(h.Cookie.fromPair(`one two=three four`))
+})
+
+t.bench(function bench_Cookie_fromPairs() {
+  l.nop(h.Cookie.fromPairs(`one=two; three=four; five=six`))
+})
 
 if (import.meta.main) t.deopt(), t.benches()

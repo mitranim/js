@@ -1,16 +1,14 @@
 import * as l from './lang.mjs'
+import * as co from './coll.mjs'
 
 export const RE_WORD = /[\p{Lu}\d]+(?=\W|_|$)|[\p{Lu}\d]+(?=\p{Lu}\p{Ll}|\W|_|$)|\p{Lu}[\p{Ll}\d]*(?=\p{Lu}|\W|_|$)|[\p{Ll}\d]+(?=\p{Lu}|\W|_|$)|[\p{Lu}\d]+(?=\p{Ll}|\W|_|$)|[\p{L}\d]+(?=\W|_|$)/gu
 export const RE_EMBED = /{{([^{}]*)}}/g
 
 export function isBlank(val) {return /^\s*$/.test(l.reqStr(val))}
 
-export function isAscii(val) {
-  l.reqStr(val)
-  let ind = -1
-  while (++ind < val.length) if (val.charCodeAt(ind) >= 128) return false
-  return true
-}
+export function isAscii(val) {return isEveryCharCode(val, isCodeAscii)}
+
+export function isAsciiPrint(val) {return isEveryCharCode(val, isCodeAsciiPrint)}
 
 export function isNarrow(val) {
   l.reqStr(val)
@@ -19,6 +17,23 @@ export function isNarrow(val) {
 }
 
 export function isUni(val) {return !isNarrow(val)}
+
+export function isEveryCharCode(str, fun) {
+  l.reqStr(str)
+  l.reqFun(fun)
+
+  let ind = -1
+  while (++ind < str.length) if (!fun(str.charCodeAt(ind))) return false
+  return true
+}
+
+export function isCodeAscii(val) {
+  return l.isInt(val) && val >= 0 && val < 128
+}
+
+export function isCodeAsciiPrint(val) {
+  return l.isInt(val) && val >= 32 && val < 127
+}
 
 export function lenStr(val) {return l.reqStr(val).length}
 
@@ -64,17 +79,15 @@ Thin wrapping seems significantly cheaper than copying.
 
 TODO: support initials.
 */
-export class Words {
-  constructor(val) {this.arr = l.reqArr(val)}
-
+export class Words extends co.Vec {
   space() {return this.join(` `)}
   snake() {return this.join(`_`)}
   kebab() {return this.join(`-`)}
   solid() {return this.join(``)}
 
-  lower() {return this.map(lower)}
-  upper() {return this.map(upper)}
-  title() {return this.map(title)}
+  lower() {return this.mapMut(lower)}
+  upper() {return this.mapMut(upper)}
+  title() {return this.mapMut(title)}
   sente() {return this.lower().mapHead(title)}
   camel() {return this.title().mapHead(lower)}
 
@@ -100,9 +113,9 @@ export class Words {
   titleCamel() {return this.title().solid()}
 
   // Same as `iter.mjs` → `mapMut`. Avoiding import.
-  map(fun) {
+  mapMut(fun) {
     l.reqFun(fun)
-    const {arr} = this
+    const {$: arr} = this
     let ind = -1
     while (++ind < arr.length) arr[ind] = fun(arr[ind])
     return this
@@ -110,22 +123,18 @@ export class Words {
 
   mapHead(fun) {
     l.reqFun(fun)
-    const {arr} = this
+    const {$: arr} = this
     if (arr.length) arr[0] = fun(arr[0])
     return this
   }
 
-  clone() {return new this.constructor(this.arr.slice())}
-  join(val) {return this.arr.join(val)}
+  join(val) {return this.$.join(val)}
   str() {return this.toString()}
   toString() {return this.space()}
-  get [Symbol.toStringTag]() {return this.constructor.name}
 
   static from(val) {
-    if (l.isNil(val)) return new this()
     if (l.isStr(val)) return this.fromStr(val)
-    if (l.isArr(val)) return new this(val)
-    throw l.errConv(val, this.name)
+    return super.from(val)
   }
 
   static fromStr(val) {return new this(l.laxStr(val).match(RE_WORD) || [])}
@@ -144,7 +153,7 @@ export function title(val) {
 export function strMap(val) {return new StrMap(val)}
 
 /*
-Map<string, string[]> used by various subclasses such as `Search` and `Flag`.
+Map<string, string[]> used by various subclasses such as `Query` and `Flag`.
 Features:
 
   * Automatic type checks / sanity checks.
@@ -245,8 +254,6 @@ export class StrMap extends Map {
 
   clone() {return new this.constructor(this)}
   toJSON() {return this.toDictAll()}
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
 export function regTest(val, reg) {
@@ -304,6 +311,7 @@ export function maybeInter(pre, sep, suf) {
   return pre + sep + suf
 }
 
+// TODO rename to `stripPreAll` and provide a "once" version.
 export function stripPre(val, pre) {
   val = l.laxStr(val)
   l.reqStr(pre)
@@ -311,6 +319,7 @@ export function stripPre(val, pre) {
   return val
 }
 
+// TODO rename to `stripSufAll` and provide a "once" version.
 export function stripSuf(val, suf) {
   val = l.laxStr(val)
   l.reqStr(suf)
@@ -343,6 +352,31 @@ export function maybeSuf(val, suf) {
 }
 
 export function split(val, sep) {return val = l.laxStr(val) ? val.split(sep) : []}
+
+// Tested indirectly through `Draft`. Needs to be simplified. Needs its own tests.
+export function splitMap(src, reg, fun) {
+  src = l.laxStr(src)
+  reqRegGlob(reg)
+  l.reqFun(fun)
+
+  const buf = []
+  if (!src) return buf
+
+  let mat
+  let ind = 0
+  reg.lastIndex = 0
+
+  while ((mat = reg.exec(src))) {
+    const {index} = mat
+    if (index > ind) buf.push(src.slice(ind, index))
+    ind = index + mat[0].length
+    buf.push(fun.call(this, mat[1]))
+  }
+
+  if (ind < src.length) buf.push(src.slice(ind))
+  return buf
+}
+
 export function lines(val) {return split(val, /(?:\r\n|\r|\n)/g)}
 export function trimLines(val) {return l.laxStr(val).replace(/^\s+|\s+$/gm, ``)}
 
@@ -379,6 +413,7 @@ export function joinLinesOptLax(val) {return joinOptLax(val, `\n`)}
 export function spaced(...val) {return joinOptLax(val, ` `)}
 export function dashed(...val) {return joinOptLax(val, `-`)}
 
+// TODO rename to something like `pathStartsWith` and swap args.
 export function isSubpath(sup, sub) {
   l.reqStr(sup), l.reqStr(sub)
   return sup === sub || sub.startsWith(sup) && stripPre(sub, sup).startsWith(`/`)
@@ -398,6 +433,10 @@ export function arrHex(val) {
   return buf.join(``)
 }
 
+/*
+Would be simpler and faster to use `crypto.randomUUID().replaceAll('-', '')`,
+but requires Safari 15++.
+*/
 export function uuid() {return arrHex(uuidArr())}
 
 // https://en.wikipedia.org/wiki/Universally_unique_identifier
@@ -422,20 +461,18 @@ export function draftRenderAsync(src, ctx) {return draftParse(src).renderAsync(c
 /*
 Word of warning. Most apps shouldn't use string templating. Whenever possible,
 structured markup should be authored as code, not as string templates, with
-something like `github.com/mitranim/prax`. Markup-as-code allows MUCH better
-performance, doesn't need special build systems, and is compatible with common
-static analysis tools such as type checkers and linters. String-based
+something like our `ren_str.mjs` or `ren_dom.mjs`. Markup-as-code allows MUCH
+better performance, doesn't need special build systems, and is compatible with
+common static analysis tools such as type checkers and linters. String-based
 templating should be used only when already committed to a dedicated markup
 language such as Markdown.
 */
-export class Draft {
-  constructor(...val) {this.arr = val}
-
+export class Draft extends co.Vec {
   // TODO consider merging with `renderAsync`, automatically switching to
   // promises when the first promise is detected. Might be tricky.
   render(ctx) {
     let out = ``
-    for (const val of this.arr) {
+    for (const val of this.$) {
       out += l.renderLax(isRen(val) ? val.render(ctx) : val)
     }
     return out
@@ -443,33 +480,16 @@ export class Draft {
 
   renderAsync(ctx) {
     const seg = val => isRen(val) ? val.render(ctx) : val
-    return Promise.all(this.arr.map(seg)).then(strConcatLax)
+    return Promise.all(this.$.map(seg)).then(strConcatLax)
   }
 
   parse(src, reg) {
-    src = l.laxStr(src)
-    reqRegGlob(reg)
-    if (!src) return this
-
-    let mat
-    let ind = 0
-    reg.lastIndex = 0
-
-    while ((mat = reg.exec(src))) {
-      const {index} = mat
-      if (index > ind) this.arr.push(src.slice(ind, index))
-      ind = index + mat[0].length
-      this.arr.push(new this.Embed(mat[1]))
-    }
-
-    if (ind < src.length) this.arr.push(src.slice(ind))
+    this.$.push(...splitMap.call(this, src, reg, this.embed))
     return this
   }
 
-  clear() {return this.arr.length = 0, this}
-
+  embed(val) {return new this.Embed(val)}
   get Embed() {return Embed}
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
 function reqRegGlob(val) {
@@ -480,9 +500,10 @@ function reqRegGlob(val) {
 export function isRen(val) {return l.hasMeth(val, `render`)}
 
 // See the warning on `Draft`.
-export class Embed {
+export class Embed extends l.Emp {
   constructor(val) {
-    [this.key, ...this.args] = split(trim(val), /\s+/g)
+    super()
+    {[this.key, ...this.args] = split(trim(val), /\s+/g)}
     if (!this.key) throw SyntaxError(`missing key in ${l.show(val)}`)
   }
 
@@ -500,8 +521,6 @@ export class Embed {
     if (l.isPromise(val)) return val.then(l.renderLax)
     return l.renderLax(val)
   }
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
 export function str(...val) {
@@ -524,7 +543,10 @@ export function strConcatLax(val) {
   return l.isNil(val) ? `` : strLax(...l.reqArr(val))
 }
 
-// Short for "sanity", "string sanity". Must be used as a "tag" for template strings.
+/*
+Short for "sanity", "string sanity". Must be used as a "tag function" for
+template strings.
+*/
 export function san(str, ...inp) {return interpolate(str, inp, l.render)}
 
 export function sanLax(str, ...inp) {return interpolate(str, inp, l.renderLax)}

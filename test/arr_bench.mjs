@@ -38,7 +38,7 @@ class ArrSub extends Array {}
 // Note: this behaves incorrectly with 1 argument, but we test with more.
 class ArrOfNew extends Array {static of() {return new this(...arguments)}}
 
-class ArrOfFrom extends Array {static of(...args) {return this.from(args)}}
+class ArrOfFrom extends Array {static of(...val) {return this.from(val)}}
 
 class Arr extends Array {
   constructor(val) {
@@ -131,7 +131,7 @@ class Arr extends Array {
 
   // Rectify performance for subclasses.
   // Faster is possible but not worth the lines.
-  static of(...args) {return new this(args.length).resetFromArr(args)}
+  static of(...val) {return new this(val.length).resetFromArr(val)}
 
   // Rectify performance for subclasses.
   static from(val, fun) {
@@ -141,8 +141,6 @@ class Arr extends Array {
       new this().resetFromIter(val)
     ).mapMutOpt(fun)
   }
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
 function count(val) {
@@ -157,12 +155,12 @@ function reqLenMatch(exp, act) {
   }
 }
 
-const numArrSub = ArrSub.from(itc.numList)
-t.eq([...numArrSub], itc.numList)
+const numArrSub = ArrSub.from(itc.numArr)
+t.eq([...numArrSub], itc.numArr)
 t.ok(l.isArr(numArrSub))
 
-const numArr = Arr.from(itc.numList)
-t.eq([...numArr], itc.numList)
+const numArr = Arr.from(itc.numArr)
+t.eq([...numArr], itc.numArr)
 t.ok(l.isArr(numArr))
 
 /* Bench */
@@ -196,9 +194,9 @@ t.bench(function bench_array_of_ArrOfNew() {l.nop(ArrOfNew.of(10, 20, 30, 40))})
 t.bench(function bench_array_of_ArrOfFrom() {l.nop(ArrOfFrom.of(10, 20, 30, 40))})
 t.bench(function bench_array_of_Arr() {l.nop(Arr.of(10, 20, 30, 40))})
 
-t.bench(function bench_array_from_arr_simple_Array() {l.nop(Array.from(itc.numList))})
-t.bench(function bench_array_from_arr_simple_ArrSub() {l.nop(ArrSub.from(itc.numList))})
-t.bench(function bench_array_from_arr_simple_Arr() {l.nop(Arr.from(itc.numList))})
+t.bench(function bench_array_from_arr_simple_Array() {l.nop(Array.from(itc.numArr))})
+t.bench(function bench_array_from_arr_simple_ArrSub() {l.nop(ArrSub.from(itc.numArr))})
+t.bench(function bench_array_from_arr_simple_Arr() {l.nop(Arr.from(itc.numArr))})
 
 t.bench(function bench_array_from_set_simple_Array() {l.nop(Array.from(itc.numSet))})
 t.bench(function bench_array_from_set_simple_ArrSub() {l.nop(ArrSub.from(itc.numSet))})
@@ -207,52 +205,55 @@ t.bench(function bench_array_from_set_simple_Arr() {l.nop(Arr.from(itc.numSet))}
 itc.deoptArrayFrom(Array)
 itc.deoptArrayFrom(ArrSub)
 itc.deoptArrayFrom(Arr)
-t.bench(function bench_array_from_arr_mapped_Array() {l.nop(Array.from(itc.numList, l.inc))})
-t.bench(function bench_array_from_arr_mapped_ArrSub() {l.nop(ArrSub.from(itc.numList, l.inc))})
-t.bench(function bench_array_from_arr_mapped_Arr() {l.nop(Arr.from(itc.numList, l.inc))})
+t.bench(function bench_array_from_arr_mapped_Array() {l.nop(Array.from(itc.numArr, l.inc))})
+t.bench(function bench_array_from_arr_mapped_ArrSub() {l.nop(ArrSub.from(itc.numArr, l.inc))})
+t.bench(function bench_array_from_arr_mapped_Arr() {l.nop(Arr.from(itc.numArr, l.inc))})
 
 t.bench(function bench_array_from_set_mapped_Array() {l.nop(Array.from(itc.numSet, l.inc))})
 t.bench(function bench_array_from_set_mapped_ArrSub() {l.nop(ArrSub.from(itc.numSet, l.inc))})
 t.bench(function bench_array_from_set_mapped_Arr() {l.nop(Arr.from(itc.numSet, l.inc))})
 
-t.bench(function bench_array_length_Array() {l.nop(itc.numList.length)})
+t.bench(function bench_array_length_Array() {l.nop(itc.numArr.length)})
 t.bench(function bench_array_length_ArrSub() {l.nop(numArrSub.length)})
 t.bench(function bench_array_length_Arr() {l.nop(numArr.length)})
 
-t.bench(function bench_array_index_Array() {l.nop(itc.numList[half])})
+t.bench(function bench_array_index_Array() {l.nop(itc.numArr[half])})
 t.bench(function bench_array_index_ArrSub() {l.nop(numArrSub[half])})
 t.bench(function bench_array_index_Arr() {l.nop(numArr[half])})
 
-t.bench(function bench_array_at_Array() {l.nop(itc.numList.at(half))})
+t.bench(function bench_array_at_Array() {l.nop(itc.numArr.at(half))})
 t.bench(function bench_array_at_ArrSub() {l.nop(numArrSub.at(half))})
 t.bench(function bench_array_at_Arr() {l.nop(numArr.at(half))})
 
-t.bench(function bench_array_walk_Array() {for (const val of itc.numList) l.nop(val)})
+t.bench(function bench_array_walk_Array() {for (const val of itc.numArr) l.nop(val)})
 t.bench(function bench_array_walk_ArrSub() {for (const val of numArrSub) l.nop(val)})
 t.bench(function bench_array_walk_Arr() {for (const val of numArr) l.nop(val)})
 
-t.bench(function bench_array_concat_with_empty_Array() {l.nop(itc.numList.concat())})
+t.bench(function bench_array_concat_with_empty_Array() {l.nop(itc.numArr.concat())})
 t.bench(function bench_array_concat_with_empty_ArrSub() {l.nop(numArrSub.concat())})
 t.bench(function bench_array_concat_with_empty_Arr() {l.nop(numArr.concat())})
 
-t.bench(function bench_array_concat_with_long_Array() {l.nop(itc.numList.concat(itc.numList))})
+t.bench(function bench_array_concat_with_long_Array() {l.nop(itc.numArr.concat(itc.numArr))})
 t.bench(function bench_array_concat_with_long_ArrSub() {l.nop(numArrSub.concat(numArrSub))})
 t.bench(function bench_array_concat_with_long_Arr() {l.nop(numArr.concat(numArr))})
 
-t.bench(function bench_array_slice_Array() {l.nop(itc.numList.slice())})
+t.bench(function bench_array_slice_Array() {l.nop(itc.numArr.slice())})
 t.bench(function bench_array_slice_ArrSub() {l.nop(numArrSub.slice())})
 t.bench(function bench_array_slice_Arr() {l.nop(numArr.slice())})
-t.bench(function bench_array_slice_iter() {l.nop(i.arrCopy(numArr))})
+t.bench(function bench_array_slice_iter_Array() {l.nop(i.slice(itc.numArr))})
+t.bench(function bench_array_slice_iter_Arr() {l.nop(i.slice(numArr))})
 
-t.bench(function bench_array_every_Array() {l.nop(itc.numList.every(l.True))})
+t.bench(function bench_array_every_Array() {l.nop(itc.numArr.every(l.True))})
 t.bench(function bench_array_every_ArrSub() {l.nop(numArrSub.every(l.True))})
 t.bench(function bench_array_every_Arr() {l.nop(numArr.every(l.True))})
-t.bench(function bench_array_every_iter() {l.nop(i.every(numArr, l.True))})
+t.bench(function bench_array_every_iter_Array() {l.nop(i.every(itc.numArr, l.True))})
+t.bench(function bench_array_every_iter_Arr() {l.nop(i.every(numArr, l.True))})
 
-// Benchmark lacks deopt.
-t.bench(function bench_array_map_Array_map() {l.nop(itc.numList.map(l.id))})
-t.bench(function bench_array_map_Arr_map() {l.nop(numArr.map(l.id))})
+// Lacks deopt.
+t.bench(function bench_array_map_Array_map() {l.nop(itc.numArr.map(l.id))})
+t.bench(function bench_array_map_Arr_map() {l.nop(itc.numArr.map(l.id))})
 t.bench(function bench_array_map_Arr_mapMut() {l.nop(numArr.mapMut(l.id))})
-t.bench(function bench_array_map_iter() {l.nop(i.map(numArr, l.id))})
+t.bench(function bench_array_map_iter_Array() {l.nop(i.map(itc.numArr, l.id))})
+t.bench(function bench_array_map_iter_Arr() {l.nop(i.map(numArr, l.id))})
 
 if (import.meta.main) t.deopt(), t.benches()

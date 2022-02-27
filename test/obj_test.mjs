@@ -9,7 +9,7 @@ function unreachable() {throw Error(`unreachable`)}
 
 const inherit = Object.create
 
-class Empty {}
+class Simple {}
 
 class Fat {
   constructor() {
@@ -29,23 +29,18 @@ class Fat {
   set getterSetter(_) {unreachable()}
 }
 
+/*
+May revise and move to `test.mjs`.
+A lot of our class tests want something similar.
+*/
+function testStructure(ref, cls, exp) {
+  t.ok(ref instanceof cls)
+  t.is(ref.constructor, cls)
+  t.is(Object.getPrototypeOf(ref), cls.prototype)
+  t.own(ref, exp)
+}
+
 /* Test */
-
-t.test(function test_fixProto() {
-  class BrokenSuper {
-    constructor() {return Object.create(BrokenSuper.prototype)}
-  }
-
-  class UnfixedSub extends BrokenSuper {}
-
-  class FixedSub extends BrokenSuper {
-    constructor() {o.fixProto(super(), new.target)}
-  }
-
-  t.is(Object.getPrototypeOf(new BrokenSuper()), BrokenSuper.prototype)
-  t.is(Object.getPrototypeOf(new UnfixedSub()), BrokenSuper.prototype)
-  t.is(Object.getPrototypeOf(new FixedSub()), FixedSub.prototype)
-})
 
 t.test(function test_assign() {
   testMut(o.assign)
@@ -118,12 +113,12 @@ function testMut(fun) {
   t.test(function test_returns_target() {
     mutate({})
     mutate({}, {})
-    mutate(new class Empty {}(), {})
+    mutate(new class Simple {}(), {})
   })
 
   t.test(function test_from_nil() {
     function test(val) {
-      const tar = new Empty()
+      const tar = new Simple()
       mutate(tar, val)
       t.eq({...tar}, {...val})
     }
@@ -133,13 +128,13 @@ function testMut(fun) {
   })
 
   t.test(function test_from_npo() {
-    const tar = new Empty()
+    const tar = new Simple()
     mutate(tar, inherit(null, {one: {value: 10, enumerable: true}}))
     t.eq({...tar}, {one: 10})
   })
 
   t.test(function test_from_dict() {
-    const tar = new Empty()
+    const tar = new Simple()
     mutate(tar, {one: 10})
     t.eq({...tar}, {one: 10})
   })
@@ -198,6 +193,52 @@ t.test(function test_patch() {
       t.is(tar.getter, 50)
       t.is(tar.getterSetter, 60)
     })
+  })
+})
+
+t.test(function test_Dict() {
+  t.throws(() => o.Dict(), TypeError, `cannot be invoked without 'new'`)
+  t.throws(() => new o.Dict(10), TypeError, `expected variant of isStruct, got 10`)
+
+  t.test(function test_constructor() {
+    function test(src, exp) {
+      testStructure(new o.Dict(src), o.Dict, exp)
+    }
+
+    test(undefined, {})
+
+    test({one: 10}, {one: 10})
+
+    test({one: 10, two: 20}, {one: 10, two: 20})
+
+    test(
+      {one: 10, two: 20, toString: 30},
+      {one: 10, two: 20, toString: 30},
+    )
+
+    test(
+      {[Symbol.for(`one`)]: 10, constructor: 20, mut: 30, [Symbol.toStringTag]: 40},
+      {[Symbol.for(`one`)]: 10},
+    )
+  })
+
+  t.test(function test_mut() {
+    t.throws(() => new o.Dict().mut(10), TypeError, `expected variant of isStruct, got 10`)
+
+    function test(src, inp, exp) {
+      const tar = new o.Dict(src)
+      t.is(tar.mut(inp), tar)
+      testStructure(tar, o.Dict, exp)
+    }
+
+    test(undefined, undefined, {})
+    test(undefined, {one: 10}, {one: 10})
+    test({one: 10}, undefined, {one: 10})
+    test({one: 10}, {two: 20}, {one: 10, two: 20})
+    test({one: 10}, {one: 30, two: 20}, {one: 30, two: 20})
+
+    test(undefined, {mut: 10}, {})
+    test({one: 10}, {mut: 20}, {one: 10})
   })
 })
 
@@ -319,75 +360,47 @@ function testClearPrototype(...classes) {
   }
 }
 
-t.test(function test_mapDict() {
-  testDictFunBasics(o.mapDict)
+t.test(function test_ClsFunPh() {
+  class Cls {constructor(...val) {this.val = val}}
 
-  t.eq(o.mapDict(undefined, l.id), {})
-  t.eq(o.mapDict({}, l.id), {})
-  t.eq(o.mapDict({one: 10, two: 20}, l.inc), {one: 11, two: 21})
+  t.throws(() => Cls(), TypeError, `Class constructor Cls cannot be invoked without 'new'`)
+
+  const cls = o.ClsFunPh.of(Cls)
+
+  function test(ref) {
+    t.inst(ref, Cls)
+    t.own(ref, {val: [10, 20, 30]})
+  }
+
+  test(new Cls(10, 20, 30))
+  test(new cls(10, 20, 30))
+  test(cls(10, 20, 30))
 })
 
-function testDictFunBasics(fun) {
-  t.throws(() => fun({}),           TypeError, `expected variant of isFun, got undefined`)
-  t.throws(() => fun([], l.nop),    TypeError, `expected variant of isStruct, got []`)
-  t.throws(() => fun(`str`, l.nop), TypeError, `expected variant of isStruct, got "str"`)
-  t.is(Object.getPrototypeOf(fun(undefined, l.nop)), null)
-}
+t.test(function test_ClsInstPh() {
+  class Cls {
+    constructor(val) {this.val = val}
+    set(val) {return this.val = val, this}
+  }
 
-t.test(function test_pick() {
-  testDictFunBasics(o.pick)
+  t.throws(() => Cls(), TypeError, `Class constructor Cls cannot be invoked without 'new'`)
+  t.throws(() => Cls.set(), TypeError, `Cls.set is not a function`)
 
-  t.eq(o.pick(undefined,            l.True), {})
-  t.eq(o.pick({},                   l.True), {})
-  t.eq(o.pick({one: 10, two: 20},   l.True), {one: 10, two: 20})
-  t.eq(o.pick({one: 10, two: 20},   l.False), {})
-  t.eq(o.pick({one: 10, two: `20`}, l.isFin), {one: 10})
-})
+  const cls = o.ClsInstPh.of(Cls)
 
-t.test(function test_omit() {
-  testDictFunBasics(o.omit)
+  function test(ref) {
+    t.inst(ref, Cls)
+    t.own(ref, {val: 20})
+  }
 
-  t.eq(o.omit(undefined,            l.True), {})
-  t.eq(o.omit({},                   l.True), {})
-  t.eq(o.omit({one: 10, two: 20},   l.True), {})
-  t.eq(o.omit({one: 10, two: 20},   l.False), {one: 10, two: 20})
-  t.eq(o.omit({one: 10, two: `20`}, l.isFin), {two: `20`})
-})
-
-t.test(function test_pickKeys() {
-  t.throws(() => o.pickKeys([]),    TypeError, `expected variant of isStruct, got []`)
-  t.throws(() => o.pickKeys(`str`), TypeError, `expected variant of isStruct, got "str"`)
-
-  t.is(Object.getPrototypeOf(o.pickKeys()), null)
-
-  t.eq(o.pickKeys(), {})
-  t.eq(o.pickKeys(undefined, []), {})
-  t.eq(o.pickKeys({}, undefined), {})
-  t.eq(o.pickKeys({}, []), {})
-
-  t.eq(o.pickKeys({one: 10, two: 20, three: 30}, []), {})
-  t.eq(o.pickKeys({one: 10, two: 20, three: 30}, [`one`]), {one: 10})
-  t.eq(o.pickKeys({one: 10, two: 20, three: 30}, [`two`]), {two: 20})
-  t.eq(o.pickKeys({one: 10, two: 20, three: 30}, [`three`]), {three: 30})
-  t.eq(o.pickKeys({one: 10, two: 20, three: 30}, [`one`, `two`]), {one: 10, two: 20})
-})
-
-t.test(function test_omitKeys() {
-  t.throws(() => o.omitKeys([]),    TypeError, `expected variant of isStruct, got []`)
-  t.throws(() => o.omitKeys(`str`), TypeError, `expected variant of isStruct, got "str"`)
-
-  t.is(Object.getPrototypeOf(o.omitKeys()), null)
-
-  t.eq(o.omitKeys(), {})
-  t.eq(o.omitKeys(undefined, []), {})
-  t.eq(o.omitKeys({}, undefined), {})
-  t.eq(o.omitKeys({}, []), {})
-
-  t.eq(o.omitKeys({one: 10, two: 20, three: 30}, []), {one: 10, two: 20, three: 30})
-  t.eq(o.omitKeys({one: 10, two: 20, three: 30}, [`one`]), {two: 20, three: 30})
-  t.eq(o.omitKeys({one: 10, two: 20, three: 30}, [`two`]), {one: 10, three: 30})
-  t.eq(o.omitKeys({one: 10, two: 20, three: 30}, [`three`]), {one: 10, two: 20})
-  t.eq(o.omitKeys({one: 10, two: 20, three: 30}, [`one`, `two`]), {three: 30})
+  test(new Cls(20))
+  test(new Cls(10).set(20))
+  test(new cls(20))
+  test(new cls(10).set(20))
+  test(cls(20))
+  test(cls(10).set(20))
+  test(cls.set(20))
+  test(cls.set(10).set(20))
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

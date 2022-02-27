@@ -8,6 +8,7 @@ import * as co from '../coll.mjs'
 import * as o from '../obj.mjs'
 import * as i from '../iter.mjs'
 import * as u from '../url.mjs'
+import * as p from '../path.mjs'
 
 const VER = s.trim(Deno.readTextFileSync(`ver`))
 const CLI = cl.Flag.os()
@@ -27,10 +28,13 @@ const FEATS = [
   [`url`, `better URL implementation.`],
   [`time`, `tools for datetimes and intervals.`],
   [`http`, `shortcuts for the native fetch/Request/Response APIs.`],
+  [`path`, `various functions for working with FS paths.`],
   [`dom`, `shortcuts for working with the DOM.`],
   [`dom_reg`, `shortcuts for registering custom DOM elements.`],
-  [`ren_dom`, `simple system for rendering DOM nodes in the browser.`],
+  [`ren_dom`, `simple system for rendering DOM nodes in the browser. React-inspired syntax, JSX-compatible, better semantics and performance.`],
+  [`ren_str`, `simple system for rendering XML/HTML on the server. React-inspired syntax, JSX-compatible, better semantics and performance.`],
   [`obs`, `observables via proxies.`],
+  [`obs_dom`, `automatic reactivity for custom DOM elements.`],
   [`cli`, `essential tools for CLI apps.`],
   [`test`, `tools for testing and benchmarking.`],
 ]
@@ -47,13 +51,13 @@ class Pkg extends o.MemGet {
   get base() {return `https://cdn.jsdelivr.net/gh/mitranim/js`}
   get ver() {return VER}
   get url() {return s.inter(this.base, `@`, this.ver)}
-  get readmeSrcPath() {return io.join(DIR_DOC_SRC, `readme.md`)}
+  get readmeSrcPath() {return p.posix.join(DIR_DOC_SRC, `readme.md`)}
   get readmeSrcText() {return io.readText(this.readmeSrcPath).then(s.trim)}
   get readmeOutPath() {return `readme.md`}
   get readmeOutText() {return this.$readmeOutText()}
   get features() {return s.joinLinesOpt(i.map(this.feats, toHeadlineBullet))}
 
-  async $readmeOutText() {return s.draftRenderAsync((await this.readmeSrcText), this)}
+  async $readmeOutText() {return renderNamed(this.readmeSrcText, this, this.readmeSrcPath)}
 
   link(feat, ident, text) {return this.feat(feat).identDocLinkFull(ident, text)}
 
@@ -82,18 +86,19 @@ class Feat extends o.MemGet {
   get codeHead() {return mdLink(this.codePath, this.docCodePath)}
   get codeText() {return io.readText(this.codePath)}
   get codeLines() {return this.$codeLines()}
-  get testPath() {return io.join(DIR_TEST, s.str(this.name, `_test.mjs`))}
+  get testPath() {return p.posix.join(DIR_TEST, s.str(this.name, `_test.mjs`))}
   get docTestPath() {return u.urlJoin(`..`, this.testPath)}
   get testText() {return io.readText(this.testPath)}
   get testLines() {return this.$testLines()}
   get readmeName() {return s.str(this.name, `_readme.md`)}
-  get readmeSrcPath() {return io.join(DIR_DOC_SRC, this.readmeName)}
+  get readmeSrcPath() {return p.posix.join(DIR_DOC_SRC, this.readmeName)}
   get readmeSrcText() {return io.readText(this.readmeSrcPath).then(s.trim)}
-  get readmeOutPath() {return io.join(DIR_DOC_OUT, this.readmeName)}
+  get readmeOutPath() {return p.posix.join(DIR_DOC_OUT, this.readmeName)}
   get readmeOutText() {return this.$readmeOutText()}
   get idents() {return this.$idents()}
   get identTestLines() {return this.$identTestLines()}
   get url() {return this.pkg.url}
+  get featUrl() {return p.posix.join(this.url, this.codePath)}
   get toc() {return this.$toc()}
   get tocDoc() {return this.$tocDoc()}
   get tocUndoc() {return this.$tocUndoc()}
@@ -110,7 +115,7 @@ class Feat extends o.MemGet {
 
   async $codeLines() {return s.lines(await this.codeText)}
   async $testLines() {return s.lines(await this.testText)}
-  async $readmeOutText() {return s.draftRenderAsync((await this.readmeSrcText), this)}
+  async $readmeOutText() {return renderNamed(this.readmeSrcText, this, this.readmeSrcPath)}
 
   async $idents() {
     const buf = new co.Coll()
@@ -133,7 +138,10 @@ class Feat extends o.MemGet {
   async $identTestLines() {
     const buf = new Map/*<str, nat>*/()
     for (const [ind, text] of (await this.testLines).entries()) {
-      const mat = text.match(/^t[.]test[(]function test_(\w+)[(]/)
+      const mat = (
+        text.match(/^t[.]test[(]function test_(\w+)[(]/) ||
+        text.match(/^await t[.]test[(]async function test_(\w+)[(]/)
+      )
       if (mat) buf.set(mat[1], ind)
     }
     return buf
@@ -222,9 +230,11 @@ class Ident extends o.MemGet {
   get testLink() {return this.$testLink()}
   get sourceHead() {return mdLink(`source`, this.codeLink)}
   get testHead() {return this.$testHead()}
+  get url() {return this.feat.url}
+  get featUrl() {return this.feat.featUrl}
   get doc() {return this.$doc()}
   get docName() {return s.str(toDocName(this.name), `.md`)}
-  get docPath() {return io.join(DIR_DOC_SRC, this.feat.name, this.docName)}
+  get docPath() {return p.posix.join(DIR_DOC_SRC, this.feat.name, this.docName)}
   get docHead() {return this.$docHead()}
   get docSrcText() {return io.readTextOpt(this.docPath).then(s.trim)}
   get docOutText() {return this.$docOutText()}
@@ -280,7 +290,7 @@ class Ident extends o.MemGet {
     return withNewlines(await this.docHead, 2) + withNewline(await this.docOutText)
   }
 
-  async $docOutText() {return s.draftRenderAsync((await this.docSrcText), this)}
+  async $docOutText() {return renderNamed(this.docSrcText, this, this.docPath)}
 
   async reqDoc() {
     if (!(await this.hasDoc)) throw Error(s.san`missing doc for ${this.addr}`)
@@ -300,13 +310,31 @@ function mdLink(text, link) {return s.str(`[`, text, `](`, link, `)`)}
 function mdLinkInter(text) {return mdLink(s.str(`#`, text), mdHash(text))}
 function mdHash(val) {return `#` + s.words(val.toLowerCase()).lowerKebab()}
 function coded(...val) {return s.str('`', ...val, '`')}
-function allow(path) {return RE_WATCH.test(io.maybeRel(path))}
+function allow(path) {return RE_WATCH.test(path)}
 function runTimed() {return cl.timed(run, `doc`)}
 function runTimedOpt() {return runTimed().catch(console.error)}
 
 function toDocName(val) {
   l.reqStr(val)
   return /^[A-Z]/.test(val) ? `_` + val : val
+}
+
+async function renderNamed(src, ctx, msg) {
+  const pre = `unexpected rendering error in ${l.show(msg)}: `
+
+  try {
+    return await s.draftRenderAsync(await src, ctx)
+  }
+  catch (err) {
+    l.reqInst(err, Error)
+    err.message = pre + err.message
+
+    // Seems to be unnecessary, but not sure.
+    // May depend on whether you rethrow the error, which we do.
+    // err.stack = pre + err.stack
+
+    throw err
+  }
 }
 
 async function main() {
@@ -317,7 +345,7 @@ async function main() {
 
   await runTimedOpt()
 
-  for await (const _ of io.watch(allow)) {
+  for await (const _ of io.filterWatch(io.watchCwd(), allow)) {
     cl.emptty()
     await runTimedOpt()
   }

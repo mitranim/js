@@ -7,7 +7,13 @@ import * as i from '../iter.mjs'
 
 /* Global */
 
-const bsetLong = co.bset(itc.numList)
+const bsetLong = co.bset(itc.numArr)
+
+const numVec = co.Vec.from(itc.numArr)
+t.eq(numVec.toArray(), itc.numArr)
+
+i.map(numVec, l.inc)
+t.eq(numVec.toArray(), itc.numArr)
 
 /* Bench */
 
@@ -30,17 +36,11 @@ t.bench(function bench_set_walk_Set() {for (const val of itc.numSet) l.nop(val)}
 t.bench(function bench_set_walk_Bset() {for (const val of bsetLong) l.nop(val)})
 t.bench(function bench_set_walk_Bset_values() {for (const val of bsetLong.values()) l.nop(val)})
 
-// Note: the behavior is not equivalent.
-itc.deoptHofMeth(bsetLong, bsetLong.map)
-t.bench(function bench_set_map_Set_iter() {l.nop(i.map(itc.numSet, l.inc))})
-t.bench(function bench_set_map_Bset_iter() {l.nop(i.map(bsetLong, l.inc))})
-t.bench(function bench_set_map_Bset_map() {l.nop(bsetLong.map(l.inc))})
+t.bench(function bench_set_map_Set() {l.nop(i.map(itc.numSet, l.inc))})
+t.bench(function bench_set_map_Bset() {l.nop(i.map(bsetLong, l.inc))})
 
-// Note: the behavior is not equivalent.
-itc.deoptHofMeth(bsetLong, bsetLong.filter)
-t.bench(function bench_set_filter_Set_iter() {l.nop(i.filter(itc.numSet, l.id))})
-t.bench(function bench_set_filter_Bset_iter() {l.nop(i.filter(bsetLong, l.id))})
-t.bench(function bench_set_filter_Bset_filter() {l.nop(bsetLong.filter(l.id))})
+t.bench(function bench_set_filter_Set() {l.nop(i.filter(itc.numSet, l.id))})
+t.bench(function bench_set_filter_Bset() {l.nop(i.filter(bsetLong, l.id))})
 
 t.bench(function bench_map_new_empty() {l.nop(co.bmap())})
 
@@ -97,5 +97,29 @@ t.bench(function bench_map_new_plain_dict() {
     [`b46f6e8ab43245a9a83f9384055d373e`]: `f2ba20160aa5404086e458bb02b2498f`,
   })
 })
+
+t.bench(function bench_vec_empty_Array() {l.nop([])})
+t.bench(function bench_vec_empty_Vec() {l.nop(new co.Vec())})
+
+t.bench(function bench_vec_prealloc_Array() {l.nop(Array(itc.size))})
+t.bench(function bench_vec_prealloc_Vec() {l.nop(co.Vec.make(itc.size))})
+
+t.bench(function bench_vec_of_Array() {l.nop(Array.of(10, 20, 30, 40))})
+t.bench(function bench_vec_of_Vec() {l.nop(co.Vec.of(10, 20, 30, 40))})
+
+t.bench(function bench_vec_from_arr_Array() {l.nop(Array.from(itc.numArr))})
+t.bench(function bench_vec_from_arr_Vec() {l.nop(co.Vec.from(itc.numArr))})
+
+t.bench(function bench_vec_from_set_Array() {l.nop(Array.from(itc.numSet))})
+t.bench(function bench_vec_from_set_Vec() {l.nop(co.Vec.from(itc.numSet))})
+
+t.bench(function bench_vec_walk_Array() {for (const val of itc.numArr) l.nop(val)})
+t.bench(function bench_vec_walk_Vec() {for (const val of numVec) l.nop(val)})
+
+t.bench(function bench_vec_map_inner_native() {l.nop(numVec.$.map(l.inc))})
+t.bench(function bench_vec_map_our_iter() {l.nop(i.map(numVec, l.inc))})
+
+t.bench(function bench_vec_filter_inner_native() {l.nop(numVec.$.filter(l.id))})
+t.bench(function bench_vec_filter_our_iter() {l.nop(i.filter(numVec, l.id))})
 
 if (import.meta.main) t.deopt(), t.benches()

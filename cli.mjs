@@ -36,7 +36,7 @@ export function emptty(soft) {
 
   if (Deno?.isatty) {
     if (Deno.isatty()) {
-      Deno.stdout.writeSync(soft ? clearSoftArr : clearHardArr)
+      Deno.stdout.writeSync(soft ? clearSoftArr() : clearHardArr())
       return true
     }
     return false
@@ -46,7 +46,7 @@ export function emptty(soft) {
 
   if (process?.stdout) {
     if (process.stdout.isTTY) {
-      process.stdout.write(soft ? clearSoftArr : clearHardArr)
+      process.stdout.write(soft ? clearSoftArr() : clearHardArr())
       return true
     }
     return false
@@ -134,16 +134,20 @@ export class Flag extends s.StrMap {
 function isFlag(str) {return str.startsWith(`-`)}
 function unFlag(str) {return s.stripPre(str, `-`)}
 
-const enc = new TextEncoder()
-
 // Copied from `https://github.com/mitranim/emptty`.
 export const esc = `\x1b`
 export const clearSoft = esc + `c`
 export const clearScroll = esc + `[3J`
 export const clearHard = clearSoft + clearScroll
-export const clearSoftArr = enc.encode(clearSoft)
-export const clearScrollArr = enc.encode(clearScroll)
-export const clearHardArr = enc.encode(clearHard)
+
+/*
+`TextEncoder..encode` is stupidly slow. `new` is not the bottleneck.
+We could encode the arrays "statically" but then it wastes CPU on module
+initialization even if unused.
+*/
+export function clearSoftArr() {return new TextEncoder().encode(clearSoft)}
+export function clearScrollArr() {return new TextEncoder().encode(clearScroll)}
+export function clearHardArr() {return new TextEncoder().encode(clearHard)}
 
 export async function timed(fun, tag) {
   const pre = tag ? s.san`[${tag}] ` : ``

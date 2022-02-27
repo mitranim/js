@@ -1,25 +1,15 @@
 /* global Deno */
 
 import * as l from './lang.mjs'
-import * as s from './str.mjs'
+import * as p from './path.mjs'
 
 export const IS_WINDOWS = l.reqStr(Deno.build.os) === `windows`
-export const SEP = IS_WINDOWS ? `\\` : `/`
-
-export function isPath(val) {return l.isSome(val) && l.isScalar(val)}
-export function reqPath(val) {return l.req(val, isPath)}
-export function optPath(val) {return l.opt(val, isPath)}
+export const SEP = IS_WINDOWS ? p.SEP_WINDOWS : p.SEP_POSIX
+export const paths = IS_WINDOWS ? p.windows : p.posix
 
 export function isErrNotFound(val) {return l.isInst(val, Deno.errors.NotFound)}
 
-export function join(...val) {return s.join(val, SEP)}
-
-export function ext(val) {
-  const mat = l.reqStr(val).match(/(?<=[^/\\])[.]\w+$/)
-  return (mat && mat[0]) || ``
-}
-
-export function readText(path) {return Deno.readTextFile(reqPath(path))}
+export function readText(path) {return Deno.readTextFile(p.reqPath(path))}
 
 export async function readTextOpt(path) {
   if (l.isNil(path)) return ``
@@ -34,7 +24,9 @@ export async function readTextOpt(path) {
 }
 
 export async function readTextCreate(path) {
-  try {return await readText(path)}
+  try {
+    return await readText(path)
+  }
   catch (err) {
     if (isErrNotFound(err)) {
       await create(path)
@@ -49,10 +41,10 @@ export async function readJson(path) {
 }
 
 export function writeText(path, val, opt) {
-  return Deno.writeTextFile(reqPath(path), l.reqStr(val), opt)
+  return Deno.writeTextFile(p.reqPath(path), l.reqStr(val), opt)
 }
 
-export function create(path) {return Deno.create(reqPath(path))}
+export function create(path) {return Deno.create(p.reqPath(path))}
 
 export async function touch(path) {
   const info = await FileInfo.statOpt(path)
@@ -65,21 +57,34 @@ export async function touch(path) {
   if (!info.isFile()) throw Error(`${l.show(path)} is not a file`)
 }
 
-export function maybeRel(path) {
-  return s.stripPre(path, s.optSuf(Deno.cwd(), SEP))
+export function watchCwd() {return watchRel(Deno.cwd())}
+
+/*
+Needs a better name. Watches a path, converting all paths in each `Deno.FsEvent`
+from absolute to relative.
+*/
+export async function* watchRel(base) {
+  l.req(base, paths.isAbs.bind(paths))
+  const toRel = path => paths.relTo(path, base)
+
+  for await (const event of Deno.watchFs(base, {recursive: true})) {
+    event.paths = event.paths.map(toRel)
+    yield event
+  }
 }
 
-export async function* watch(fun) {
+export async function* filterWatch(iter, fun) {
   l.reqFun(fun)
-  for await (const event of Deno.watchFs(`.`, {recursive: true})) {
+  for await (const event of iter) {
     if (event.paths.some(fun)) yield event
   }
 }
 
-export class FileInfo {
+export class FileInfo extends l.Emp {
   constructor(stat, path) {
+    super()
+    this.path = p.reqPath(path)
     this.stat = l.reqStruct(stat)
-    this.path = reqPath(path)
   }
 
   isFile() {return this.stat.isFile}
@@ -89,7 +94,7 @@ export class FileInfo {
   onlyDir() {return this.isDir() ? this : undefined}
 
   static async stat(path) {
-    return new this(await Deno.stat(reqPath(path)), path)
+    return new this(await Deno.stat(p.reqPath(path)), path)
   }
 
   static async statOpt(path) {
@@ -103,8 +108,6 @@ export class FileInfo {
       throw err
     }
   }
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
 export function isReader(val) {return l.hasMeth(val, `read`)}
@@ -116,8 +119,9 @@ export function reqCloser(val) {return l.req(val, isCloser)}
 function optClose(val) {if (isCloser(val)) val.close()}
 
 // Adapter between `Deno.Reader` and standard `ReadableStream`.
-export class StreamSource {
+export class StreamSource extends l.Emp {
   constructor(src) {
+    super()
     this.src = reqReader(src)
     this.closed = false
   }
@@ -159,14 +163,13 @@ export class StreamSource {
   static async open(path) {return new this(await Deno.open(path))}
 
   get size() {return 4096}
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
 export class FileStream extends ReadableStream {
   constructor(src, path) {
     super(src)
     this.src = l.reqInst(src, StreamSource)
-    this.path = optPath(path)
+    this.path = p.optPath(path)
   }
 
   cancel() {return this.deinit(), super.cancel()}
@@ -178,5 +181,4 @@ export class FileStream extends ReadableStream {
   }
 
   static get Source() {return StreamSource}
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }

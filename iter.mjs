@@ -8,86 +8,93 @@ export function arrOf(seq, fun) {
 }
 
 export function more(val) {return val.next().done === false}
-export function alloc(len) {return Array(l.laxNat(len))}
+
+export function alloc(len) {return Array(l.reqNat(len))}
 
 export function arr(val) {
   if (l.isNil(val)) return []
-  if (l.isArr(val)) return val
-  return slice(val)
+  if (l.isList(val)) return arrFromList(val)
+  if (l.isArrble(val)) return arrFromList(val.toArray())
+  if (l.isSeq(val)) return values(val)
+  throw l.errConv(val, `array`)
 }
 
-export function arrCopy(val) {return maybeCopy(val, arr(val))}
+function arrFromList(val) {
+  if (isTrueArr(val)) return arrCopy(val)
+  return Array.prototype.slice.call(val)
+}
 
-function maybeCopy(src, out) {return l.is(src, out) ? reslice(out) : out}
-function reslice(val) {return Array.prototype.slice.call(val)}
+function arrCopy(val) {
+  const buf = alloc(reqTrueArr(val).length)
+  let ind = -1
+  while (++ind < val.length) buf[ind] = val[ind]
+  return buf
+}
+
+function arrFromIter(val) {
+  const out = []
+  for (val of val) out.push(val)
+  return out
+}
 
 export function slice(val, start, next) {
   l.opt(start, l.isInt)
   l.opt(next, l.isInt)
-  if (l.isNil(val)) return []
-  if (l.isList(val)) return Array.prototype.slice.call(val, start, next)
-  if (l.isSet(val) || l.isIterator(val)) return values(val).slice(start, next)
-  throw l.errConv(val, `array`)
+  if (!start && !next) return arr(val)
+  return arr(val).slice(start, next)
 }
 
 export function keys(val) {
   if (!l.isObj(val)) return []
   if (l.isList(val)) return span(val.length)
-  if (l.isSet(val)) return copy(val, setValues)
-  if (l.isMap(val)) return copy(val, mapKeys)
-  if (l.isIterator(val)) return span(iterLen(val))
-  if (l.isIter(val) && l.hasMeth(val, `keys`)) return arr(val.keys())
-  if (l.isStruct(val)) return Object.keys(val)
+  if (l.isIter(val) && l.hasMeth(val, `keys`)) return arrFromIter(val.keys())
+  if (isStructSync(val)) return Object.keys(val)
   throw l.errConv(val, `keys`)
 }
 
-// Doesn't prealloc because performance improvement would be minimal.
-function copy(src, fun) {const out = []; fun(src, out); return out}
-function setValues(val, out) {for (val of val.values()) out.push(val)}
-function mapKeys(val, out) {for (val of val.keys()) out.push(val)}
-
 export function values(val) {
+  if (isTrueArr(val)) return val
+  return valuesCopy(val)
+}
+
+export function valuesCopy(val) {
   if (!l.isObj(val)) return []
-  if (l.isArr(val)) return val
-  if (l.isList(val)) return Array.prototype.slice.call(val)
-  if (l.isSet(val)) return copy(val, setValues)
-  if (l.isMap(val)) return copy(val, mapValues)
-  if (l.isIterator(val)) return copy(val, iterValues)
-  if (l.isIter(val) && l.hasMeth(val, `values`)) return arr(val.values())
-  if (l.isStruct(val)) return structValues(val)
+  if (l.isList(val)) return arrFromList(val)
+  if (l.isArrble(val)) return arrFromList(val.toArray())
+  if (l.isSet(val)) return withBuf(val, copySet)
+  if (l.isMap(val)) return withBuf(val, copyMap)
+  if (l.isIter(val) && l.hasMeth(val, `values`)) return arrFromIter(val.values())
+  if (l.isIterator(val)) return arrFromIter(val)
+  if (isStructSync(val)) return valuesFromStruct(val)
   throw l.errConv(val, `values`)
 }
 
-function mapValues(val, out) {for (val of val.values()) out.push(val)}
-function iterValues(val, out) {for (val of val) out.push(val)}
+function withBuf(src, fun) {const out = []; fun(src, out); return out}
+function copySet(val, out) {for (val of l.reqSet(val).values()) out.push(val)}
+function copyMap(val, out) {for (val of l.reqMap(val).values()) out.push(val)}
 
-// Like `Object.values` but much faster.
-function structValues(src) {
+function valuesFromStruct(src) {
   const out = Object.keys(src)
   let ind = -1
   while (++ind < out.length) out[ind] = src[out[ind]]
   return out
 }
 
-export function valuesCopy(val) {return maybeCopy(val, values(val))}
-
 export function entries(val) {
   if (!l.isObj(val)) return []
-  if (l.isArr(val)) return copy(val, arrEntries)
-  if (l.isList(val)) return copy(val, listEntries)
-  if (l.isSet(val)) return copy(val, setEntries)
-  if (l.isMap(val)) return copy(val, mapEntries)
-  if (l.isIterator(val)) return copy(val, iterEntries)
-  if (l.isIter(val) && l.hasMeth(val, `entries`)) return arr(val.entries())
-  if (l.isStruct(val)) return structEntries(val)
+  if (l.isList(val)) return entriesFromList(val)
+  if (l.isIter(val) && l.hasMeth(val, `entries`)) return arrFromIter(val.entries())
+  if (l.isIterator(val)) return arrFromIter(val)
+  if (isStructSync(val)) return structEntries(val)
   throw l.errConv(val, `entries`)
 }
 
-function arrEntries(val, out, ind = -1) {for (val of val) out.push([++ind, val])}
-function listEntries(val, out, ind = -1) {for (val of val) out.push([++ind, val])}
-function setEntries(val, out) {for (val of val.entries()) out.push(val)}
-function mapEntries(val, out) {for (val of val.entries()) out.push(val)}
-function iterEntries(val, out, ind = -1) {for (val of val) out.push([++ind, val])}
+function entriesFromList(val) {
+  const out = alloc(val.length)
+  let ind = -1
+  while (++ind < val.length) out[ind] = [ind, val[ind]]
+  return out
+}
 
 // Like `Object.entries` but much faster.
 function structEntries(src) {
@@ -128,7 +135,7 @@ export function len(val) {
     return 0
   }
 
-  if (l.isStruct(val)) return Object.keys(val).length
+  if (isStructSync(val)) return Object.keys(val).length
   throw TypeError(`unable to measure length of ${l.show(val)}`)
 }
 
@@ -204,6 +211,12 @@ export function some(val, fun) {
   l.reqFun(fun)
   for (val of values(val)) if (fun(val)) return true
   return false
+}
+
+export function flat(val) {
+  val = arr(val)
+  for (const elem of val) if (l.isArr(elem)) return val.flat(Infinity)
+  return val
 }
 
 export function head(val) {
@@ -291,10 +304,10 @@ export function zip(src) {
 
 export function setOf(...val) {return new Set(val)}
 
-export function mapOf(...args) {
+export function mapOf(...val) {
   const out = new Map()
   let ind = 0
-  while (ind < args.length) out.set(args[ind++], args[ind++])
+  while (ind < val.length) out.set(val[ind++], val[ind++])
   return out
 }
 
@@ -311,9 +324,55 @@ export function range(min, max) {
 
 export function span(len) {return range(0, l.laxNat(len))}
 export function times(len, fun) {return mapMut(span(len), fun)}
-export function repeat(len, val) {return alloc(len).fill(val)}
-export function set(val) {return l.isSet(val) ? val : new Set(values(val))}
+export function repeat(len, val) {return alloc(l.laxNat(len)).fill(val)}
+export function setFrom(val) {return l.isSet(val) ? val : new Set(values(val))}
 export function setCopy(val) {return new Set(values(val))}
+
+export function mapDict(val, fun) {
+  l.reqFun(fun)
+  const out = l.npo()
+  for (const key of l.structKeys(val)) out[key] = fun(val[key])
+  return out
+}
+
+// Antipattern, should probably remove.
+export function pick(val, fun) {
+  l.reqFun(fun)
+  const out = l.npo()
+  for (const key of l.structKeys(val)) {
+    const elem = val[key]
+    if (fun(elem)) out[key] = elem
+  }
+  return out
+}
+
+// Antipattern, should probably remove.
+export function omit(val, fun) {return pick(val, l.not(fun))}
+
+// Antipattern, should probably remove.
+export function pickKeys(val, keys) {
+  val = l.laxStruct(val)
+  const out = l.npo()
+  for (const key of values(keys)) if (l.hasOwnEnum(val, key)) out[key] = val[key]
+  return out
+}
+
+// Antipattern, should probably remove.
+export function omitKeys(val, keys) {
+  val = l.laxStruct(val)
+  keys = setFrom(keys)
+  const out = l.npo()
+  for (const key of l.structKeys(val)) if (!keys.has(key)) out[key] = val[key]
+  return out
+}
+
+/* Internal */
 
 function getLength(val) {return l.get(val, `length`)}
 function getSize(val) {return l.get(val, `size`)}
+function isStructSync(val) {return l.isStruct(val) && !(Symbol.asyncIterator in val)}
+
+// At the time of writing, in V8, array subclasses have inferior performance.
+// We enforce plain arrays for consistent performance.
+function isTrueArr(val) {return l.isArr(val) && val.constructor === Array}
+function reqTrueArr(val) {return isTrueArr(val) ? val : l.errFun(val, isTrueArr)}

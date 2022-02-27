@@ -43,7 +43,7 @@ Alternatives that suck:
 
 ## Usage
 
-Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import everything at once:
+Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import all core modules at once:
 
 ```js
 import * as a from '{{url}}/all.mjs'
@@ -59,6 +59,8 @@ import * as s from '{{url}}/str.mjs'
 ## Features
 
 {{features}}
+
+Some other extremely useful features are undocumented for now. Docs are in progress.
 
 ## Perf
 

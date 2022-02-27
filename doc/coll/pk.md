@@ -2,7 +2,7 @@ Short for "primary key". Similar to {{link coll pkOpt}}, but the input _must_ pr
 
 ```js
 co.pk({})
-// uncaught TypeError: unable to get primary key of {}
+// Uncaught TypeError: unable to get primary key of {}
 
 class Person {
   constructor({name}) {this.name = name}

@@ -10,43 +10,13 @@ class Person {
   pk() {return this.name}
 }
 
-class Persons extends co.ClsColl {
+class PersonColl extends co.ClsColl {
   get cls() {return Person}
 }
 
 function toMap(val) {return new Map(val.entries())}
-function args(...val) {return val}
 
 /* Test */
-
-t.test(function test_pkOpt() {
-  function test(val, exp) {t.is(co.pkOpt(val), exp)}
-  function none(val) {test(val, undefined)}
-
-  none(undefined)
-  none(null)
-  none(10)
-  none(false)
-  none(`str`)
-  none({})
-  none([])
-  none({pk: 10})
-
-  test({pk() {return 10}}, 10)
-  test({pk() {return `str`}}, `str`)
-})
-
-t.test(function test_pk() {
-  t.throws(() => co.pk(), TypeError, `unable to get primary key of undefined`)
-  t.throws(() => co.pk(10), TypeError, `unable to get primary key of 10`)
-  t.throws(() => co.pk({}), TypeError, `unable to get primary key of {}`)
-  t.throws(() => co.pk({pk: 10}), TypeError, `unable to get primary key of {"pk":10}`)
-  t.throws(() => co.pk({pk() {return null}}), TypeError, `unable to get primary key of {}`)
-
-  function test(val, exp) {t.is(co.pk(val), exp)}
-  test({pk() {return 10}}, 10)
-  test({pk() {return `str`}}, `str`)
-})
 
 t.test(function test_bset() {
   t.eq(co.bset(), new co.Bset())
@@ -87,35 +57,6 @@ t.test(function test_Bset() {
       t.eq(co.bset().mut(co.bsetOf(10, 20)), co.bsetOf(10, 20))
       t.eq(co.bsetOf(10).mut(co.bsetOf(20)), co.bsetOf(10, 20))
     })
-  })
-
-  t.test(function test_map() {
-    t.throws(() => co.bset().map(), TypeError, `expected variant of isFun, got undefined`)
-    t.throws(() => co.bset().map(10), TypeError, `expected variant of isFun, got 10`)
-
-    t.eq(co.bset().map(l.id), [])
-
-    const ref = co.bsetOf(10, 20)
-    t.eq(ref.map(args), [[10, 10, ref], [20, 20, ref]])
-  })
-
-  t.test(function test_filter() {
-    t.throws(() => co.bset().filter(), TypeError, `expected variant of isFun, got undefined`)
-    t.throws(() => co.bset().filter(10), TypeError, `expected variant of isFun, got 10`)
-
-    t.eq(co.bsetOf(10, 20).filter(l.False), [])
-
-    t.eq(co.bsetOf(10, 20).filter(l.True), [10, 20])
-
-    t.eq(
-      co.bsetOf(10, 20).filter((val, key) => val === 10 && key === 10),
-      [10],
-    )
-
-    t.eq(
-      co.bsetOf(10, 20).filter((val, key) => val === 20 && key === 20),
-      [20],
-    )
   })
 
   t.test(function test_toArray() {
@@ -192,35 +133,6 @@ t.test(function test_Bmap() {
     })
   })
 
-  t.test(function test_map() {
-    t.throws(() => co.bmap().map(), TypeError, `expected variant of isFun, got undefined`)
-    t.throws(() => co.bmap().map(10), TypeError, `expected variant of isFun, got 10`)
-
-    t.eq(co.bmap().map(l.id), [])
-
-    const ref = co.bmap({one: 10, two: 20})
-    t.eq(ref.map(args), [[10, `one`, ref], [20, `two`, ref]])
-  })
-
-  t.test(function test_filter() {
-    t.throws(() => co.bmap().filter(), TypeError, `expected variant of isFun, got undefined`)
-    t.throws(() => co.bmap().filter(10), TypeError, `expected variant of isFun, got 10`)
-
-    t.eq(co.bmap({one: 10, two: 20}).filter(l.False), [])
-
-    t.eq(co.bmap({one: 10, two: 20}).filter(l.True), [10, 20])
-
-    t.eq(
-      co.bmap({one: 10, two: 20}).filter((val, key) => val === 10 && key === `one`),
-      [10],
-    )
-
-    t.eq(
-      co.bmap({one: 10, two: 20}).filter((val, key) => val === 20 && key === `two`),
-      [20],
-    )
-  })
-
   t.test(function test_toDict() {
     t.test(function test_full() {
       function test(src) {t.eq(co.bmap(src).toDict(), src)}
@@ -260,11 +172,40 @@ t.test(function test_Bmap() {
   })
 })
 
+t.test(function test_pkOpt() {
+  function test(val, exp) {t.is(co.pkOpt(val), exp)}
+  function none(val) {test(val, undefined)}
+
+  none(undefined)
+  none(null)
+  none(10)
+  none(false)
+  none(`str`)
+  none({})
+  none([])
+  none({pk: 10})
+
+  test({pk() {return 10}}, 10)
+  test({pk() {return `str`}}, `str`)
+})
+
+t.test(function test_pk() {
+  t.throws(() => co.pk(), TypeError, `expected primary key of undefined, got undefined`)
+  t.throws(() => co.pk(10), TypeError, `expected primary key of 10, got undefined`)
+  t.throws(() => co.pk({}), TypeError, `expected primary key of {}, got undefined`)
+  t.throws(() => co.pk({pk: 10}), TypeError, `expected primary key of {"pk":10}, got undefined`)
+  t.throws(() => co.pk({pk() {return null}}), TypeError, `expected primary key of {}, got null`)
+
+  function test(val, exp) {t.is(co.pk(val), exp)}
+  test({pk() {return 10}}, 10)
+  test({pk() {return `str`}}, `str`)
+})
+
 t.test(function test_Coll() {
   function test(val, exp) {t.eq(toMap(val), exp)}
 
   function none(val) {
-    t.throws(() => new co.Coll().add(val), TypeError, `unable to get primary key of ${l.show(val)}`)
+    t.throws(() => new co.Coll().add(val), TypeError, `expected primary key of ${l.show(val)}, got undefined`)
     test(new co.Coll().addOpt(val), new Map())
   }
 
@@ -288,11 +229,145 @@ t.test(function test_Coll() {
 
 t.test(function test_ClsColl() {
   t.eq(
-    toMap(new Persons().add({name: `Mira`}).add({name: `Kara`})),
+    toMap(new PersonColl().add({name: `Mira`}).add({name: `Kara`})),
     new Map()
       .set(`Mira`, new Person({name: `Mira`}))
       .set(`Kara`, new Person({name: `Kara`})),
   )
+})
+
+t.test(function test_Vec() {
+  t.test(function test_constructor() {
+    t.throws(() => new co.Vec(`str`), TypeError, `expected variant of isArr, got "str"`)
+
+    t.test(function test_reuse() {
+      function test(src) {t.is(new co.Vec(src).$, src)}
+
+      test([])
+      test([10, 20, 30])
+    })
+
+    t.eq(new co.Vec().$, [])
+    t.isnt(new co.Vec().$, new co.Vec().$)
+  })
+
+  t.test(function test_size() {
+    t.is(new co.Vec().size, 0)
+    t.is(new co.Vec([10, 20, 30]).size, 3)
+
+    const arr = [10, 20, 30]
+    const vec = new co.Vec(arr)
+    t.is(vec.size, 3)
+
+    arr.length = 2
+    t.is(vec.size, 2)
+
+    arr.length = 1
+    t.is(vec.size, 1)
+  })
+
+  t.test(function test_iterator() {
+    t.eq([...new co.Vec()], [])
+    t.eq([...new co.Vec([10, 20, 30])], [10, 20, 30])
+  })
+
+  t.test(function test_add() {
+    const vec = new co.Vec()
+    t.eq(vec.$, [])
+
+    t.is(vec.add(10), vec)
+    t.eq(vec.$, [10])
+
+    t.is(vec.add(20), vec)
+    t.eq(vec.$, [10, 20])
+  })
+
+  t.test(function test_clear() {
+    const vec = new co.Vec([10, 20, 30])
+    t.eq(vec.$, [10, 20, 30])
+
+    t.is(vec.clear(), vec)
+    t.eq(vec.$, [])
+  })
+
+  t.test(function test_clone() {
+    const arr = [10, 20, 30]
+    const vec = new co.Vec(arr)
+    t.is(vec.$, arr)
+
+    const out = vec.clone()
+    t.eq(out, vec)
+    t.eq(out.$, arr)
+    t.isnt(out, vec)
+    t.isnt(out.$, arr)
+  })
+
+  t.test(function test_toArray() {
+    const arr = [10, 20, 30]
+    t.is(new co.Vec(arr).toArray(), arr)
+  })
+
+  t.test(function test_toJSON() {
+    function test(arr) {
+      t.is(new co.Vec(arr).toJSON(), arr)
+      t.is(JSON.stringify(new co.Vec(arr)), JSON.stringify(arr))
+    }
+
+    test([])
+    test([10])
+    test([10, 20])
+    test([10, 20, 30])
+  })
+
+  t.test(function test_of() {
+    t.eq(co.Vec.of().$, [])
+    t.eq(co.Vec.of(10).$, [10])
+    t.eq(co.Vec.of(10, 20).$, [10, 20])
+    t.eq(co.Vec.of(10, 20, [30]).$, [10, 20, [30]])
+  })
+
+  t.test(function test_from() {
+    t.throws(() => co.Vec.from(`str`), TypeError, `expected variant of isIter, got "str"`)
+
+    t.eq(co.Vec.from().$, [])
+    t.eq(co.Vec.from([10, 20, 30]).$, [10, 20, 30])
+    t.eq(co.Vec.from([10, 20, 30]).$, [10, 20, 30])
+  })
+
+  t.test(function test_make() {
+    function test(len) {t.eq(co.Vec.make(len).$, Array(len))}
+
+    test(0)
+    test(1)
+    test(2)
+    test(3)
+  })
+})
+
+t.test(function test_ClsVec() {
+  class PersonVec extends co.ClsVec {get cls() {return Person}}
+
+  const vecs = [
+    new PersonVec([{name: `Mira`}, {name: `Kara`}]),
+
+    new PersonVec().add({name: `Mira`}).add({name: `Kara`}),
+
+    new PersonVec([
+      new Person({name: `Mira`}),
+      new Person({name: `Kara`}),
+    ]),
+
+    Object.assign(new PersonVec(), {$: [
+      new Person({name: `Mira`}),
+      new Person({name: `Kara`}),
+    ]}),
+
+    PersonVec.of({name: `Mira`}, {name: `Kara`}),
+
+    PersonVec.of(new Person({name: `Mira`}), new Person({name: `Kara`})),
+  ]
+
+  for (const one of vecs) for (const two of vecs) t.eq(one, two)
 })
 
 t.test(function test_Que() {

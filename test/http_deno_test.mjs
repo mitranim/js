@@ -16,17 +16,18 @@ import * as hd from '../http_deno.mjs'
 
 t.test(function test_DirRel() {
   const dir = new hd.DirRel(`target`)
-  t.is(dir.fsPath(`/one%20two`), `target/one two`)
-  t.is(dir.fsPath(`/scripts/one%20two`), `target/scripts/one two`)
-  t.is(dir.fsPath(`../one%20two`), undefined)
-  t.is(dir.fsPath(`/scripts/../one%20two`), undefined)
+  t.is(dir.urlPathToFsPath(`/one%20two`), `target/one two`)
+  t.is(dir.urlPathToFsPath(`/scripts/one%20two`), `target/scripts/one two`)
+  t.is(dir.urlPathToFsPath(`../one%20two`), undefined)
+  t.is(dir.urlPathToFsPath(`/scripts/../one%20two`), undefined)
 })
 
-t.test(function test_DirRelTest() {
-  const dir = new hd.DirRelTest(`target`, /^scripts[/]/)
-  t.is(dir.fsPath(`/one%20two`), undefined)
-  t.is(dir.fsPath(`/scripts/one%20two`), `target/scripts/one two`)
-  t.is(dir.fsPath(`/scripts/../one`), undefined)
+t.test(function test_DirRelFil() {
+  const dir = new hd.DirRelFil(`target`, /^scripts[/]/)
+  t.is(dir.urlPathToFsPath(`/one%20two`), undefined)
+  t.is(dir.urlPathToFsPath(`/target/scripts/one%20two`), undefined)
+  t.is(dir.urlPathToFsPath(`/scripts/one%20two`), `target/scripts/one two`)
+  t.is(dir.urlPathToFsPath(`/scripts/../one`), undefined)
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

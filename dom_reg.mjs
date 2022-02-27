@@ -76,8 +76,9 @@ export class HTMLVideoElement extends (G.HTMLVideoElement || H) {constructor() {
 
 export function reg(cls) {return cer.reg(cls)}
 
-export class CustomElementRegistry {
+export class CustomElementRegistry extends l.Emp {
   constructor(ref) {
+    super()
     this.ref = optDefiner(ref)
     this.tagToCls = new Map()
     this.clsToTag = new Map()
@@ -96,7 +97,6 @@ export class CustomElementRegistry {
   get(key) {return this.tagToCls.get(key)}
   upgrade() {}
   whenDefined() {}
-  get [Symbol.toStringTag]() {return this.constructor.name}
 
   /* Non-standard behaviors */
 
@@ -128,6 +128,9 @@ export class CustomElementRegistry {
   }
 
   clsTagBase(cls) {
+    // Opt-in override.
+    if (l.hasMeth(cls, `tag`)) return l.reqStr(cls.tag())
+
     const name = clsNameBase(cls, RE_BASE)
     if (!name) return ``
 

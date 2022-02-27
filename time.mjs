@@ -1,5 +1,8 @@
 import * as l from './lang.mjs'
 
+export const PICO_IN_SEC = 1_000_000_000_000
+export const NANO_IN_SEC = 1_000_000_000
+export const MICRO_IN_SEC = 1_000_000
 export const MS_IN_SEC = 1_000
 export const SEC_IN_MIN = 60
 export const MIN_IN_HOUR = 60
@@ -23,9 +26,9 @@ export const RE_DUR = /^P(?:(?<years>-?\d+)Y)?(?:(?<months>-?\d+)M)?(?:(?<days>-
 export function dur(val) {return new Dur(val)}
 
 // https://en.wikipedia.org/wiki/ISO_8601#Durations
-export class Dur {
+export class Dur extends l.Emp {
   constructor(val) {
-    this.clear()
+    super().clear()
     if (l.isSome(val)) this.reset(val)
   }
 
@@ -68,30 +71,25 @@ export class Dur {
   }
 
   resetFromStr(val) {
-    l.reqStr(val)
-    if (!val) return this.clear()
-
-    const mat = l.reqStr(val).match(RE_DUR)
-    const gr = mat && mat.groups
-    if (!gr) throw l.errSynt(val, this.constructor.name)
-
-    this.years = toInt(gr.years)
-    this.months = toInt(gr.months)
-    this.days = toInt(gr.days)
-    this.hours = toInt(gr.hours)
-    this.minutes = toInt(gr.minutes)
-    this.seconds = toInt(gr.seconds)
+    if (!l.reqStr(val)) return this.clear()
+    const gro = reqGroups(val, RE_DUR, this.constructor.name)
+    this.years = toInt(gro.years)
+    this.months = toInt(gro.months)
+    this.days = toInt(gro.days)
+    this.hours = toInt(gro.hours)
+    this.minutes = toInt(gro.minutes)
+    this.seconds = toInt(gro.seconds)
     return this
   }
 
   resetFromStruct(val) {
     l.reqStruct(val)
-    this.years = l.laxInt(val.years)
-    this.months = l.laxInt(val.months)
-    this.days = l.laxInt(val.days)
-    this.hours = l.laxInt(val.hours)
-    this.minutes = l.laxInt(val.minutes)
-    this.seconds = l.laxInt(val.seconds)
+    this.setYears(val.years)
+    this.setMonths(val.months)
+    this.setDays(val.days)
+    this.setHours(val.hours)
+    this.setMinutes(val.minutes)
+    this.setSeconds(val.seconds)
     return this
   }
 
@@ -116,8 +114,6 @@ export class Dur {
   valueOf() {return this.toString()}
 
   static isValid(val) {return l.isSome(val) && l.toInst(val, this).isValid()}
-
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
 /*
@@ -128,12 +124,23 @@ function toInt(val) {return l.isNil(val) ? 0 : Number.parseInt(val)}
 
 function suff(val, suf) {return val ? (val + suf) : ``}
 
+// Short for "timestamp".
 export function ts(val) {
   return l.convType(tsOpt(val), val, `timestamp`)
 }
 
+// Short for "timestamp optional".
 export function tsOpt(val) {return l.onlyFin(tsNum(val))}
 
+/*
+Short for "timestamp number". Converts one of a few supported types to a numeric
+timestamp. Output may be `NaN`. See `ts` and `tsOpt`. Doesn't allow `Number`
+subclasses because we ourselves use several of them for different units,
+therefore can't assume a specific unit. Primitive numeric timestamps are
+usually in milliseconds, so it's RELATIVELY safe to assume ms. Sometimes
+timestamps are stored and transmitted in seconds. That's out of our hands. The
+caller should convert seconds in advance.
+*/
 export function tsNum(val) {
   if (l.isNum(val)) return val
   if (l.isStr(val)) return Date.parse(val)
@@ -166,22 +173,25 @@ export function hourToMs(val) {return l.laxFin(val) * MS_IN_HOUR}
 export function hourToSec(val) {return l.laxFin(val) * SEC_IN_HOUR}
 export function hourToMin(val) {return l.laxFin(val) * MIN_IN_HOUR}
 
+// Variant of `Date` with added convenience methods.
 export class DateTime extends Date {
   isValid() {return l.isFin(this.valueOf())}
 
   reqValid() {
     if (this.isValid()) return this
-    throw TypeError(`invalid date`)
+    throw TypeError(super.toString())
   }
 
   onlyValid() {return this.isValid() ? this : undefined}
-  eq(val) {return l.is(this.valueOf(), tsNum(val))}
-  toJSON() {return this.isValid() ? this.toString() : null}
 
-  get [Symbol.toStringTag]() {return this.constructor.name}
+  eq(val) {return l.is(this.valueOf(), tsNum(val))}
 }
 
-export class Timestamp extends DateTime {
+/*
+Short for "date timestamp". Represents itself as a timestamp in JSON.
+An invalid date is encoded as `null` because `NaN` → `null`.
+*/
+export class DateTs extends DateTime {
   toJSON() {return this.valueOf()}
 }
 
@@ -192,64 +202,85 @@ export class DateIso extends DateTime {
   }
 }
 
-// Compatible with `<input type=date>`.
+/*
+Compatible with `<input type=date>`. Doesn't automatically shorten for JSON,
+to minimize information loss. Use `DateShortJson` for that.
+*/
 export class DateShort extends DateTime {
   toString() {
     if (!this.isValid()) return ``
-    return [this.getFullYear(), this.getMonth(), this.getDate()].join(`-`)
+    return this.yearStr() + `-` + this.monthStr() + `-` + this.dateStr()
   }
+
+  yearStr() {return zeroed(this.getFullYear(), 4)}
+  monthStr() {return zeroed(this.getMonth() + 1, 2)}
+  dateStr() {return zeroed(this.getDate(), 2)}
 }
 
-export class Ts extends Number {
+export class DateShortJson extends DateShort {
+  toJSON() {return this.isValid() ? this.toString() : null}
+}
+
+export class Sec extends Number {
   constructor(val) {super(toFin(val))}
+  get $() {return this.valueOf()}
 
-  picoStr() {return this.pico() + ` ps`}
-  nanoStr() {return this.nano() + ` ns`}
-  microStr() {return this.micro() + ` μs`}
-  milliStr() {return this.milli() + ` ms`}
+  picoStr() {return this.fmt(this.pico()) + ` ps`}
+  nanoStr() {return this.fmt(this.nano()) + ` ns`}
+  microStr() {return this.fmt(this.micro()) + ` ` + MICRO_SIGN + `s`}
+  milliStr() {return this.fmt(this.milli()) + ` ms`}
+  secStr() {return this.fmt(this.sec()) + ` s`}
 
-  // // TODO consider fancy printing like Go `time.Duration`.
-  // toString() {return super.toString()}
+  pico() {return this.conv(PICO_IN_SEC)}
+  nano() {return this.conv(NANO_IN_SEC)}
+  micro() {return this.conv(MICRO_IN_SEC)}
+  milli() {return this.conv(MS_IN_SEC)}
+  sec() {return this.conv(1)}
+  minute() {return this.conv(1 / SEC_IN_MIN)}
+  hour() {return this.conv(1 / SEC_IN_HOUR)}
 
-  get [Symbol.toStringTag]() {return this.constructor.name}
+  mod() {return 1}
+  conv(mul) {return this.$ * (l.reqNum(mul) / l.reqNum(this.mod()))}
+  fmt(val) {return numStr(val)}
+
+  dur() {
+    let rem = this.sec()
+
+    const hour = Math.trunc(rem / SEC_IN_HOUR)
+    rem = rem % SEC_IN_HOUR
+
+    const min = Math.trunc(rem / SEC_IN_MIN)
+    rem = rem % SEC_IN_MIN
+
+    return new this.Dur().setHours(hour).setMinutes(min).setSeconds(rem)
+  }
+
+  toString() {return this.secStr()}
+
+  get Dur() {return Dur}
 }
 
-function toFin(val) {
-  if (l.isNil(val)) return 0
-  if (l.isFin(val)) return val
-  if (l.isInst(val, Number)) return toFin(val.valueOf())
-  throw l.errConv(val, `fin`)
-}
-
-export class Pico extends Ts {
-  pico() {return this.valueOf()}
-  nano() {return this.valueOf() / 1_000}
-  micro() {return this.valueOf() / 1_000_1000}
-  milli() {return this.valueOf() / 1_000_000_000}
+/*
+TODO may consider generalizing the "pico/nano/etc" numeric classes.
+The unit conversions are relevant for other units, not just seconds.
+*/
+export class Pico extends Sec {
+  mod() {return PICO_IN_SEC}
   toString() {return this.picoStr()}
 }
 
-export class Nano extends Ts {
-  pico() {return this.valueOf() * 1_000}
-  nano() {return this.valueOf()}
-  micro() {return this.valueOf() / 1_000}
-  milli() {return this.valueOf() / 1_000_000}
+export class Nano extends Sec {
+  mod() {return NANO_IN_SEC}
   toString() {return this.nanoStr()}
 }
 
-export class Micro extends Ts {
-  pico() {return this.valueOf() * 1_000_000}
-  nano() {return this.valueOf() * 1_000}
-  micro() {return this.valueOf()}
-  milli() {return this.valueOf() / 1_000}
+export class Micro extends Sec {
+  mod() {return MICRO_IN_SEC}
   toString() {return this.microStr()}
 }
 
-export class Milli extends Ts {
-  pico() {return this.valueOf() * 1_000_000_000}
-  nano() {return this.valueOf() * 1_000_000}
-  micro() {return this.valueOf() * 1_000}
-  milli() {return this.valueOf()}
+export class Milli extends Sec {
+  mod() {return MS_IN_SEC}
   toString() {return this.milliStr()}
 }
 
@@ -259,7 +290,61 @@ export function after(ms, sig) {
   return afterSimple(ms)
 }
 
+/* Internal */
+
+// This is Unicode micro sign which LOOKS like a Greek mu,
+// but is considered a distinct code unit.
+const MICRO_SIGN = `µ`
+
+function toFin(val) {
+  if (l.isFin(val)) return val
+  if (l.isInst(val, Number)) return toFin(val.valueOf())
+  throw l.errFun(val, l.isFin)
+}
+
+/*
+Performance observed in V8:
+
+  * `Number.prototype.toString` is WAY faster than `NumberFormat`,
+    at least for integers.
+  * `Number.prototype.toLocaleString` is WAY slower than `NumberFormat`.
+
+We resort to `NumberFormat` when `.toString` would have used the exponent
+notation, which we aim to avoid.
+*/
+function numStr(val) {
+  l.reqFin(val)
+  if (Number.isSafeInteger(val)) return val.toString()
+  return numFmt.format(val)
+}
+
+/*
+Reference:
+
+  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
+
+Magic "20" seems to be the maximum allowed value. `Infinity` is not accepted.
+*/
+const numFmt = new Intl.NumberFormat([`en-US`], {
+  useGrouping: false,
+  maximumFractionDigits: 20,
+})
+
+function zeroed(src, len) {return l.reqInt(src).toString().padStart(len, `0`)}
+
+// Duplicate from `url.mjs` to minimize deps.
+function reqGroups(val, reg, msg) {
+  const mat = l.laxStr(val).match(reg)
+  return l.convSynt(mat && mat.groups, val, msg)
+}
+
+function afterSimple(ms) {
+  return new Promise(function init(done) {setTimeout(done, ms, true)})
+}
+
 function afterSig(ms, sig) {
+  if (sig.aborted) return Promise.resolve(false)
+
   return new Promise(function init(done) {
     sig.addEventListener(`abort`, aborted)
     const id = setTimeout(reached, ms)
@@ -268,8 +353,4 @@ function afterSig(ms, sig) {
     function aborted() {deinit(), done(false)}
     function deinit() {clearTimeout(id), sig.removeEventListener(`abort`, aborted)}
   })
-}
-
-function afterSimple(ms) {
-  return new Promise(function init(done) {setTimeout(done, ms, true)})
 }

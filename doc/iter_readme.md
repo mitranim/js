@@ -23,7 +23,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as i from '{{url}}/iter.mjs'
+import * as i from '{{featUrl}}'
 ```
 
 ## Perf

@@ -1,4 +1,12 @@
+/*
+This module has tools mostly for client code such as browsers apps. For server
+code, see `http_srv.mjs`. The modules are split because browser apps are more
+sensitive to code size. Our code is compatible with tree shaking, but apps
+without a bundler or using `deno bundle` are still affected.
+*/
+
 import * as l from './lang.mjs'
+import * as s from './str.mjs'
 import * as u from './url.mjs'
 
 export const GET = `GET`
@@ -9,7 +17,13 @@ export const PUT = `PUT`
 export const PATCH = `PATCH`
 export const DELETE = `DELETE`
 
-export const CONTENT_TYPE = `content-type`
+export const HEAD_CACHE_CONTROL = `cache-control`
+export const HEAD_CONTENT_TYPE = `content-type`
+export const HEAD_ACCEPT = `accept`
+export const HEAD_ORIGIN = `origin`
+export const HEAD_HOST = `host`
+
+export const TYPE_TEXT = `text/plain`
 export const TYPE_HTML = `text/html`
 export const TYPE_JSON = `application/json`
 export const TYPE_FORM = `application/x-www-form-urlencoded`
@@ -19,6 +33,14 @@ export function jsonDecode(val) {return l.laxStr(val) ? JSON.parse(val) : null}
 export function jsonEncode(val) {return JSON.stringify(l.isNil(val) ? null : val)}
 export function getStatus(val) {return l.get(val, `status`)}
 export function hasStatus(err, sta) {return l.reqNat(sta) === getStatus(err)}
+
+/*
+The built-in `AbortError` is not a separate class but an instance of
+`DOMException`. We're unable to detect it purely by `instanceof`.
+*/
+export function isErrAbort(val) {
+  return l.isInst(val, Error) && val.name === `AbortError`
+}
 
 export class Err extends Error {
   constructor(msg, status, res) {
@@ -34,34 +56,12 @@ export class Err extends Error {
   get name() {return this.constructor.name}
 }
 
-export function reqBui(val) {return new ReqBui(val)}
-
-export class ReqBui {
-  constructor(val) {this.mut(val)}
-
-  async fetch() {return new this.Res(await fetch(this.url, this))}
-  async fetchOk() {return (await this.fetch()).okRes()}
-  async fetchOkText() {return (await this.fetch()).okText()}
-  async fetchOkJson() {return (await this.fetch()).okJson()}
-
-  meth(val) {return this.method = l.laxStr(val) || undefined, this}
-  get() {return this.meth(GET)}
-  post() {return this.meth(POST)}
-  put() {return this.meth(PUT)}
-  patch() {return this.meth(PATCH)}
-  delete() {return this.meth(DELETE)}
-
-  to(val) {return this.url = l.reqScalar(val), this}
-  sig(val) {return this.signal = l.optInst(val, AbortSignal), this}
-  inp(val) {return this.body = reqBody(val), this}
-  json(val) {return this.inp(jsonEncode(val)).headSet(CONTENT_TYPE, TYPE_JSON)}
-
-  type(val) {return this.headSet(CONTENT_TYPE, val)}
-  typeJson() {return this.type(TYPE_JSON)}
-  typeForm() {return this.type(TYPE_FORM)}
-  typeMulti() {return this.type(TYPE_MULTI)}
-
-  req() {return new Request(this.url, this)}
+/*
+"Bui" is short for "builder". This is a common component of `ReqBui` and
+`ResBui`, providing shortcuts for building HTTP headers.
+*/
+export class HttpBui extends l.Emp {
+  constructor(val) {super().mut(val)}
 
   mut(val) {
     if (l.isNil(val)) return this
@@ -77,8 +77,18 @@ export class ReqBui {
     return this
   }
 
-  // Not called ".head" to avoid accidental confusion with HEAD.
-  // It's better to avoid having a ".head" method or property.
+  type(val) {return this.headSet(HEAD_CONTENT_TYPE, val)}
+  typeText() {return this.type(TYPE_TEXT)}
+  typeHtml() {return this.type(TYPE_HTML)}
+  typeJson() {return this.type(TYPE_JSON)}
+  typeForm() {return this.type(TYPE_FORM)}
+  typeMulti() {return this.type(TYPE_MULTI)}
+
+  /*
+  Not called ".head" to avoid accidental confusion with HEAD,
+  which could be a gotcha for `ReqBui`. It's better to avoid
+  a ".head" method or property.
+  */
   heads() {return this.headers || (this.headers = l.npo())}
   headHas(key) {return l.hasOwn(this.headers, reqHeadKey(key))}
   headGet(key) {return this.headHas(key) ? this.headers[key] : ``}
@@ -152,24 +162,56 @@ export class ReqBui {
   }
 
   headRender(val) {return l.renderLax(val).trim()}
+}
+
+export function reqBui(val) {return new ReqBui(val)}
+
+export class ReqBui extends HttpBui {
+  async fetch() {return new this.Res(await fetch(this.url, this))}
+  async fetchOk() {return (await this.fetch()).okRes()}
+  async fetchOkText() {return (await this.fetch()).okText()}
+  async fetchOkJson() {return (await this.fetch()).okJson()}
+
+  req() {return new Request(this.url, this)}
+  meth(val) {return this.method = l.laxStr(val) || undefined, this}
+  get() {return this.meth(GET)}
+  post() {return this.meth(POST)}
+  put() {return this.meth(PUT)}
+  patch() {return this.meth(PATCH)}
+  delete() {return this.meth(DELETE)}
+
+  to(val) {return this.url = l.optScalar(val), this}
+  path(...val) {return this.initUrl().setPath(...val), this}
+  query(val) {return this.initUrl().setQuery(val), this}
+  initUrl() {return this.url = u.toUrl(this.url)}
+
+  sig(val) {return this.signal = l.optInst(val, AbortSignal), this}
+  inp(val) {return this.body = optBody(val), this}
+  json(val) {return this.inp(jsonEncode(val)).typeJson()}
 
   get Res() {return Res}
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
 export class Res extends Response {
-  constructor(body, res) {
-    if (l.isInst(body, Response)) {
-      res = body
-      body = res.body
-    }
-    else {
-      l.reqBody(body)
-      l.reqInst(res, Response)
+  constructor(one, two) {
+    // This non-standard clause is used by `ReqBui`.
+    if (l.isInst(one, Response)) {
+      l.reqNil(two)
+      super(optBody(one.body), one)
+      this.res = one
+      return
     }
 
-    super(body, res)
-    this.res = res
+    // Allows to instantiate from an existing response but override the body.
+    if (l.isInst(two, Response)) {
+      super(optBody(one), two)
+      this.res = two
+      return
+    }
+
+    // Like standard constructor but with stricter type checks.
+    super(optBody(one), l.optStruct(two))
+    this.res = this
   }
 
   get redirected() {return this.res.redirected}
@@ -188,11 +230,13 @@ export class Res extends Response {
   async okJson() {return (await this.okRes()).json()}
 
   get Err() {return Err}
-  get [Symbol.toStringTag]() {return this.constructor.name}
 }
 
-export class Rou {
+export function toRou(val) {return l.toInst(val, Rou)}
+
+export class Rou extends l.Emp {
   constructor(req) {
+    super()
     this.req = l.reqInst(req, Request)
     this.url = u.url(req.url)
     this.groups = undefined
@@ -201,7 +245,6 @@ export class Rou {
   get pathname() {return l.reqStr(this.url.pathname)}
   get method() {return l.reqStr(this.req.method)}
 
-  // May be overridden in subclasses.
   run(fun) {return fun(this)}
 
   preflight(fun = resEmpty) {
@@ -282,6 +325,48 @@ export class Rou {
   }
 
   async eitherAsync(val, fun) {return (await val) || this.run(fun)}
+
+  reqGroups() {
+    const val = this.groups
+    if (val) return val
+    throw Error(`unexpected lack of named captures when routing ${this.pathname}`)
+  }
+
+  // Needs a more specific name.
+  static from(loc, opt) {
+    return new this(new Request(l.reqScalar(loc), l.optStruct(opt)))
+  }
+}
+
+export class Ctx extends AbortController {
+  constructor(sig) {
+    l.setProto(super(), new.target)
+    this[sigKey] = undefined
+    this.link(sig)
+  }
+
+  link(sig) {
+    this.unlink()
+    if (!l.optInst(sig, AbortSignal)) return this
+    if (sig.aborted) return this.deinit(), this
+
+    this[sigKey] = sig
+    sig.addEventListener(`abort`, this, {once: true})
+    return this
+  }
+
+  unlink() {
+    const sig = this[sigKey]
+    if (sig) {
+      this[sigKey] = undefined
+      sig.removeEventListener(`abort`, this)
+    }
+    return this
+  }
+
+  handleEvent({type}) {if (type === `abort`) this.deinit()}
+  abort() {return this.deinit()}
+  deinit() {return this.unlink(), super.abort()}
 }
 
 export function resNotAllowed(rou) {
@@ -303,6 +388,138 @@ export function resErr(err) {
   )
 }
 
+// Also see `Cookie.fromPairs`.
+export function cookieSplitPairs(val) {
+  val = l.laxStr(val)
+  return s.split(s.trim(val), /\s*;\s*/g).filter(l.id)
+}
+
+// Also see `Cookie.fromPairs`.
+export function cookieSplitPair(src) {
+  src = l.reqStr(src).trim()
+  if (!src) throw TypeError(`unexpected empty cookie pair`)
+  if (src.includes(`;`)) throw TypeError(`invalid cookie pair ${l.show(src)}`)
+
+  const ind = src.indexOf(`=`)
+  if (!(ind >= 0)) return [``, src]
+
+  const key = src.slice(0, ind)
+  const val = src.slice(ind + 1)
+  return [key.trim(), val.trim()]
+}
+
+export function cook(val) {return new Cookie(val)}
+
+export class Cookie extends l.Emp {
+  constructor(val) {super().clear().reset(val)}
+
+  clear() {
+    this.name = undefined
+    this.value = undefined
+    this.path = undefined
+    this.domain = undefined
+    this.expires = undefined
+    this.maxAge = undefined
+    this.secure = undefined
+    this.httpOnly = undefined
+    this.sameSite = undefined
+    return this
+  }
+
+  setName(val) {return this.name = optCookieName(val), this}
+  setValue(val) {return this.value = optCookieValue(val), this}
+  setPath(val) {return this.path = optCookieAttr(val), this}
+  setDomain(val) {return this.domain = optCookieAttr(val), this}
+  setExpires(val) {return this.expires = l.optValidDate(val), this}
+  setMaxAge(val) {return this.maxAge = l.optNat(val), this}
+  setSecure(val) {return this.secure = l.optBool(val), this}
+  setHttpOnly(val) {return this.httpOnly = l.optBool(val), this}
+  setSameSite(val) {return this.sameSite = optCookieAttr(val), this}
+
+  setDomainSub(val) {
+    if (l.isNil(val)) return this.setDomain()
+    return this.setDomain(s.optPre(val, `.`))
+  }
+
+  lax() {return this.setSameSite(`lax`)}
+  expired() {return this.setValue(this.value || ``).setMaxAge(0)}
+  durable() {return this.setMaxAge(60 * 60 * 24 * 365 * 17)}
+  install() {return document.cookie = this, this}
+
+  reset(val) {
+    if (l.isNil(val)) return this
+    if (l.isStruct(val)) return this.resetFromStruct(val)
+    throw l.errInst(val, this)
+  }
+
+  resetFromStruct(val) {
+    l.reqStruct(val)
+    this.setName(val.name)
+    this.setValue(val.value)
+    this.setPath(val.path)
+    this.setDomain(val.domain)
+    this.setExpires(val.expires)
+    this.setMaxAge(val.maxAge)
+    this.setSecure(val.secure)
+    this.setHttpOnly(val.httpOnly)
+    this.setSameSite(val.sameSite)
+    return this
+  }
+
+  clone() {return new this.constructor(this)}
+
+  nameValue() {
+    const {name, value} = this
+    if (l.isNil(name) || l.isNil(value)) return ``
+    return l.reqStr(name) + `=` + l.reqStr(value)
+  }
+
+  join(buf, key, val) {
+    l.reqStr(buf)
+    if (l.isNil(val)) return buf
+    return (buf && buf + `; `) + l.reqStr(key) + `=` + l.render(val)
+  }
+
+  toString() {
+    let buf = this.nameValue()
+    if (!buf) return ``
+
+    buf = this.join(buf, `path`, this.path)
+    buf = this.join(buf, `domain`, this.domain)
+    buf = this.join(buf, `expires`, this.expires && this.expires.toUTCString())
+    buf = this.join(buf, `max-age`, this.maxAge)
+    buf = this.join(buf, `secure`, this.secure)
+    buf = this.join(buf, `http-only`, this.httpOnly)
+    buf = this.join(buf, `same-site`, this.sameSite)
+    return buf
+  }
+
+  static fromPair(src) {
+    const pair = cookieSplitPair(src)
+    return new this().setName(pair[0]).setValue(pair[1])
+  }
+
+  static fromPairs(src) {
+    return cookieSplitPairs(src).map(this.fromPair, this)
+  }
+
+  static toMap(src) {
+    const buf = new Map()
+    for (const val of this.fromPairs(src)) buf.set(val.name, val)
+    return buf
+  }
+
+  static del(name) {
+    if (!optCookieName(name)) return
+
+    new this()
+      .setName(name).expired().install()
+      .setPath(`/`).install()
+  }
+}
+
+/* Internal */
+
 // Semi-placeholder. May tighten up.
 function isHeadKey(val) {return l.isStr(val) && val !== ``}
 function reqHeadKey(val) {return isHeadKey(val) ? val : l.convFun(val, isHeadKey)}
@@ -314,9 +531,21 @@ function reqMethod(val) {return isMethod(val) ? val : l.convFun(val, isMethod)}
 function isPattern(val) {return l.isStr(val) || l.isReg(val)}
 function reqPattern(val) {return isPattern(val) ? val : l.convFun(val, isPattern)}
 
-function reqBody(val) {return l.reqOneOf(val, bodyFuns)}
-export const bodyFuns = [isUint8Array, isReadableStream, isFormData, l.isScalar]
+export function reqBody(val) {return l.reqOneOf(val, bodyFuns)}
+export function optBody(val) {return l.optOneOf(val, bodyFuns)}
+export const bodyFuns = [l.isScalar, isUint8Array, isReadableStream, isFormData]
 
 function isUint8Array(val) {return l.isInst(val, Uint8Array)}
 function isReadableStream(val) {return l.isInst(val, ReadableStream)}
 function isFormData(val) {return typeof FormData === `function` && l.isInst(val, FormData)}
+
+const sigKey = Symbol.for(`sig`)
+
+function isCookieName(val) {return l.isStr(val) && !/[;=]/.test(val)}
+function optCookieName(val) {return l.opt(val, isCookieName)}
+
+function isCookieValue(val) {return l.isStr(val) && !/[;]/.test(val)}
+function optCookieValue(val) {return l.opt(val, isCookieValue)}
+
+function isCookieAttr(val) {return l.isStr(val) && !/[\s;]/.test(val)}
+function optCookieAttr(val) {return l.opt(val, isCookieAttr)}

@@ -1,15 +1,10 @@
 import * as l from './lang.mjs'
+import * as u from './url.mjs'
 
 export const HAS_DOM = (
-  typeof window === `object` && l.isObj(window) &&
-  typeof document === `object` && l.isObj(document)
+  typeof window === `object` && !!window &&
+  typeof document === `object` && !!document
 )
-
-export const KEY_ESCAPE = `Escape`
-
-export const CAPTURE = /* @__PURE__ */ Object.freeze({capture: true})
-
-export const TARGET_BLANK = /* @__PURE__ */ Object.freeze({target: `_blank`, rel: `noopener noreferrer`})
 
 export function isEvent(val) {return typeof Event === `function` && l.isInst(val, Event)}
 export function reqEvent(val) {return l.req(val, isEvent)}
@@ -58,10 +53,9 @@ export class DocHeadMut extends WeakSet {
     }
   }
 }
-
 DocHeadMut.main = /* @__PURE__ */ new DocHeadMut()
 
-export class DocBodyMut {
+export class DocBodyMut extends l.Emp {
   get foc() {return DocFoc.main}
   get doc() {return document}
 
@@ -72,7 +66,6 @@ export class DocBodyMut {
     this.foc.pop()
   }
 }
-
 DocBodyMut.main = /* @__PURE__ */ new DocBodyMut()
 
 /*
@@ -163,3 +156,70 @@ export function selectText(val) {
     val.setSelectionRange(0, l.laxStr(val.value).length)
   }
 }
+
+export function loc(val) {return new Loc(val)}
+export function toLoc(val) {return l.toInst(val, Loc)}
+
+/*
+Short for "location". Variant of `Url` with awareness of DOM APIs. Uses both
+`window.location` and `window.history`, providing various shortcuts for
+manipulating location and history.
+
+Additional properties are symbolic for consistency with `Url`.
+Getters and setters also perform type checking.
+*/
+export class Loc extends u.Url {
+  constructor(val) {
+    super()
+    this[stateKey] = undefined
+    this[titleKey] = ``
+    this.reset(val)
+  }
+
+  get state() {return this[stateKey]}
+  set state(val) {this[stateKey] = val}
+
+  get title() {return this[titleKey]}
+  set title(val) {this[titleKey] = l.laxStr(val)}
+
+  withState(val) {return this.clone().setState(val)}
+  setState(val) {return this.state = val, this}
+
+  withTitle(val) {return this.clone().setTitle(val)}
+  setTitle(val) {return this.title = val, this}
+
+  push() {this.history.pushState(this.state, this.title, this)}
+  replace() {this.history.replaceState(this.state, this.title, this)}
+  reload() {this.location.href = this}
+
+  // Allows `new Loc(loc)` and `loc.clone()`.
+  resetFromUrl(val) {
+    super.resetFromUrl(val)
+    this.state = val.state
+    this.title = val.title
+    return this
+  }
+
+  eq(val) {
+    return (
+      !!l.optInst(val, Loc) &&
+      l.is(this.state, val.state) &&
+      l.is(this.title, val.title) &&
+      l.is(this.href, val.href)
+    )
+  }
+
+  get history() {return this.constructor.history}
+  get location() {return this.constructor.location}
+
+  static get history() {return window.history}
+  static get location() {return window.location}
+
+  // Note: at the time of writing, browsers don't store the title anywhere.
+  static current() {
+    return new this(this.location).setState(this.history.state)
+  }
+}
+
+export const stateKey = Symbol.for(`state`)
+export const titleKey = Symbol.for(`title`)

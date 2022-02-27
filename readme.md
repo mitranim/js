@@ -43,17 +43,17 @@ Alternatives that suck:
 
 ## Usage
 
-Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import everything at once:
+Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import all core modules at once:
 
 ```js
-import * as a from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/all.mjs'
+import * as a from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.2/all.mjs'
 ```
 
 Otherwise, import specific modules you need. See the list below. Example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/lang.mjs'
-import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/str.mjs'
+import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.2/lang.mjs'
+import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.2/str.mjs'
 ```
 
 ## Features
@@ -66,12 +66,17 @@ import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/str.mjs'
   * [`url`](docs/url_readme.md): better URL implementation.
   * [`time`](docs/time_readme.md): tools for datetimes and intervals.
   * [`http`](docs/http_readme.md): shortcuts for the native fetch/Request/Response APIs.
+  * [`path`](docs/path_readme.md): various functions for working with FS paths.
   * [`dom`](docs/dom_readme.md): shortcuts for working with the DOM.
   * [`dom_reg`](docs/dom_reg_readme.md): shortcuts for registering custom DOM elements.
-  * [`ren_dom`](docs/ren_dom_readme.md): simple system for rendering DOM nodes in the browser.
+  * [`ren_dom`](docs/ren_dom_readme.md): simple system for rendering DOM nodes in the browser. React-inspired syntax, JSX-compatible, better semantics and performance.
+  * [`ren_str`](docs/ren_str_readme.md): simple system for rendering XML/HTML on the server. React-inspired syntax, JSX-compatible, better semantics and performance.
   * [`obs`](docs/obs_readme.md): observables via proxies.
+  * [`obs_dom`](docs/obs_dom_readme.md): automatic reactivity for custom DOM elements.
   * [`cli`](docs/cli_readme.md): essential tools for CLI apps.
   * [`test`](docs/test_readme.md): tools for testing and benchmarking.
+
+Some other extremely useful features are undocumented for now. Docs are in progress.
 
 ## Perf
 

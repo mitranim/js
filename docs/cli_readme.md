@@ -23,7 +23,7 @@
 CLI args:
 
 ```js
-import * as cl from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/cli.mjs'
+import * as cl from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.2/cli.mjs'
 
 const cli = cl.Flag.os()
 
@@ -34,7 +34,7 @@ console.log(...cli.args)
 Console clearing:
 
 ```js
-import * as cl from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/cli.mjs'
+import * as cl from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.2/cli.mjs'
 
 cl.emptty()
 ```
@@ -42,7 +42,7 @@ cl.emptty()
 Clearing the console only once, before running your code:
 
 ```js
-import 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.1/cli_emptty.mjs'
+import 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.2/cli_emptty.mjs'
 ```
 
 ## API
@@ -74,11 +74,11 @@ The following APIs are exported but undocumented. Check [cli.mjs](../cli.mjs).
   * [`function arg`](../cli.mjs#L10)
   * [`function consoleCols`](../cli.mjs#L12)
   * [`function emptty`](../cli.mjs#L32)
-  * [`const esc`](../cli.mjs#L140)
-  * [`const clearSoft`](../cli.mjs#L141)
-  * [`const clearScroll`](../cli.mjs#L142)
-  * [`const clearHard`](../cli.mjs#L143)
-  * [`const clearSoftArr`](../cli.mjs#L144)
-  * [`const clearScrollArr`](../cli.mjs#L145)
-  * [`const clearHardArr`](../cli.mjs#L146)
-  * [`function timed`](../cli.mjs#L148)
+  * [`const esc`](../cli.mjs#L138)
+  * [`const clearSoft`](../cli.mjs#L139)
+  * [`const clearScroll`](../cli.mjs#L140)
+  * [`const clearHard`](../cli.mjs#L141)
+  * [`function clearSoftArr`](../cli.mjs#L148)
+  * [`function clearScrollArr`](../cli.mjs#L149)
+  * [`function clearHardArr`](../cli.mjs#L150)
+  * [`function timed`](../cli.mjs#L152)

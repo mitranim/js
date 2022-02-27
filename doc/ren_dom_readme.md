@@ -2,7 +2,9 @@
 
 {{codeHead}} provides a very simple and performant system for rendering DOM nodes in the browser. The syntax is React-inspired and compatible with JSX, but the semantics are much simpler and more universally useful.
 
-This is a port and rework of https://github.com/mitranim/prax, more specifically its DOM component. The semantics are exactly the same. The top-level APIs are very similar. The underlying implementation is more flexible. Docs are in progress. Read the linked repo's docs to understand the motivation, use cases, and semantics.
+Partially isomorphic with {{featLink ren_str}}. Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
+
+This is a port and rework of https://github.com/mitranim/prax, more specifically its DOM component. The semantics are exactly the same. The top-level API is very similar. The underlying implementation is more flexible. Docs are in progress. Read the linked repo's docs to understand the motivation, use cases, and semantics.
 
 Short overview of features:
 
@@ -17,7 +19,14 @@ Short overview of features:
   * Render only once. Use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
     * Use {{featLink dom_reg}} for automatic element registration.
     * Use shortcuts such as `mut` for DOM updates.
+  * Partially isomorphic with {{featLink ren_str}}. Good for SSR/SPA hybrids.
   * Tiny with no external dependencies.
+
+Complemented by:
+
+  * {{featLink ren_str}} for SSR.
+  * {{featLink dom_reg}} for automatically registering custom elements.
+  * {{featLink obs_dom}} for making custom elements automatically react to {{featLink obs observables}}.
 
 ## TOC
 
@@ -31,7 +40,7 @@ Short overview of features:
 Creating new nodes:
 
 ```js
-import {E} from '{{url}}/ren_dom.mjs'
+import {E} from '{{featUrl}}'
 
 document.body.append(
   E(`div`, {class: `outer`},
@@ -48,16 +57,15 @@ The following elements have been appended:
 */
 ```
 
-Shorter syntax:
+Specialized syntax is available:
 
 ```js
-import {Ren} from '{{url}}/ren_dom.mjs'
-
-const t = Ren.main.tag
+import {A, ren} from '{{featUrl}}'
+const {e} = ren
 
 document.body.append(
-  t.div({class: `outer`},
-    t.p({class: `inner`}, `hello world!`)
+  e.div(A.cls(`outer`),
+    e.p(A.cls(`inner`), `hello world!`)
   )
 )
 ```
@@ -65,13 +73,14 @@ document.body.append(
 Imperative updates:
 
 ```js
+import {A} from '{{featUrl}}'
+import * as r from '{{featUrl}}'
 import * as dr from '{{url}}/dom_reg.mjs'
-import * as x from '{{url}}/ren_dom.mjs'
 
 class SomeLink extends dr.HTMLAnchorElement {
   constructor(href, text) {
     super()
-    x.mut(this, {class: `link`, href}, text)
+    r.mut(this, A.href(href).cls(`link`), text)
   }
 }
 

@@ -6,8 +6,6 @@ class ErrUnreachable extends Error {get name() {return this.constructor.name}}
 
 /* Util */
 
-function nop() {}
-
 function advanceTime() {
   const start = t.now()
   let cycles = -1
@@ -16,8 +14,8 @@ function advanceTime() {
 }
 
 // Tool for tracking call levels.
-class Track {
-  constructor() {this.lvl = 0}
+class Track extends l.Emp {
+  constructor() {super().lvl = 0}
   inc() {return this.lvl += 1, this}
   dec() {return this.lvl -= 1, this}
   req(exp) {return t.is(this.lvl, exp), this}
@@ -27,19 +25,18 @@ const track = new Track()
 
 /* Test */
 
-track.inc().req(1)
 t.test(function test_test() {
-  track.inc().req(2)
+  track.inc().req(1)
   t.test(function test_reject_invalid() {
     t.throws(() => t.test(), TypeError, `expected variant of isFun, got undefined`)
     t.throws(() => t.test(`str`), TypeError, `expected variant of isFun, got "str"`)
-    t.throws(() => t.test(nop), SyntaxError, `names of test functions must begin with "test"`)
+    t.throws(() => t.test(l.nop), SyntaxError, `names of test functions must begin with "test"`)
 
-    track.dec().req(1)
+    track.dec().req(0)
   })
-  track.req(1)
+  track.req(0)
 
-  track.inc().req(2)
+  track.inc().req(1)
   t.test(function test_test_run() {
     let run
     t.test(function test() {run = arguments[0]})
@@ -47,35 +44,32 @@ t.test(function test_test() {
     l.reqInst(run, t.Run)
     run.reqDone()
 
-    track.dec().req(1)
+    track.dec().req(0)
   })
-  track.req(1)
+  track.req(0)
 
-  track.inc().req(2)
+  track.inc().req(1)
   t.test(function test_filtering() {
     t.conf.testFilterFrom(`---`)
     t.test(function test_failing() {throw new ErrUnreachable(`unreachable`)})
     t.conf.testFilterFrom()
 
     t.conf.testFilterFrom(`test_test/test_filtering`)
-    track.inc().req(3)
-    t.test(function test_normal() {track.dec().req(2)})
-    track.req(2)
+    track.inc().req(2)
+    t.test(function test_normal() {track.dec().req(1)})
+    track.req(1)
     t.conf.testFilterFrom()
 
     t.conf.testFilterFrom(`test_test/test_filtering/test_normal`)
-    track.inc().req(3)
-    t.test(function test_normal() {track.dec().req(2)})
-    track.req(2)
+    track.inc().req(2)
+    t.test(function test_normal() {track.dec().req(1)})
+    track.req(1)
     t.conf.testFilterFrom()
 
-    track.dec().req(1)
+    track.dec().req(0)
   })
-  track.req(1)
-
-  track.dec().req(0)
+  track.req(0)
 })
-track.req(0)
 
 // Needs a much more comprehensive test.
 t.test(function test_equal() {
@@ -137,8 +131,9 @@ t.test(function test_equal() {
   t.ok(t.equal(new Request(`one://two.three`, {method: `POST`}), new Request(`one://two.three`, {method: `POST`})))
   t.ok(t.equal(new Request(`one://two.three`, {method: `POST`, body: `one`}), new Request(`one://two.three`, {method: `POST`, body: `one`})))
 
-  // Currently not implemented because reading streams requires awaiting.
-  // Requires us to support async tests.
+  // Wasn't implemented because reading streams requires awaiting,
+  // and `test.mjs` didn't support async. Now it does, so let's fix this.
+  //
   // t.no(t.equal(new Request(`one://two.three`, {method: `POST`, body: `one`}), new Request(`one://two.three`, {method: `POST`, body: `two`})))
 })
 
@@ -214,7 +209,7 @@ t.test(function test_Run() {
 t.test(function test_TimeRunner() {
   // For faster testing.
   const defaultSize = t.TimeRunner.defaultWarmupSize
-  t.TimeRunner.defaultWarmupSize = 8
+  t.TimeRunner.defaultWarmupSize = 1
 
   try {
     t.throws(() => new t.TimeRunner(`str`), TypeError, `expected variant of isFinPos, got "str"`)

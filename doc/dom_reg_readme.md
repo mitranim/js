@@ -24,7 +24,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from '{{url}}/dom_reg.mjs'
+import * as dr from '{{featUrl}}'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {

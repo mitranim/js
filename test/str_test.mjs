@@ -15,7 +15,6 @@ const ASCII = (
   '`'
 )
 
-// const LONG = `one two three four five six seven eight nine ten`
 const NARROW = ASCII + `…µ←↓↑→`
 const UNI = `🙂😁😛`
 const BLANK = ` \t\v\r\n`
@@ -655,13 +654,8 @@ t.test(function test_StrMap() {
 
   // Mostly delegates to `.mut` which is tested below.
   t.test(function test_reset() {
-    testStrMapReset(function make(val) {
-      return s.strMap().reset(val)
-    })
-
-    testStrMapReset(function make(val) {
-      return s.strMap({seven: `eight`}).reset(val)
-    })
+    testStrMapReset(function make(val) {return s.strMap().reset(val)})
+    testStrMapReset(function make(val) {return s.strMap({seven: `eight`}).reset(val)})
 
     testMap(s.strMap({one: `two`}).reset(), [])
     testMap(s.strMap({one: `two`}).reset({}), [])
@@ -670,38 +664,45 @@ t.test(function test_StrMap() {
   })
 
   t.test(function test_mut() {
-    testStrMapReset(function make(val) {
-      return s.strMap().mut(val)
+    testStrMapReset(function make(val) {return s.strMap().mut(val)})
+
+    t.test(function test_empty() {
+      function test(inp) {
+        testMap(s.strMap({one: `two`}).mut(inp), [[`one`, [`two`]]])
+      }
+
+      test()
+      test({})
+      test([])
+      test(s.strMap())
     })
 
-    testMap(
-      s.strMap({one: `two`, three: [`four`, `five`]})
-        .mut([[`one`, `six`], [`three`, [`seven`]], [`eight`, [`nine`]]]),
-      [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`]]],
-    )
+    t.test(function test_full() {
+      /*
+      TODO consider changing the behavior from `.appendAny` to `.setAny`. For
+      any key present in the input, the entire pre-existing entry should be
+      removed. However, we must preserve ALL values present in the input, which
+      is tricky in cases where the same key occurs multiple times with
+      different values, which we support for compatibility with URL `Query`.
+      This is trivial to solve by "remembering" new keys in a temporary set;
+      the tricky part is doing this in a cleaner and more efficient way.
 
-    testMap(
-      s.strMap({one: `two`, three: [`four`, `five`]})
-        .mut({one: `six`, three: [`seven`], eight: `nine`}),
-      [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`]]],
-    )
+      Once implemented, the output should be this:
 
-    testMap(
-      s.strMap({one: `two`, three: [`four`, `five`]})
-        .mut(new Map().set(`one`, `six`).set(`three`, [`seven`]).set(`eight`, `nine`)),
-      [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`]]],
-    )
+        [[`one`, [`six`]], [`three`, [`seven`]], [`eight`, [`nine`, `ten`]]]
+      */
+      function test(inp) {
+        testMap(
+          s.strMap({one: `two`, three: [`four`, `five`]}).mut(inp),
+          [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`, `ten`]]],
+        )
+      }
 
-    testMap(
-      s.strMap({one: `two`, three: [`four`, `five`]})
-        .mut(s.strMap({one: `six`, three: [`seven`], eight: `nine`})),
-      [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`]]],
-    )
-
-    testMap(s.strMap({one: `two`}).mut(), [[`one`, [`two`]]])
-    testMap(s.strMap({one: `two`}).mut({}), [[`one`, [`two`]]])
-    testMap(s.strMap({one: `two`}).mut([]), [[`one`, [`two`]]])
-    testMap(s.strMap({one: `two`}).mut(s.strMap()), [[`one`, [`two`]]])
+      test([[`one`, `six`], [`three`, [`seven`]], [`eight`, `nine`], [`eight`, `ten`]])
+      test({one: `six`, three: [`seven`], eight: [`nine`, `ten`]})
+      test(new Map().set(`one`, `six`).set(`three`, [`seven`]).set(`eight`, [`nine`, `ten`]))
+      test(s.strMap({one: `six`, three: [`seven`], eight: [`nine`, `ten`]}))
+    })
   })
 
   t.test(function test_has() {
@@ -1049,7 +1050,7 @@ t.test(function test_Embed() {
     t.throws(() => new s.Embed(`one two`).render({one: `two`}), SyntaxError, `property "one" doesn't expect args ["two"]`)
     t.throws(() => new s.Embed(`one two three`).render({one: `two`}), SyntaxError, `property "one" doesn't expect args ["two","three"]`)
 
-    function toJson(...args) {return JSON.stringify(args)}
+    function toJson(...val) {return JSON.stringify(val)}
 
     t.is(new s.Embed(`one`).render({one: 10}), `10`)
     t.is(new s.Embed(`one`).render({get one() {return 10}}), `10`)
@@ -1061,31 +1062,31 @@ t.test(function test_Embed() {
 
 t.test(function test_Draft() {
   t.test(function test_parse() {
-    t.eq(s.draftParse(), new s.Draft())
+    t.eq(s.draftParse(), s.Draft.of())
 
     t.eq(
       s.draftParse(`one`),
-      new s.Draft(`one`),
+      s.Draft.of(`one`),
     )
 
     t.eq(
       s.draftParse(`one two three`),
-      new s.Draft(`one two three`),
+      s.Draft.of(`one two three`),
     )
 
     t.eq(
       s.draftParse(`{{one}}`),
-      new s.Draft(new s.Embed(`one`)),
+      s.Draft.of(new s.Embed(`one`)),
     )
 
     t.eq(
       s.draftParse(`one {{two}} three`),
-      new s.Draft(`one `, new s.Embed(`two`), ` three`),
+      s.Draft.of(`one `, new s.Embed(`two`), ` three`),
     )
 
     t.eq(
       s.draftParse(`one {{two}} three {{four five}} six`),
-      new s.Draft(
+      s.Draft.of(
         `one `,
         new s.Embed(`two`),
         ` three `,

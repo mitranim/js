@@ -74,7 +74,7 @@ export function isBigInt(val) {return typeof val === `bigint`}
 export function reqBigInt(val) {return isBigInt(val) ? val : convFun(val, isBigInt)}
 export function optBigInt(val) {return isNil(val) ? val : reqBigInt(val)}
 export function onlyBigInt(val) {return isBigInt(val) ? val : undefined}
-export function laxBigInt(val) {return isNil(val) ? 0n : reqBigInt(val)}
+export function laxBigInt(val) {return isNil(val) ? BigInt(0) : reqBigInt(val)}
 
 // TODO also provide "is non-empty string". Needs a short name.
 export function isStr(val) {return typeof val === `string`}
@@ -92,6 +92,11 @@ export function isKey(val) {return isPrim(val) && !isJunk(val)}
 export function reqKey(val) {return isKey(val) ? val : convFun(val, isKey)}
 export function optKey(val) {return isNil(val) ? val : reqKey(val)}
 export function onlyKey(val) {return isKey(val) ? val : undefined}
+
+export function isPk(val) {return !!val && (isStr(val) || isIntPos(val))}
+export function reqPk(val) {return isPk(val) ? val : convFun(val, isPk)}
+export function optPk(val) {return isNil(val) ? val : reqPk(val)}
+export function onlyPk(val) {return isPk(val) ? val : undefined}
 
 export function isJunk(val) {return isNil(val) || isNaN(val) || isInf(val)}
 export function reqJunk(val) {return isJunk(val) ? val : convFun(val, isJunk)}
@@ -144,7 +149,7 @@ export function optDict(val) {return isNil(val) ? val : reqDict(val)}
 export function onlyDict(val) {return isDict(val) ? val : undefined}
 export function laxDict(val) {return isNil(val) ? npo() : reqDict(val)}
 
-export function isStruct(val) {return isObj(val) && !isIter(val) && !isIterAsync(val)}
+export function isStruct(val) {return isObj(val) && !(Symbol.iterator in val)}
 export function reqStruct(val) {return isStruct(val) ? val : convFun(val, isStruct)}
 export function optStruct(val) {return isNil(val) ? val : reqStruct(val)}
 export function onlyStruct(val) {return isStruct(val) ? val : undefined}
@@ -235,7 +240,7 @@ export function optList(val) {return isNil(val) ? val : reqList(val)}
 export function onlyList(val) {return isList(val) ? val : undefined}
 export function laxList(val) {return isNil(val) ? [] : reqList(val)}
 
-export function isSeq(val) {return isList(val) || isSet(val) || isIterator(val)}
+export function isSeq(val) {return isList(val) || isSet(val) || isArrble(val) || isIterator(val)}
 export function reqSeq(val) {return isSeq(val) ? val : convFun(val, isSeq)}
 export function optSeq(val) {return isNil(val) ? val : reqSeq(val)}
 export function onlySeq(val) {return isSeq(val) ? val : undefined}
@@ -245,17 +250,27 @@ export function reqVac(val) {return isVac(val) ? val : convFun(val, isVac)}
 export function optVac(val) {return isNil(val) ? val : reqVac(val)}
 export function onlyVac(val) {return isVac(val) ? val : undefined}
 
-// TODO consider renaming to `isScalarOpt` and adding a non-nil version.
 export function isScalar(val) {
   if (isObj(val)) {
     const fun = get(val, `toString`)
     return isFun(fun) && fun !== Object.prototype.toString && fun !== Array.prototype.toString
   }
-  return !isFun(val)
+  return !(isNil(val) || isSym(val) || isFun(val))
 }
 export function reqScalar(val) {return isScalar(val) ? val : convFun(val, isScalar)}
 export function optScalar(val) {return isNil(val) ? val : reqScalar(val)}
 export function onlyScalar(val) {return isScalar(val) ? val : undefined}
+
+export function isScalarOpt(val) {return isNil(val) || isScalar(val)}
+export function reqScalarOpt(val) {return isScalarOpt(val) ? val : convFun(val, isScalarOpt)}
+export function optScalarOpt(val) {return isNil(val) ? val : reqScalarOpt(val)}
+export function onlyScalarOpt(val) {return isScalarOpt(val) ? val : undefined}
+
+// Custom interface for iterables that wrap arrays.
+export function isArrble(val) {return isIter(val) && hasMeth(val, `toArray`)}
+export function reqArrble(val) {return isArrble(val) ? val : convFun(val, isArrble)}
+export function optArrble(val) {return isNil(val) ? val : reqArrble(val)}
+export function onlyArrble(val) {return isArrble(val) ? val : undefined}
 
 export function isArrOf(val, fun) {
   reqFun(fun)
@@ -322,7 +337,7 @@ export function toInstOpt(val, cls) {return isNil(val) ? val : toInst(val, cls)}
 export function render(val) {
   if (isStr(val)) return val
   if (isDate(val)) return renderDate(val)
-  if (isSome(val) && isScalar(val)) return val + ``
+  if (isScalar(val)) return String(val)
   throw errConv(val, `string`)
 }
 
@@ -330,9 +345,10 @@ export function renderLax(val) {return isNil(val) ? `` : render(val)}
 
 export function show(val) {
   if (isStr(val)) return JSON.stringify(val)
+  if (isSym(val)) return val.toString()
   if (isFun(val)) return showFun(val)
   if (isObj(val)) return showObj(val)
-  return val + ``
+  return String(val)
 }
 
 /* Misc */
@@ -346,7 +362,6 @@ export function val(src) {return function val() {return src}}
 export function panic(val) {throw val}
 export function True() {return true}
 export function False() {return false}
-export function npo() {return Object.create(null)}
 export function vac(val) {return isVac(val) ? undefined : val}
 
 export function bind(fun, ...args) {return reqFun(fun).bind(this, ...args)}
@@ -359,7 +374,25 @@ export function not(fun) {
 export function hasIn(val, key) {return isComp(val) && key in val}
 export function hasOwn(val, key) {return isComp(val) && Object.prototype.hasOwnProperty.call(val, key)}
 export function hasOwnEnum(val, key) {return isComp(val) && Object.prototype.propertyIsEnumerable.call(val, key)}
+export function hasInherited(val, key) {return hasIn(val, key) && !hasOwnEnum(val, key)}
 export function hasMeth(val, key) {return hasIn(val, key) && isFun(val[key])}
+
+/* Cls */
+
+export function setProto(tar, cls) {
+  if (Object.getPrototypeOf(tar) !== cls.prototype) {
+    Object.setPrototypeOf(tar, cls.prototype)
+  }
+}
+
+export function npo() {return Object.create(null)}
+
+function empty() {}
+empty.prototype = null
+
+export class Emp extends empty {
+  get [Symbol.toStringTag]() {return this.constructor.name}
+}
 
 /* Op */
 
@@ -414,16 +447,17 @@ export function convSynt(val, src, msg) {
 
 function showFun(val) {return `[function ${val.name || val}]`}
 function showFuns(funs) {return funs.map(showFunName).join(`, `)}
-function showFunName(fun) {return fun.name || showFun(fun)}
+export function showFunName(fun) {return fun.name || showFun(fun)}
 
 function showObj(val) {
-  if (isInst(val, Error)) return val + ``
+  if (isInst(val, Error)) return String(val)
+  if (isArr(val)) return JSON.stringify(val)
 
   const con = getCon(val)
-  if (!con || con === Object || con === Array) return JSON.stringify(val)
+  if (!con || con === Object) return JSON.stringify(val)
 
   const name = getName(con)
-  return name ? `[object ${name}]` : val + ``
+  return name ? `[object ${name}]` : String(val)
 }
 
 /*

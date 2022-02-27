@@ -22,12 +22,12 @@
   * Query keys must be strings.
   * Invalid inputs for various URL components cause exceptions instead of being silently converted to garbage, truncated, or ignored.
 * Subclassable.
-  * Can subclass `Search` and override it for your `Url` variant.
+  * Can subclass `Query` and override it for your `Url` variant.
   * Can override any getter, setter, or method.
   * Compatible with proxies and `Object.create`.
   * No "illegal invocation" exceptions.
 * No special cases for "known" URL schemes.
-* `Search` is `Map<string, string[]>` as it should be.
+* `Query` is `Map<string, string[]>` as it should be.
 * Automatically stringable as it should be.
 * Decent test coverage.
 * Decent benchmark coverage.
@@ -88,7 +88,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from '{{url}}/url.mjs'
+import * as u from '{{featUrl}}'
 ```
 
 Example parsing:
@@ -107,28 +107,28 @@ url.query.toDictAll() // {key: ['val']}
 Example segmented path:
 
 ```js
-u.url(`https://example.com`).setPath(`/api/msgs`, 123, `get`) + ``
+u.url(`https://example.com`).setPath(`/api/msgs`, 123, `get`).toString()
 // 'https://example.com/api/msgs/123/get'
 ```
 
 Example without scheme/protocol:
 
 ```js
-u.url(`/api`).addPath(`msgs`, 123, `get`) + ``
+u.url(`/api`).addPath(`msgs`, 123, `get`).toString()
 // '/api/msgs/123/get'
 ```
 
 Example query dict support:
 
 ```js
-u.url(`/profile`).mutQuery({action: `edit`}) + ``
+u.url(`/profile`).mutQuery({action: `edit`}).toString()
 // `'/profile?action=edit'
 ```
 
 ## Limitations
 
 * `Url` lacks support for optional base URL. Constructor takes only 1 value.
-* `Search` iterates as `Map<string, string[]>`, not as `URLSearchParams`.
+* `Query` iterates as `Map<string, string[]>`, not as `URLSearchParams`.
 
 ## API
 
