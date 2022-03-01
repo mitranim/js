@@ -6,10 +6,13 @@ maintains client connections, and broadcasts events.
 Use `LiveDirs` to both serve files and filter FS events. This avoids duplication
 between your file-serving and watch-filtering configs.
 
-Simplified example:
+Simplified example of sending notifications to clients:
 
-  const dirs = LiveDirs.of(new DirRel(`.`))
-  const bro = new LiveBroad()
+  import * as ld from '{{url}}/live_deno.mjs'
+  import * as hd from '{{url}}/http_deno.mjs'
+
+  const dirs = ld.LiveDirs.of(new hd.DirRel(`.`))
+  const bro = new ld.LiveBroad()
 
   for await (const event of dirs.watchLive()) {
     await bro.writeEventJson(event)
@@ -46,9 +49,7 @@ export class LiveBroad extends hs.Broad {
   }
 
   eventsRes(sig) {
-    const stream = this.make(sig)
-    stream.write(new TextEncoder().encode(`data: {"type":"ping"}\n\n`))
-    return hs.resBui().inp(stream).typeEventStream().corsAll().res()
+    return hs.resBui().inp(this.make(sig)).typeEventStream().corsAll().res()
   }
 
   onWriteErr(err) {

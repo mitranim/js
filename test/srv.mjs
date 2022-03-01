@@ -1,7 +1,6 @@
 /*
 Tiny server for running tests in the browser.
-Missing feature: automatic client reloading.
-Should be ported from https://github.com/mitranim/afr.
+TODO add live reloading, using `live_deno.mjs`
 */
 
 /* global Deno */
