@@ -61,7 +61,7 @@ class Pkg extends o.MemGet {
 
   link(feat, ident, text) {return this.feat(feat).identDocLinkFull(ident, text)}
 
-  featLink(name, text) {return this.feat(name).featLink(text)}
+  featLink(name, text) {return this.feat(name).selfLink(text)}
 
   feat(name) {
     return (
@@ -109,7 +109,7 @@ class Feat extends o.MemGet {
   get identsWithDoc() {return this.$identsWithDoc()}
   get identsWithoutDoc() {return this.$identsWithoutDoc()}
   get docLink() {return mdLink(coded(this.name), this.readmeOutPath)}
-  get docRelPath() {return u.urlJoin(`..`, this.readmeName)}
+  get docRelPath() {return this.readmeName}
   get docRelLink() {return mdLink(coded(this.name), this.docRelPath)}
   get headline() {return s.str(this.docLink, s.optPre(this.desc, `: `))}
 
@@ -205,7 +205,9 @@ ${s.joinLines(i.map(idents, toUndocBullet))}
     return (await this.ident(name)).featIdentLink(text)
   }
 
-  featLink(text) {
+  featLink(name, text) {return this.pkg.featLink(name, text)}
+
+  selfLink(text) {
     return text ? mdLink(text, this.docRelPath) : this.docRelLink
   }
 }

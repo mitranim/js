@@ -215,7 +215,7 @@ Subclass of built-in [`AbortController`](https://developer.mozilla.org/en-US/doc
   * Subclassable without further breakage.
     * Has workarounds for Safari bugs.
   * Implements our "standard" interface `.deinit()`.
-    * Enables automatic cleanup when using our [proxies](../obs_readme.md) for deinitables and observables.
+    * Enables automatic cleanup when using our [proxies](obs_readme.md) for deinitables and observables.
 
 Optional chaining/linking:
 

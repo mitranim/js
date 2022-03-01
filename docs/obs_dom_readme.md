@@ -1,10 +1,10 @@
 ## Overview
 
-[obs_dom.mjs](../obs_dom.mjs) allows [custom DOM elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) to automatically subscribe to [obs](../obs_dom_readme.md) and automatically rerun updates on changes.
+[obs_dom.mjs](../obs_dom.mjs) allows [custom DOM elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) to automatically subscribe to [observables](obs_readme.md) and automatically rerun updates on changes.
 
 Updates are async-batched and run hierarchically, from ancestors to descendants. Scheduling is customizable.
 
-Optionally combine with [dom_reg](../obs_dom_readme.md) for automatic registration of element classes.
+Optionally combine with [`dom_reg`](dom_reg_readme.md) for automatic registration of element classes.
 
 ## TOC
 

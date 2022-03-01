@@ -2,7 +2,7 @@
 
 [ren_str.mjs](../ren_str.mjs) provides a very simple and performant system for rendering XML/HTML strings. Good for servers and static sites. The syntax is React-inspired and compatible with JSX, but the semantics are much simpler and performance much higher.
 
-Partially isomorphic with [ren_dom](../ren_str_readme.md). Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
+Partially isomorphic with [`ren_dom`](ren_dom_readme.md). Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
 
 Short overview of features:
 

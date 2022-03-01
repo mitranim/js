@@ -2,7 +2,7 @@
 
 [ren_dom.mjs](../ren_dom.mjs) provides a very simple and performant system for rendering DOM nodes in the browser. The syntax is React-inspired and compatible with JSX, but the semantics are much simpler and more universally useful.
 
-Partially isomorphic with [ren_str](../ren_dom_readme.md). Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
+Partially isomorphic with [`ren_str`](ren_str_readme.md). Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
 
 This is a port and rework of https://github.com/mitranim/prax, more specifically its DOM component. The semantics are exactly the same. The top-level API is very similar. The underlying implementation is more flexible. Docs are in progress. Read the linked repo's docs to understand the motivation, use cases, and semantics.
 
@@ -17,16 +17,16 @@ Short overview of features:
     * No need for JSX.
     * No need for a build system.
   * Render only once. Use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
-    * Use [dom_reg](../ren_dom_readme.md) for automatic element registration.
+    * Use [`dom_reg`](dom_reg_readme.md) for automatic element registration.
     * Use shortcuts such as `mut` for DOM updates.
-  * Partially isomorphic with [ren_str](../ren_dom_readme.md). Good for SSR/SPA hybrids.
+  * Partially isomorphic with [`ren_str`](ren_str_readme.md). Good for SSR/SPA hybrids.
   * Tiny with no external dependencies.
 
 Complemented by:
 
-  * [ren_str](../ren_dom_readme.md) for SSR.
-  * [dom_reg](../ren_dom_readme.md) for automatically registering custom elements.
-  * [obs_dom](../ren_dom_readme.md) for making custom elements automatically react to [obs](../ren_dom_readme.md).
+  * [`ren_str`](ren_str_readme.md) for SSR.
+  * [`dom_reg`](dom_reg_readme.md) for automatically registering custom elements.
+  * [`obs_dom`](obs_dom_readme.md) for making custom elements automatically react to [observables](obs_readme.md).
 
 ## TOC
 
