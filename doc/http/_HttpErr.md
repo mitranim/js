@@ -1,7 +1,7 @@
 Subclass of `Error` for HTTP responses. The error message includes the HTTP status code, if any.
 
 ```ts
-class Err extends Error {
+class HttpErr extends Error {
   message: string
   status: int
   res?: Response

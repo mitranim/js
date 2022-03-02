@@ -1,4 +1,7 @@
+import './internal_test_init.mjs'
+import * as iti from './internal_test_init.mjs'
 import * as t from '../test.mjs'
+import * as h from '../http.mjs'
 import * as hs from '../http_srv.mjs'
 
 await t.test(async function test_WritableReadableStream() {
@@ -8,7 +11,7 @@ await t.test(async function test_WritableReadableStream() {
     src.write(`hello world!`)
     src.close()
 
-    t.is(await readFull(src), `hello world!`)
+    t.is(await iti.readFull(src), `hello world!`)
   })
 
   await t.test(async function test_idempotent_deinit() {
@@ -18,15 +21,17 @@ await t.test(async function test_WritableReadableStream() {
     src.deinit()
     src.deinit()
 
-    t.is(await readFull(src), ``)
+    t.is(await iti.readFull(src), ``)
   })
 
   await t.test(async function test_error() {
     const src = new hs.WritableReadableStream()
-    src.error(TypeError(`something illegal`))
+    src.error(TypeError(`custom error text`))
 
-    await t.throws(async () => src.getReader().read(), TypeError, `something illegal`)
-    await t.throws(async () => src.write(``), TypeError, `cannot close or enqueue`)
+    await t.throws(async () => src.getReader().read(), TypeError, `custom error text`)
+
+    // Deno and Chrome generate very different messages, this is the delta.
+    await t.throws(async () => src.write(``), TypeError, `enqueue`)
 
     src.deinit()
   })
@@ -45,23 +50,13 @@ await t.test(async function test_WritableReadableStream() {
       src.write(`hello world!`)
       abc.abort()
 
-      await testAborted(async () => readFull(src))
+      await testAborted(async () => iti.readFull(src))
     })
   })
 })
 
 function testAborted(fun) {
-  return t.throws(fun, DOMException, `signal has been aborted`)
-}
-
-/*
-Not part of public API because it violates the purpose of streams
-and should not be encouraged.
-*/
-async function readFull(src) {
-  let out = ``
-  for await (const val of src) out += val
-  return out
+  return t.throws(fun, h.AbortError, `signal has been aborted`)
 }
 
 if (import.meta.main) console.log(`[test] ok!`)

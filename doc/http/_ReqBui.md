@@ -9,7 +9,7 @@ class ReqBui extends RequestInit {
 
   /*
   Returns the resulting `Res` if the response is OK. If the response is
-  received, but HTTP status code is non-OK, throws a descriptive `Err`.
+  received, but HTTP status code is non-OK, throws a descriptive `HttpErr`.
 
   Shortcut for `(await this.fetch()).okRes()`.
   */

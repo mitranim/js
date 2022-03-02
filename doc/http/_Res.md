@@ -12,7 +12,7 @@ class Res extends Response {
 
   /*
   If `res.ok`, returns the response as-is. Otherwise throws an instance of
-  `Err` with the status code and response text in its error message.
+  `HttpErr` with the status code and response text in its error message.
   */
   okRes(): Promise<Res>
 
@@ -29,6 +29,6 @@ class Res extends Response {
   okJson(): Promise<any>
 
   // Class used for response errors. Can override in subclass.
-  get Err(): {new(): Err}
+  get Err(): {new(): HttpErr}
 }
 ```

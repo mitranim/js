@@ -7,16 +7,16 @@ Reference: https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 JS doesn't support multiline regexes. To read and edit this, manually reformat
 into multiline, then combine back into one line.
 */
-export const RE_URL = /^(?:(?<scheme>[A-Za-z][\w+.-]*):(?:(?<slash>[/][/])(?:(?<username>[^\s/?#@:]*)(?::(?<password>[^\s/?#@]*))?@)?(?<hostname>[^\s/?#:]*)(?::(?<port>\d*))?)?)?(?<pathname>[^\s?#]*)(?:[?](?<query>[^\s#]*))?(?:[#](?<hash>[^\s]*))?$/
+export const RE_URL = /^(?:(?<scheme>[A-Za-z][\w+.-]*):(?:(?<slash>[/][/])(?:(?<username>[^\s/?#@:]*)(?::(?<password>[^\s/?#@]*))?@)?(?<hostname>(?:\[[:\p{Hex_Digit}]*\]|[^\s/?#:]*))(?::(?<port>\d*))?)?)?(?<pathname>[^\s?#]*)(?:[?](?<query>[^\s#]*))?(?:[#](?<hash>[^\s]*))?$/u
 export const RE_SCHEME = /^[A-Za-z][\w+.-]*$/
 export const RE_SLASH = /^[/]*$/
 export const RE_PROTOCOL = /^(?:(?<scheme>[A-Za-z][\w+.-]*):(?<slash>[/][/])?)?$/
 export const RE_USERNAME = /^[^\s/?#@:]*$/
 export const RE_PASSWORD = /^[^\s/?#@]*$/
-export const RE_HOSTNAME = /^[^\s/?#:]*$/
+export const RE_HOSTNAME = /^(?:\[[:\p{Hex_Digit}]*\]|[^\s/?#:]*)$/u
 export const RE_PORT = /^\d*$/
-export const RE_HOST = /^(?<hostname>[^\s/?#:]*)(?::(?<port>\d*))?$/
-export const RE_ORIGIN = /^(?:(?<scheme>[A-Za-z][\w+.-]*):(?:(?<slash>[/][/])(?:(?<username>[^\s/?#@:]*)(?::(?<password>[^\s/?#@]*))?@)?(?<hostname>[^\s/?#:]*)(?::(?<port>\d*))?)?)?$/
+export const RE_HOST = /^(?<hostname>(?:\[[:\p{Hex_Digit}]*\]|[^\s/?#:]*))(?::(?<port>\d*))?$/u
+export const RE_ORIGIN = /^(?:(?<scheme>[A-Za-z][\w+.-]*):(?:(?<slash>[/][/])(?:(?<username>[^\s/?#@:]*)(?::(?<password>[^\s/?#@]*))?@)?(?<hostname>(?:\[[:\p{Hex_Digit}]*\]|[^\s/?#:]*))(?::(?<port>\d*))?)?)?$/u
 export const RE_PATHNAME = /^[^\s?#]*$/
 export const RE_HASH = /^\S*$/
 

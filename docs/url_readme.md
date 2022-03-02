@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.2/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.3/url.mjs'
 ```
 
 Example parsing:
@@ -308,7 +308,7 @@ new URLSearchParams(new u.Query(`one=two&one=three&four=five`))
 
 ### `class Url`
 
-Links: [source](../url.mjs#L77); [test/example](../test/url_test.mjs#L282).
+Links: [source](../url.mjs#L77); [test/example](../test/url_test.mjs#L286).
 
 Like [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) but much better. See [#Overview](#overview) for some differences.
 

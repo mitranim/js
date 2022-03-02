@@ -31,13 +31,16 @@ export class LiveBroad extends hs.Broad {
   get basePath() {return `/e8f2dcbe89994b14a1a1c59c2ea6eac7`}
   get clientPath() {return p.posix.join(this.basePath, `live_client.mjs`)}
   get eventsPath() {return p.posix.join(this.basePath, `events`)}
+  get sendPath() {return p.posix.join(this.basePath, `send`)}
 
   res(val) {
     const rou = h.toRou(val)
-    return (
-      rou.get(this.clientPath, this.clientRes.bind(this)) ||
-      rou.get(this.eventsPath, this.eventsRes.bind(this, rou.req.signal))
-    )
+
+    if (rou.get(this.clientPath)) return this.clientRes()
+    if (rou.get(this.eventsPath)) return this.eventsRes(rou.req)
+    if (rou.post(this.sendPath)) return this.sendRes(rou.req)
+
+    return undefined
   }
 
   clientRes() {
@@ -48,8 +51,13 @@ export class LiveBroad extends hs.Broad {
       .res()
   }
 
-  eventsRes(sig) {
-    return hs.resBui().inp(this.make(sig)).typeEventStream().corsAll().res()
+  eventsRes(req) {
+    return hs.resBui().inp(this.make(req.signal)).typeEventStream().corsAll().res()
+  }
+
+  async sendRes(req) {
+    await this.writeEvent(await req.text())
+    return new Response()
   }
 
   onWriteErr(err) {

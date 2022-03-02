@@ -325,7 +325,7 @@ Reference:
 
 Magic "20" seems to be the maximum allowed value. `Infinity` is not accepted.
 */
-const numFmt = new Intl.NumberFormat([`en-US`], {
+const numFmt = /* @__PURE__ */ new Intl.NumberFormat([`en-US`], {
   useGrouping: false,
   maximumFractionDigits: 20,
 })

@@ -27,6 +27,9 @@ bench:
 srv_w:
 	$(DENO) --watch test/srv.mjs
 
+srv:
+	$(DENO) test/srv.mjs
+
 lint_w:
 	watchexec -r -c -d=0 -e=mjs -n -- $(MAKE) lint
 

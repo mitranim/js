@@ -279,6 +279,10 @@ function testSearchMutWith(fun) {
   testMut(u.query(`one=two`), fun(`three=four&five=six`), `one=two&three=four&five=six`)
 }
 
+/*
+TODO more tests for IPv4.
+TODO more tests for IPv6.
+*/
 t.test(function test_Url() {
   t.test(function test_structure() {
     t.eq(
@@ -471,6 +475,12 @@ t.test(function test_Url() {
     test(`one://two`, `two`)
     test(`one://two.three`, `two.three`)
     test(`one://two.three.four`, `two.three.four`)
+
+    test(`http://1.2.3.4:5678`, `1.2.3.4`)
+    test(`http://12.23.34.45:5678`, `12.23.34.45`)
+    test(`http://[::1]:1234`, `[::1]`)
+    test(`http://[2001:0db8:0000:0000:0000:8a2e:0370:7334]:1234`, `[2001:0db8:0000:0000:0000:8a2e:0370:7334]`)
+    test(`http://[2001:db8::8a2e:370:7334]:1234`, `[2001:db8::8a2e:370:7334]`)
   })
 
   t.test(function test_setHostname() {

@@ -31,8 +31,10 @@ export const TYPE_MULTI = `multipart/form-data`
 
 export function jsonDecode(val) {return l.laxStr(val) ? JSON.parse(val) : null}
 export function jsonEncode(val) {return JSON.stringify(l.isNil(val) ? null : val)}
+
+// Usable on instances of `HttpErr` and instances of `Response`.
+export function hasStatus(val, code) {return l.reqNat(code) === getStatus(val)}
 export function getStatus(val) {return l.get(val, `status`)}
-export function hasStatus(err, sta) {return l.reqNat(sta) === getStatus(err)}
 
 /*
 The built-in `AbortError` is not a separate class but an instance of
@@ -42,7 +44,7 @@ export function isErrAbort(val) {
   return l.isInst(val, Error) && val.name === `AbortError`
 }
 
-export class Err extends Error {
+export class HttpErr extends Error {
   constructor(msg, status, res) {
     l.reqStr(msg)
     l.reqNat(status)
@@ -53,6 +55,19 @@ export class Err extends Error {
     this.res = res
   }
 
+  get name() {return this.constructor.name}
+}
+
+/*
+Do not confuse this with the built-in `AbortError` thrown by `AbortSignal` and
+various APIs using it. The built-in `AbortError` is an instance of
+`DOMException` instead of being its own class. At the time of writing, the only
+built-in way to throw it is via `AbortSignal.prototype.throwIfAborted`, with
+very little browser support. Our own `AbortError` is an emulation. Our
+`isErrAbort` detects both types.
+*/
+export class AbortError extends Error {
+  constructor(msg) {super(l.renderLax(msg) || `signal has been aborted`)}
   get name() {return this.constructor.name}
 }
 
@@ -229,7 +244,7 @@ export class Res extends Response {
   async okText() {return (await this.okRes()).text()}
   async okJson() {return (await this.okRes()).json()}
 
-  get Err() {return Err}
+  get Err() {return HttpErr}
 }
 
 export function toRou(val) {return l.toInst(val, Rou)}
@@ -245,91 +260,80 @@ export class Rou extends l.Emp {
   get pathname() {return l.reqStr(this.url.pathname)}
   get method() {return l.reqStr(this.req.method)}
 
-  run(fun) {return fun(this)}
+  /*
+  Example (depends on app semantics):
 
-  preflight(fun = resEmpty) {
-    l.reqFun(fun)
-    return this.someMeth(HEAD, OPTIONS) ? this.run(fun) : undefined
-  }
+    if (rou.preflight()) return h.resBui().corsAll().res()
+  */
+  preflight() {return this.someMeth(HEAD, OPTIONS)}
 
-  sub(pat, fun) {
-    l.reqFun(fun)
-    return this.matchPat(pat) ? this.either(fun, resNotFound) : undefined
-  }
+  match(met, pat) {return this.meth(met) && this.pat(pat)}
+  found(fun) {return this.either(fun, this.notFound)}
+  methods(fun) {return this.either(fun, this.notAllowed)}
 
-  methods(pat, fun) {
-    l.reqFun(fun)
-    return this.matchPat(pat) ? this.either(fun, resNotAllowed) : undefined
-  }
+  get(pat) {return this.match(GET, pat)}
+  head(pat) {return this.match(HEAD, pat)}
+  options(pat) {return this.match(OPTIONS, pat)}
+  post(pat) {return this.match(POST, pat)}
+  put(pat) {return this.match(PUT, pat)}
+  patch(pat) {return this.match(PATCH, pat)}
+  delete(pat) {return this.match(DELETE, pat)}
 
-  meth(met, pat, fun) {
-    reqPattern(pat)
-    l.reqFun(fun)
-    return this.matchMeth(met) ? this.pat(pat, fun) : undefined
-  }
+  meth(val) {return this.method === reqMethod(val)}
+  someMeth(...val) {return val.some(this.meth, this)}
 
-  get(pat, fun) {return this.meth(GET, pat, fun)}
-  head(pat, fun) {return this.meth(HEAD, pat, fun)}
-  options(pat, fun) {return this.meth(OPTIONS, pat, fun)}
-  post(pat, fun) {return this.meth(POST, pat, fun)}
-  put(pat, fun) {return this.meth(PUT, pat, fun)}
-  patch(pat, fun) {return this.meth(PATCH, pat, fun)}
-  delete(pat, fun) {return this.meth(DELETE, pat, fun)}
+  /*
+  Usage:
 
-  pat(pat, fun) {
-    l.reqFun(fun)
-    return this.matchPat(pat) ? this.run(fun) : undefined
-  }
+    if (rou.pre(`/api`)) return rou.found(routeApi)
+  */
+  pre(val) {return s.isSubpath(val, this.pathname)}
 
-  only(...val) {return this.someMeth(...val) ? undefined : this.run(resNotAllowed)}
-
-  onlyGet() {return this.only(GET)}
-  onlyHead() {return this.only(HEAD)}
-  onlyOptions() {return this.only(OPTIONS)}
-  onlyPost() {return this.only(POST)}
-  onlyPut() {return this.only(PUT)}
-  onlyPatch() {return this.only(PATCH)}
-  onlyDelete() {return this.only(DELETE)}
-
-  match(met, pat) {
-    this.groups = undefined
-    return this.matchMeth(met) && this.matchPat(pat)
-  }
-
-  matchMeth(val) {return this.method === reqMethod(val)}
-  someMeth(...val) {return val.some(this.matchMeth, this)}
-
-  matchPat(val) {
-    this.groups = undefined
-    if (l.isStr(val)) return this.matchPatStr(val)
-    if (l.isReg(val)) return this.matchPatReg(val)
+  pat(val) {
+    if (l.isNil(val)) return this.patNil()
+    if (l.isStr(val)) return this.patStr(val)
+    if (l.isReg(val)) return this.patReg(val)
     throw l.errConv(val, `pattern`)
   }
 
-  matchPatStr(val) {
+  patNil() {return true}
+
+  patStr(val) {
+    this.groups = undefined
     return l.reqStr(val) === this.pathname
   }
 
-  matchPatReg(val) {
+  patReg(val) {
     const mat = this.pathname.match(l.reqReg(val))
     this.groups = (mat && mat.groups) || undefined
     return !!mat
   }
 
+  reqGroups() {
+    const val = this.groups
+    if (val) return val
+    throw Error(`unexpected lack of named captures when routing ${this.pathname}`)
+  }
+
+  run(fun) {return l.reqFun(fun).call(this, this)}
+
   either(fun, def) {
-    l.reqFun(fun), l.reqFun(def)
     const val = this.run(fun)
     if (l.isPromise(val)) return this.eitherAsync(val, def)
     if (val) return val
     return this.run(def)
   }
 
-  async eitherAsync(val, fun) {return (await val) || this.run(fun)}
+  async eitherAsync(val, fun) {return (await val) || fun.call(this, this)}
 
-  reqGroups() {
-    const val = this.groups
-    if (val) return val
-    throw Error(`unexpected lack of named captures when routing ${this.pathname}`)
+  notFound() {
+    const {pathname: path, method: met} = l.reqInst(this, Rou)
+    return new Response(`not found: ${met} ${path}`, {status: 404})
+  }
+
+  notAllowed() {
+    const {pathname: path, method: met} = l.reqInst(this, Rou)
+    return new Response(`method not allowed: ${met} ${path}`, {status: 405})
   }
 
   // Needs a more specific name.
@@ -527,9 +531,6 @@ function reqHeadKey(val) {return isHeadKey(val) ? val : l.convFun(val, isHeadKey
 // Semi-placeholder. May tighten up.
 function isMethod(val) {return l.isStr(val)}
 function reqMethod(val) {return isMethod(val) ? val : l.convFun(val, isMethod)}
-
-function isPattern(val) {return l.isStr(val) || l.isReg(val)}
-function reqPattern(val) {return isPattern(val) ? val : l.convFun(val, isPattern)}
 
 export function reqBody(val) {return l.reqOneOf(val, bodyFuns)}
 export function optBody(val) {return l.optOneOf(val, bodyFuns)}

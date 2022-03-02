@@ -81,6 +81,7 @@ export class DirAbs extends DirBase {
   }
 }
 
+// Short for "directory relative".
 export class DirRel extends DirBase {
   constructor(base) {super().base = l.reqStr(base)}
 
@@ -102,6 +103,7 @@ export class DirRel extends DirBase {
 
 export function dirRel(base, fil) {return new DirRelFil(base, fil)}
 
+// Short for "directory relative with filter".
 export class DirRelFil extends DirRel {
   constructor(base, fil) {
     super(base).fil = l.toInstOpt(fil, this.Fil)
@@ -205,7 +207,7 @@ export class Srv extends l.Emp {
   listen(opt) {
     this.deinit()
     this.lis = Deno.listen(opt)
-    console.log(`listening on http://${opt.hostname || `localhost`}:${opt.port}`)
+    this.onListen(opt)
     return this.serve(this.lis)
   }
 
@@ -255,6 +257,10 @@ export class Srv extends l.Emp {
   onEventErr(err, event) {this.onErr(err, event)}
   onReqErr(err, req) {this.onErr(err, req)}
   errRes(err, req) {return errRes(err, req)}
+
+  onListen(opt) {
+    console.log(`[${this.constructor.name}] listening on http://${opt.hostname || `localhost`}:${opt.port}`)
+  }
 
   deinit() {
     try {this.lis?.close()}

@@ -1,4 +1,4 @@
-// Should be tested first.
+// Needs to be tested first.
 import './test_test.mjs'
 import './lang_test.mjs'
 

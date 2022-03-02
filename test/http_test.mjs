@@ -1,4 +1,5 @@
 import './internal_test_init.mjs'
+import * as iti from './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as s from '../str.mjs'
@@ -16,8 +17,6 @@ function mockReq() {return new Request(URL_LONG, {method: h.POST})}
 function mockRou() {return new h.Rou(mockReq())}
 function simpleReq(url, meth) {return new Request(url, {method: meth})}
 function testHead(bui, exp) {t.eq(bui.heads(), exp)}
-function unreachable() {throw Error(`unreachable`)}
-function args(...val) {return val}
 
 /*
 Needs better support from our testing library.
@@ -39,18 +38,6 @@ function testHttpBui(act, exp) {
 function testReqBui(act, exp) {
   t.inst(act, h.ReqBui)
   t.own(act, exp)
-}
-
-// Dup from `http_srv_test.mjs`, TODO dedup. Not intended for public API.
-async function readFull(src) {
-  let out = ``
-  for await (const val of src) out += toStr(val)
-  return out
-}
-
-function toStr(val) {
-  if (l.isInst(val, Uint8Array)) return new TextDecoder().decode(val)
-  return l.reqStr(val)
 }
 
 function testStr(src, exp) {t.is(src.toString(), exp)}
@@ -99,21 +86,21 @@ t.test(function test_jsonEncode() {
   t.is(h.jsonEncode(``), `""`)
 })
 
-t.test(function test_Err() {
-  t.throws(() => new h.Err(10, 20), TypeError, `expected variant of isStr, got 10`)
-  t.throws(() => new h.Err(``, `str`), TypeError, `expected variant of isNat, got "str"`)
-  t.throws(() => new h.Err(``, 0, `str`), TypeError, `expected instance of Response, got "str"`)
+t.test(function test_HttpErr() {
+  t.throws(() => new h.HttpErr(10, 20), TypeError, `expected variant of isStr, got 10`)
+  t.throws(() => new h.HttpErr(``, `str`), TypeError, `expected variant of isNat, got "str"`)
+  t.throws(() => new h.HttpErr(``, 0, `str`), TypeError, `expected instance of Response, got "str"`)
 
-  t.is(new h.Err(``, 0).name, `Err`)
-  t.is(new h.Err(`one`, 0).message, `one`)
-  t.is(new h.Err(`one`, 20).message, `20: one`)
+  t.is(new h.HttpErr(``, 0).name, `HttpErr`)
+  t.is(new h.HttpErr(`one`, 0).message, `one`)
+  t.is(new h.HttpErr(`one`, 20).message, `20: one`)
 })
 
 t.test(function test_getStatus() {
   t.is(h.getStatus(), undefined)
   t.is(h.getStatus(Error()), undefined)
-  t.is(h.getStatus(new h.Err(``, 0)), 0)
-  t.is(h.getStatus(new h.Err(``, 400)), 400)
+  t.is(h.getStatus(new h.HttpErr(``, 0)), 0)
+  t.is(h.getStatus(new h.HttpErr(``, 400)), 400)
   t.is(h.getStatus({}), undefined)
   t.is(h.getStatus({status: 0}), 0)
   t.is(h.getStatus({status: 400}), 400)
@@ -133,10 +120,10 @@ t.test(function test_hasStatus() {
     test(Error())
   })
 
-  t.no(h.hasStatus(new h.Err(``, 0), 400))
+  t.no(h.hasStatus(new h.HttpErr(``, 0), 400))
   t.no(h.hasStatus(new Response(``, {status: 200}), 400))
 
-  t.ok(h.hasStatus(new h.Err(``, 400), 400))
+  t.ok(h.hasStatus(new h.HttpErr(``, 400), 400))
   t.ok(h.hasStatus(new Response(``, {status: 400}), 400))
 })
 
@@ -610,14 +597,14 @@ await t.test(async function test_Res() {
 })
 
 async function testResSimple(res, src) {
-  t.is(await readFull(res.body), `hello world`)
+  t.is(await iti.readFull(res.body), `hello world`)
   t.is(res.res, src)
   t.is(res.status, 400)
   t.no(res.ok)
 }
 
 t.test(function test_Rou() {
-  t.test(function test_new() {
+  t.test(function test_constructor() {
     t.test(function test_invalid() {
       t.throws(() => new h.Rou(), TypeError, `expected instance of Request, got undefined`)
       t.throws(() => new h.Rou(10), TypeError, `expected instance of Request, got 10`)
@@ -639,24 +626,31 @@ t.test(function test_Rou() {
     }))
   })
 
-  t.test(function test_matchMeth() {
+  t.test(function test_meth() {
     const rou = mockRou()
 
-    t.throws(() => rou.matchMeth(), TypeError, `expected variant of isMethod, got undefined`)
-    t.throws(() => rou.matchMeth({}), TypeError, `expected variant of isMethod, got {}`)
+    t.throws(() => rou.meth(), TypeError, `expected variant of isMethod, got undefined`)
+    t.throws(() => rou.meth({}), TypeError, `expected variant of isMethod, got {}`)
 
-    t.no(rou.matchMeth(h.GET))
-    t.no(rou.matchMeth(h.HEAD))
+    t.no(rou.meth(h.GET))
+    t.no(rou.meth(h.HEAD))
 
-    t.ok(rou.matchMeth(h.POST))
+    t.ok(rou.meth(h.POST))
   })
 
-  t.test(function test_matchPat() {
+  t.test(function test_preflight() {
+    t.no(new h.Rou(simpleReq(URL_LONG, h.GET)).preflight())
+    t.no(new h.Rou(simpleReq(URL_LONG, h.POST)).preflight())
+
+    t.ok(new h.Rou(simpleReq(URL_LONG, h.HEAD)).preflight())
+    t.ok(new h.Rou(simpleReq(URL_LONG, h.OPTIONS)).preflight())
+  })
+
+  t.test(function test_pat() {
     const rou = mockRou()
 
     t.test(function test_invalid() {
-      t.throws(() => rou.matchPat(), TypeError, `unable to convert undefined to pattern`)
-      t.throws(() => rou.matchPat({}), TypeError, `unable to convert {} to pattern`)
+      t.throws(() => rou.pat({}), TypeError, `unable to convert {} to pattern`)
     })
 
     t.test(function test_none() {
@@ -665,12 +659,12 @@ t.test(function test_Rou() {
         t.eq(rou.groups, undefined)
       }
 
-      test(rou.matchPat(`path`))
-      test(rou.matchPat(`/path/`))
-      test(rou.matchPat(`path/`))
-      test(rou.matchPat(`/pat`))
-      test(rou.matchPat(/path[/]/))
-      test(rou.matchPat(/path_other/))
+      test(rou.pat(`path`))
+      test(rou.pat(`/path/`))
+      test(rou.pat(`path/`))
+      test(rou.pat(`/pat`))
+      test(rou.pat(/path[/]/))
+      test(rou.pat(/path_other/))
     })
 
     t.test(function test_some() {
@@ -679,123 +673,60 @@ t.test(function test_Rou() {
         t.eq(rou.groups, exp)
       }
 
-      test(rou.matchPat(`/path`), undefined)
-      test(rou.matchPat(/^[/](?<val>path)$/), {val: `path`})
+      test(rou.pat(), undefined)
+      test(rou.pat(`/path`), undefined)
+      test(rou.pat(/^[/](?<val>path)$/), {val: `path`})
     })
   })
 
   t.test(function test_match() {
     const rou = mockRou()
 
-    t.no(rou.match(h.GET, `/path`))
-    t.no(rou.match(h.POST, `/pat`))
-
-    function test(val, exp) {
-      t.ok(val)
-      t.eq(rou.groups, exp)
-    }
-
-    test(rou.match(h.POST, `/path`), undefined)
-    test(rou.match(h.POST, /^[/](?<val>path)$/), {val: `path`})
-  })
-
-  t.test(function test_only() {
-    const rou = mockRou()
-
-    t.throws(() => rou.only({}), TypeError, `expected variant of isMethod, got {}`)
-    t.throws(() => rou.only(h.GET, {}), TypeError, `expected variant of isMethod, got {}`)
-
-    testRes(rou.only(), {status: 405})
-    testRes(rou.only(h.HEAD), {status: 405})
-
-    t.is(rou.only(h.POST), undefined)
-    t.is(rou.only(h.POST, h.GET), undefined)
-    t.is(rou.only(h.GET, h.POST), undefined)
-  })
-
-  t.test(function test_meth() {
-    const rou = mockRou()
-
     t.test(function test_invalid() {
-      t.throws(() => rou.meth(h.POST,    undefined, undefined), TypeError, `expected variant of isPattern, got undefined`)
-      t.throws(() => rou.meth(h.POST,    `/`,       undefined), TypeError, `expected variant of isFun, got undefined`)
-      t.throws(() => rou.meth(h.POST,    /(?:)/,    undefined), TypeError, `expected variant of isFun, got undefined`)
-      t.throws(() => rou.meth(undefined, /(?:)/,    l.nop),     TypeError, `expected variant of isMethod, got undefined`)
+      t.throws(() => rou.match(undefined, /(?:)/), TypeError, `expected variant of isMethod, got undefined`)
+      t.throws(() => rou.match(h.POST, {}), TypeError, `unable to convert {} to pattern`)
     })
 
     t.test(function test_none() {
-      function test(val) {t.is(val, undefined)}
+      function test(val) {
+        t.no(val)
+        t.is(rou.groups, undefined)
+      }
 
-      test(rou.meth(h.GET,  `/path`,      unreachable))
-      test(rou.meth(h.POST, `/pat`,       unreachable))
-      test(rou.meth(h.GET,  /(?:)/,       unreachable))
-      test(rou.meth(h.POST, /path_other/, unreachable))
+      test(rou.match(h.GET))
+      test(rou.match(h.GET, `/path`))
+      test(rou.match(h.GET, /(?:)/))
+
+      test(rou.match(h.POST, `/pat`))
+      test(rou.match(h.POST, /path_other/))
     })
 
     t.test(function test_some() {
       function test(val, exp) {
-        t.eq(val, [rou])
+        t.ok(val)
         t.eq(rou.groups, exp)
       }
 
-      test(rou.meth(h.POST, `/path`,             args), undefined)
-      test(rou.meth(h.POST, /^[/]path$/,         args), undefined)
-      test(rou.meth(h.POST, /^[/](?<key>path)$/, args), {key: `path`})
+      test(rou.match(h.POST), undefined)
+      test(rou.match(h.POST, `/path`), undefined)
+      test(rou.match(h.POST, /^[/](?<val>path)$/), {val: `path`})
+      test(rou.match(h.POST, `/path`), undefined)
+      test(rou.match(h.POST, /^[/]path$/), undefined)
+      test(rou.match(h.POST, /^[/](?<key>path)$/), {key: `path`})
     })
   })
 
   // TODO test async fallback.
-  t.test(function test_sub() {
+  t.test(function test_found() {
     const rou = mockRou()
 
     t.test(function test_invalid() {
-      t.throws(() => rou.sub(undefined, l.nop), TypeError, `unable to convert undefined to pattern`)
-      t.throws(() => rou.sub(`/`,  undefined), TypeError, `expected variant of isFun, got undefined`)
+      t.throws(() => rou.found(), TypeError, `expected variant of isFun, got undefined`)
+      t.throws(() => rou.found(10), TypeError, `expected variant of isFun, got 10`)
     })
 
-    t.test(function test_none() {
-      function test(val) {t.is(val, undefined)}
-
-      test(rou.sub(`/pat`, unreachable))
-      test(rou.sub(/path_other/, unreachable))
-    })
-
-    t.test(function test_some() {
-      function test(val, exp) {
-        t.eq(val, [rou])
-        t.eq(rou.groups, exp)
-      }
-
-      test(rou.sub(`/path`, args), undefined)
-      test(rou.sub(/^[/](?<key>path)$/, args), {key: `path`})
-    })
-
-    t.test(function test_fallback() {
-      testRes(rou.sub(/(?:)/, l.nop), {status: 404})
-    })
-  })
-
-  t.test(function test_preflight() {
-    t.test(function test_invalid() {
-      t.throws(() => mockRou().preflight(null), TypeError, `expected variant of isFun, got null`)
-      t.throws(() => mockRou().preflight(`str`), TypeError, `expected variant of isFun, got "str"`)
-      t.throws(() => mockRou().preflight({}), TypeError, `expected variant of isFun, got {}`)
-    })
-
-    t.test(function test_default() {
-      t.is(new h.Rou(simpleReq(URL_LONG, h.GET)).preflight(), undefined)
-      t.is(new h.Rou(simpleReq(URL_LONG, h.POST)).preflight(), undefined)
-      testRes(new h.Rou(simpleReq(URL_LONG, h.HEAD)).preflight(), {status: 200})
-      testRes(new h.Rou(simpleReq(URL_LONG, h.OPTIONS)).preflight(), {status: 200})
-    })
-
-    t.test(function test_override() {
-      function over() {return `override`}
-      t.is(new h.Rou(simpleReq(URL_LONG, h.GET)).preflight(over), undefined)
-      t.is(new h.Rou(simpleReq(URL_LONG, h.POST)).preflight(over), undefined)
-      t.is(new h.Rou(simpleReq(URL_LONG, h.HEAD)).preflight(over), `override`)
-      t.is(new h.Rou(simpleReq(URL_LONG, h.OPTIONS)).preflight(over), `override`)
-    })
+    testRes(rou.found(l.nop), {status: 404})
+    testRes(rou.found(() => new Response(``, {status: 400})), {status: 400})
   })
 })
 

@@ -57,30 +57,30 @@ export class ResBui extends h.HttpBui {
 }
 
 /*
-Orkaround for the insane DOM stream API which seems to provide NO WAY
-to make a reader-writer pair.
+Orkaround for the insane DOM stream API which seems to
+provide NO WAY to make a reader-writer pair.
 */
 export class WritableReadableStream extends ReadableStream {
   constructor(sig) {
-    sig?.throwIfAborted()
-
     let ctr
     super({start: val => {ctr = val}})
     this.ctr = reqStreamController(ctr)
     this.sig = l.optInst(sig, AbortSignal)
 
+    this.throwIfAborted()
     sig?.addEventListener(`abort`, this, {once: true})
   }
 
-  throwIfAborted() {this.sig?.throwIfAborted()}
+  /*
+  Would prefer `this.sig?.throwIfAborted()`, but at the time of writing,
+  it has very little browser support.
+  */
+  throwIfAborted() {if (this.sig?.aborted) throw new this.AbortError()}
 
   handleEvent(event) {
     if (event.type === `abort`) {
       event.target.removeEventListener(event.type, this)
-
-      try {event.target.throwIfAborted()}
-      catch (err) {this.error(err)}
-
+      this.error(new this.AbortError())
       this.deinit()
     }
   }
@@ -99,6 +99,8 @@ export class WritableReadableStream extends ReadableStream {
   close() {try {this.ctr.close()} catch {}}
 
   deinit() {return this.close()}
+
+  get AbortError() {return h.AbortError}
 }
 
 /*

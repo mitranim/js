@@ -20,7 +20,7 @@ HTTP request/response utils are ported and reworked from https://github.com/mitr
 * [#Misc](#misc)
   * [#`function jsonDecode`](#function-jsondecode)
   * [#`function jsonEncode`](#function-jsonencode)
-  * [#`class Err`](#class-err)
+  * [#`class HttpErr`](#class-httperr)
   * [#`function reqBui`](#function-reqbui)
   * [#`class ReqBui`](#class-reqbui)
   * [#`class Res`](#class-res)
@@ -30,7 +30,7 @@ HTTP request/response utils are ported and reworked from https://github.com/mitr
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.2/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.3/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -40,24 +40,24 @@ const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
 
 ### `function jsonDecode`
 
-Links: [source](../http.mjs#L32); [test/example](../test/http_test.mjs#L73).
+Links: [source](../http.mjs#L32); [test/example](../test/http_test.mjs#L60).
 
 Sanity-checking wrapper for [`JSON.parse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse). If the input is nil or an empty string, returns `null`. Otherwise the input must be a primitive string. Throws on other inputs, without trying to stringify them.
 
 ### `function jsonEncode`
 
-Links: [source](../http.mjs#L33); [test/example](../test/http_test.mjs#L88).
+Links: [source](../http.mjs#L33); [test/example](../test/http_test.mjs#L75).
 
 Sanity-checking wrapper for [`JSON.stringify`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify). Equivalent to `JSON.stringify(val ?? null)`. If the input is `undefined`, returns `'null'` (string) rather than `undefined` (nil). Output is _always_ a valid JSON string.
 
-### `class Err`
+### `class HttpErr`
 
-Links: [source](../http.mjs#L45); [test/example](../test/http_test.mjs#L102).
+Links: [source](../http.mjs#L47); [test/example](../test/http_test.mjs#L89).
 
 Subclass of `Error` for HTTP responses. The error message includes the HTTP status code, if any.
 
 ```ts
-class Err extends Error {
+class HttpErr extends Error {
   message: string
   status: int
   res?: Response
@@ -68,13 +68,13 @@ class Err extends Error {
 
 ### `function reqBui`
 
-Links: [source](../http.mjs#L167); [test/example](../test/http_test.mjs#L450).
+Links: [source](../http.mjs#L182); [test/example](../test/http_test.mjs#L437).
 
 Same as `new` [#`ReqBui`](#class-reqbui) but syntactically shorter and a function.
 
 ### `class ReqBui`
 
-Links: [source](../http.mjs#L169); [test/example](../test/http_test.mjs#L463).
+Links: [source](../http.mjs#L184); [test/example](../test/http_test.mjs#L450).
 
 Request builder. Does _not_ subclass `Request`. Call `.req()` to create a native request, or the various `.fetchX()` methods to immediately execute. Unlike the native request, the body is not always a stream. This means `ReqBui` can be stored and reused several times.
 
@@ -87,7 +87,7 @@ class ReqBui extends RequestInit {
 
   /*
   Returns the resulting `Res` if the response is OK. If the response is
-  received, but HTTP status code is non-OK, throws a descriptive `Err`.
+  received, but HTTP status code is non-OK, throws a descriptive `HttpErr`.
 
   Shortcut for `(await this.fetch()).okRes()`.
   */
@@ -168,7 +168,7 @@ class ReqBui extends RequestInit {
 
 ### `class Res`
 
-Links: [source](../http.mjs#L195); [test/example](../test/http_test.mjs#L591).
+Links: [source](../http.mjs#L210); [test/example](../test/http_test.mjs#L578).
 
 Subclass of `Response` with additional shortcuts for response handling. Always wraps a native response received from another source. [#`ReqBui`](#class-reqbui) automatically uses this for responses. You don't need to construct this.
 
@@ -184,7 +184,7 @@ class Res extends Response {
 
   /*
   If `res.ok`, returns the response as-is. Otherwise throws an instance of
-  `Err` with the status code and response text in its error message.
+  `HttpErr` with the status code and response text in its error message.
   */
   okRes(): Promise<Res>
 
@@ -201,13 +201,13 @@ class Res extends Response {
   okJson(): Promise<any>
 
   // Class used for response errors. Can override in subclass.
-  get Err(): {new(): Err}
+  get Err(): {new(): HttpErr}
 }
 ```
 
 ### `class Ctx`
 
-Links: [source](../http.mjs#L341); [test/example](../test/http_test.mjs#L806).
+Links: [source](../http.mjs#L345); [test/example](../test/http_test.mjs#L737).
 
 Subclass of built-in [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController). Features:
 
@@ -249,23 +249,24 @@ The following APIs are exported but undocumented. Check [http.mjs](../http.mjs).
   * [`const TYPE_JSON`](../http.mjs#L28)
   * [`const TYPE_FORM`](../http.mjs#L29)
   * [`const TYPE_MULTI`](../http.mjs#L30)
-  * [`function getStatus`](../http.mjs#L34)
-  * [`function hasStatus`](../http.mjs#L35)
-  * [`function isErrAbort`](../http.mjs#L41)
-  * [`class HttpBui`](../http.mjs#L63)
-  * [`function toRou`](../http.mjs#L235)
-  * [`class Rou`](../http.mjs#L237)
-  * [`function resNotAllowed`](../http.mjs#L372)
-  * [`function resNotFound`](../http.mjs#L377)
-  * [`function resEmpty`](../http.mjs#L382)
-  * [`function resErr`](../http.mjs#L384)
-  * [`function cookieSplitPairs`](../http.mjs#L392)
-  * [`function cookieSplitPair`](../http.mjs#L398)
-  * [`function cook`](../http.mjs#L411)
-  * [`class Cookie`](../http.mjs#L413)
-  * [`function reqBody`](../http.mjs#L534)
-  * [`function optBody`](../http.mjs#L535)
-  * [`const bodyFuns`](../http.mjs#L536)
+  * [`function hasStatus`](../http.mjs#L36)
+  * [`function getStatus`](../http.mjs#L37)
+  * [`function isErrAbort`](../http.mjs#L43)
+  * [`class AbortError`](../http.mjs#L69)
+  * [`class HttpBui`](../http.mjs#L78)
+  * [`function toRou`](../http.mjs#L250)
+  * [`class Rou`](../http.mjs#L252)
+  * [`function resNotAllowed`](../http.mjs#L376)
+  * [`function resNotFound`](../http.mjs#L381)
+  * [`function resEmpty`](../http.mjs#L386)
+  * [`function resErr`](../http.mjs#L388)
+  * [`function cookieSplitPairs`](../http.mjs#L396)
+  * [`function cookieSplitPair`](../http.mjs#L402)
+  * [`function cook`](../http.mjs#L415)
+  * [`class Cookie`](../http.mjs#L417)
+  * [`function reqBody`](../http.mjs#L535)
+  * [`function optBody`](../http.mjs#L536)
+  * [`const bodyFuns`](../http.mjs#L537)
 
 
 ## Misc
