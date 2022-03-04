@@ -1,5 +1,6 @@
 import * as l from './lang.mjs'
 import * as s from './str.mjs'
+import * as co from './coll.mjs'
 
 // Returns OS args in Deno and Node. Returns `[]` in other environemnts.
 export function args() {
@@ -131,8 +132,43 @@ export class Flag extends s.StrMap {
   static os() {return new this(args())}
 }
 
-function isFlag(str) {return str.startsWith(`-`)}
-function unFlag(str) {return s.stripPre(str, `-`)}
+/*
+Simple "env" map with support for parsing "env properties" strings. The parser
+supports comments with `#` but not `!`, doesn't support backslash escapes, and
+doesn't allow whitespace around `=`. Doesn't perform any IO; see `io_deno.mjs`
+→ `EnvMap` which is a subclass.
+*/
+export class EnvMap extends co.Bmap {
+  set(key, val) {return super.set(l.reqStr(key), l.render(val))}
+
+  mut(val) {
+    if (l.isStr(val)) return this.mutFromStr(val)
+    return super.mut(val)
+  }
+
+  mutFromStr(val) {
+    for (const line of this.lines(val)) this.addLine(line)
+    return this
+  }
+
+  addLine(val) {
+    const mat = l.reqStr(val).match(/^(\w+)=(.*)$/)
+    if (!mat) throw SyntaxError(`expected valid env/properties line, got ${l.show(val)}`)
+    this.set(mat[1], mat[2])
+    return this
+  }
+
+  lines(val) {
+    return s.lines(val).map(s.trim).filter(this.isLineNonEmpty, this)
+  }
+
+  isLineEmpty(val) {
+    val = s.trim(val)
+    return !val || val.startsWith(`#`)
+  }
+
+  isLineNonEmpty(val) {return !this.isLineEmpty(val)}
+}
 
 // Copied from `https://github.com/mitranim/emptty`.
 export const esc = `\x1b`
@@ -161,3 +197,8 @@ export async function timed(fun, tag) {
     console.log(s.san`${pre}done in ${end - start} ms`)
   }
 }
+
+/* Internal */
+
+function isFlag(str) {return str.startsWith(`-`)}
+function unFlag(str) {return s.stripPre(str, `-`)}

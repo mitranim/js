@@ -2,6 +2,7 @@
 
 import * as l from './lang.mjs'
 import * as p from './path.mjs'
+import * as cl from './cli.mjs'
 
 export const IS_WINDOWS = l.reqStr(Deno.build.os) === `windows`
 export const SEP = IS_WINDOWS ? p.SEP_WINDOWS : p.SEP_POSIX
@@ -9,13 +10,29 @@ export const paths = IS_WINDOWS ? p.windows : p.posix
 
 export function isErrNotFound(val) {return l.isInst(val, Deno.errors.NotFound)}
 
-export function readText(path) {return Deno.readTextFile(p.reqPath(path))}
+// Defined for symmetry with `readTextOpt`.
+export function readText(path) {return Deno.readTextFile(path)}
 
 export async function readTextOpt(path) {
   if (l.isNil(path)) return ``
 
   try {
     return await readText(path)
+  }
+  catch (err) {
+    if (isErrNotFound(err)) return ``
+    throw err
+  }
+}
+
+// Defined for symmetry with `readTextSyncOpt`.
+export function readTextSync(path) {return Deno.readTextFileSync(path)}
+
+export function readTextSyncOpt(path) {
+  if (l.isNil(path)) return ``
+
+  try {
+    return Deno.readTextFileSync(path)
   }
   catch (err) {
     if (isErrNotFound(err)) return ``
@@ -181,4 +198,23 @@ export class FileStream extends ReadableStream {
   }
 
   static get Source() {return StreamSource}
+}
+
+export class EnvMap extends cl.EnvMap {
+  mutFromFile(path) {return this.mut(readTextSync(path))}
+  mutFromFileOpt(path) {return this.mut(readTextSyncOpt(path))}
+
+  deleteInstalled() {
+    for (const key of this.keys()) {
+      if (l.isSome(Deno.env.get(key))) this.delete(key)
+    }
+    return this
+  }
+
+  install() {
+    for (const [key, val] of this.entries()) {
+      Deno.env.set(l.reqStr(key), l.render(val))
+    }
+    return this
+  }
 }
