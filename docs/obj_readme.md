@@ -12,7 +12,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.4/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/obj.mjs'
 ```
 
 ## API
@@ -134,7 +134,7 @@ new Model(`str`)
 
 The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
 
-  * [`class Strict`](../obj.mjs#L23)
+  * [`class Strict`](../obj.mjs#L24)
   * [`class StrictPh`](../obj.mjs#L63)
   * [`class WeakTag`](../obj.mjs#L81)
   * [`function memGet`](../obj.mjs#L90)

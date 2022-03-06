@@ -34,7 +34,7 @@ export class LiveBroad extends hs.Broad {
   get sendPath() {return p.posix.join(this.basePath, `send`)}
 
   res(val) {
-    const rou = h.toRou(val)
+    const rou = h.toReqRou(val)
 
     if (rou.get(this.clientPath)) return this.clientRes()
     if (rou.get(this.eventsPath)) return this.eventsRes(rou.req)

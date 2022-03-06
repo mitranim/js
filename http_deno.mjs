@@ -268,7 +268,9 @@ export class Srv extends l.Emp {
   }
 }
 
-function errRes(err) {return new Response(l.show(err), {status: 500})}
+export function errRes(err) {
+  return new Response(l.show(err), {status: 500})
+}
 
 // Short for "filter".
 export class Fil extends l.Emp {

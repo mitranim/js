@@ -16,12 +16,12 @@ export function patch(tar, src) {
 
 export class Dict extends l.Emp {
   constructor(val) {super().mut(val)}
-  mut(val) {return patch(this, val), this.reinit(), this}
   reinit() {}
+  mut(val) {return this.mutFromStruct(val)}
+  mutFromStruct(val) {return patch(this, val), this.reinit(), this}
 }
 
 export class Strict extends l.Emp {
-  // eslint-disable-next-line constructor-super
   constructor() {
     super()
     return this.StrictPh.of(this)

@@ -24,13 +24,15 @@ HTTP request/response utils are ported and reworked from https://github.com/mitr
   * [#`function reqBui`](#function-reqbui)
   * [#`class ReqBui`](#class-reqbui)
   * [#`class Res`](#class-res)
+  * [#`class Rou`](#class-rou)
+  * [#`class ReqRou`](#class-reqrou)
   * [#`class Ctx`](#class-ctx)
   * [#Undocumented](#undocumented)
 
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.4/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -205,9 +207,102 @@ class Res extends Response {
 }
 ```
 
+### `class Rou`
+
+Links: [source](../http.mjs#L252); [test/example](../test/http_test.mjs#L606).
+
+Simple router that uses only URL and pathname. Suitable for SPA. For servers, use [#`ReqRou`](#class-reqrou) which supports requests and HTTP methods.
+
+Basics:
+
+```js
+const rou = new h.Rou(`https://example.com/path?query#hash`)
+
+rou.url // Url { https://example.com/path?query#hash }
+rou.url.href === `https://example.com/path?query#hash`
+rou.pathname === `/path`
+rou.groups === undefined
+
+rou.pat(`/`) === false
+rou.pat(`/blah`) === false
+rou.pat(`/path`) === true
+
+rou.pat(/^[/](?<key>[^/]+)$/) === true
+rou.groups // {key: `path`}
+```
+
+Routing is imperative:
+
+```js
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/http.mjs'
+import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/lang.mjs'
+
+const nextPage = route(window.location)
+
+function route(loc) {
+  const rou = new h.Rou(loc)
+
+  if (rou.pat(`/`)) return PageIndex(rou)
+  if (rou.pat(`/articles`)) return PageArticles(rou)
+  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticles(rou)
+  return Page404(rou)
+}
+
+function PageArticles(rou) {
+  const key = l.reqPk(rou.reqGroups().key)
+  return `...`
+}
+```
+
+### `class ReqRou`
+
+Links: [source](../http.mjs#L297); [test/example](../test/http_test.mjs#L652).
+
+Short for "request router" or "request-response router". Advanced version of [#`Rou`](#class-rou). Suitable for servers and SSR/SPA hybrid apps.
+
+Routing can be shared between SSR and SPA:
+
+```js
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/http.mjs'
+
+function route(rou) {
+  l.reqInst(rou, h.ReqRou)
+
+  if (rou.pat(`/`)) return PageIndex(rou)
+  if (rou.pat(`/articles`)) return PageArticles(rou)
+  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticles(rou)
+  return Page404(rou)
+}
+
+function PageArticles(rou) {
+  const key = l.reqPk(rou.reqGroups().key)
+
+  return `... page for article ${key} ...`
+}
+```
+
+SSR uses incoming requests:
+
+```js
+function response(req) {
+  return htmlRes(route(new h.ReqRou(req)))
+}
+
+// Consider also using `h.ResBui`.
+function htmlRes(body) {
+  return new Response(body, {headers: {[h.HEAD_CONTENT_TYPE]: h.TYPE_HTML}})
+}
+```
+
+SPA uses current URL:
+
+```js
+const page = route(h.ReqRou.from(window.location))
+```
+
 ### `class Ctx`
 
-Links: [source](../http.mjs#L345); [test/example](../test/http_test.mjs#L737).
+Links: [source](../http.mjs#L355); [test/example](../test/http_test.mjs#L745).
 
 Subclass of built-in [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController). Features:
 
@@ -255,18 +350,14 @@ The following APIs are exported but undocumented. Check [http.mjs](../http.mjs).
   * [`class AbortError`](../http.mjs#L69)
   * [`class HttpBui`](../http.mjs#L78)
   * [`function toRou`](../http.mjs#L250)
-  * [`class Rou`](../http.mjs#L252)
-  * [`function resNotAllowed`](../http.mjs#L376)
-  * [`function resNotFound`](../http.mjs#L381)
-  * [`function resEmpty`](../http.mjs#L386)
-  * [`function resErr`](../http.mjs#L388)
-  * [`function cookieSplitPairs`](../http.mjs#L396)
-  * [`function cookieSplitPair`](../http.mjs#L402)
-  * [`function cook`](../http.mjs#L415)
-  * [`class Cookie`](../http.mjs#L417)
-  * [`function reqBody`](../http.mjs#L535)
-  * [`function optBody`](../http.mjs#L536)
-  * [`const bodyFuns`](../http.mjs#L537)
+  * [`function toReqRou`](../http.mjs#L295)
+  * [`function cookieSplitPairs`](../http.mjs#L387)
+  * [`function cookieSplitPair`](../http.mjs#L393)
+  * [`function cook`](../http.mjs#L406)
+  * [`class Cookie`](../http.mjs#L408)
+  * [`function reqBody`](../http.mjs#L526)
+  * [`function optBody`](../http.mjs#L527)
+  * [`const bodyFuns`](../http.mjs#L528)
 
 
 ## Misc

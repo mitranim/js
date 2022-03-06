@@ -14,7 +14,7 @@ function mockInst(cls, ...val) {return Object.assign(Object.create(cls.prototype
 function mockHttpBui(...val) {return mockInst(h.HttpBui, ...val)}
 function mockReqBui(...val) {return mockInst(h.ReqBui, ...val)}
 function mockReq() {return new Request(URL_LONG, {method: h.POST})}
-function mockRou() {return new h.Rou(mockReq())}
+function mockReqRou() {return new h.ReqRou(mockReq())}
 function simpleReq(url, meth) {return new Request(url, {method: meth})}
 function testHead(bui, exp) {t.eq(bui.heads(), exp)}
 
@@ -606,48 +606,17 @@ async function testResSimple(res, src) {
 t.test(function test_Rou() {
   t.test(function test_constructor() {
     t.test(function test_invalid() {
-      t.throws(() => new h.Rou(), TypeError, `expected instance of Request, got undefined`)
-      t.throws(() => new h.Rou(10), TypeError, `expected instance of Request, got 10`)
-      t.throws(() => new h.Rou(`str`), TypeError, `expected instance of Request, got "str"`)
-      t.throws(() => new h.Rou(URL_LONG), TypeError, `expected instance of Request, got ${l.show(URL_LONG)}`)
-      t.throws(() => new h.Rou({}), TypeError, `expected instance of Request, got instance of Object {}`)
-      t.throws(() => new h.Rou([]), TypeError, `expected instance of Request, got instance of Array []`)
+      t.throws(() => new h.Rou(10), TypeError, `unable to convert 10 to Url`)
+      t.throws(() => new h.Rou({}), TypeError, `unable to convert {} to Url`)
+      t.throws(() => new h.Rou([]), TypeError, `unable to convert [] to Url`)
     })
 
-    const req = mockReq()
-    const rou = new h.Rou(req)
-
-    t.is(rou.req, req)
-
-    t.eq(rou, mockInst(h.Rou, {
-      req,
-      url: u.url(URL_LONG),
-      groups: undefined,
-    }))
-  })
-
-  t.test(function test_meth() {
-    const rou = mockRou()
-
-    t.throws(() => rou.meth(), TypeError, `expected variant of isMethod, got undefined`)
-    t.throws(() => rou.meth({}), TypeError, `expected variant of isMethod, got {}`)
-
-    t.no(rou.meth(h.GET))
-    t.no(rou.meth(h.HEAD))
-
-    t.ok(rou.meth(h.POST))
-  })
-
-  t.test(function test_preflight() {
-    t.no(new h.Rou(simpleReq(URL_LONG, h.GET)).preflight())
-    t.no(new h.Rou(simpleReq(URL_LONG, h.POST)).preflight())
-
-    t.ok(new h.Rou(simpleReq(URL_LONG, h.HEAD)).preflight())
-    t.ok(new h.Rou(simpleReq(URL_LONG, h.OPTIONS)).preflight())
+    t.own(new h.Rou(URL_LONG), {url: u.url(URL_LONG), groups: undefined})
+    t.own(new h.Rou(), {url: u.url(), groups: undefined})
   })
 
   t.test(function test_pat() {
-    const rou = mockRou()
+    const rou = new h.Rou(URL_LONG)
 
     t.test(function test_invalid() {
       t.throws(() => rou.pat({}), TypeError, `unable to convert {} to pattern`)
@@ -678,9 +647,48 @@ t.test(function test_Rou() {
       test(rou.pat(/^[/](?<val>path)$/), {val: `path`})
     })
   })
+})
+
+t.test(function test_ReqRou() {
+  t.test(function test_constructor() {
+    t.test(function test_invalid() {
+      t.throws(() => new h.ReqRou(), TypeError, `expected instance of Request, got undefined`)
+      t.throws(() => new h.ReqRou(10), TypeError, `expected instance of Request, got 10`)
+      t.throws(() => new h.ReqRou(`str`), TypeError, `expected instance of Request, got "str"`)
+      t.throws(() => new h.ReqRou(URL_LONG), TypeError, `expected instance of Request, got ${l.show(URL_LONG)}`)
+      t.throws(() => new h.ReqRou({}), TypeError, `expected instance of Request, got instance of Object {}`)
+      t.throws(() => new h.ReqRou([]), TypeError, `expected instance of Request, got instance of Array []`)
+    })
+
+    const req = mockReq()
+    const rou = new h.ReqRou(req)
+
+    t.is(rou.req, req)
+    t.own(rou, {req, url: u.url(URL_LONG), groups: undefined})
+  })
+
+  t.test(function test_meth() {
+    const rou = mockReqRou()
+
+    t.throws(() => rou.meth(), TypeError, `expected variant of isMethod, got undefined`)
+    t.throws(() => rou.meth({}), TypeError, `expected variant of isMethod, got {}`)
+
+    t.no(rou.meth(h.GET))
+    t.no(rou.meth(h.HEAD))
+
+    t.ok(rou.meth(h.POST))
+  })
+
+  t.test(function test_preflight() {
+    t.no(new h.ReqRou(simpleReq(URL_LONG, h.GET)).preflight())
+    t.no(new h.ReqRou(simpleReq(URL_LONG, h.POST)).preflight())
+
+    t.ok(new h.ReqRou(simpleReq(URL_LONG, h.HEAD)).preflight())
+    t.ok(new h.ReqRou(simpleReq(URL_LONG, h.OPTIONS)).preflight())
+  })
 
   t.test(function test_match() {
-    const rou = mockRou()
+    const rou = mockReqRou()
 
     t.test(function test_invalid() {
       t.throws(() => rou.match(undefined, /(?:)/), TypeError, `expected variant of isMethod, got undefined`)
@@ -718,7 +726,7 @@ t.test(function test_Rou() {
 
   // TODO test async fallback.
   t.test(function test_found() {
-    const rou = mockRou()
+    const rou = mockReqRou()
 
     t.test(function test_invalid() {
       t.throws(() => rou.found(), TypeError, `expected variant of isFun, got undefined`)

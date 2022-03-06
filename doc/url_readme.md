@@ -88,7 +88,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from '{{featUrl}}'
+import * as u from '{{featUrl url}}'
 ```
 
 Example parsing:

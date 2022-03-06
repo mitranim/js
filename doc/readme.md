@@ -52,8 +52,8 @@ import * as a from '{{url}}/all.mjs'
 Otherwise, import specific modules you need. See the list below. Example:
 
 ```js
-import * as l from '{{url}}/lang.mjs'
-import * as s from '{{url}}/str.mjs'
+import * as l from '{{featUrl lang}}'
+import * as s from '{{featUrl str}}'
 ```
 
 ## Features

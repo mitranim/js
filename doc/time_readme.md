@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as ti from '{{featUrl}}'
+import * as ti from '{{featUrl time}}'
 ```
 
 ## API

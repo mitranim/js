@@ -25,7 +25,7 @@ Known limitations:
 Using a specific implementation:
 
 ```js
-import * as p from '{{featUrl}}'
+import * as p from '{{featUrl path}}'
 
 console.log(p.posix.join(`one`, `two`))
 // 'one/two'

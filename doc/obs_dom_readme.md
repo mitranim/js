@@ -15,9 +15,9 @@ Optionally combine with {{featLink dom_reg}} for automatic registration of eleme
 ## Usage
 
 ```js
-import * as o from '{{url}}/obs.mjs'
-import * as od from '{{url}}/obs_dom.mjs'
-import * as dr from '{{url}}/dom_reg.mjs'
+import * as o from '{{featUrl obs}}'
+import * as od from '{{featUrl obs_dom}}'
+import * as dr from '{{featUrl dom_reg}}'
 
 const obs = o.obs({msg: `hello!`})
 

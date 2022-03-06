@@ -20,7 +20,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as l from '{{featUrl}}'
+import * as l from '{{featUrl lang}}'
 ```
 
 ## API

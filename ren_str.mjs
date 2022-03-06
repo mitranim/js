@@ -27,13 +27,13 @@ export class RenStr extends rb.RenBase {
   open(tag, props) {return `<` + this.reqTag(tag) + this.props(props) + `>`}
   close(tag) {return `</` + l.reqStr(tag) + `>`}
 
-  // TODO: test deoptimization with non-array iterators.
   chi(...val) {
     let out = ``
     for (val of val) out += this.child(val)
     return out
   }
 
+  // TODO: bench deopt with non-array iterators.
   child(val) {
     if (rb.isRaw(val)) return val.valueOf()
     if (l.isSeq(val)) return this.chi(...val)
@@ -53,9 +53,6 @@ export class RenStr extends rb.RenBase {
   }
 
   attrOpt(key, val) {return l.laxStr(val) && this.attr(key, val)}
-
-  reqTag(val) {return reqTag(val)}
-  reqAttr(val) {return reqAttr(val)}
 
   escapeAttr(val) {return escapeAttr(val)}
   escapeText(val) {return escapeText(val)}
@@ -136,7 +133,6 @@ export class RenHtmlBase extends RenStr {
     return this.attr(this.dataKey(key), this.strLax(val))
   }
 
-  isBool(key) {return rb.BOOL_ATTRS.has(key)}
   styleKey(val) {return StyleKeyCache.main.goc(val)}
   dataKey(val) {return DataKeyCache.main.goc(val)}
 }
@@ -146,7 +142,7 @@ export class RenStrSvg extends RenHtmlBase {}
 RenStrSvg.main = /* @__PURE__ */ new RenStrSvg()
 
 // Should be used for rendering HTML.
-export class RenStrHtml extends RenHtmlBase {
+export class RenStrHtml extends /* @__PURE__ */ rb.MixRenHtml(RenHtmlBase) {
   doc(...val) {return `<!doctype html>` + this.chi(...val)}
 
   elem(tag, props, ...chi) {
@@ -156,13 +152,9 @@ export class RenStrHtml extends RenHtmlBase {
 
   // TODO also forbid `.innerHTML` in props.
   elemVoid(tag, props, ...chi) {
-    if (chi.length) {
-      throw SyntaxError(`expected void element ${l.show(tag)} to have no children, got ${l.show(chi)}`)
-    }
+    if (chi.length) throw this.voidErr(tag, chi)
     return this.open(tag, props)
   }
-
-  isVoid(val) {return VOID_ELEMS.has(val)}
 }
 RenStrHtml.main = /* @__PURE__ */ new RenStrHtml()
 
@@ -185,14 +177,6 @@ StyleKeyCache.main = /* @__PURE__ */ new StyleKeyCache()
 
 class DataKeyCache extends Cache {make(val) {return camelToData(val)}}
 DataKeyCache.main = /* @__PURE__ */ new DataKeyCache()
-
-/*
-References:
-
-  https://www.w3.org/TR/html52/
-  https://www.w3.org/TR/html52/syntax.html#writing-html-documents-elements
-*/
-export const VOID_ELEMS = /* @__PURE__ */ new Set([`area`, `base`, `br`, `col`, `embed`, `hr`, `img`, `input`, `link`, `meta`, `param`, `source`, `track`, `wbr`])
 
 /*
 https://www.w3.org/TR/html52/syntax.html#escaping-a-string
@@ -244,21 +228,3 @@ but we may have to differentiate them later.
 */
 function camelToKebab(val) {return val.split(/(?=[A-Z])/g).map(lower).join(`-`)}
 function lower(val) {return val.toLowerCase()}
-
-/*
-Should prevent accidental use of VERY invalid tag or attribute names,
-without interfering with rare but valid cases such as non-ASCII XML.
-
-References:
-
-  https://www.w3.org/TR/html52/syntax.html#tag-name
-  https://www.w3.org/TR/html52/infrastructure.html#alphanumeric-ascii-characters
-  https://www.w3.org/TR/html52/syntax.html#elements-attributes
-*/
-function isName(val) {return l.isStr(val) && /^[^\s<>/\\"]+$/.test(val)}
-
-function isTag(val) {return isName(val)}
-function reqTag(val) {return isTag(val) ? val : l.convFun(val, isTag)}
-
-function isAttr(val) {return isName(val) && val !== ``}
-function reqAttr(val) {return isAttr(val) ? val : l.convFun(val, isAttr)}

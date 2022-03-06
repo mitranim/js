@@ -30,7 +30,7 @@ Short overview of features:
 HTML rendering:
 
 ```js
-import {E, ren} from '{{featUrl}}'
+import {E, ren} from '{{featUrl ren_str}}'
 
 console.log(
   Html({title: `home`, body: Index()})
@@ -60,7 +60,7 @@ function Index() {
 Specialized syntax is available:
 
 ```js
-import {A, ren} from '{{featUrl}}'
+import {A, ren} from '{{featUrl ren_str}}'
 const {e, en} = ren
 
 console.log(

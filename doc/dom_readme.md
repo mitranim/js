@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as d from '{{featUrl}}'
+import * as d from '{{featUrl dom}}'
 ```
 
 ## API

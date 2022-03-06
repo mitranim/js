@@ -30,7 +30,7 @@ Short overview of features:
 HTML rendering:
 
 ```js
-import {E, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.4/ren_str.mjs'
+import {E, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/ren_str.mjs'
 
 console.log(
   Html({title: `home`, body: Index()})
@@ -60,7 +60,7 @@ function Index() {
 Specialized syntax is available:
 
 ```js
-import {A, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.4/ren_str.mjs'
+import {A, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/ren_str.mjs'
 const {e, en} = ren
 
 console.log(
@@ -98,11 +98,10 @@ The following APIs are exported but undocumented. Check [ren_str.mjs](../ren_str
   * [`function S`](../ren_str.mjs#L6)
   * [`function X`](../ren_str.mjs#L7)
   * [`class RenStr`](../ren_str.mjs#L16)
-  * [`class RenHtmlBase`](../ren_str.mjs#L76)
-  * [`class RenStrSvg`](../ren_str.mjs#L145)
-  * [`class RenStrHtml`](../ren_str.mjs#L149)
-  * [`const ren`](../ren_str.mjs#L170)
-  * [`const VOID_ELEMS`](../ren_str.mjs#L195)
-  * [`function escapeAttr`](../ren_str.mjs#L203)
-  * [`function escapeText`](../ren_str.mjs#L216)
-  * [`function escapeChar`](../ren_str.mjs#L223)
+  * [`class RenHtmlBase`](../ren_str.mjs#L73)
+  * [`class RenStrSvg`](../ren_str.mjs#L141)
+  * [`class RenStrHtml`](../ren_str.mjs#L145)
+  * [`const ren`](../ren_str.mjs#L162)
+  * [`function escapeAttr`](../ren_str.mjs#L187)
+  * [`function escapeText`](../ren_str.mjs#L200)
+  * [`function escapeChar`](../ren_str.mjs#L207)

@@ -250,14 +250,57 @@ export class Res extends Response {
 export function toRou(val) {return l.toInst(val, Rou)}
 
 export class Rou extends l.Emp {
-  constructor(req) {
+  constructor(url) {
     super()
-    this.req = l.reqInst(req, Request)
-    this.url = u.url(req.url)
+    this.url = u.toUrl(url)
     this.groups = undefined
   }
 
   get pathname() {return l.reqStr(this.url.pathname)}
+
+  clear() {this.groups = undefined}
+
+  // Short for "pattern".
+  pat(val) {
+    if (l.isNil(val)) return this.clear(), true
+    if (l.isStr(val)) return this.exa(val)
+    if (l.isReg(val)) return this.reg(val)
+    throw l.errConv(val, `pattern`)
+  }
+
+  // Short for "exact".
+  exa(val) {
+    this.clear()
+    return l.reqStr(val) === this.pathname
+  }
+
+  // Short for "regular expression".
+  reg(val) {
+    this.clear()
+    const mat = this.pathname.match(l.reqReg(val))
+    this.groups = (mat && mat.groups) || undefined
+    return !!mat
+  }
+
+  // Short for "prefix".
+  pre(val) {return s.isSubpath(val, this.pathname)}
+
+  reqGroups() {
+    const val = this.groups
+    if (val) return val
+    throw Error(`unexpected lack of named captures when routing ${this.pathname}`)
+  }
+}
+
+export function toReqRou(val) {return l.toInst(val, ReqRou)}
+
+export class ReqRou extends Rou {
+  constructor(req) {
+    l.reqInst(req, Request)
+    super(req.url)
+    this.req = req
+  }
+
   get method() {return l.reqStr(this.req.method)}
 
   /*
@@ -282,49 +325,14 @@ export class Rou extends l.Emp {
   meth(val) {return this.method === reqMethod(val)}
   someMeth(...val) {return val.some(this.meth, this)}
 
-  /*
-  Usage:
-
-    if (rou.pre(`/api`)) return rou.found(routeApi)
-  */
-  pre(val) {return s.isSubpath(val, this.pathname)}
-
-  pat(val) {
-    if (l.isNil(val)) return this.patNil()
-    if (l.isStr(val)) return this.patStr(val)
-    if (l.isReg(val)) return this.patReg(val)
-    throw l.errConv(val, `pattern`)
-  }
-
-  patNil() {return true}
-
-  patStr(val) {
-    this.groups = undefined
-    return l.reqStr(val) === this.pathname
-  }
-
-  patReg(val) {
-    const mat = this.pathname.match(l.reqReg(val))
-    this.groups = (mat && mat.groups) || undefined
-    return !!mat
-  }
-
-  reqGroups() {
-    const val = this.groups
-    if (val) return val
-    throw Error(`unexpected lack of named captures when routing ${this.pathname}`)
-  }
-
-  run(fun) {return l.reqFun(fun).call(this, this)}
-
   either(fun, def) {
-    const val = this.run(fun)
+    const val = this.call(fun)
     if (l.isPromise(val)) return this.eitherAsync(val, def)
     if (val) return val
-    return this.run(def)
+    return this.call(def)
   }
 
-  async eitherAsync(val, fun) {return (await val) || fun.call(this, this)}
+  async eitherAsync(val, fun) {return (await val) || this.call(fun)}
 
   notFound() {
     const {pathname: path, method: met} = l.reqInst(this, Rou)
@@ -336,7 +344,9 @@ export class Rou extends l.Emp {
     return new Response(`method not allowed: ${met} ${path}`, {status: 405})
   }
 
-  // Needs a more specific name.
+  call(fun) {return l.reqFun(fun).call(this, this)}
+
+  // Shortcut for SPA routing.
   static from(loc, opt) {
     return new this(new Request(l.reqScalar(loc), l.optStruct(opt)))
   }
@@ -371,25 +381,6 @@ export class Ctx extends AbortController {
   handleEvent({type}) {if (type === `abort`) this.deinit()}
   abort() {return this.deinit()}
   deinit() {return this.unlink(), super.abort()}
-}
-
-export function resNotAllowed(rou) {
-  const {pathname: path, method: met} = l.reqInst(rou, Rou)
-  return new Response(`method not allowed: ${met} ${path}`, {status: 405})
-}
-
-export function resNotFound(rou) {
-  const {pathname: path, method: met} = l.reqInst(rou, Rou)
-  return new Response(`not found: ${met} ${path}`, {status: 404})
-}
-
-export function resEmpty() {return new Response()}
-
-export function resErr(err) {
-  return new Response(
-    (err && (err.stack || err.message)) || `unknown error`,
-    {status: 500},
-  )
 }
 
 // Also see `Cookie.fromPairs`.

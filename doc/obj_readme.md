@@ -9,7 +9,7 @@
 ## Usage
 
 ```js
-import * as o from '{{featUrl}}'
+import * as o from '{{featUrl obj}}'
 ```
 
 ## API

@@ -22,7 +22,7 @@ export class RenDom extends rb.RenBase {
   // Short for "fragment". Used internally. Also allows JSX compat.
   frag(...val) {return this.addChi(new DocumentFragment(), ...val)}
 
-  make(tag, props) {return document.createElement(l.reqStr(tag), props)}
+  make(tag, props) {return document.createElement(this.reqTag(tag), props)}
 
   mut(tar, props, ...chi) {
     this.mutProps(tar, props)
@@ -97,7 +97,11 @@ export class RenDom extends rb.RenBase {
     if (l.isStr(src)) return setOpt(tar, key, src, this.strLax(val))
 
     if (l.isPrim(src)) {
-      if (l.isPrim(val)) return setOpt(tar, key, src, norm(val))
+      if (l.isPrim(val)) {
+        if (this.isBool(key)) rb.optAt(key, val, l.isBool)
+        return setOpt(tar, key, src, norm(val))
+      }
+
       throw errMismatch(tar, key, val, src)
     }
 
@@ -143,9 +147,12 @@ export class RenDom extends rb.RenBase {
 
   appendStr(tar, val) {if (l.reqStr(val)) tar.append(val)}
 
-  // Might be stupidly inefficient. Need benchmarks.
+  /*
+  Might be stupidly inefficient. Need benchmarks.
+  Might not be compatible with SVG rendering. Needs SVG testing.
+  */
   appendRaw(tar, val) {
-    const buf = tar.cloneNode()
+    const buf = this.makeDef()
     buf.innerHTML = rb.reqRaw(val)
     while (buf.firstChild) tar.append(buf.firstChild)
   }
@@ -159,7 +166,12 @@ export class RenDom extends rb.RenBase {
     return tar
   }
 
-  isBool(key) {return rb.BOOL_ATTRS.has(key)}
+  replace(tar, ...chi) {
+    reqNode(tar)
+    tar.parentNode.replaceChild(this.frag(...chi), tar)
+  }
+
+  makeDef() {return this.make(`div`)}
 
   loop(tar, val, fun) {
     if ((val = this.deref(val))) {
@@ -171,7 +183,13 @@ export class RenDom extends rb.RenBase {
   }
 }
 
-export class RenDomHtml extends RenDom {}
+// export class RenDomHtml extends RenDom {}
+export class RenDomHtml extends /* @__PURE__ */ rb.MixRenHtml(RenDom) {
+  E(tag, props, ...chi) {
+    if (this.isVoid(tag) && chi.length) throw this.voidErr(tag, chi)
+    return super.E(tag, props, ...chi)
+  }
+}
 RenDomHtml.main = /* @__PURE__ */ new RenDomHtml()
 
 // Easier to remember, and iso with `ren_str.mjs`.
@@ -188,6 +206,8 @@ export class RenDomSvg extends RenDom {
     l.reqStr(tag)
     return document.createElementNS(`http://www.w3.org/2000/svg`, tag, props)
   }
+
+  makeDef() {return this.make(`svg`)}
 }
 RenDomSvg.main = /* @__PURE__ */ new RenDomSvg()
 

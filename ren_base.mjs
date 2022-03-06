@@ -7,7 +7,21 @@ but simpler semantics and better performance.
 
 import * as l from './lang.mjs'
 
-export const BOOL_ATTRS = new Set([`allowfullscreen`, `allowpaymentrequest`, `async`, `autofocus`, `autoplay`, `checked`, `controls`, `default`, `disabled`, `formnovalidate`, `hidden`, `ismap`, `itemscope`, `loop`, `multiple`, `muted`, `nomodule`, `novalidate`, `open`, `playsinline`, `readonly`, `required`, `reversed`, `selected`, `truespeed`])
+/*
+The specification postulates the concept, but where's the standard list?
+Taken from non-authoritative sources.
+
+  https://www.w3.org/TR/html52/infrastructure.html#boolean-attribute
+*/
+export const BOOL_ATTRS = /* @__PURE__ */ new Set([`allowfullscreen`, `allowpaymentrequest`, `async`, `autofocus`, `autoplay`, `checked`, `controls`, `default`, `disabled`, `formnovalidate`, `hidden`, `ismap`, `itemscope`, `loop`, `multiple`, `muted`, `nomodule`, `novalidate`, `open`, `playsinline`, `readonly`, `required`, `reversed`, `selected`, `truespeed`])
+
+/*
+References:
+
+  https://www.w3.org/TR/html52/
+  https://www.w3.org/TR/html52/syntax.html#writing-html-documents-elements
+*/
+export const VOID_ELEMS = /* @__PURE__ */ new Set([`area`, `base`, `br`, `col`, `embed`, `hr`, `img`, `input`, `link`, `meta`, `param`, `source`, `track`, `wbr`])
 
 // Short for "renderer". Base class used by DOM and XML/string renderers.
 export class RenBase extends l.Emp {
@@ -28,10 +42,24 @@ export class RenBase extends l.Emp {
     return l.render(val)
   }
 
+  reqTag(val) {return reqTag(val)}
+  reqAttr(val) {return reqAttr(val)}
+
   get e() {return this[eKey] || (this[eKey] = new Proxy(this, new this.EPh()))}
   get en() {return this[enKey] || (this[enKey] = new Proxy(this, new this.EnPh()))}
   get EPh() {return EPh}
   get EnPh() {return EnPh}
+}
+
+export function MixRenHtml(cls) {
+  return class MixRenHtml extends cls {
+    isBool(key) {return BOOL_ATTRS.has(key)}
+    isVoid(tag) {return VOID_ELEMS.has(tag)}
+
+    voidErr(tag, chi) {
+      return SyntaxError(`expected void element ${l.show(tag)} to have no children, got ${l.show(chi)}`)
+    }
+  }
 }
 
 const eKey = Symbol.for(`e`)
@@ -129,11 +157,12 @@ export class PropBui extends l.Emp {
   }
 
   /*
-  The following methods have 1-1 matching names with known properties or
-  attributes. For "custom" shortcuts, see below.
+  The names of the following methods match 1-1 with known properties
+  or attributes. For "custom" shortcuts, see below.
   */
   button() {return this.type(`button`)}
   charset(val) {return this.set(`charset`, val)}
+  checked(val) {return this.set(`checked`, !!val)}
   class(val) {return this.set(`class`, val)}
   content(val) {return this.set(`content`, val)}
   disabled(val) {return this.set(`disabled`, !!val)}
@@ -225,6 +254,28 @@ export function optAt(key, val, fun) {
   if (l.isNil(val) || fun(val)) return val
   throw TypeError(`invalid property ${l.show(key)}: ` + l.msgType(val, l.showFunName(fun)))
 }
+
+/*
+Should prevent accidental use of VERY invalid tag or attribute names,
+without interfering with rare but valid cases such as non-ASCII XML.
+This is relevant mostly for string rendering, but we also use this in
+DOM rendering for consistency and easier shared testing.
+
+References:
+
+  https://www.w3.org/TR/html52/syntax.html#tag-name
+  https://www.w3.org/TR/html52/infrastructure.html#alphanumeric-ascii-characters
+  https://www.w3.org/TR/html52/syntax.html#elements-attributes
+
+TODO profile and optimize. Might be one of the bottlenecks in string rendering.
+*/
+export function isName(val) {return l.isStr(val) && /^[^\s<>/\\"]+$/.test(val)}
+
+export function isTag(val) {return isName(val)}
+export function reqTag(val) {return isTag(val) ? val : l.convFun(val, isTag)}
+
+export function isAttr(val) {return isName(val)}
+export function reqAttr(val) {return isAttr(val) ? val : l.convFun(val, isAttr)}
 
 function spaced(one, two) {
   one = l.laxStr(one), two = l.laxStr(two)

@@ -18,7 +18,7 @@ const srv = new class Srv extends hd.Srv {
   }
 
   async res(req) {
-    const rou = new h.Rou(req)
+    const rou = new h.ReqRou(req)
 
     return (
       (await this.bro.res(rou)) ||

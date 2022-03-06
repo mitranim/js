@@ -69,6 +69,8 @@ class Pkg extends o.MemGet {
       l.panic(Error(`unable to find feat ${l.show(name)}`))
     )
   }
+
+  featUrl(name) {return this.feat(name).selfUrl}
 }
 
 class Feat extends o.MemGet {
@@ -98,7 +100,7 @@ class Feat extends o.MemGet {
   get idents() {return this.$idents()}
   get identTestLines() {return this.$identTestLines()}
   get url() {return this.pkg.url}
-  get featUrl() {return p.posix.join(this.url, this.codePath)}
+  get selfUrl() {return p.posix.join(this.url, this.codePath)}
   get toc() {return this.$toc()}
   get tocDoc() {return this.$tocDoc()}
   get tocUndoc() {return this.$tocUndoc()}
@@ -210,6 +212,8 @@ ${s.joinLines(i.map(idents, toUndocBullet))}
   selfLink(text) {
     return text ? mdLink(text, this.docRelPath) : this.docRelLink
   }
+
+  featUrl(name) {return this.pkg.featUrl(name)}
 }
 
 class Ident extends o.MemGet {
@@ -233,7 +237,6 @@ class Ident extends o.MemGet {
   get sourceHead() {return mdLink(`source`, this.codeLink)}
   get testHead() {return this.$testHead()}
   get url() {return this.feat.url}
-  get featUrl() {return this.feat.featUrl}
   get doc() {return this.$doc()}
   get docName() {return s.str(toDocName(this.name), `.md`)}
   get docPath() {return p.posix.join(DIR_DOC_SRC, this.feat.name, this.docName)}
@@ -298,6 +301,8 @@ class Ident extends o.MemGet {
     if (!(await this.hasDoc)) throw Error(s.san`missing doc for ${this.addr}`)
     return this.doc
   }
+
+  featUrl(name) {return this.feat.featUrl(name)}
 }
 
 function toDocLinkBullet(val) {return s.str(INDENT, `* `, val.docLink)}

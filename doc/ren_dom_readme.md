@@ -40,7 +40,7 @@ Complemented by:
 Creating new nodes:
 
 ```js
-import {E} from '{{featUrl}}'
+import {E} from '{{featUrl ren_dom}}'
 
 document.body.append(
   E(`div`, {class: `outer`},
@@ -60,7 +60,7 @@ The following elements have been appended:
 Specialized syntax is available:
 
 ```js
-import {A, ren} from '{{featUrl}}'
+import {A, ren} from '{{featUrl ren_dom}}'
 const {e} = ren
 
 document.body.append(
@@ -73,9 +73,9 @@ document.body.append(
 Imperative updates:
 
 ```js
-import {A} from '{{featUrl}}'
-import * as r from '{{featUrl}}'
-import * as dr from '{{url}}/dom_reg.mjs'
+import {A} from '{{featUrl ren_dom}}'
+import * as r from '{{featUrl ren_dom}}'
+import * as dr from '{{featUrl dom_reg}}'
 
 class SomeLink extends dr.HTMLAnchorElement {
   constructor(href, text) {
