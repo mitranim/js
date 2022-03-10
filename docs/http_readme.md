@@ -244,13 +244,13 @@ function route(loc) {
 
   if (rou.pat(`/`)) return PageIndex(rou)
   if (rou.pat(`/articles`)) return PageArticles(rou)
-  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticles(rou)
+  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticle(rou)
   return Page404(rou)
 }
 
-function PageArticles(rou) {
+function PageArticle(rou) {
   const key = l.reqPk(rou.reqGroups().key)
-  return `...`
+  return `page for article ${key}`
 }
 ```
 
@@ -270,14 +270,13 @@ function route(rou) {
 
   if (rou.pat(`/`)) return PageIndex(rou)
   if (rou.pat(`/articles`)) return PageArticles(rou)
-  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticles(rou)
+  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticle(rou)
   return Page404(rou)
 }
 
-function PageArticles(rou) {
+function PageArticle(rou) {
   const key = l.reqPk(rou.reqGroups().key)
-
-  return `... page for article ${key} ...`
+  return `page for article ${key}`
 }
 ```
 
@@ -299,6 +298,8 @@ SPA uses current URL:
 ```js
 const page = route(h.ReqRou.from(window.location))
 ```
+
+For SSR/SPA isomorphic rendering, use the pair of "ren" modules: [`ren_str`](ren_str_readme.md) on the server and [`ren_dom`](ren_dom_readme.md) in browsers.
 
 ### `class Ctx`
 

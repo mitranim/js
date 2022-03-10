@@ -31,12 +31,12 @@ function route(loc) {
 
   if (rou.pat(`/`)) return PageIndex(rou)
   if (rou.pat(`/articles`)) return PageArticles(rou)
-  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticles(rou)
+  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticle(rou)
   return Page404(rou)
 }
 
-function PageArticles(rou) {
+function PageArticle(rou) {
   const key = l.reqPk(rou.reqGroups().key)
-  return `...`
+  return `page for article ${key}`
 }
 ```

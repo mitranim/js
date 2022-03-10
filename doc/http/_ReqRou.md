@@ -10,14 +10,13 @@ function route(rou) {
 
   if (rou.pat(`/`)) return PageIndex(rou)
   if (rou.pat(`/articles`)) return PageArticles(rou)
-  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticles(rou)
+  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticle(rou)
   return Page404(rou)
 }
 
-function PageArticles(rou) {
+function PageArticle(rou) {
   const key = l.reqPk(rou.reqGroups().key)
-
-  return `... page for article ${key} ...`
+  return `page for article ${key}`
 }
 ```
 
@@ -39,3 +38,5 @@ SPA uses current URL:
 ```js
 const page = route(h.ReqRou.from(window.location))
 ```
+
+For SSR/SPA isomorphic rendering, use the pair of "ren" modules: {{featLink ren_str}} on the server and {{featLink ren_dom}} in browsers.
