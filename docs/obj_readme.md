@@ -12,7 +12,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.6/obj.mjs'
 ```
 
 ## API
@@ -55,7 +55,7 @@ When overriding inherited and non-enumerable properties is desirable, use [#`ass
 
 ### `class Dict`
 
-Links: [source](../obj.mjs#L17); [test/example](../test/obj_test.mjs#L199).
+Links: [source](../obj.mjs#L25); [test/example](../test/obj_test.mjs#L199).
 
 Short for "dictionary". Tiny superclass for "model"/"data"/"record" classes. Makes it "safe" to assign arbitrary properties from JSON or other unknown inputs, avoiding conflicts with predefined getters and methods.
 
@@ -134,11 +134,13 @@ new Model(`str`)
 
 The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
 
-  * [`class Strict`](../obj.mjs#L24)
-  * [`class StrictPh`](../obj.mjs#L63)
-  * [`class WeakTag`](../obj.mjs#L81)
-  * [`function memGet`](../obj.mjs#L90)
-  * [`class MemTag`](../obj.mjs#L92)
-  * [`class MemGet`](../obj.mjs#L96)
-  * [`class ClsFunPh`](../obj.mjs#L105)
-  * [`class ClsInstPh`](../obj.mjs#L121)
+  * [`function patchInstances`](../obj.mjs#L17)
+  * [`class ClsDict`](../obj.mjs#L32)
+  * [`class Strict`](../obj.mjs#L37)
+  * [`class StrictPh`](../obj.mjs#L76)
+  * [`class WeakTag`](../obj.mjs#L94)
+  * [`function memGet`](../obj.mjs#L103)
+  * [`class MemTag`](../obj.mjs#L105)
+  * [`class MemGet`](../obj.mjs#L109)
+  * [`class ClsFunPh`](../obj.mjs#L118)
+  * [`class ClsInstPh`](../obj.mjs#L134)

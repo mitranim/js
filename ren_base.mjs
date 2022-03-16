@@ -45,21 +45,21 @@ export class RenBase extends l.Emp {
   reqTag(val) {return reqTag(val)}
   reqAttr(val) {return reqAttr(val)}
 
+  /*
+  All renderers have access to these HTML special cases, but not all renderers
+  actually use them. May revise in the future.
+  */
+  isBool(key) {return BOOL_ATTRS.has(key)}
+  isVoid(tag) {return VOID_ELEMS.has(tag)}
+
+  voidErr(tag, chi) {
+    return SyntaxError(`expected void element ${l.show(tag)} to have no children, got ${l.show(chi)}`)
+  }
+
   get e() {return this[eKey] || (this[eKey] = new Proxy(this, new this.EPh()))}
   get en() {return this[enKey] || (this[enKey] = new Proxy(this, new this.EnPh()))}
   get EPh() {return EPh}
   get EnPh() {return EnPh}
-}
-
-export function MixRenHtml(cls) {
-  return class MixRenHtml extends cls {
-    isBool(key) {return BOOL_ATTRS.has(key)}
-    isVoid(tag) {return VOID_ELEMS.has(tag)}
-
-    voidErr(tag, chi) {
-      return SyntaxError(`expected void element ${l.show(tag)} to have no children, got ${l.show(chi)}`)
-    }
-  }
 }
 
 const eKey = Symbol.for(`e`)

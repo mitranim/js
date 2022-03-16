@@ -529,14 +529,14 @@ export function str(...val) {
   return out
 }
 
-export function strConcat(val) {
-  return l.isNil(val) ? `` : str(...l.reqArr(val))
-}
-
 export function strLax(...val) {
   let out = ``
   for (val of val) out += l.renderLax(val)
   return out
+}
+
+export function strConcat(val) {
+  return l.isNil(val) ? `` : str(...l.reqArr(val))
 }
 
 export function strConcatLax(val) {

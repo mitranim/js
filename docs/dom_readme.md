@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as d from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/dom.mjs'
+import * as d from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.6/dom.mjs'
 ```
 
 ## API
@@ -51,8 +51,9 @@ The following APIs are exported but undocumented. Check [dom.mjs](../dom.mjs).
   * [`function clip`](../dom.mjs#L136)
   * [`function clipNode`](../dom.mjs#L147)
   * [`function selectText`](../dom.mjs#L149)
-  * [`function loc`](../dom.mjs#L160)
-  * [`function toLoc`](../dom.mjs#L161)
-  * [`class Loc`](../dom.mjs#L171)
-  * [`const stateKey`](../dom.mjs#L224)
-  * [`const titleKey`](../dom.mjs#L225)
+  * [`function findAncestor`](../dom.mjs#L160)
+  * [`function loc`](../dom.mjs#L169)
+  * [`function toLoc`](../dom.mjs#L170)
+  * [`class Loc`](../dom.mjs#L180)
+  * [`const stateKey`](../dom.mjs#L233)
+  * [`const titleKey`](../dom.mjs#L234)

@@ -142,7 +142,7 @@ export class RenStrSvg extends RenHtmlBase {}
 RenStrSvg.main = /* @__PURE__ */ new RenStrSvg()
 
 // Should be used for rendering HTML.
-export class RenStrHtml extends /* @__PURE__ */ rb.MixRenHtml(RenHtmlBase) {
+export class RenStrHtml extends RenHtmlBase {
   doc(...val) {return `<!doctype html>` + this.chi(...val)}
 
   elem(tag, props, ...chi) {

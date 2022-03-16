@@ -183,8 +183,7 @@ export class RenDom extends rb.RenBase {
   }
 }
 
-// export class RenDomHtml extends RenDom {}
-export class RenDomHtml extends /* @__PURE__ */ rb.MixRenHtml(RenDom) {
+export class RenDomHtml extends RenDom {
   E(tag, props, ...chi) {
     if (this.isVoid(tag) && chi.length) throw this.voidErr(tag, chi)
     return super.E(tag, props, ...chi)

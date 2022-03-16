@@ -157,6 +157,15 @@ export function selectText(val) {
   }
 }
 
+export function findAncestor(node, cls) {
+  l.reqCls(cls)
+  while (optNode(node)) {
+    if (l.isInst(node, cls)) return node
+    node = node.parentNode
+  }
+  return undefined
+}
+
 export function loc(val) {return new Loc(val)}
 export function toLoc(val) {return l.toInst(val, Loc)}
 

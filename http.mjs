@@ -182,12 +182,12 @@ export class HttpBui extends l.Emp {
 export function reqBui(val) {return new ReqBui(val)}
 
 export class ReqBui extends HttpBui {
-  async fetch() {return new this.Res(await fetch(this.url, this))}
+  async fetch() {return new this.Res(await fetch(l.reqScalar(this.url), this))}
   async fetchOk() {return (await this.fetch()).okRes()}
   async fetchOkText() {return (await this.fetch()).okText()}
   async fetchOkJson() {return (await this.fetch()).okJson()}
 
-  req() {return new Request(this.url, this)}
+  req() {return new Request(l.reqScalar(this.url), this)}
   meth(val) {return this.method = l.laxStr(val) || undefined, this}
   get() {return this.meth(GET)}
   post() {return this.meth(POST)}
@@ -302,6 +302,7 @@ export class ReqRou extends Rou {
   }
 
   get method() {return l.reqStr(this.req.method)}
+  get signal() {return this.req.signal}
 
   /*
   Example (depends on app semantics):

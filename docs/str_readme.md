@@ -23,7 +23,7 @@ Written carefully and with benchmarks, but doesn't claim to be optimal at what i
 Example case conversion:
 
 ```js
-import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.5/str.mjs'
+import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.6/str.mjs'
 
 s.words(`oneTwoThree`).title().snake() === `One_Two_Three`
 
@@ -110,8 +110,8 @@ The following APIs are exported but undocumented. Check [str.mjs](../str.mjs).
   * [`function isRen`](../str.mjs#L500)
   * [`class Embed`](../str.mjs#L503)
   * [`function str`](../str.mjs#L526)
-  * [`function strConcat`](../str.mjs#L532)
-  * [`function strLax`](../str.mjs#L536)
+  * [`function strLax`](../str.mjs#L532)
+  * [`function strConcat`](../str.mjs#L538)
   * [`function strConcatLax`](../str.mjs#L542)
   * [`function san`](../str.mjs#L550)
   * [`function sanLax`](../str.mjs#L552)

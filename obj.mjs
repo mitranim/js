@@ -14,11 +14,24 @@ export function patch(tar, src) {
   return tar
 }
 
+export function patchInstances(tar, src, cls) {
+  l.reqStruct(tar)
+  for (const key of l.structKeys(src)) {
+    if (!l.hasInherited(tar, key)) tar[key] = l.toInst(src[key], cls)
+  }
+  return tar
+}
+
 export class Dict extends l.Emp {
   constructor(val) {super().mut(val)}
+  mut(val) {return this.mutFromStruct(val), this.reinit(), this}
+  mutFromStruct(val) {return patch(this, val)}
   reinit() {}
-  mut(val) {return this.mutFromStruct(val)}
-  mutFromStruct(val) {return patch(this, val), this.reinit(), this}
+}
+
+export class ClsDict extends Dict {
+  get cls() {return Object}
+  mutFromStruct(val) {return patchInstances(this, val, this.cls)}
 }
 
 export class Strict extends l.Emp {
