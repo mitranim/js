@@ -16,6 +16,9 @@ class PersonColl extends co.ClsColl {
 
 function toMap(val) {return new Map(val.entries())}
 
+function testMap(val, exp) {t.eq(toMap(val), exp)}
+
+
 /* Test */
 
 t.test(function test_bset() {
@@ -202,29 +205,43 @@ t.test(function test_pk() {
 })
 
 t.test(function test_Coll() {
-  function test(val, exp) {t.eq(toMap(val), exp)}
+  t.test(function test_addOpt() {
+    function test(val) {
+      t.throws(() => new co.Coll().add(val), TypeError, `expected primary key of ${l.show(val)}, got undefined`)
+      testMap(new co.Coll().addOpt(val), new Map())
+    }
 
-  function none(val) {
-    t.throws(() => new co.Coll().add(val), TypeError, `expected primary key of ${l.show(val)}, got undefined`)
-    test(new co.Coll().addOpt(val), new Map())
-  }
+    test(undefined)
+    test(null)
+    test(10)
+    test(`str`)
+    test([])
+    test({})
+    test({pk: 10})
+    test({pk() {return undefined}})
+  })
 
-  none(undefined)
-  none(null)
-  none(10)
-  none(`str`)
-  none([])
-  none({})
-  none({pk: 10})
-  none({pk() {return undefined}})
+  t.test(function test_add() {
+    const one = new Person({name: `Mira`})
+    const two = new Person({name: `Kara`})
 
-  const one = new Person({name: `Mira`})
-  const two = new Person({name: `Kara`})
+    testMap(
+      new co.Coll().add(one).add(two),
+      new Map().set(`Mira`, one).set(`Kara`, two),
+    )
+  })
 
-  test(
-    new co.Coll().add(one).add(two),
-    new Map().set(`Mira`, one).set(`Kara`, two),
-  )
+  t.test(function test_toJSON() {
+    t.is(
+      JSON.stringify(
+        new co.Coll([
+          new Person({name: `Mira`}),
+          new Person({name: `Kara`}),
+        ]),
+      ),
+      `[{"name":"Mira"},{"name":"Kara"}]`,
+    )
+  })
 })
 
 t.test(function test_ClsColl() {

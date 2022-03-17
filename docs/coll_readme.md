@@ -25,20 +25,20 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as co from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.7/coll.mjs'
+import * as co from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.8/coll.mjs'
 ```
 
 ## API
 
 ### `function bset`
 
-Links: [source](../coll.mjs#L3); [test/example](../test/coll_test.mjs#L21).
+Links: [source](../coll.mjs#L3); [test/example](../test/coll_test.mjs#L24).
 
 Same as `new` [#`Bset`](#class-bset) but syntactically shorter and a function.
 
 ### `function bsetOf`
 
-Links: [source](../coll.mjs#L4); [test/example](../test/coll_test.mjs#L26).
+Links: [source](../coll.mjs#L4); [test/example](../test/coll_test.mjs#L29).
 
 Same as [#`Bset`](#class-bset) `.of` but syntactically shorter and a function. The following is equivalent:
 
@@ -51,7 +51,7 @@ new co.Bset().add(10).add(20).add(30)
 
 ### `class Bset`
 
-Links: [source](../coll.mjs#L6); [test/example](../test/coll_test.mjs#L32).
+Links: [source](../coll.mjs#L6); [test/example](../test/coll_test.mjs#L35).
 
 Short for "better set". Variant of built-in `Set` with additional common-sense behaviors:
 
@@ -61,13 +61,13 @@ Short for "better set". Variant of built-in `Set` with additional common-sense b
 
 ### `function bmap`
 
-Links: [source](../coll.mjs#L37); [test/example](../test/coll_test.mjs#L85).
+Links: [source](../coll.mjs#L32); [test/example](../test/coll_test.mjs#L88).
 
 Same as `new` [#`Bmap`](#class-bmap) but syntactically shorter and a function.
 
 ### `function bmapOf`
 
-Links: [source](../coll.mjs#L38); [test/example](../test/coll_test.mjs#L90).
+Links: [source](../coll.mjs#L33); [test/example](../test/coll_test.mjs#L93).
 
 Same as [#`Bmap`](#class-bmap) `.of` but syntactically shorter and a function. The following is equivalent:
 
@@ -80,7 +80,7 @@ new co.Bmap().set(10, 20).set(30, 40)
 
 ### `class Bmap`
 
-Links: [source](../coll.mjs#L40); [test/example](../test/coll_test.mjs#L104).
+Links: [source](../coll.mjs#L35); [test/example](../test/coll_test.mjs#L107).
 
 Short for "better map". Variant of built-in `Map` with additional common-sense behaviors:
 
@@ -95,7 +95,7 @@ Short for "better map". Variant of built-in `Map` with additional common-sense b
 
 ### `function pkOpt`
 
-Links: [source](../coll.mjs#L86); [test/example](../test/coll_test.mjs#L175).
+Links: [source](../coll.mjs#L82); [test/example](../test/coll_test.mjs#L178).
 
 Short for "primary key optional". Takes an arbitrary value and returns its "primary key". This is used internally by [#`Coll`](#class-coll) and [#`ClsColl`](#class-clscoll).
 
@@ -119,7 +119,7 @@ console.log(co.pkOpt(new Person({name: `Kara`})))
 
 ### `function pk`
 
-Links: [source](../coll.mjs#L89); [test/example](../test/coll_test.mjs#L192).
+Links: [source](../coll.mjs#L85); [test/example](../test/coll_test.mjs#L195).
 
 Short for "primary key". Similar to [#`pkOpt`](#function-pkopt), but the input _must_ produce a non-nil primary key, otherwise this panics. This is used internally by [#`Coll`](#class-coll) and [#`ClsColl`](#class-clscoll).
 
@@ -138,7 +138,7 @@ co.pk(new Person({name: `Mira`}))
 
 ### `class Coll`
 
-Links: [source](../coll.mjs#L95); [test/example](../test/coll_test.mjs#L204).
+Links: [source](../coll.mjs#L91); [test/example](../test/coll_test.mjs#L207).
 
 Short for "collection". Ordered map where values are indexed on their "primary key" determined by the function [#`pk`](#function-pk) which is also exported by this module. Unlike a normal JS map, this is considered a sequence of values, not a sequence of key-value pairs. Order is preserved, iterating the values is decently fast, and the index allows fast access by key without additional iteration.
 
@@ -164,7 +164,7 @@ Coll {
 
 ### `class ClsColl`
 
-Links: [source](../coll.mjs#L115); [test/example](../test/coll_test.mjs#L230).
+Links: [source](../coll.mjs#L114); [test/example](../test/coll_test.mjs#L247).
 
 Variant of [#`Coll`](#class-coll) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsColl`. Elements added with `.add` are idempotently instantiated.
 
@@ -196,7 +196,7 @@ Persons {
 
 ### `class Vec`
 
-Links: [source](../coll.mjs#L122); [test/example](../test/coll_test.mjs#L239).
+Links: [source](../coll.mjs#L121); [test/example](../test/coll_test.mjs#L256).
 
 Short for "vector". Thin wrapper around a plain array. Features:
 
@@ -219,7 +219,7 @@ The overhead of the wrapper is insignificant.
 
 ### `class ClsVec`
 
-Links: [source](../coll.mjs#L145); [test/example](../test/coll_test.mjs#L347).
+Links: [source](../coll.mjs#L144); [test/example](../test/coll_test.mjs#L364).
 
 Variant of [#`Vec`](#class-vec) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsVec`. Elements added with `.add` are idempotently instantiated.
 
@@ -255,6 +255,6 @@ Persons {
 
 The following APIs are exported but undocumented. Check [coll.mjs](../coll.mjs).
 
-  * [`class ClsSet`](../coll.mjs#L32)
-  * [`class ClsMap`](../coll.mjs#L80)
-  * [`class Que`](../coll.mjs#L158)
+  * [`class ClsSet`](../coll.mjs#L27)
+  * [`class ClsMap`](../coll.mjs#L76)
+  * [`class Que`](../coll.mjs#L157)

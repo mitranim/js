@@ -351,7 +351,9 @@ export function maybeSuf(val, suf) {
   return val && (val + suf)
 }
 
-export function split(val, sep) {return val = l.laxStr(val) ? val.split(sep) : []}
+export function split(val, sep) {
+  return val = l.laxStr(val) ? val.split(sep) : []
+}
 
 // Tested indirectly through `Draft`. Needs to be simplified. Needs its own tests.
 export function splitMap(src, reg, fun) {

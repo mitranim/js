@@ -17,13 +17,8 @@ export class Bset extends Set {
     return this
   }
 
-  toArray() {
-    const out = []
-    for (const val of this.values()) out.push(val)
-    return out
-  }
-
   clone() {return new this.constructor(this)}
+  toArray() {return [...this.values()]}
   toJSON() {return this.toArray()}
 
   static of(...val) {return new this(val)}
@@ -57,6 +52,8 @@ export class Bmap extends Map {
     return this
   }
 
+  clone() {return new this.constructor(this)}
+
   toDict() {
     const out = l.npo()
     for (const [key, val] of this.entries()) {
@@ -65,7 +62,6 @@ export class Bmap extends Map {
     return out
   }
 
-  clone() {return new this.constructor(this)}
   toJSON() {return this.toDict()}
 
   // Mirror of `iter.mjs` → `mapOf`.
@@ -109,7 +105,10 @@ export class Coll extends Bmap {
     return this
   }
 
-  [Symbol.iterator]() {return super.values()}
+  toArray() {return [...this.values()]}
+  toJSON() {return this.toArray()}
+
+  [Symbol.iterator]() {return this.values()}
 }
 
 export class ClsColl extends Coll {

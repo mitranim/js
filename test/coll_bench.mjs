@@ -8,6 +8,7 @@ import * as i from '../iter.mjs'
 /* Global */
 
 const bsetLong = co.bset(itc.numArr)
+const bmapLong = co.bmap(itc.numDict)
 
 const numVec = co.Vec.from(itc.numArr)
 t.eq(numVec.toArray(), itc.numArr)
@@ -25,12 +26,15 @@ t.bench(function bench_set_new_Array_long() {l.nop(Array.from(itc.numSet))})
 t.bench(function bench_set_new_Set_long() {l.nop(new Set(itc.numSet))})
 t.bench(function bench_set_new_Bset_long() {l.nop(co.bset(itc.numSet))})
 
-t.bench(function bench_set_to_arr_Set_spread() {l.nop([...itc.numSet])})
-t.bench(function bench_set_to_arr_Set_iter_values() {l.nop(i.values(itc.numSet))})
-t.bench(function bench_set_to_arr_Bset_spread() {l.nop([...bsetLong])})
-t.bench(function bench_set_to_arr_Bset_spread_values() {l.nop([...bsetLong.values()])})
-t.bench(function bench_set_to_arr_Bset_toArray() {l.nop(bsetLong.toArray())})
-t.bench(function bench_set_to_arr_Bset_iter_values() {l.nop(i.values(bsetLong))})
+t.bench(function bench_Set_to_arr_spread() {l.nop([...itc.numSet])})
+t.bench(function bench_Set_to_arr_iter_values() {l.nop(i.values(itc.numSet))})
+
+t.bench(function bench_Bset_to_arr_spread() {l.nop([...bsetLong])})
+t.bench(function bench_Bset_to_arr_spread_values() {l.nop([...bsetLong.values()])})
+t.bench(function bench_Bset_to_arr_iter_values() {l.nop(i.values(bsetLong))})
+t.bench(function bench_Bset_to_arr_toArray() {l.nop(bsetLong.toArray())})
+
+t.bench(function bench_Bmap_to_dict() {l.nop(bmapLong.toDict())})
 
 t.bench(function bench_set_walk_Set() {for (const val of itc.numSet) l.nop(val)})
 t.bench(function bench_set_walk_Bset() {for (const val of bsetLong) l.nop(val)})

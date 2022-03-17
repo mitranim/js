@@ -7,7 +7,9 @@ VERB := $(if $(filter $(verb),true),--verb,)
 PREC := $(if $(filter $(prec),true),--prec,)
 TEST := test/$(FEAT)_test.mjs $(VERB) $(RUN)
 BENCH := test/$(FEAT)_bench.mjs $(VERB) $(PREC) $(RUN)
-DOC := doc/doc.mjs
+CMD_SRV := test/cmd_srv.mjs
+CMD_DOC := doc/cmd_doc.mjs
+CMD_VER_INC := doc/cmd_ver_inc.mjs
 
 # This is a "function" that must be defined with "=", not ":=".
 VER = $(or $(ver),$(shell cat ver))
@@ -25,10 +27,10 @@ bench:
 	$(DENO) $(BENCH)
 
 srv_w:
-	$(DENO) --watch test/srv.mjs
+	$(DENO) --watch $(CMD_SRV)
 
 srv:
-	$(DENO) test/srv.mjs
+	$(DENO) $(CMD_SRV)
 
 lint_w:
 	watchexec -r -c -d=0 -e=mjs -n -- $(MAKE) lint
@@ -37,16 +39,19 @@ lint:
 	deno lint --rules-exclude=no-empty,require-yield,require-await,constructor-super
 
 doc_w:
-	$(DENO) --watch $(DOC) --watch
+	$(DENO) --watch $(CMD_DOC) --watch
 
 doc:
-	$(DENO) $(DOC)
+	$(DENO) $(CMD_DOC)
 
 watch:
 	$(PAR) test_w lint_w doc_w
 
 prep: test
 	$(PAR) lint doc
+
+ver_inc:
+	$(DENO) $(CMD_VER_INC)
 
 ver:
 	printf '%s' "$(VER)" > ver

@@ -15,9 +15,9 @@ Optionally combine with [`dom_reg`](dom_reg_readme.md) for automatic registratio
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.7/obs.mjs'
-import * as od from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.7/obs_dom.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.7/dom_reg.mjs'
+import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.8/obs.mjs'
+import * as od from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.8/obs_dom.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.8/dom_reg.mjs'
 
 const obs = o.obs({msg: `hello!`})
 
