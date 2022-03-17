@@ -9,9 +9,9 @@ import * as l from './lang.mjs'
 export class BaseTimer extends l.Emp {
   constructor(ref) {
     super()
-    this.id = undefined
     this.ref = reqRunner(ref)
     this.run = this.run.bind(this)
+    this.val = undefined
   }
 
   // Override in subclass.
@@ -19,13 +19,13 @@ export class BaseTimer extends l.Emp {
   timerDeinit() {}
 
   run() {try {this.ref.run()} finally {this.unschedule()}}
-  schedule() {if (!this.id) this.id = this.timerInit(this.run)}
+  schedule() {if (!this.val) this.val = this.timerInit(this.run)}
 
   unschedule() {
-    const {id} = this
-    if (id) {
-      this.id = undefined
-      this.timerDeinit(id)
+    const {val} = this
+    if (val) {
+      this.val = undefined
+      this.timerDeinit(val)
     }
   }
 
@@ -35,13 +35,13 @@ export class BaseTimer extends l.Emp {
 // Default recommended timer.
 export class RofTimer extends BaseTimer {
   timerInit(run) {return requestAnimationFrame(run)}
-  timerDeinit(id) {cancelAnimationFrame(id)}
+  timerDeinit(val) {cancelAnimationFrame(val)}
 }
 
 // Fallback alternative to `requestAnimationFrame`.
 export class TimeoutTimer extends BaseTimer {
   timerInit(run) {return setTimeout(run)}
-  timerDeinit(id) {clearTimeout(id)}
+  timerDeinit(val) {clearTimeout(val)}
 }
 
 // Fake/nop timer that always runs synchronously.

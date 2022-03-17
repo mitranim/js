@@ -74,12 +74,12 @@ t.test(function test_Query() {
     empty(``)
     empty(`?`)
 
-    test(`one=two`, new u.Query({one: `two`}))
-    test(`?one=two`, new u.Query({one: [`two`]}))
+    test(`one=two`, u.query({one: `two`}))
+    test(`?one=two`, u.query({one: [`two`]}))
 
     test(
       `one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven`,
-      new u.Query({
+      u.query({
         one: [`two`, `three`],
         four: `five`,
         five: [`six`],
@@ -88,10 +88,17 @@ t.test(function test_Query() {
       })
     )
 
-    t.test(function test_plus_decoding() {
+    t.test(function test_decoding_plus() {
       test(
         `one+two=three+four++five`,
-        new u.Query({'one two': `three four  five`}),
+        u.query({'one two': `three four  five`}),
+      )
+    })
+
+    t.test(function test_decoding_unicode() {
+      test(
+        `?one=%F0%9F%99%82%F0%9F%98%81%F0%9F%98%9B`,
+        u.query({one: [`🙂😁😛`]}),
       )
     })
   })
@@ -110,17 +117,24 @@ t.test(function test_Query() {
     test(`??`, ``)
     test(`??one=two`, `one=two`)
 
-    t.test(function test_date_encoding() {
+    t.test(function test_encoding_date() {
       const val = new Date(1024)
       testStr(u.query().append(`key`, val), `key=1970-01-01T00%3A00%3A01.024Z`)
       testStr(u.query({key: val}), `key=1970-01-01T00%3A00%3A01.024Z`)
       testStr(u.query([[`key`, val]]), `key=1970-01-01T00%3A00%3A01.024Z`)
     })
 
-    t.test(function test_plus_encoding() {
+    t.test(function test_encoding_plus() {
       testStr(
         u.query().append(`one two`, `three four  five`),
         `one+two=three+four++five`,
+      )
+    })
+
+    t.test(function test_encoding_unicode() {
+      testStr(
+        u.query().append(`one`, `🙂😁😛`),
+        `one=%F0%9F%99%82%F0%9F%98%81%F0%9F%98%9B`,
       )
     })
   })
@@ -1348,6 +1362,7 @@ function testUrlSearchGet(test) {
   test(`scheme:?`, ``)
   test(`scheme:?key=val`, `key=val`)
   test(`scheme:path?key=val`, `key=val`)
+  test(`scheme:path?key=%F0%9F%99%82%F0%9F%98%81%F0%9F%98%9B`, `key=%F0%9F%99%82%F0%9F%98%81%F0%9F%98%9B`)
   test(`scheme:/path?key=val`, `key=val`)
 
   test(`scheme://`, ``)
@@ -1392,6 +1407,25 @@ function testUrlSearchSet(test) {
   test(`scheme://host?one=two`, `key=val`, `scheme://host?key=val`)
   test(`scheme://host/path?one=two`, `key=val`, `scheme://host/path?key=val`)
   test(`scheme://host/path?one=two#hash`, `key=val`, `scheme://host/path?key=val#hash`)
+
+  t.test(function test_unicode() {
+    test(``, `key=🙂😁😛`, `?key=%F0%9F%99%82%F0%9F%98%81%F0%9F%98%9B`)
+    test(``, `key=%F0%9F%99%82%F0%9F%98%81%F0%9F%98%9B`, `?key=%F0%9F%99%82%F0%9F%98%81%F0%9F%98%9B`)
+
+    // For comparison. Our behavior should align.
+    t.test(function test_native() {
+      function test(src) {
+        const url = new URL(`https://example.com`)
+        url.search = src
+
+        t.is(url.search, `?key=%F0%9F%99%82%F0%9F%98%81%F0%9F%98%9B`)
+        t.is(url.searchParams.get(`key`), `🙂😁😛`)
+      }
+
+      test(`key=🙂😁😛`)
+      test(`key=%F0%9F%99%82%F0%9F%98%81%F0%9F%98%9B`)
+    })
+  })
 }
 
 if (import.meta.main) console.log(`[test] ok!`)

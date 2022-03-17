@@ -127,13 +127,15 @@ class Reac extends l.Emp {
 
   // Called by `Moebius`.
   run() {this.node.run()}
-  trig() {sc.Sched.main.push(this.loop)}
+  trig() {this.sched.push(this.loop)}
 
   // Internal.
   exec() {this.loop.run()}
   depth() {return nodeDepth(this.node)}
   isLive() {return this.node.isConnected}
   deinit() {this.loop.deinit()}
+
+  get sched() {return sc.Sched.main}
 }
 
 class ElementReac extends Reac {

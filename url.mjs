@@ -119,7 +119,7 @@ export class Url extends l.Emp {
   set pathname(val) {this[pathnameKey] = toPathname(val)}
 
   get search() {return String(this[queryKey])}
-  set search(val) {this[queryKey] = encodeURI(unSearch(l.laxStr(val), this.Query.name))}
+  set search(val) {this[queryKey] = queryEncIdemp(unSearch(l.laxStr(val), this.Query.name))}
 
   get query() {
     let val = this[queryKey]
@@ -406,4 +406,12 @@ export function queryEnc(val) {
   val = encodeURIComponent(val)
   if (val.includes(`%20`)) val = val.replace(/%20/g, `+`)
   return val
+}
+
+/*
+Needs additional benchmarks. Our current benchmarks did not detect a regression
+when this was added.
+*/
+export function queryEncIdemp(val) {
+  return encodeURI(decodeURIComponent(val))
 }
