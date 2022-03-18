@@ -44,7 +44,7 @@ export class DirBase extends l.Emp {
   async resolveSiteFile(url) {
     url = u.url(url)
 
-    const info = this.resolveFile(url)
+    const info = await this.resolveFile(url)
     if (info) return info
 
     if (p.posix.ext(url.pathname)) return undefined
@@ -132,9 +132,14 @@ export class Dirs extends Array {
     return this.procure(function iter(dir) {return dir.resolveSiteFile(val)})
   }
 
-  resolveSiteFileWithNotFound(val) {
+  resolveNotFound(val) {
     val = u.url(val)
-    return this.procure(function iter(dir) {return dir.resolveSiteFileWithNotFound(val)})
+    return this.procure(function iter(dir) {return dir.resolveNotFound(val)})
+  }
+
+  async resolveSiteFileWithNotFound(val) {
+    val = u.url(val)
+    return (await this.resolveSiteFile(val)) || (await this.resolveNotFound(val))
   }
 
   async procure(fun) {
