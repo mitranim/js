@@ -11,6 +11,8 @@ async function* agen() {unreachable()}
 const inherit = Object.create
 function True() {return true}
 function False() {return false}
+class EqAlways extends l.Emp {eq() {return true}}
+class EqNever extends l.Emp {eq() {return false}}
 
 /* Test */
 
@@ -896,6 +898,8 @@ t.test(function test_isScalar() {
 })
 
 t.test(function test_isInst() {
+  // The `reqCls` assertion has been removed for performance reasons.
+  //
   // t.throws(l.isInst, TypeError, `expected variant of isCls, got undefined`)
   // t.throws(() => l.isInst({}), TypeError, `expected variant of isCls, got undefined`)
   // t.throws(() => l.isInst({}, `str`), TypeError, `expected variant of isCls, got "str"`)
@@ -909,6 +913,16 @@ t.test(function test_isInst() {
   t.ok(l.isInst([], Object))
   t.ok(l.isInst([], Array))
   t.ok(l.isInst({}, Object))
+})
+
+t.test(function test_isEq() {
+  t.no(l.isEq())
+  t.no(l.isEq({}))
+  t.no(l.isEq(EqAlways))
+  t.no(l.isEq(EqNever))
+
+  t.ok(l.isEq(new EqAlways()))
+  t.ok(l.isEq(new EqNever()))
 })
 
 t.test(function test_isArrOf() {
@@ -994,6 +1008,54 @@ t.test(function test_hasMeth() {
   t.ok(l.hasMeth(l.nop, `call`))
   t.ok(l.hasMeth(l.nop, `bind`))
   t.ok(l.hasMeth({key() {}}, `key`))
+})
+
+t.test(function test_eq() {
+  /*
+  Note: `l.eq` does NOT perform a structural comparison, which would be
+  expensive and often incorrect. It uses referential equality via `l.is`,
+  falling back on custom `.eq()` in classes that implement this interface.
+  This approach is not universal, but avoids: ludicrous inefficienties
+  such as walking arbitrarily large structs; semantic errors such as
+  considering all promises to be equal.
+  */
+  t.test(function test_different() {
+    function test(one, two) {t.no(l.eq(one, two))}
+
+    test(undefined, null)
+    test(undefined, NaN)
+    test([], [])
+    test({}, {})
+    test(l.npo(), l.npo())
+    test(new EqNever(), new EqNever())
+  })
+
+  t.test(function test_same() {
+    t.test(function test_one() {
+      function test(val) {t.ok(l.eq(val, val))}
+
+      test()
+      test(null)
+      test(false)
+      test(true)
+      test(NaN)
+      test(10)
+      test(-10)
+      test(``)
+      test(`str`)
+      test(l.nop)
+      test(new EqAlways())
+      test(new EqNever())
+    })
+
+    t.test(function test_two() {
+      function test(one, two) {t.ok(l.eq(one, two))}
+
+      test(l.nop, l.nop)
+      test(-0, +0)
+      test(new EqAlways(), new EqAlways())
+    })
+  })
 })
 
 t.test(function test_setProto() {

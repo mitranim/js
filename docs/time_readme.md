@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as ti from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.8/time.mjs'
+import * as ti from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.9/time.mjs'
 ```
 
 ## API
@@ -61,13 +61,14 @@ The following APIs are exported but undocumented. Check [time.mjs](../time.mjs).
   * [`function hourToSec`](../time.mjs#L173)
   * [`function hourToMin`](../time.mjs#L174)
   * [`class DateTime`](../time.mjs#L177)
-  * [`class DateTs`](../time.mjs#L194)
-  * [`class DateIso`](../time.mjs#L198)
-  * [`class DateShort`](../time.mjs#L209)
-  * [`class DateShortJson`](../time.mjs#L220)
-  * [`class Sec`](../time.mjs#L224)
-  * [`class Pico`](../time.mjs#L267)
-  * [`class Nano`](../time.mjs#L272)
-  * [`class Micro`](../time.mjs#L277)
-  * [`class Milli`](../time.mjs#L282)
-  * [`function after`](../time.mjs#L287)
+  * [`class DateTs`](../time.mjs#L203)
+  * [`class DateIso`](../time.mjs#L207)
+  * [`class DateShort`](../time.mjs#L218)
+  * [`class DateShortJson`](../time.mjs#L222)
+  * [`class Finite`](../time.mjs#L227)
+  * [`class Sec`](../time.mjs#L263)
+  * [`class Pico`](../time.mjs#L302)
+  * [`class Nano`](../time.mjs#L307)
+  * [`class Micro`](../time.mjs#L312)
+  * [`class Milli`](../time.mjs#L317)
+  * [`function after`](../time.mjs#L322)

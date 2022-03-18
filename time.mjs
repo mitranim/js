@@ -185,6 +185,15 @@ export class DateTime extends Date {
   onlyValid() {return this.isValid() ? this : undefined}
 
   eq(val) {return l.is(this.valueOf(), tsNum(val))}
+
+  dateStr() {
+    if (!this.isValid()) return ``
+    return this.yearStr() + `-` + this.monthStr() + `-` + this.dayStr()
+  }
+
+  yearStr() {return zeroed(this.getFullYear(), 4)}
+  monthStr() {return zeroed(this.getMonth() + 1, 2)}
+  dayStr() {return zeroed(this.getDate(), 2)}
 }
 
 /*
@@ -207,29 +216,56 @@ Compatible with `<input type=date>`. Doesn't automatically shorten for JSON,
 to minimize information loss. Use `DateShortJson` for that.
 */
 export class DateShort extends DateTime {
-  toString() {
-    if (!this.isValid()) return ``
-    return this.yearStr() + `-` + this.monthStr() + `-` + this.dateStr()
-  }
-
-  yearStr() {return zeroed(this.getFullYear(), 4)}
-  monthStr() {return zeroed(this.getMonth() + 1, 2)}
-  dateStr() {return zeroed(this.getDate(), 2)}
+  toString() {return this.dateStr()}
 }
 
 export class DateShortJson extends DateShort {
   toJSON() {return this.isValid() ? this.toString() : null}
 }
 
-export class Sec extends Number {
+// This is not time-specific. TODO move out, but where?
+export class Finite extends Number {
   constructor(val) {super(toFin(val))}
-  get $() {return this.valueOf()}
 
-  picoStr() {return this.fmt(this.pico()) + ` ps`}
-  nanoStr() {return this.fmt(this.nano()) + ` ns`}
-  microStr() {return this.fmt(this.micro()) + ` ` + MICRO_SIGN + `s`}
-  milliStr() {return this.fmt(this.milli()) + ` ms`}
-  secStr() {return this.fmt(this.sec()) + ` s`}
+  eq(val) {return this.valueOf() === toNum(val)}
+
+  format(val) {return this.constructor.format(val)}
+
+  /*
+  Performance observed in V8:
+
+    * `Number.prototype.toString` is WAY faster than `NumberFormat`,
+      at least for integers.
+    * `Number.prototype.toLocaleString` is WAY slower than `NumberFormat`.
+
+  We resort to `NumberFormat` when `.toString` would have used the exponent
+  notation, which we aim to avoid.
+  */
+  static format(val) {
+    l.reqFin(val)
+    if (Number.isSafeInteger(val)) return val.toString()
+    return this.fmt.format(val)
+  }
+}
+
+/*
+Reference:
+
+  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
+
+Magic "20" seems to be the maximum allowed value. `Infinity` is not accepted.
+*/
+Finite.fmt = /* @__PURE__ */ new Intl.NumberFormat(`en-US`, {
+  useGrouping: false,
+  maximumFractionDigits: 20,
+})
+
+export class Sec extends Finite {
+  picoStr() {return this.format(this.pico()) + ` ps`}
+  nanoStr() {return this.format(this.nano()) + ` ns`}
+  microStr() {return this.format(this.micro()) + ` ` + MICRO_SIGN + `s`}
+  milliStr() {return this.format(this.milli()) + ` ms`}
+  secStr() {return this.format(this.sec()) + ` s`}
 
   pico() {return this.conv(PICO_IN_SEC)}
   nano() {return this.conv(NANO_IN_SEC)}
@@ -240,8 +276,7 @@ export class Sec extends Number {
   hour() {return this.conv(1 / SEC_IN_HOUR)}
 
   mod() {return 1}
-  conv(mul) {return this.$ * (l.reqNum(mul) / l.reqNum(this.mod()))}
-  fmt(val) {return numStr(val)}
+  conv(mul) {return this.valueOf() * (l.reqNum(mul) / l.reqNum(this.mod()))}
 
   dur() {
     let rem = this.sec()
@@ -296,39 +331,13 @@ export function after(ms, sig) {
 // but is considered a distinct code unit.
 const MICRO_SIGN = `µ`
 
-function toFin(val) {
-  if (l.isFin(val)) return val
-  if (l.isInst(val, Number)) return toFin(val.valueOf())
-  throw l.errFun(val, l.isFin)
+function toFin(val) {return l.reqFin(toNum(val))}
+
+function toNum(val) {
+  if (l.isNum(val)) return val
+  if (l.isInst(val, Number)) return l.reqNum(val.valueOf())
+  throw l.errFun(val, l.isNum)
 }
-
-/*
-Performance observed in V8:
-
-  * `Number.prototype.toString` is WAY faster than `NumberFormat`,
-    at least for integers.
-  * `Number.prototype.toLocaleString` is WAY slower than `NumberFormat`.
-
-We resort to `NumberFormat` when `.toString` would have used the exponent
-notation, which we aim to avoid.
-*/
-function numStr(val) {
-  l.reqFin(val)
-  if (Number.isSafeInteger(val)) return val.toString()
-  return numFmt.format(val)
-}
-
-/*
-Reference:
-
-  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
-
-Magic "20" seems to be the maximum allowed value. `Infinity` is not accepted.
-*/
-const numFmt = /* @__PURE__ */ new Intl.NumberFormat([`en-US`], {
-  useGrouping: false,
-  maximumFractionDigits: 20,
-})
 
 function zeroed(src, len) {return l.reqInt(src).toString().padStart(len, `0`)}
 

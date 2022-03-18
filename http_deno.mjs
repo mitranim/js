@@ -161,11 +161,14 @@ export class HttpFileInfo extends io.FileInfo {
 
   stream() {return this.HttpFileStream.open(this.path)}
 
-  // Currently unused, may consider automatically adding to headers.
+  // Not used automatically. May be used by user code.
   etag() {
     const {size, mtime, birthtime} = this.stat
     return s.dashed(birthtime?.valueOf(), mtime?.valueOf(), size)
   }
+
+  etagQuoted() {return JSON.stringify(l.reqStr(this.etag()))}
+  etagQuotedWeak() {return s.maybePre(this.etagQuoted(), `W/`)}
 
   get HttpFileStream() {return HttpFileStream}
 }

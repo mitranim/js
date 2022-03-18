@@ -19,6 +19,7 @@ export const DELETE = `DELETE`
 
 export const HEAD_CACHE_CONTROL = `cache-control`
 export const HEAD_CONTENT_TYPE = `content-type`
+export const HEAD_ETAG = `etag`
 export const HEAD_ACCEPT = `accept`
 export const HEAD_ORIGIN = `origin`
 export const HEAD_HOST = `host`
@@ -489,6 +490,9 @@ export class Cookie extends l.Emp {
     buf = this.join(buf, `same-site`, this.sameSite)
     return buf
   }
+
+  static domPairs() {return this.fromPairs(document.cookie)}
+  static domMap() {return this.toMap(document.cookie)}
 
   static fromPair(src) {
     const pair = cookieSplitPair(src)

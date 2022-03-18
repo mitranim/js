@@ -37,6 +37,17 @@ properties, but the prototype always has `.constructor`.
 */
 class EmpSub extends l.Emp {}
 
+class EqAlways extends l.Emp {eq() {return true}}
+const someEqAlways0 = new EqAlways()
+const someEqAlways1 = new EqAlways()
+
+class EqNever extends l.Emp {eq() {return false}}
+const someEqNever0 = new EqNever()
+const someEqNever1 = new EqNever()
+
+const someNonEq0 = Object.create(null)
+const someNonEq1 = Object.create(null)
+
 /* Util */
 
 function* gen(iter) {if (iter) for (const val of iter) yield val}
@@ -124,6 +135,11 @@ t.bench(function bench_isPromise_miss_prim() {l.nop(l.isPromise(someStr))})
 t.bench(function bench_isPromise_miss_obj() {l.nop(l.isPromise(someArr))})
 t.bench(function bench_isPromise_hit() {l.nop(l.isPromise(someProm))})
 
+t.bench(function bench_isEq_nil() {l.nop(l.isEq())})
+t.bench(function bench_isEq_miss_prim() {l.nop(l.isEq(`str`))})
+t.bench(function bench_isEq_miss_obj() {l.nop(l.isEq(someProm))})
+t.bench(function bench_isEq_hit() {l.nop(l.isEq(someEqAlways0))})
+
 t.bench(function bench_hasMeth_nil() {l.nop(l.hasMeth(undefined, `toISOString`))})
 t.bench(function bench_hasMeth_miss_prim() {l.nop(l.hasMeth(someStr, `toISOString`))})
 t.bench(function bench_hasMeth_miss_fun() {l.nop(l.hasMeth(l.nop, `toISOString`))})
@@ -193,5 +209,24 @@ const emptyNotFrozen = new l.Emp()
 const emptyFrozen = Object.freeze(new l.Emp())
 t.bench(function bench_Object_isFrozen_miss() {l.nop(Object.isFrozen(emptyNotFrozen))})
 t.bench(function bench_Object_isFrozen_hit() {l.nop(Object.isFrozen(emptyFrozen))})
+
+t.bench(function bench_eq_miss_prim_nil() {l.nop(l.eq(undefined, null))})
+t.bench(function bench_eq_hit_prim_nil() {l.nop(l.eq())})
+
+t.bench(function bench_eq_miss_prim_str() {l.nop(l.eq(`one`, `two`))})
+t.bench(function bench_eq_hit_prim_str() {l.nop(l.eq(`one`, `one`))})
+
+t.bench(function bench_eq_miss_prim_num() {l.nop(l.eq(10, 20))})
+t.bench(function bench_eq_hit_prim_num() {l.nop(l.eq(10, 10))})
+
+t.bench(function bench_eq_miss_obj_and_prim() {l.nop(l.eq(someProm, undefined))})
+t.bench(function bench_eq_miss_prim_and_obj() {l.nop(l.eq(undefined, someProm))})
+t.bench(function bench_eq_miss_obj_and_obj_no_eq() {l.nop(l.eq(someNonEq0, someNonEq1))})
+t.bench(function bench_eq_miss_obj_and_obj_different_constructor() {l.nop(l.eq(someEqAlways0, someEqNever0))})
+
+t.bench(function bench_eq_hit_obj_same_no_eq() {l.nop(l.eq(someNonEq0, someNonEq0))})
+t.bench(function bench_eq_hit_obj_same_has_eq() {l.nop(l.eq(someEqAlways0, someEqAlways0))})
+t.bench(function bench_eq_hit_obj_diff_eq_true() {l.nop(l.eq(someEqAlways0, someEqAlways1))})
+t.bench(function bench_eq_hit_obj_diff_eq_false() {l.nop(l.eq(someEqNever0, someEqNever1))})
 
 if (import.meta.main) t.deopt(), t.benches()

@@ -193,27 +193,27 @@ export function optMap(val) {return isNil(val) ? val : reqMap(val)}
 export function onlyMap(val) {return isMap(val) ? val : undefined}
 export function laxMap(val) {return isNil(val) ? new Map() : reqMap(val)}
 
-export function isPromise(val) {return hasMeth(val, `then`)}
+export function isPromise(val) {return isObj(val) && `then` in val && isFun(val.then)}
 export function reqPromise(val) {return isPromise(val) ? val : convFun(val, isPromise)}
 export function optPromise(val) {return isNil(val) ? val : reqPromise(val)}
 export function onlyPromise(val) {return isPromise(val) ? val : undefined}
 
-export function isIter(val) {return hasMeth(val, Symbol.iterator)}
+export function isIter(val) {return isObj(val) && Symbol.iterator in val && isFun(val[Symbol.iterator])}
 export function reqIter(val) {return isIter(val) ? val : convFun(val, isIter)}
 export function optIter(val) {return isNil(val) ? val : reqIter(val)}
 export function onlyIter(val) {return isIter(val) ? val : undefined}
 
-export function isIterAsync(val) {return hasMeth(val, Symbol.asyncIterator)}
+export function isIterAsync(val) {return isObj(val) && Symbol.asyncIterator in val && isFun(val[Symbol.asyncIterator])}
 export function reqIterAsync(val) {return isIterAsync(val) ? val : convFun(val, isIterAsync)}
 export function optIterAsync(val) {return isNil(val) ? val : reqIterAsync(val)}
 export function onlyIterAsync(val) {return isIterAsync(val) ? val : undefined}
 
-export function isIterator(val) {return isIter(val) && hasMeth(val, `next`)}
+export function isIterator(val) {return isIter(val) && hasNext(val)}
 export function reqIterator(val) {return isIterator(val) ? val : convFun(val, isIterator)}
 export function optIterator(val) {return isNil(val) ? val : reqIterator(val)}
 export function onlyIterator(val) {return isIterator(val) ? val : undefined}
 
-export function isIteratorAsync(val) {return isIterAsync(val) && hasMeth(val, `next`)}
+export function isIteratorAsync(val) {return isIterAsync(val) && hasNext(val)}
 export function reqIteratorAsync(val) {return isIteratorAsync(val) ? val : convFun(val, isIteratorAsync)}
 export function optIteratorAsync(val) {return isNil(val) ? val : reqIteratorAsync(val)}
 export function onlyIteratorAsync(val) {return isIteratorAsync(val) ? val : undefined}
@@ -267,10 +267,15 @@ export function optScalarOpt(val) {return isNil(val) ? val : reqScalarOpt(val)}
 export function onlyScalarOpt(val) {return isScalarOpt(val) ? val : undefined}
 
 // Custom interface for iterables that wrap arrays.
-export function isArrble(val) {return isIter(val) && hasMeth(val, `toArray`)}
+export function isArrble(val) {return isIter(val) && `toArray` in val && isFun(val.toArray)}
 export function reqArrble(val) {return isArrble(val) ? val : convFun(val, isArrble)}
 export function optArrble(val) {return isNil(val) ? val : reqArrble(val)}
 export function onlyArrble(val) {return isArrble(val) ? val : undefined}
+
+export function isEq(val) {return isObj(val) && `eq` in val && isFun(val.eq)}
+export function reqEq(val) {return isEq(val) ? val : convFun(val, isEq)}
+export function optEq(val) {return isNil(val) ? val : reqEq(val)}
+export function onlyEq(val) {return isEq(val) ? val : undefined}
 
 export function isArrOf(val, fun) {
   reqFun(fun)
@@ -377,6 +382,13 @@ export function hasOwnEnum(val, key) {return isComp(val) && Object.prototype.pro
 export function hasInherited(val, key) {return hasIn(val, key) && !hasOwnEnum(val, key)}
 export function hasMeth(val, key) {return hasIn(val, key) && isFun(val[key])}
 
+export function eq(one, two) {
+  if (is(one, two)) return true
+  if (!isEq(one)) return false
+  const con = getCon(two)
+  return !!con && (con === getCon(one)) && one.eq(two)
+}
+
 /* Cls */
 
 export function setProto(tar, cls) {
@@ -415,6 +427,7 @@ export function dec(val) {return val - 1}
 function isDictProto(val) {return isNil(val) || val === Object.prototype}
 function isFunType(val, name) {return isFun(val) && val.constructor.name === name}
 function instDesc(val) {return isFun(val) ? `instance of ${showFunName(val)} ` : ``}
+function hasNext(val) {return `next` in val && isFun(val.next)}
 
 function reqValid(fun) {
   if (!isFun(fun)) {
@@ -468,11 +481,10 @@ export function get(val, key) {return isComp(val) && key in val ? val[key] : und
 export function reqIn(ref, key) {if (!hasIn(ref, key)) throw errIn(ref, key)}
 export function reqGet(ref, key) {return reqIn(ref, key), ref[key]}
 
-function getProto(val) {return isObj(val) ? Object.getPrototypeOf(val) : undefined}
-function getCon(val) {return get(getProto(val), `constructor`)}
 function getName(val) {return get(val, `name`)}
 function getLength(val) {return get(val, `length`)}
 function getSize(val) {return get(val, `size`)}
+function getCon(val) {return get(val, `constructor`)}
 
 // This is actually faster than default rendering.
 function renderDate(val) {

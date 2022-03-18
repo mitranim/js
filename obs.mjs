@@ -251,7 +251,7 @@ export class Ph extends l.Emp {
     const had = l.hasOwnEnum(tar, key)
     const prev = tar[key]
     tar[key] = val
-    if (Object.is(prev, val)) return false
+    if (l.eq(prev, val)) return false
     if (had) this.drop(prev)
     return true
   }

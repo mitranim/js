@@ -185,6 +185,19 @@ function testDurResetFromStruct(make) {
   durNonZeros.forEach(test)
 }
 
+t.test(function test_DateTime() {
+  t.test(function test_isValid() {
+    t.ok(new ti.DateTime().isValid())
+    t.no(new ti.DateTime(NaN).isValid())
+  })
+
+  t.test(function test_dateStr() {
+    testDateShort(function test(src, exp) {
+      t.is(new ti.DateTime(src).dateStr(), exp)
+    })
+  })
+})
+
 t.test(function test_DateShort() {
   testDateShortString(ti.DateShort)
 
