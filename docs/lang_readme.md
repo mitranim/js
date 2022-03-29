@@ -104,7 +104,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.10/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.11/lang.mjs'
 ```
 
 ## API
@@ -610,7 +610,7 @@ const x = someTest ? someValue : f.panic(Error(`unreachable`))
 
 ### `function vac`
 
-Links: [source](../lang.mjs#L370); [test/example](../test/lang_test.mjs#L1655).
+Links: [source](../lang.mjs#L370); [test/example](../test/lang_test.mjs#L1660).
 
 Complements [#`isVac`](#function-isvac). Returns `undefined` if the input is vacuous, otherwise returns the input as-is.
 
@@ -730,73 +730,73 @@ ref.toString === undefined
 
 ### `function add`
 
-Links: [source](../lang.mjs#L412); [test/example](../test/lang_test.mjs#L1551).
+Links: [source](../lang.mjs#L412); [test/example](../test/lang_test.mjs#L1556).
 
 Same as `+`.
 
 ### `function sub`
 
-Links: [source](../lang.mjs#L413); [test/example](../test/lang_test.mjs#L1557).
+Links: [source](../lang.mjs#L413); [test/example](../test/lang_test.mjs#L1562).
 
 Same as `-`.
 
 ### `function mul`
 
-Links: [source](../lang.mjs#L414); [test/example](../test/lang_test.mjs#L1563).
+Links: [source](../lang.mjs#L414); [test/example](../test/lang_test.mjs#L1568).
 
 Same as `*`.
 
 ### `function div`
 
-Links: [source](../lang.mjs#L415); [test/example](../test/lang_test.mjs#L1569).
+Links: [source](../lang.mjs#L415); [test/example](../test/lang_test.mjs#L1574).
 
 Same as `/`.
 
 ### `function rem`
 
-Links: [source](../lang.mjs#L416); [test/example](../test/lang_test.mjs#L1575).
+Links: [source](../lang.mjs#L416); [test/example](../test/lang_test.mjs#L1580).
 
 Same as `%`.
 
 ### `function lt`
 
-Links: [source](../lang.mjs#L417); [test/example](../test/lang_test.mjs#L1583).
+Links: [source](../lang.mjs#L417); [test/example](../test/lang_test.mjs#L1588).
 
 Same as `<`.
 
 ### `function gt`
 
-Links: [source](../lang.mjs#L418); [test/example](../test/lang_test.mjs#L1594).
+Links: [source](../lang.mjs#L418); [test/example](../test/lang_test.mjs#L1599).
 
 Same as `>`.
 
 ### `function lte`
 
-Links: [source](../lang.mjs#L419); [test/example](../test/lang_test.mjs#L1605).
+Links: [source](../lang.mjs#L419); [test/example](../test/lang_test.mjs#L1610).
 
 Same as `<=`.
 
 ### `function gte`
 
-Links: [source](../lang.mjs#L420); [test/example](../test/lang_test.mjs#L1616).
+Links: [source](../lang.mjs#L420); [test/example](../test/lang_test.mjs#L1621).
 
 Same as `>=`.
 
 ### `function neg`
 
-Links: [source](../lang.mjs#L421); [test/example](../test/lang_test.mjs#L1627).
+Links: [source](../lang.mjs#L421); [test/example](../test/lang_test.mjs#L1632).
 
 Arithmetic negation. Same as unary `-`.
 
 ### `function inc`
 
-Links: [source](../lang.mjs#L422); [test/example](../test/lang_test.mjs#L1639).
+Links: [source](../lang.mjs#L422); [test/example](../test/lang_test.mjs#L1644).
 
 Increments by `1`.
 
 ### `function dec`
 
-Links: [source](../lang.mjs#L423); [test/example](../test/lang_test.mjs#L1647).
+Links: [source](../lang.mjs#L423); [test/example](../test/lang_test.mjs#L1652).
 
 Decrements by `1`.
 

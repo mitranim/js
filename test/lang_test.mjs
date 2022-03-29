@@ -1511,6 +1511,12 @@ t.test(function test_val() {
 })
 
 t.test(function test_panic() {
+  t.test(function test_nil() {
+    l.panic()
+    l.panic(undefined)
+    l.panic(null)
+  })
+
   /*
   This doesn't use `t.throws` because it would enforce throwing instances of
   `Error`, while `l.panic` has no such restrictions.
@@ -1526,7 +1532,6 @@ t.test(function test_panic() {
     }
   }
 
-  test()
   test(10)
   test(`str`)
   test(Error(`err`))

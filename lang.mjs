@@ -364,7 +364,7 @@ export function falsy(val) {return !val}
 export function nop() {}
 export function id(val) {return val}
 export function val(src) {return function val() {return src}}
-export function panic(val) {throw val}
+export function panic(val) {if (isSome(val)) throw val}
 export function True() {return true}
 export function False() {return false}
 export function vac(val) {return isVac(val) ? undefined : val}

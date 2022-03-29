@@ -510,11 +510,15 @@ export class Cookie extends l.Emp {
   }
 
   static del(name) {
-    if (!optCookieName(name)) return
+    reqCookieName(name)
 
-    new this()
+    const domain = window.location.hostname
+
+    return new this()
       .setName(name).expired().install()
       .setPath(`/`).install()
+      .setDomain(domain).install()
+      .setDomainSub(domain).install()
   }
 }
 
@@ -540,9 +544,12 @@ const sigKey = Symbol.for(`sig`)
 
 function isCookieName(val) {return l.isStr(val) && !/[;=]/.test(val)}
 function optCookieName(val) {return l.opt(val, isCookieName)}
+function reqCookieName(val) {return l.req(val, isCookieName)}
 
 function isCookieValue(val) {return l.isStr(val) && !/[;]/.test(val)}
 function optCookieValue(val) {return l.opt(val, isCookieValue)}
+// function reqCookieValue(val) {return l.req(val, isCookieValue)}
 
 function isCookieAttr(val) {return l.isStr(val) && !/[\s;]/.test(val)}
 function optCookieAttr(val) {return l.opt(val, isCookieAttr)}
+// function reqCookieAttr(val) {return l.req(val, isCookieAttr)}
