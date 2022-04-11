@@ -17,7 +17,7 @@
     "eqeqeq": ["error", "always", {"null": "never"}],
     "no-unused-vars": ["error", {"argsIgnorePattern": "^_", "varsIgnorePattern": "^_"}],
 
-    // Copy of "eslint:recommended".
+    /* Copy of "eslint:recommended". */
     "consistent-return": "error",
     "constructor-super": "error",
     "for-direction": "error",

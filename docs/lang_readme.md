@@ -104,7 +104,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.11/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.12/lang.mjs'
 ```
 
 ## API

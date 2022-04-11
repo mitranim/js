@@ -65,9 +65,25 @@ export class Dur extends l.Emp {
   // `.resetFromStruct`, but the costs are minor and not worth the lines.
   reset(val) {
     if (l.isNil(val)) return this.clear()
+    if (l.isNum(val)) return this.resetFromNum(val)
     if (l.isStr(val)) return this.resetFromStr(val)
     if (l.isStruct(val)) return this.resetFromStruct(val)
     throw l.errInst(val, this)
+  }
+
+  // Assumes that the input is in milliseconds.
+  resetFromNum(val) {
+    l.reqNum(val)
+    this.clear()
+
+    this.hours = Math.trunc(val / MS_IN_HOUR)
+    val = val % MS_IN_HOUR
+
+    this.minutes = Math.trunc(val / MS_IN_MIN)
+    val = val % MS_IN_MIN
+
+    this.seconds = Math.trunc(val / MS_IN_SEC)
+    return this
   }
 
   resetFromStr(val) {
@@ -278,17 +294,7 @@ export class Sec extends Finite {
   mod() {return 1}
   conv(mul) {return this.valueOf() * (l.reqNum(mul) / l.reqNum(this.mod()))}
 
-  dur() {
-    let rem = this.sec()
-
-    const hour = Math.trunc(rem / SEC_IN_HOUR)
-    rem = rem % SEC_IN_HOUR
-
-    const min = Math.trunc(rem / SEC_IN_MIN)
-    rem = rem % SEC_IN_MIN
-
-    return new this.Dur().setHours(hour).setMinutes(min).setSeconds(rem)
-  }
+  dur() {return new this.Dur(this.milli())}
 
   toString() {return this.secStr()}
 
