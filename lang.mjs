@@ -288,7 +288,7 @@ export function reqArrOf(val, fun) {
   return val
 }
 
-export function optArrOf(val, fun) {return isNil(val) ? val : reqArrOf(fun)}
+export function optArrOf(val, fun) {return isNil(val) ? val : reqArrOf(val, fun)}
 
 export function isEmpty(val) {
   if (!isObj(val)) return true

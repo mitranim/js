@@ -10,9 +10,10 @@ BENCH := test/$(FEAT)_bench.mjs $(VERB) $(PREC) $(RUN)
 CMD_SRV := test/cmd_srv.mjs
 CMD_DOC := doc/cmd_doc.mjs
 CMD_VER_INC := doc/cmd_ver_inc.mjs
+PKG := package.json
 
 # This is a "function" that must be defined with "=", not ":=".
-VER = $(or $(ver),$(shell cat ver))
+VER = $(shell jq -r '.version' < $(PKG))
 
 test_w:
 	$(DENO) --watch $(TEST)
@@ -50,12 +51,6 @@ watch:
 prep: test
 	$(PAR) lint doc
 
-ver_inc:
-	$(DENO) $(CMD_VER_INC)
-
-ver:
-	printf '%s' "$(VER)" > ver
-
 tag:
 	git tag $(VER)
 
@@ -64,9 +59,10 @@ untag:
 
 # Usage:
 #
-#   make ver doc ver=<new_ver>
-#   <commit>
-#   make tag push
+#   * Update the version in `package.json`.
+#   * `make doc`
+#   * Commit.
+#   * `make tag push`
 push:
 	git push origin $(VER) $$(git symbolic-ref --short HEAD)
 

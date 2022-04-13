@@ -263,6 +263,29 @@ t.test(function test_indexOf() {
   test([10, NaN, 20, NaN, 30], 40,        -1)
 })
 
+t.test(function test_findIndex() {
+  t.test(function test_invalid() {
+    t.throws(() => i.findIndex(`str`, l.nop), TypeError, `expected variant of isList, got "str"`)
+    t.throws(() => i.findIndex([]), TypeError, `expected variant of isFun, got undefined`)
+    t.throws(() => i.findIndex([], 10), TypeError, `expected variant of isFun, got 10`)
+  })
+
+  function test(src, fun, exp) {t.is(i.findIndex(src, fun), exp)}
+
+  test(undefined, l.True, -1)
+  test(undefined, l.False, -1)
+
+  test([], l.True, -1)
+  test([], l.False, -1)
+
+  test([10, 20, 30], l.False, -1)
+  test([10, 20, 30], l.True, 0)
+
+  test([10, NaN, 20, NaN, 30], l.isFin, 0)
+  test([10, NaN, Infinity, NaN, 30], l.isNaN, 1)
+  test([10, NaN, Infinity, NaN, 30], l.isInf, 2)
+})
+
 t.test(function test_includes() {
   function test(src, val, exp) {
     t.is(i.includes(src, val), exp)
@@ -363,6 +386,7 @@ t.test(function test_len() {
   testLen(function test(val, len) {t.is(i.len(val), len)})
 })
 
+// TODO verify that when invoked on iterators, it doesn't iterate them fully.
 t.test(function test_hasLen() {
   testLen(function test(val, len) {t.is(i.hasLen(val), len > 0)})
 })
@@ -474,6 +498,20 @@ t.test(function test_mapCompact() {
     {one: -11, two: -2, three: -1, four: 0, five: 1, six: 2, seven: 11},
     function testColl(make) {
       t.eq(i.mapCompact(make(), l.dec), [-12, -3, -2, -1, 1, 10])
+    },
+  )
+})
+
+t.test(function test_mapFlat() {
+  testFunIterInit(i.mapFlat)
+  testFunEmptyList(function test(val) {return i.mapFlat(val, l.id)})
+
+  testColls(
+    [10, 20, 30],
+    {one: 10, two: 20, three: 30},
+    function testColl(make) {
+      t.eq(i.mapFlat(make(), l.id), [10, 20, 30])
+      t.eq(i.mapFlat(make(), arrgs), [10, 20, 30])
     },
   )
 })
@@ -671,23 +709,13 @@ t.test(function test_take() {
   testFunEmptyList(i.take)
   testFunEmptyList(function test(val) {return i.take(val, 0)})
 
-  function done(val) {
-    t.eq(i.take(val, undefined), [])
-    t.eq(i.take(val, 0), [])
-  }
-
-  done([10, 20, 30])
-  done(args(10, 20, 30))
-  done(new Set([10, 20, 30]))
-  done(new Map([[10, 20], [30, 40]]))
-  done({one: 10, two: 20})
-
   function test(src, len, exp) {t.eq(i.take(src, len), exp)}
 
   testColls(
     [10, 20, 30],
     {one: 10, two: 20, three: 30},
     function testColl(make) {
+      test(make(), undefined, [10, 20, 30])
       test(make(), 0, [])
       test(make(), 1, [10])
       test(make(), 2, [10, 20])
@@ -900,6 +928,53 @@ t.test(function test_zip() {
   })
 })
 
+t.test(function test_setOf() {
+  t.eq(i.setOf(), new Set())
+  t.eq(i.setOf(10, 20), new Set().add(10).add(20))
+  t.eq(i.setOf(10, 20, 30), new Set().add(10).add(20).add(30))
+  t.eq(i.setOf(10, 20, 30, 40), new Set().add(10).add(20).add(30).add(40))
+})
+
+t.test(function test_setFrom() {
+  testFunEmptySet(i.setFrom)
+
+  t.test(function test_same_reference() {
+    function test(ref) {t.is(i.setFrom(ref), ref)}
+
+    test(new Set())
+    test(new Set([10, 20, 30]))
+    test(new class SubSet extends Set {}())
+    test(new class SubSet extends Set {}([10, 20, 30]))
+  })
+
+  t.test(function test_convert() {
+    function test(src, exp) {t.eq(i.setFrom(src), exp)}
+
+    testColls(
+      [10, 20, 10, 30],
+      {one: 10, two: 20, three: 10, four: 30},
+      function testColl(make) {test(make(), new Set([10, 20, 30]))},
+    )
+  })
+})
+
+// Delegates to `i.setFrom`. We only need to test the copying.
+t.test(function test_setCopy() {
+  testFunEmptySet(i.setCopy)
+
+  function test(src, exp) {
+    const out = i.setCopy(src)
+    t.isnt(src, out)
+    t.eq(out, exp)
+  }
+
+  testColls(
+    [10, 20, 10, 30],
+    {one: 10, two: 20, three: 10, four: 30},
+    function testColl(make) {test(make(), new Set([10, 20, 30]))},
+  )
+})
+
 t.test(function test_mapOf() {
   t.eq(i.mapOf(), new Map())
   t.eq(i.mapOf(10, 20), new Map().set(10, 20))
@@ -964,46 +1039,6 @@ t.test(function test_repeat() {
   t.eq(i.repeat(1, `val`), [`val`])
   t.eq(i.repeat(2, `val`), [`val`, `val`])
   t.eq(i.repeat(3, `val`), [`val`, `val`, `val`])
-})
-
-t.test(function test_setFrom() {
-  testFunEmptySet(i.setFrom)
-
-  t.test(function test_same_reference() {
-    function test(ref) {t.is(i.setFrom(ref), ref)}
-
-    test(new Set())
-    test(new Set([10, 20, 30]))
-    test(new class SubSet extends Set {}())
-    test(new class SubSet extends Set {}([10, 20, 30]))
-  })
-
-  t.test(function test_convert() {
-    function test(src, exp) {t.eq(i.setFrom(src), exp)}
-
-    testColls(
-      [10, 20, 10, 30],
-      {one: 10, two: 20, three: 10, four: 30},
-      function testColl(make) {test(make(), new Set([10, 20, 30]))},
-    )
-  })
-})
-
-// Delegates to `i.setFrom`. We only need to test the copying.
-t.test(function test_setCopy() {
-  testFunEmptySet(i.setCopy)
-
-  function test(src, exp) {
-    const out = i.setCopy(src)
-    t.isnt(src, out)
-    t.eq(out, exp)
-  }
-
-  testColls(
-    [10, 20, 10, 30],
-    {one: 10, two: 20, three: 10, four: 30},
-    function testColl(make) {test(make(), new Set([10, 20, 30]))},
-  )
 })
 
 t.test(function test_mapDict() {

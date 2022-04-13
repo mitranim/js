@@ -112,7 +112,7 @@ t.bench(function bench_words_split_join_inline() {l.nop(LONG_NARROW.match(s.RE_W
 t.bench(function bench_words_split_join_current() {l.nop(s.words(LONG_NARROW).str())})
 
 t.bench(function bench_words_split_change_join_inline() {l.nop(LONG_NARROW.match(s.RE_WORD).map(s.upper).join(` `))})
-t.bench(function bench_words_split_change_join_current() {l.nop(s.words(LONG_NARROW).upperSpace())})
+t.bench(function bench_words_split_change_join_current() {l.nop(s.words(LONG_NARROW).upperSpaced())})
 
 t.bench(function bench_title_narrow_miss() {l.nop(s.title(LONG_NARROW_TITLE))})
 t.bench(function bench_title_narrow_hit() {l.nop(s.title(LONG_NARROW_LOWER))})

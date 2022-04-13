@@ -121,14 +121,21 @@ export class ClsColl extends Coll {
 export class Vec extends l.Emp {
   constructor(val) {super().$ = l.laxArr(val)}
 
-  get size() {return this.$.length}
-  [Symbol.iterator]() {return this.$.values()}
-
   add(val) {return this.$.push(val), this}
+
+  addFrom(val) {
+    if (l.optIter(val)) for (val of val) this.add(val)
+    return this
+  }
+
   clear() {return this.$.length = 0, this}
   clone() {return new this.constructor(this.$.slice())}
   toArray() {return this.$} // Used by `iter.mjs`.
   toJSON() {return this.toArray()}
+
+  get size() {return this.$.length}
+
+  [Symbol.iterator]() {return this.$.values()}
 
   static of(...val) {return new this(Array.of(...val))}
 

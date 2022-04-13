@@ -25,7 +25,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as co from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.12/coll.mjs'
+import * as co from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.13/coll.mjs'
 ```
 
 ## API
@@ -219,7 +219,7 @@ The overhead of the wrapper is insignificant.
 
 ### `class ClsVec`
 
-Links: [source](../coll.mjs#L144); [test/example](../test/coll_test.mjs#L364).
+Links: [source](../coll.mjs#L151); [test/example](../test/coll_test.mjs#L364).
 
 Variant of [#`Vec`](#class-vec) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsVec`. Elements added with `.add` are idempotently instantiated.
 
@@ -257,4 +257,4 @@ The following APIs are exported but undocumented. Check [coll.mjs](../coll.mjs).
 
   * [`class ClsSet`](../coll.mjs#L27)
   * [`class ClsMap`](../coll.mjs#L76)
-  * [`class Que`](../coll.mjs#L157)
+  * [`class Que`](../coll.mjs#L164)

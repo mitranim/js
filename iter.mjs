@@ -27,7 +27,8 @@ function arrFromList(val) {
 function arrCopy(val) {
   const buf = alloc(reqTrueArr(val).length)
   let ind = -1
-  while (++ind < val.length) buf[ind] = val[ind]
+  const len = val.length
+  while (++ind < len) buf[ind] = val[ind]
   return buf
 }
 
@@ -76,7 +77,8 @@ function copyMap(val, out) {for (val of l.reqMap(val).values()) out.push(val)}
 function valuesFromStruct(src) {
   const out = Object.keys(src)
   let ind = -1
-  while (++ind < out.length) out[ind] = src[out[ind]]
+  const len = out.length
+  while (++ind < len) out[ind] = src[out[ind]]
   return out
 }
 
@@ -92,7 +94,8 @@ export function entries(val) {
 function entriesFromList(val) {
   const out = alloc(val.length)
   let ind = -1
-  while (++ind < val.length) out[ind] = [ind, val[ind]]
+  const len = val.length
+  while (++ind < len) out[ind] = [ind, val[ind]]
   return out
 }
 
@@ -100,7 +103,8 @@ function entriesFromList(val) {
 function structEntries(src) {
   const out = Object.keys(src)
   let ind = -1
-  while (++ind < out.length) out[ind] = [out[ind], src[out[ind]]]
+  const len = out.length
+  while (++ind < len) out[ind] = [out[ind], src[out[ind]]]
   return out
 }
 
@@ -108,18 +112,28 @@ export function reify(val) {return hasIter(val) ? map(val, reify) : val}
 
 function hasIter(val) {return l.isList(val) ? some(val, hasIter) : l.isIterator(val)}
 
-export function indexOf(val, elem) {
-  if (l.opt(val, l.isList)) {
+// Slightly suboptimal but not worth more code.
+export function indexOf(src, val) {
+  return findIndex(src, function test(elem) {return l.is(elem, val)})
+}
+
+export function findIndex(src, fun) {
+  l.reqFun(fun)
+  if (l.opt(src, l.isList)) {
     let ind = -1
-    while (++ind < val.length) if (l.is(val[ind], elem)) return ind
+    const len = src.length
+    while (++ind < len) if (fun(src[ind])) return ind
   }
   return -1
 }
 
-export function includes(val, elem) {return values(val).includes(elem)}
+export function includes(src, val) {
+  return l.isSet(src) ? src.has(val) : values(src).includes(val)
+}
+
 export function concat(one, two) {return values(one).concat(values(two))}
-export function append(val, elem) {return values(val).concat([elem])}
-export function prepend(val, elem) {return [elem].concat(values(val))}
+export function append(src, val) {return values(src).concat([val])}
+export function prepend(src, val) {return [val].concat(values(src))}
 
 export function len(val) {
   if (!l.isObj(val)) return 0
@@ -158,11 +172,14 @@ export function mapMut(val, fun) {
   l.reqArr(val)
   l.reqFun(fun)
   let ind = -1
-  while (++ind < val.length) val[ind] = fun(val[ind])
+  const len = val.length
+  while (++ind < len) val[ind] = fun(val[ind])
   return val
 }
 
 export function mapCompact(val, fun) {return compact(map(val, fun))}
+
+export function mapFlat(val, fun) {return flat(map(val, fun))}
 
 export function filter(val, fun) {
   l.reqFun(fun)
@@ -231,7 +248,10 @@ function iter(val) {return l.hasMeth(val, `values`) ? val.values() : val[Symbol.
 export function last(val) {return val = values(val), val[val.length - 1]}
 export function init(val) {return values(val).slice(0, -1)}
 export function tail(val) {return values(val).slice(1)}
-export function take(val, len) {return values(val).slice(0, l.laxNat(len))}
+
+export function take(val, len) {
+  return l.isNil(len) ? values(val) : values(val).slice(0, l.reqNat(len))
+}
 
 export function count(val, fun) {
   l.reqFun(fun)
@@ -304,6 +324,10 @@ export function zip(src) {
 
 export function setOf(...val) {return new Set(val)}
 
+export function setFrom(val) {return l.isSet(val) ? val : new Set(values(val))}
+
+export function setCopy(val) {return new Set(values(val))}
+
 export function mapOf(...val) {
   const out = new Map()
   let ind = 0
@@ -318,15 +342,14 @@ export function range(min, max) {
 
   const out = alloc(max - min)
   let ind = -1
-  while (++ind < out.length) out[ind] = min + ind
+  const len = out.length
+  while (++ind < len) out[ind] = min + ind
   return out
 }
 
 export function span(len) {return range(0, l.laxNat(len))}
 export function times(len, fun) {return mapMut(span(len), fun)}
 export function repeat(len, val) {return alloc(l.laxNat(len)).fill(val)}
-export function setFrom(val) {return l.isSet(val) ? val : new Set(values(val))}
-export function setCopy(val) {return new Set(values(val))}
 
 export function mapDict(val, fun) {
   l.reqFun(fun)

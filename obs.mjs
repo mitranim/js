@@ -57,6 +57,12 @@ export const ctx = /* @__PURE__ */ new class Ctx extends l.Emp {
     else if (isSubber(val)) val.subTo(obs)
   }
 
+  swap(next) {
+    const prev = this.subber
+    this.subber = next
+    return prev
+  }
+
   inert(fun, ...val) {
     const sub = this.subber
     this.subber = undefined
@@ -160,8 +166,7 @@ export class Rec extends Set {
     if (this.act) throw Error(`unexpected overlapping rec.run`)
 
     const sch = Sched.main
-    const {subber} = ctx
-    ctx.subber = this
+    const subber = ctx.swap(this)
 
     // The try pyramid demonstrates the need for Swift-like `defer`.
     try {
@@ -180,7 +185,7 @@ export class Rec extends Set {
       }
       finally {this.act = false}
     }
-    finally {ctx.subber = subber}
+    finally {ctx.swap(subber)}
   }
 
   trig() {}

@@ -80,7 +80,7 @@ Thin wrapping seems significantly cheaper than copying.
 TODO: support initials.
 */
 export class Words extends co.Vec {
-  space() {return this.join(` `)}
+  spaced() {return this.join(` `)}
   snake() {return this.join(`_`)}
   kebab() {return this.join(`-`)}
   solid() {return this.join(``)}
@@ -88,25 +88,25 @@ export class Words extends co.Vec {
   lower() {return this.mapMut(lower)}
   upper() {return this.mapMut(upper)}
   title() {return this.mapMut(title)}
-  sente() {return this.lower().mapHead(title)}
+  sentence() {return this.lower().mapHead(title)}
   camel() {return this.title().mapHead(lower)}
 
-  lowerSpace() {return this.lower().space()}
-  upperSpace() {return this.upper().space()}
-  titleSpace() {return this.title().space()}
-  senteSpace() {return this.sente().space()}
-  camelSpace() {return this.camel().space()}
+  lowerSpaced() {return this.lower().spaced()}
+  upperSpaced() {return this.upper().spaced()}
+  titleSpaced() {return this.title().spaced()}
+  sentenceSpaced() {return this.sentence().spaced()}
+  camelSpaced() {return this.camel().spaced()}
 
   lowerSnake() {return this.lower().snake()}
   upperSnake() {return this.upper().snake()}
   titleSnake() {return this.title().snake()}
-  senteSnake() {return this.sente().snake()}
+  senteSnake() {return this.sentence().snake()}
   camelSnake() {return this.camel().snake()}
 
   lowerKebab() {return this.lower().kebab()}
   upperKebab() {return this.upper().kebab()}
   titleKebab() {return this.title().kebab()}
-  senteKebab() {return this.sente().kebab()}
+  senteKebab() {return this.sentence().kebab()}
   camelKebab() {return this.camel().kebab()}
 
   lowerCamel() {return this.camel().solid()}
@@ -130,7 +130,7 @@ export class Words extends co.Vec {
 
   join(val) {return this.$.join(val)}
   str() {return this.toString()}
-  toString() {return this.space()}
+  toString() {return this.spaced()}
 
   static from(val) {
     if (l.isStr(val)) return this.fromStr(val)

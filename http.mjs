@@ -33,6 +33,21 @@ export const TYPE_MULTI = `multipart/form-data`
 export function jsonDecode(val) {return l.laxStr(val) ? JSON.parse(val) : null}
 export function jsonEncode(val) {return JSON.stringify(l.isNil(val) ? null : val)}
 
+// True if given HTTP status code is between 100 and 199 inclusive.
+export function isStatusInfo(val) {return l.isNat(val) && val >= 100 && val <= 199}
+
+// True if given HTTP status code is between 200 and 299 inclusive.
+export function isStatusOk(val) {return l.isNat(val) && val >= 200 && val <= 299}
+
+// True if given HTTP status code is between 300 and 399 inclusive.
+export function isStatusRedir(val) {return l.isNat(val) && val >= 300 && val <= 399}
+
+// True if given HTTP status code is between 400 and 499 inclusive.
+export function isStatusClientErr(val) {return l.isNat(val) && val >= 400 && val <= 499}
+
+// True if given HTTP status code is between 500 and 599 inclusive.
+export function isStatusServerErr(val) {return l.isNat(val) && val >= 500 && val <= 599}
+
 // Usable on instances of `HttpErr` and instances of `Response`.
 export function hasStatus(val, code) {return l.reqNat(code) === getStatus(val)}
 export function getStatus(val) {return l.get(val, `status`)}
@@ -45,6 +60,7 @@ export function isErrAbort(val) {
   return l.isInst(val, Error) && val.name === `AbortError`
 }
 
+// TODO rename to `ErrHttp`.
 export class HttpErr extends Error {
   constructor(msg, status, res) {
     l.reqStr(msg)
@@ -208,6 +224,61 @@ export class ReqBui extends HttpBui {
   get Res() {return Res}
 }
 
+export function resBui(val) {return new ResBui(val)}
+
+// Short for "response builder".
+export class ResBui extends HttpBui {
+  res() {return new this.Res(this.body, this)}
+  inp(val) {return this.body = val, this}
+  text(val) {return this.inp(val).typeText()}
+  html(val) {return this.inp(val).typeHtml()}
+  json(val) {return this.inp(jsonEncode(val)).typeJson()}
+  code(val) {return this.status = l.optNat(val), this}
+  isRedir() {return isStatusRedir(this.status)}
+  redirMoved(val) {return this.code(301).headSet(`location`, val)}
+  redirFound(val) {return this.code(302).headSet(`location`, val)}
+  redirSeeOther(val) {return this.code(303).headSet(`location`, val)}
+  redirTemp(val) {return this.code(307).headSet(`location`, val)}
+  redirPerm(val) {return this.code(308).headSet(`location`, val)}
+
+  /*
+  For an actual implementation of an event stream, see the following:
+  `WritableReadableStream`, `Broad`, `LiveBroad`.
+  */
+  typeEventStream() {
+    return this.type(`text/event-stream`).headSet(`transfer-encoding`, `utf-8`)
+  }
+
+  corsCredentials() {return this.headSet(`access-control-allow-credentials`, `true`)}
+  corsHeaders(...val) {return this.headSetAll(`access-control-allow-headers`, val)}
+  corsMethods(...val) {return this.headSetAll(`access-control-allow-methods`, val)}
+  corsOrigin(val) {return this.headSet(`access-control-allow-origin`, val)}
+
+  /*
+  Note: `content-type` is whitelisted by default but not redundant here.
+  Default has restrictions on allowed values.
+  */
+  corsHeadersCommon() {
+    return this.corsHeaders(HEAD_CONTENT_TYPE, HEAD_CACHE_CONTROL)
+  }
+
+  corsMethodsAll() {
+    return this.corsMethods(GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE)
+  }
+
+  corsOriginAll() {return this.corsOrigin(`*`)}
+
+  corsAll() {
+    return this
+      .corsCredentials()
+      .corsHeadersCommon()
+      .corsMethodsAll()
+      .corsOriginAll()
+  }
+
+  get Res() {return Response}
+}
+
 export class Res extends Response {
   constructor(one, two) {
     // This non-standard clause is used by `ReqBui`.
@@ -335,6 +406,8 @@ export class ReqRou extends Rou {
   }
 
   async eitherAsync(val, fun) {return (await val) || this.call(fun)}
+
+  empty() {return new Response()}
 
   notFound() {
     const {pathname: path, method: met} = l.reqInst(this, Rou)
@@ -509,13 +582,16 @@ export class Cookie extends l.Emp {
     return buf
   }
 
-  static del(name) {
-    reqCookieName(name)
+  static set(key, val) {
+    new this().setName(key).setValue(val).setPath(`/`).install()
+  }
 
+  static del(key) {
+    reqCookieName(key)
     const domain = window.location.hostname
 
     return new this()
-      .setName(name).expired().install()
+      .setName(key).expired().install()
       .setPath(`/`).install()
       .setDomain(domain).install()
       .setDomainSub(domain).install()

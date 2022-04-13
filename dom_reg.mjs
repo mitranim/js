@@ -76,6 +76,8 @@ export class HTMLVideoElement extends (G.HTMLVideoElement || H) {constructor() {
 
 export function reg(cls) {return cer.reg(cls)}
 
+export function regAs(cls, tag) {return cer.regAs(cls, tag)}
+
 export class CustomElementRegistry extends l.Emp {
   constructor(ref) {
     super()
@@ -89,9 +91,9 @@ export class CustomElementRegistry extends l.Emp {
 
   define(tag, cls, opt) {
     this.redundant(tag, cls)
-    if (this.ref) this.ref.define(tag, cls, opt)
     this.tagToCls.set(tag, cls)
     this.clsToTag.set(cls, tag)
+    if (this.ref) this.ref.define(tag, cls, opt)
   }
 
   get(key) {return this.tagToCls.get(key)}
@@ -103,6 +105,13 @@ export class CustomElementRegistry extends l.Emp {
   reg(cls) {
     if (!this.hasCls(cls)) {
       this.define(this.clsTagSalted(cls), cls, this.clsOpt(cls))
+    }
+    return cls
+  }
+
+  regAs(cls, tag) {
+    if (!this.hasCls(cls)) {
+      this.define(tag, cls, this.clsOpt(cls))
     }
     return cls
   }
@@ -129,7 +138,10 @@ export class CustomElementRegistry extends l.Emp {
 
   clsTagBase(cls) {
     // Opt-in override.
-    if (l.hasMeth(cls, `tag`)) return l.reqStr(cls.tag())
+    if (l.hasOwn(cls, `tag`)) {
+      const val = cls.tag
+      if (val) return l.reqStr(val)
+    }
 
     const name = clsNameBase(cls, RE_BASE)
     if (!name) return ``

@@ -167,14 +167,28 @@ t.test(function test_CustomElementRegistry() {
     })
   })
 
+  // Very similar to `.reg`. We only need minimal sanity checks.
+  t.test(function test_regAs() {
+    const cer = makeCer()
+
+    class SomeBtn extends dr.HTMLButtonElement {
+      static {cer.regAs(this, `one-two-three`)}
+    }
+
+    testCerMatch(cer, SomeBtn, `one-two-three`)
+    testCerSize(cer, 1)
+
+    l.nop(new SomeBtn())
+
+    testCerMatch(cer, SomeBtn, `one-two-three`)
+    testCerSize(cer, 1)
+  })
+
   t.test(function test_tag_ambiguity() {
     const cer = makeCer()
 
     class SomeBodyCell extends dr.HTMLTableCellElement {}
-
-    class SomeHeadCell extends dr.HTMLTableCellElement {
-      static tag() {return `th`}
-    }
+    class SomeHeadCell extends dr.HTMLTableCellElement {static tag = `th`}
 
     t.is(cer.clsTagBase(SomeBodyCell), `td`)
     t.eq(cer.clsOpt(SomeBodyCell), {extends: `td`})
@@ -185,3 +199,4 @@ t.test(function test_CustomElementRegistry() {
 })
 
 if (import.meta.main) console.log(`[test] ok!`)
+

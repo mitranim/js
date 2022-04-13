@@ -65,25 +65,9 @@ export class Dur extends l.Emp {
   // `.resetFromStruct`, but the costs are minor and not worth the lines.
   reset(val) {
     if (l.isNil(val)) return this.clear()
-    if (l.isNum(val)) return this.resetFromNum(val)
     if (l.isStr(val)) return this.resetFromStr(val)
     if (l.isStruct(val)) return this.resetFromStruct(val)
     throw l.errInst(val, this)
-  }
-
-  // Assumes that the input is in milliseconds.
-  resetFromNum(val) {
-    l.reqNum(val)
-    this.clear()
-
-    this.hours = Math.trunc(val / MS_IN_HOUR)
-    val = val % MS_IN_HOUR
-
-    this.minutes = Math.trunc(val / MS_IN_MIN)
-    val = val % MS_IN_MIN
-
-    this.seconds = Math.trunc(val / MS_IN_SEC)
-    return this
   }
 
   resetFromStr(val) {
@@ -109,6 +93,20 @@ export class Dur extends l.Emp {
     return this
   }
 
+  resetFromMilli(val) {
+    l.reqFin(val)
+    this.clear()
+
+    this.hours = Math.trunc(val / MS_IN_HOUR)
+    val = val % MS_IN_HOUR
+
+    this.minutes = Math.trunc(val / MS_IN_MIN)
+    val = val % MS_IN_MIN
+
+    this.seconds = Math.trunc(val / MS_IN_SEC)
+    return this
+  }
+
   mut(val) {return l.isNil(val) ? this : this.mutFromStruct(val)}
 
   mutFromStruct(val) {
@@ -120,16 +118,19 @@ export class Dur extends l.Emp {
 
   clone() {return new this.constructor(this)}
 
-  toString() {
+  toISOString() {
     const {years, months, days, hours, minutes, seconds} = this
     if (!(years || months || days || hours || minutes || seconds)) return `PT0S`
     return `P${suff(years, `Y`)}${suff(months, `M`)}${suff(days, `D`)}${hours || minutes || seconds ? `T` : ``}${suff(hours, `H`)}${suff(minutes, `M`)}${suff(seconds, `S`)}`
   }
 
-  toJSON() {return this.isZero() ? null : this.toString()}
+  toJSON() {return this.isZero() ? null : this.toISOString()}
+  toString() {return this.toISOString()}
   valueOf() {return this.toString()}
 
   static isValid(val) {return l.isSome(val) && l.toInst(val, this).isValid()}
+
+  static fromMilli(val) {return new this().resetFromMilli(val)}
 }
 
 /*
@@ -294,7 +295,7 @@ export class Sec extends Finite {
   mod() {return 1}
   conv(mul) {return this.valueOf() * (l.reqNum(mul) / l.reqNum(this.mod()))}
 
-  dur() {return new this.Dur(this.milli())}
+  dur() {return this.Dur.fromMilli(this.milli())}
 
   toString() {return this.secStr()}
 

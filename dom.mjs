@@ -18,6 +18,14 @@ export function isElement(val) {return typeof Element === `function` && l.isInst
 export function reqElement(val) {return l.req(val, isElement)}
 export function optElement(val) {return l.opt(val, isElement)}
 
+export function isBlob(val) {return typeof Blob === `function` && l.isInst(val, Blob)}
+export function reqBlob(val) {return l.req(val, isBlob)}
+export function optBlob(val) {return l.opt(val, isBlob)}
+
+export function isFile(val) {return typeof File === `function` && l.isInst(val, File)}
+export function reqFile(val) {return l.req(val, isFile)}
+export function optFile(val) {return l.opt(val, isFile)}
+
 export function isDomHandler(val) {return l.hasMeth(val, `handleEvent`)}
 export function reqDomHandler(val) {return l.req(val, isDomHandler)}
 export function optDomHandler(val) {return l.opt(val, isDomHandler)}

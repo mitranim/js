@@ -6,7 +6,7 @@
 !/*.mjs
 !/*.md
 !/makefile
-!/ver
+!/package.json
 
 !/doc
 !/docs

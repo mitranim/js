@@ -27,37 +27,37 @@ import * as hs from './http_srv.mjs'
 import * as io from './io_deno.mjs'
 import * as p from './path.mjs'
 
+export const LIVE_PATH = `/e8f2dcbe89994b14a1a1c59c2ea6eac7`
+
 export class LiveBroad extends hs.Broad {
-  get basePath() {return `/e8f2dcbe89994b14a1a1c59c2ea6eac7`}
+  get basePath() {return LIVE_PATH}
   get clientPath() {return p.posix.join(this.basePath, `live_client.mjs`)}
   get eventsPath() {return p.posix.join(this.basePath, `events`)}
   get sendPath() {return p.posix.join(this.basePath, `send`)}
 
   res(val) {
     const rou = h.toReqRou(val)
-
-    if (rou.get(this.clientPath)) return this.clientRes()
-    if (rou.get(this.eventsPath)) return this.eventsRes(rou.req)
-    if (rou.post(this.sendPath)) return this.sendRes(rou.req)
-
+    if (rou.get(this.clientPath)) return this.clientRes(rou)
+    if (rou.get(this.eventsPath)) return this.eventsRes(rou)
+    if (rou.post(this.sendPath)) return this.sendRes(rou)
     return undefined
   }
 
   clientRes() {
-    return hs.resBui()
+    return h.resBui()
       .inp(`void ${clientMain.toString()}()`)
       .type(`application/javascript`)
       .corsAll()
       .res()
   }
 
-  eventsRes(req) {
-    return hs.resBui().inp(this.make(req.signal)).typeEventStream().corsAll().res()
+  eventsRes(rou) {
+    return h.resBui().inp(this.make(rou.req.signal)).typeEventStream().corsAll().res()
   }
 
-  async sendRes(req) {
-    await this.writeEvent(await req.text())
-    return new Response()
+  async sendRes(rou) {
+    await this.writeEvent(await rou.req.text())
+    return rou.empty()
   }
 
   onWriteErr(err) {

@@ -27,7 +27,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.12/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.13/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {
@@ -74,7 +74,7 @@ Shortcut for calling `cer.reg`. Takes a custom element class and idempotently re
 
 ### `const cer`
 
-Links: [source](../dom_reg.mjs#L167); [test/example](../test/dom_reg_test.mjs#L64).
+Links: [source](../dom_reg.mjs#L179); [test/example](../test/dom_reg_test.mjs#L64).
 
 Wrapper and/or shim for `customElements` with a similarly-shaped API. Keeps track of which classes and tags have already been defined, enabling idempotent registration and name salting. In browsers it also calls `customElements.define`. Note that it doesn't "patch" the global. Directly using global `customElements` bypasses our registration mechanisms and may lead to redundant registration attempts.
 
@@ -149,5 +149,6 @@ The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg
   * [`class HTMLTrackElement`](../dom_reg.mjs#L73)
   * [`class HTMLUListElement`](../dom_reg.mjs#L74)
   * [`class HTMLVideoElement`](../dom_reg.mjs#L75)
-  * [`class CustomElementRegistry`](../dom_reg.mjs#L79)
-  * [`function clsTag`](../dom_reg.mjs#L183)
+  * [`function regAs`](../dom_reg.mjs#L79)
+  * [`class CustomElementRegistry`](../dom_reg.mjs#L81)
+  * [`function clsTag`](../dom_reg.mjs#L195)

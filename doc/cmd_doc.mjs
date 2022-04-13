@@ -1,5 +1,3 @@
-/* global Deno */
-
 import * as io from '../io_deno.mjs'
 import * as l from '../lang.mjs'
 import * as s from '../str.mjs'
@@ -10,7 +8,7 @@ import * as i from '../iter.mjs'
 import * as u from '../url.mjs'
 import * as p from '../path.mjs'
 
-const VER = s.trim(Deno.readTextFileSync(`ver`))
+const VER = (await io.readJson(`package.json`)).version
 const CLI = cl.Flag.os()
 const WATCH = CLI.boolOpt(`watch`)
 const RE_WATCH = /(?:^doc[/](?:\w+[/])*)\w+[.]md|(?:\w+[.]mjs$)/

@@ -1,5 +1,8 @@
 import * as l from './lang.mjs'
 
+export function isObjKey(val) {return l.isStr(val) || l.isSym(val)}
+export function reqObjKey(val) {return isObjKey(val) ? val : l.convFun(val, isObjKey)}
+
 export function assign(tar, src) {
   l.reqStruct(tar)
   for (const key of l.structKeys(src)) tar[key] = src[key]
@@ -146,6 +149,26 @@ export class ClsInstPh extends ClsFunPh {
   }
 }
 
+export function pub(tar, key, val) {
+  Object.defineProperty(tar, reqObjKey(key), {
+    value: val,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  })
+  return val
+}
+
+export function priv(tar, key, val) {
+  Object.defineProperty(tar, reqObjKey(key), {
+    value: val,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  })
+  return val
+}
+
 /* Internal */
 
 function patchCls(cls, fun) {
@@ -159,31 +182,21 @@ function patchCls(cls, fun) {
   return cls
 }
 
-function memGetAt(ref, key, desc) {
+function memGetAt(tar, key, desc) {
   const {get} = desc
   if (!get || desc.set || !desc.configurable) return
 
   desc.get = function memGet() {return pub(this, key, get.call(this))}
   desc.set = function memSet(val) {pub(this, key, val)}
 
-  Object.defineProperty(ref, key, desc)
+  Object.defineProperty(tar, key, desc)
 }
 
-function pub(ref, key, val) {
-  Object.defineProperty(ref, key, {
-    value: val,
-    writable: true,
-    enumerable: true,
-    configurable: true,
-  })
-  return val
-}
-
-function descIn(ref, key) {
-  while (ref) {
-    const val = Object.getOwnPropertyDescriptor(ref, key)
+function descIn(tar, key) {
+  while (tar) {
+    const val = Object.getOwnPropertyDescriptor(tar, key)
     if (val) return val
-    ref = Object.getPrototypeOf(ref)
+    tar = Object.getPrototypeOf(tar)
   }
   return undefined
 }

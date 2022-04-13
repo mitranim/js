@@ -12,14 +12,14 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.12/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.13/obj.mjs'
 ```
 
 ## API
 
 ### `function assign`
 
-Links: [source](../obj.mjs#L3); [test/example](../test/obj_test.mjs#L45).
+Links: [source](../obj.mjs#L6); [test/example](../test/obj_test.mjs#L45).
 
 Signature: `(tar, src) => tar`.
 
@@ -36,7 +36,7 @@ Similar to [#`patch`](#function-patch) but doesn't check for inherited and non-e
 
 ### `function patch`
 
-Links: [source](../obj.mjs#L9); [test/example](../test/obj_test.mjs#L154).
+Links: [source](../obj.mjs#L12); [test/example](../test/obj_test.mjs#L154).
 
 Signature: `(tar, src) => tar`.
 
@@ -55,7 +55,7 @@ When overriding inherited and non-enumerable properties is desirable, use [#`ass
 
 ### `class Dict`
 
-Links: [source](../obj.mjs#L25); [test/example](../test/obj_test.mjs#L199).
+Links: [source](../obj.mjs#L28); [test/example](../test/obj_test.mjs#L199).
 
 Short for "dictionary". Tiny superclass for "model"/"data"/"record" classes. Makes it "safe" to assign arbitrary properties from JSON or other unknown inputs, avoiding conflicts with predefined getters and methods.
 
@@ -134,13 +134,17 @@ new Model(`str`)
 
 The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
 
-  * [`function patchInstances`](../obj.mjs#L17)
-  * [`class ClsDict`](../obj.mjs#L32)
-  * [`class Strict`](../obj.mjs#L37)
-  * [`class StrictPh`](../obj.mjs#L76)
-  * [`class WeakTag`](../obj.mjs#L94)
-  * [`function memGet`](../obj.mjs#L103)
-  * [`class MemTag`](../obj.mjs#L105)
-  * [`class MemGet`](../obj.mjs#L109)
-  * [`class ClsFunPh`](../obj.mjs#L118)
-  * [`class ClsInstPh`](../obj.mjs#L134)
+  * [`function isObjKey`](../obj.mjs#L3)
+  * [`function reqObjKey`](../obj.mjs#L4)
+  * [`function patchInstances`](../obj.mjs#L20)
+  * [`class ClsDict`](../obj.mjs#L35)
+  * [`class Strict`](../obj.mjs#L40)
+  * [`class StrictPh`](../obj.mjs#L79)
+  * [`class WeakTag`](../obj.mjs#L97)
+  * [`function memGet`](../obj.mjs#L106)
+  * [`class MemTag`](../obj.mjs#L108)
+  * [`class MemGet`](../obj.mjs#L112)
+  * [`class ClsFunPh`](../obj.mjs#L121)
+  * [`class ClsInstPh`](../obj.mjs#L137)
+  * [`function pub`](../obj.mjs#L152)
+  * [`function priv`](../obj.mjs#L162)

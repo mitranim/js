@@ -62,9 +62,6 @@ t.test(function test_Dur() {
   t.test(function test_decoding_valid() {testDurResetFromStr(ti.dur)})
   t.test(function test_reset_from_str() {testDurReset(testDurResetFromStr)})
 
-  t.test(function test_from_num() {testDurResetFromNum(ti.dur)})
-  t.test(function test_reset_from_num() {testDurReset(testDurResetFromNum)})
-
   t.test(function test_from_struct() {testDurResetFromStruct(ti.dur)})
   t.test(function test_reset_from_struct() {testDurReset(testDurResetFromStruct)})
 
@@ -76,6 +73,8 @@ t.test(function test_Dur() {
     testDurResetFromStruct(function make(src) {return ti.dur().reset(ti.dur(src))})
     testDurResetFromStruct(function make(src) {return ti.dur(src).reset(ti.dur(src))})
   })
+
+  t.test(function test_reset_from_milli() {testDurResetFromMilli()})
 
   t.test(function test_mut() {
     t.throws(() => ti.dur().mut({years: `10`}), TypeError, `expected variant of isInt, got "10"`)
@@ -139,29 +138,6 @@ function testDurReset(fun) {
   }
 }
 
-function testDurResetFromNum(make) {
-  function test(src, fields) {
-    t.eq({...make(src)}, {...durEmpty, ...fields})
-  }
-
-  test(0, {})
-
-  test(1000, {seconds: 1})
-  test(1500, {seconds: 1})
-  test(2000, {seconds: 2})
-
-  test((60 * 1000), {minutes: 1})
-  test((1.5 * 60 * 1000), {minutes: 1, seconds: 30})
-  test((2 * 60 * 1000), {minutes: 2})
-  test((60 * 1000) + 3000, {minutes: 1, seconds: 3})
-  test((2 * 60 * 1000) + 3000, {minutes: 2, seconds: 3})
-
-  test((60 * 60 * 1000), {hours: 1})
-  test((1.5 * 60 * 60 * 1000), {hours: 1, minutes: 30})
-  test((2 * 60 * 60 * 1000), {hours: 2})
-  test((2 * 60 * 60 * 1000) + (3 * 60 * 1000) + (4 * 1000), {hours: 2, minutes: 3, seconds: 4})
-}
-
 function testDurResetFromStr(make) {
   function test(src, str, fields) {
     t.is(make(src).toString(), str)
@@ -209,6 +185,29 @@ function testDurResetFromStruct(make) {
   test({})
   test({years: 10, months: 20})
   durNonZeros.forEach(test)
+}
+
+function testDurResetFromMilli() {
+  function test(src, fields) {
+    t.eq({...ti.dur().resetFromMilli(src)}, {...durEmpty, ...fields})
+  }
+
+  test(0, {})
+
+  test(1000, {seconds: 1})
+  test(1500, {seconds: 1})
+  test(2000, {seconds: 2})
+
+  test((60 * 1000), {minutes: 1})
+  test((1.5 * 60 * 1000), {minutes: 1, seconds: 30})
+  test((2 * 60 * 1000), {minutes: 2})
+  test((60 * 1000) + 3000, {minutes: 1, seconds: 3})
+  test((2 * 60 * 1000) + 3000, {minutes: 2, seconds: 3})
+
+  test((60 * 60 * 1000), {hours: 1})
+  test((1.5 * 60 * 60 * 1000), {hours: 1, minutes: 30})
+  test((2 * 60 * 60 * 1000), {hours: 2})
+  test((2 * 60 * 60 * 1000) + (3 * 60 * 1000) + (4 * 1000), {hours: 2, minutes: 3, seconds: 4})
 }
 
 t.test(function test_DateTime() {

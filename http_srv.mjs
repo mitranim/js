@@ -8,54 +8,6 @@ with polyfills also in Node. For tools relevant for HTTP clients, see
 import * as l from './lang.mjs'
 import * as h from './http.mjs'
 
-export function resBui(val) {return new ResBui(val)}
-
-// Short for "response builder".
-export class ResBui extends h.HttpBui {
-  res() {return new this.Res(this.body, this)}
-  inp(val) {return this.body = h.optBody(val), this}
-  text(val) {return this.inp(val).typeText()}
-  html(val) {return this.inp(val).typeHtml()}
-  json(val) {return this.inp(h.jsonEncode(val)).typeJson()}
-
-  /*
-  For an actual implementation of an event stream, see the following:
-  `WritableReadableStream`, `Broad`, `LiveBroad`.
-  */
-  typeEventStream() {
-    return this.type(`text/event-stream`).headSet(`transfer-encoding`, `utf-8`)
-  }
-
-  corsCredentials() {return this.headSet(`access-control-allow-credentials`, `true`)}
-  corsHeaders(...val) {return this.headSetAll(`access-control-allow-headers`, val)}
-  corsMethods(...val) {return this.headSetAll(`access-control-allow-methods`, val)}
-  corsOrigin(val) {return this.headSet(`access-control-allow-origin`, val)}
-
-  /*
-  Note: `content-type` is whitelisted by default but not redundant here.
-  Default has restrictions on allowed values.
-  */
-  corsHeadersCommon() {
-    return this.corsHeaders(h.HEAD_CONTENT_TYPE, h.HEAD_CACHE_CONTROL)
-  }
-
-  corsMethodsAll() {
-    return this.corsMethods(h.GET, h.HEAD, h.OPTIONS, h.POST, h.PUT, h.PATCH, h.DELETE)
-  }
-
-  corsOriginAll() {return this.corsOrigin(`*`)}
-
-  corsAll() {
-    return this
-      .corsCredentials()
-      .corsHeadersCommon()
-      .corsMethodsAll()
-      .corsOriginAll()
-  }
-
-  get Res() {return Response}
-}
-
 /*
 Orkaround for the insane DOM stream API which seems to
 provide NO WAY to make a reader-writer pair.

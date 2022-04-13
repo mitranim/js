@@ -1695,4 +1695,30 @@ t.test(function test_toInst() {
   })
 })
 
+t.test(function test_get() {
+  t.is(l.get(undefined, `toString`), undefined)
+  t.is(l.get(undefined, 0), undefined)
+
+  t.is(l.get(10, `toString`), undefined)
+  t.is(l.get(10, 0), undefined)
+
+  t.is(l.get(`str`, `toString`), undefined)
+  t.is(l.get(`str`, 0), undefined)
+
+  t.is(l.get({}, `key`), undefined)
+  t.is(l.get({}, 0), undefined)
+
+  t.is(l.get({}, `toString`), Object.prototype.toString)
+  t.is(l.get({key: 10}, `key`), 10)
+  t.is(l.get({0: 10}, `0`), 10)
+
+  t.is(l.get([], `key`), undefined)
+  t.is(l.get([], 0), undefined)
+  t.is(l.get([], `0`), undefined)
+
+  t.is(l.get([], `toString`), Array.prototype.toString)
+  t.is(l.get([10, 20, 30], 0), 10)
+  t.is(l.get([10, 20, 30], 1), 20)
+})
+
 if (import.meta.main) console.log(`[test] ok!`)
