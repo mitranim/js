@@ -8,6 +8,7 @@
 !/makefile
 !/package.json
 
+!/.github
 !/doc
 !/docs
 !/test

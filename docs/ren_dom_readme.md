@@ -40,7 +40,7 @@ Complemented by:
 Creating new nodes:
 
 ```js
-import {E} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.13/ren_dom.mjs'
+import {E} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/ren_dom.mjs'
 
 document.body.append(
   E(`div`, {class: `outer`},
@@ -60,7 +60,7 @@ The following elements have been appended:
 Specialized syntax is available:
 
 ```js
-import {A, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.13/ren_dom.mjs'
+import {A, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/ren_dom.mjs'
 const {e} = ren
 
 document.body.append(
@@ -73,9 +73,9 @@ document.body.append(
 Imperative updates:
 
 ```js
-import {A} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.13/ren_dom.mjs'
-import * as r from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.13/ren_dom.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.13/dom_reg.mjs'
+import {A} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/ren_dom.mjs'
+import * as r from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/ren_dom.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/dom_reg.mjs'
 
 class SomeLink extends dr.HTMLAnchorElement {
   constructor(href, text) {

@@ -12,7 +12,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.13/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/obj.mjs'
 ```
 
 ## API
