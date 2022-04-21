@@ -253,7 +253,7 @@ export class Ph extends l.Emp {
   getIn(tar, key) {return tar[key]}
 
   didSet(tar, key, val) {
-    const had = l.hasOwnEnum(tar, key)
+    const had = hasPub(tar, key)
     const prev = tar[key]
     tar[key] = val
     if (l.eq(prev, val)) return false
@@ -264,7 +264,7 @@ export class Ph extends l.Emp {
   didDel(ref, key) {
     if (!l.hasOwn(ref, key)) return false
 
-    const had = l.hasOwnEnum(ref, key)
+    const had = hasPub(ref, key)
     const val = ref[key]
     delete ref[key]
 
@@ -308,7 +308,7 @@ export class ObsPh extends Ph {
   }
 
   getIn(tar, key) {
-    if (!hasHidden(tar, key)) ctx.sub(this.obs)
+    if (!hasPriv(tar, key)) ctx.sub(this.obs)
     return tar[key]
   }
 
@@ -347,4 +347,10 @@ function subTrig(val) {
   else val.trig()
 }
 
-function hasHidden(val, key) {return !l.hasOwnEnum(val, key) && key in val}
+function hasPriv(tar, key) {
+  return l.isStr(key) && !l.hasOwnEnum(tar, key) && key in tar
+}
+
+function hasPub(tar, key) {
+  return l.isStr(key) && l.hasOwnEnum(tar, key)
+}

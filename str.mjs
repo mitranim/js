@@ -417,8 +417,13 @@ export function dashed(...val) {return joinOptLax(val, `-`)}
 
 // TODO rename to something like `pathStartsWith` and swap args.
 export function isSubpath(sup, sub) {
-  l.reqStr(sup), l.reqStr(sub)
-  return sup === sub || sub.startsWith(sup) && stripPre(sub, sup).startsWith(`/`)
+  l.optStr(sup)
+  l.optStr(sub)
+
+  return (
+    (l.isSome(sup) && l.isSome(sub)) &&
+    (sup === sub || sub.startsWith(sup) && stripPre(sub, sup).startsWith(`/`))
+  )
 }
 
 export function rndHex(len) {

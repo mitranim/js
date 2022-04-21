@@ -145,8 +145,7 @@ export function len(val) {
     const size = getSize(val)
     if (l.isNat(size)) return size
 
-    if (l.isIterator(val)) return iterLen(val)
-    return 0
+    return iterLen(iter(val))
   }
 
   if (isStructSync(val)) return Object.keys(val).length

@@ -124,7 +124,7 @@ export class Dur extends l.Emp {
     return `P${suff(years, `Y`)}${suff(months, `M`)}${suff(days, `D`)}${hours || minutes || seconds ? `T` : ``}${suff(hours, `H`)}${suff(minutes, `M`)}${suff(seconds, `S`)}`
   }
 
-  toJSON() {return this.isZero() ? null : this.toISOString()}
+  toJSON() {return this.toISOString()}
   toString() {return this.toISOString()}
   valueOf() {return this.toString()}
 
@@ -211,6 +211,13 @@ export class DateTime extends Date {
   yearStr() {return zeroed(this.getFullYear(), 4)}
   monthStr() {return zeroed(this.getMonth() + 1, 2)}
   dayStr() {return zeroed(this.getDate(), 2)}
+}
+
+export class DateValid extends DateTime {
+  constructor(val) {
+    super(val)
+    l.reqValidDate(this)
+  }
 }
 
 /*

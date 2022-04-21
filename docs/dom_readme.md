@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as d from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/dom.mjs'
+import * as d from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.15/dom.mjs'
 ```
 
 ## API
@@ -44,22 +44,22 @@ The following APIs are exported but undocumented. Check [dom.mjs](../dom.mjs).
   * [`class DocBodyMut`](../dom.mjs#L66)
   * [`class DocFoc`](../dom.mjs#L84)
   * [`function eventStop`](../dom.mjs#L113)
-  * [`function isEventModified`](../dom.mjs#L121)
-  * [`function nodeShow`](../dom.mjs#L125)
-  * [`function nodeHide`](../dom.mjs#L126)
-  * [`function nodeRemove`](../dom.mjs#L127)
-  * [`function nodeSel`](../dom.mjs#L128)
-  * [`function nodeSelAll`](../dom.mjs#L129)
-  * [`function isConnected`](../dom.mjs#L131)
-  * [`function isDisconnected`](../dom.mjs#L132)
-  * [`function addEvents`](../dom.mjs#L134)
-  * [`function removeEvents`](../dom.mjs#L139)
-  * [`function clip`](../dom.mjs#L144)
-  * [`function clipNode`](../dom.mjs#L155)
-  * [`function selectText`](../dom.mjs#L157)
-  * [`function findAncestor`](../dom.mjs#L168)
-  * [`function loc`](../dom.mjs#L177)
-  * [`function toLoc`](../dom.mjs#L178)
-  * [`class Loc`](../dom.mjs#L188)
-  * [`const stateKey`](../dom.mjs#L241)
-  * [`const titleKey`](../dom.mjs#L242)
+  * [`function isEventModified`](../dom.mjs#L122)
+  * [`function nodeShow`](../dom.mjs#L126)
+  * [`function nodeHide`](../dom.mjs#L127)
+  * [`function nodeRemove`](../dom.mjs#L128)
+  * [`function nodeSel`](../dom.mjs#L129)
+  * [`function nodeSelAll`](../dom.mjs#L130)
+  * [`function isConnected`](../dom.mjs#L132)
+  * [`function isDisconnected`](../dom.mjs#L133)
+  * [`function addEvents`](../dom.mjs#L135)
+  * [`function removeEvents`](../dom.mjs#L140)
+  * [`function clip`](../dom.mjs#L145)
+  * [`function clipNode`](../dom.mjs#L156)
+  * [`function selectText`](../dom.mjs#L158)
+  * [`function findAncestor`](../dom.mjs#L169)
+  * [`function loc`](../dom.mjs#L178)
+  * [`function toLoc`](../dom.mjs#L179)
+  * [`class Loc`](../dom.mjs#L189)
+  * [`const stateKey`](../dom.mjs#L242)
+  * [`const titleKey`](../dom.mjs#L243)

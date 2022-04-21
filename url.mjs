@@ -118,7 +118,7 @@ export class Url extends l.Emp {
   get pathname() {return this[pathnameKey]}
   set pathname(val) {this[pathnameKey] = toPathname(val)}
 
-  get search() {return String(this[queryKey])}
+  get search() {return this[queryKey].toString()}
   set search(val) {this[queryKey] = queryEncIdemp(unSearch(l.laxStr(val), this.Query.name))}
 
   get query() {
@@ -270,7 +270,7 @@ export class Url extends l.Emp {
     this[hostnameKey] = l.laxStr(gro.hostname)
     this[portKey] = l.laxStr(gro.port)
     this[pathnameKey] = l.laxStr(gro.pathname)
-    this.search = l.laxStr(gro.query)
+    this[queryKey] = l.laxStr(gro.query)
     this[hashKey] = l.laxStr(gro.hash)
     return this
   }
@@ -358,7 +358,7 @@ function toPathname(val) {return toStrWith(val, RE_PATHNAME, `pathname`)}
 function toHash(val) {return toStrWith(val, RE_HASH, `hash`)}
 
 function encodePort(val) {
-  if (l.isNat(val)) return String(val)
+  if (l.isNat(val)) return val.toString()
   return toStrWith(val, RE_PORT, `port`)
 }
 
@@ -395,6 +395,12 @@ function isURL(val) {return l.isInst(val, URL)}
 function isUrl(val) {return l.isInst(val, Url)}
 function isUrlLike(val) {return l.isStruct(val) && `href` in val}
 
+/*
+Needs additional benchmarks. Our current benchmarks did not detect a regression
+when this was added.
+*/
+function queryEncIdemp(val) {return encodeURI(decodeURIComponent(val))}
+
 // Needs optimization. This is currently our bottleneck.
 export function queryDec(val) {
   if (val.includes(`+`)) val = val.replace(/[+]/g, ` `)
@@ -406,12 +412,4 @@ export function queryEnc(val) {
   val = encodeURIComponent(val)
   if (val.includes(`%20`)) val = val.replace(/%20/g, `+`)
   return val
-}
-
-/*
-Needs additional benchmarks. Our current benchmarks did not detect a regression
-when this was added.
-*/
-export function queryEncIdemp(val) {
-  return encodeURI(decodeURIComponent(val))
 }

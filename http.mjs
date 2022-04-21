@@ -324,7 +324,7 @@ export function toRou(val) {return l.toInst(val, Rou)}
 export class Rou extends l.Emp {
   constructor(url) {
     super()
-    this.url = u.toUrl(url)
+    this.url = l.toInst(url, this.Url)
     this.groups = undefined
   }
 
@@ -362,6 +362,8 @@ export class Rou extends l.Emp {
     if (val) return val
     throw Error(`unexpected lack of named captures when routing ${this.pathname}`)
   }
+
+  get Url() {return u.Url}
 }
 
 export function toReqRou(val) {return l.toInst(val, ReqRou)}

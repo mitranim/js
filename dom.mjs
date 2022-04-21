@@ -114,6 +114,7 @@ export function eventStop(val) {
   if (optEvent(val)) {
     val.preventDefault()
     val.stopPropagation()
+    val.stopImmediatePropagation()
   }
   return val
 }

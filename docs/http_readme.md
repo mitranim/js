@@ -32,7 +32,7 @@ HTTP request/response utils are ported and reworked from https://github.com/mitr
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.15/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -234,8 +234,8 @@ rou.groups // {key: `path`}
 Routing is imperative:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/http.mjs'
-import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/lang.mjs'
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.15/http.mjs'
+import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.15/lang.mjs'
 
 const nextPage = route(window.location)
 
@@ -256,14 +256,14 @@ function PageArticle(rou) {
 
 ### `class ReqRou`
 
-Links: [source](../http.mjs#L369); [test/example](../test/http_test.mjs#L652).
+Links: [source](../http.mjs#L371); [test/example](../test/http_test.mjs#L652).
 
 Short for "request router" or "request-response router". Advanced version of [#`Rou`](#class-rou). Suitable for servers and SSR/SPA hybrid apps.
 
 Routing can be shared between SSR and SPA:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.15/http.mjs'
 
 function route(rou) {
   l.reqInst(rou, h.ReqRou)
@@ -303,7 +303,7 @@ For SSR/SPA isomorphic rendering, use the pair of "ren" modules: [`ren_str`](ren
 
 ### `class Ctx`
 
-Links: [source](../http.mjs#L430); [test/example](../test/http_test.mjs#L745).
+Links: [source](../http.mjs#L432); [test/example](../test/http_test.mjs#L745).
 
 Subclass of built-in [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController). Features:
 
@@ -359,14 +359,14 @@ The following APIs are exported but undocumented. Check [http.mjs](../http.mjs).
   * [`function resBui`](../http.mjs#L227)
   * [`class ResBui`](../http.mjs#L230)
   * [`function toRou`](../http.mjs#L322)
-  * [`function toReqRou`](../http.mjs#L367)
-  * [`function cookieSplitPairs`](../http.mjs#L462)
-  * [`function cookieSplitPair`](../http.mjs#L468)
-  * [`function cook`](../http.mjs#L481)
-  * [`class Cookie`](../http.mjs#L483)
-  * [`function reqBody`](../http.mjs#L611)
-  * [`function optBody`](../http.mjs#L612)
-  * [`const bodyFuns`](../http.mjs#L613)
+  * [`function toReqRou`](../http.mjs#L369)
+  * [`function cookieSplitPairs`](../http.mjs#L464)
+  * [`function cookieSplitPair`](../http.mjs#L470)
+  * [`function cook`](../http.mjs#L483)
+  * [`class Cookie`](../http.mjs#L485)
+  * [`function reqBody`](../http.mjs#L613)
+  * [`function optBody`](../http.mjs#L614)
+  * [`const bodyFuns`](../http.mjs#L615)
 
 
 ## Misc

@@ -118,13 +118,12 @@ t.test(function test_Dur() {
 
   t.test(function test_toJSON() {
     function test(src, exp) {t.is(ti.dur(src).toJSON(), exp)}
-    function none(src) {test(src, null)}
 
-    none()
-    none(``)
-    none(`PT0S`)
-    none({})
-
+    test(undefined, `PT0S`)
+    test(``, `PT0S`)
+    test({}, `PT0S`)
+    test(`PT0S`, `PT0S`)
+    test(`P1Y2M3DT4H5M6S`, `P1Y2M3DT4H5M6S`)
     test(`P1Y2M3DT4H5M6S`, `P1Y2M3DT4H5M6S`)
   })
 })

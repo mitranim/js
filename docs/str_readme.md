@@ -23,7 +23,7 @@ Written carefully and with benchmarks, but doesn't claim to be optimal at what i
 Example case conversion:
 
 ```js
-import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/str.mjs'
+import * as s from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.15/str.mjs'
 
 s.words(`oneTwoThree`).title().snake() === `One_Two_Three`
 
@@ -99,20 +99,20 @@ The following APIs are exported but undocumented. Check [str.mjs](../str.mjs).
   * [`function spaced`](../str.mjs#L415)
   * [`function dashed`](../str.mjs#L416)
   * [`function isSubpath`](../str.mjs#L419)
-  * [`function rndHex`](../str.mjs#L424)
-  * [`function arrHex`](../str.mjs#L430)
-  * [`function uuid`](../str.mjs#L442)
-  * [`function uuidArr`](../str.mjs#L445)
-  * [`function draftParse`](../str.mjs#L459)
-  * [`function draftRender`](../str.mjs#L460)
-  * [`function draftRenderAsync`](../str.mjs#L461)
-  * [`class Draft`](../str.mjs#L472)
-  * [`function isRen`](../str.mjs#L502)
-  * [`class Embed`](../str.mjs#L505)
-  * [`function str`](../str.mjs#L528)
-  * [`function strLax`](../str.mjs#L534)
-  * [`function strConcat`](../str.mjs#L540)
-  * [`function strConcatLax`](../str.mjs#L544)
-  * [`function san`](../str.mjs#L552)
-  * [`function sanLax`](../str.mjs#L554)
-  * [`function interpolate`](../str.mjs#L557)
+  * [`function rndHex`](../str.mjs#L429)
+  * [`function arrHex`](../str.mjs#L435)
+  * [`function uuid`](../str.mjs#L447)
+  * [`function uuidArr`](../str.mjs#L450)
+  * [`function draftParse`](../str.mjs#L464)
+  * [`function draftRender`](../str.mjs#L465)
+  * [`function draftRenderAsync`](../str.mjs#L466)
+  * [`class Draft`](../str.mjs#L477)
+  * [`function isRen`](../str.mjs#L507)
+  * [`class Embed`](../str.mjs#L510)
+  * [`function str`](../str.mjs#L533)
+  * [`function strLax`](../str.mjs#L539)
+  * [`function strConcat`](../str.mjs#L545)
+  * [`function strConcatLax`](../str.mjs#L549)
+  * [`function san`](../str.mjs#L557)
+  * [`function sanLax`](../str.mjs#L559)
+  * [`function interpolate`](../str.mjs#L562)

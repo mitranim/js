@@ -75,7 +75,6 @@ export class HTMLUListElement extends (G.HTMLUListElement || H) {constructor() {
 export class HTMLVideoElement extends (G.HTMLVideoElement || H) {constructor() {reg(new.target), super()}}
 
 export function reg(cls) {return cer.reg(cls)}
-
 export function regAs(cls, tag) {return cer.regAs(cls, tag)}
 
 export class CustomElementRegistry extends l.Emp {

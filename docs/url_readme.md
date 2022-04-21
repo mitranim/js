@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.14/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.15/url.mjs'
 ```
 
 Example parsing:
@@ -453,6 +453,5 @@ The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
   * [`const queryKey`](../url.mjs#L336)
   * [`const hashKey`](../url.mjs#L337)
   * [`function urlParse`](../url.mjs#L339)
-  * [`function queryDec`](../url.mjs#L399)
-  * [`function queryEnc`](../url.mjs#L405)
-  * [`function queryEncIdemp`](../url.mjs#L415)
+  * [`function queryDec`](../url.mjs#L405)
+  * [`function queryEnc`](../url.mjs#L411)
