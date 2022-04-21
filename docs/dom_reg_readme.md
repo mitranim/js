@@ -27,7 +27,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.15/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.16/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {
@@ -74,9 +74,28 @@ Shortcut for calling `cer.reg`. Takes a custom element class and idempotently re
 
 ### `const cer`
 
-Links: [source](../dom_reg.mjs#L178); [test/example](../test/dom_reg_test.mjs#L64).
+Links: [source](../dom_reg.mjs#L188); [test/example](../test/dom_reg_test.mjs#L64).
 
 Wrapper and/or shim for `customElements` with a similarly-shaped API. Keeps track of which classes and tags have already been defined, enabling idempotent registration and name salting. In browsers it also calls `customElements.define`. Note that it doesn't "patch" the global. Directly using global `customElements` bypasses our registration mechanisms and may lead to redundant registration attempts.
+
+Registration can be delayed:
+
+```js
+import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.16/dom_reg.mjs'
+
+dr.cer.unsetDefiner()
+
+class Btn extends HTMLButtonElement {
+  // Registers `Btn` in `cer`, but NOT in `window.customElements`.
+  static {dr.regAs(this, `a-btn`)}
+}
+
+// The element is NOT yet upgraded to our custom class.
+document.body.append(document.createElement(`a-btn`))
+
+// Registers the class and upgrades the element.
+dr.cer.setDefiner(customElements)
+```
 
 ### Undocumented
 
@@ -151,4 +170,4 @@ The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg
   * [`class HTMLVideoElement`](../dom_reg.mjs#L75)
   * [`function regAs`](../dom_reg.mjs#L78)
   * [`class CustomElementRegistry`](../dom_reg.mjs#L80)
-  * [`function clsTag`](../dom_reg.mjs#L194)
+  * [`function clsTag`](../dom_reg.mjs#L204)

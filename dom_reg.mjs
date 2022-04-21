@@ -167,6 +167,16 @@ export class CustomElementRegistry extends l.Emp {
     }
   }
 
+  unsetDefiner() {this.ref = undefined}
+
+  setDefiner(ref) {
+    if ((this.ref = optDefiner(ref))) {
+      for (const [cls, tag] of this.clsToTag) {
+        this.ref.define(tag, cls, this.clsOpt(cls))
+      }
+    }
+  }
+
   clear() {
     this.tagToCls.clear()
     this.clsToTag.clear()
