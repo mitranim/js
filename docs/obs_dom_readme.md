@@ -14,41 +14,24 @@ Optionally combine with [`dom_reg`](dom_reg_readme.md) for automatic registratio
 
 ## Usage
 
+`MixReac` is a "mixin" that adds reactivity to the class:
+
 ```js
-import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.16/obs.mjs'
-import * as od from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.16/obs_dom.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.16/dom_reg.mjs'
+import * as o from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.17/obs.mjs'
+import * as od from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.17/obs_dom.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.17/dom_reg.mjs'
 
 const obs = o.obs({msg: `hello!`})
 
-class MyElem extends dr.HTMLElement {
-  constructor() {od.reac(new.target), super()}
-
+class MyElem extends od.MixReac(dr.HTMLElement) {
   // Automatically runs on `.connectedCallback`.
   // Subscribes to observables. Reruns on changes.
-  run() {
-    this.textContent = obs.msg
-  }
+  run() {this.textContent = obs.msg}
 }
 
 document.body.append(new MyElem())
 
 obs.msg = `hello world!`
-```
-
-`reac(new.target)` idempotently patches the class, acting like multiple inheritance. Newer JS syntax makes it cleaner, but has less browser support:
-
-```js
-class MyElem extends dr.HTMLElement {
-  static {reac(this)}
-}
-```
-
-[Decorators](https://github.com/tc39/proposal-decorators) are even cleaner:
-
-```js
-@reac
-class MyElem extends dr.HTMLElement {}
 ```
 
 Reactivity is also available for `Text`:
@@ -69,6 +52,10 @@ obs.msg = `hello world!`
 
 The following APIs are exported but undocumented. Check [obs_dom.mjs](../obs_dom.mjs).
 
-  * [`function reac`](../obs_dom.mjs#L5)
-  * [`class ReacText`](../obs_dom.mjs#L7)
-  * [`class FunText`](../obs_dom.mjs#L29)
+  * [`function MixReac`](../obs_dom.mjs#L11)
+  * [`class ReacText`](../obs_dom.mjs#L26)
+  * [`class FunText`](../obs_dom.mjs#L48)
+  * [`class ReacMoebius`](../obs_dom.mjs#L65)
+  * [`class Reac`](../obs_dom.mjs#L94)
+  * [`class ElementReac`](../obs_dom.mjs#L114)
+  * [`class TextReac`](../obs_dom.mjs#L128)

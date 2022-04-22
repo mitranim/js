@@ -32,7 +32,7 @@ HTTP request/response utils are ported and reworked from https://github.com/mitr
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.16/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.17/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -234,8 +234,8 @@ rou.groups // {key: `path`}
 Routing is imperative:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.16/http.mjs'
-import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.16/lang.mjs'
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.17/http.mjs'
+import * as l from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.17/lang.mjs'
 
 const nextPage = route(window.location)
 
@@ -263,7 +263,7 @@ Short for "request router" or "request-response router". Advanced version of [#`
 Routing can be shared between SSR and SPA:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.16/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.17/http.mjs'
 
 function route(rou) {
   l.reqInst(rou, h.ReqRou)
@@ -360,13 +360,13 @@ The following APIs are exported but undocumented. Check [http.mjs](../http.mjs).
   * [`class ResBui`](../http.mjs#L230)
   * [`function toRou`](../http.mjs#L322)
   * [`function toReqRou`](../http.mjs#L369)
-  * [`function cookieSplitPairs`](../http.mjs#L464)
-  * [`function cookieSplitPair`](../http.mjs#L470)
-  * [`function cook`](../http.mjs#L483)
-  * [`class Cookie`](../http.mjs#L485)
-  * [`function reqBody`](../http.mjs#L613)
-  * [`function optBody`](../http.mjs#L614)
-  * [`const bodyFuns`](../http.mjs#L615)
+  * [`function cookieSplitPairs`](../http.mjs#L465)
+  * [`function cookieSplitPair`](../http.mjs#L471)
+  * [`function cook`](../http.mjs#L484)
+  * [`class Cookie`](../http.mjs#L486)
+  * [`function reqBody`](../http.mjs#L614)
+  * [`function optBody`](../http.mjs#L615)
+  * [`const bodyFuns`](../http.mjs#L616)
 
 
 ## Misc

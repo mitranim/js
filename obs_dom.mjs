@@ -2,7 +2,26 @@ import * as l from './lang.mjs'
 import * as ob from './obs.mjs'
 import * as sc from './sched.mjs'
 
-export function reac(cls) {return ReacReg.main.reg(cls)}
+/*
+Short for "mixin reactive". The output must be subclassed, and the subclass must
+implement method "run" that mutates the instance. It runs when connected to the
+DOM and reruns automatically when triggered by any observables that it uses.
+See the readme.
+*/
+export function MixReac(cls) {
+  return class MixReac extends cls {
+    connectedCallback() {
+      super.connectedCallback?.()
+      const reac = this[reacKey] || (this[reacKey] = new ElementReac(this))
+      reac.exec()
+    }
+
+    disconnectedCallback() {
+      this[reacKey]?.deinit()
+      super.disconnectedCallback?.()
+    }
+  }
+}
 
 export class ReacText extends (globalThis.Text || Object) {
   constructor(val) {
@@ -39,57 +58,11 @@ export class FunText extends ReacText {
   }
 }
 
-class ReacReg extends WeakSet {
-  reg(cls) {
-    if (!this.has(cls)) {
-      reacPatchProto(cls.prototype)
-      this.add(cls)
-    }
-    return cls
-  }
-}
-
-function reacPatchProto(proto) {
-  const {connectedCallback, disconnectedCallback} = proto
-
-  if (l.isFun(connectedCallback)) {
-    proto.connectedCallback = function connectedCallbackReac() {
-      connectedCallbackReacStatic.call(this)
-      return connectedCallback.call(this)
-    }
-  }
-  else {
-    proto.connectedCallback = connectedCallbackReacStatic
-  }
-
-  if (l.isFun(disconnectedCallback)) {
-    proto.disconnectedCallback = function disconnectedCallbackReac() {
-      disconnectedCallbackReacStatic.call(this)
-      return disconnectedCallback.call(this)
-    }
-  }
-  else {
-    proto.disconnectedCallback = disconnectedCallbackReacStatic
-  }
-}
-
-ReacReg.main = /* @__PURE__ */ new ReacReg()
-
-function connectedCallbackReacStatic() {
-  const reac = this[reacKey] || (this[reacKey] = new ElementReac(this))
-  reac.exec()
-}
-
-function disconnectedCallbackReacStatic() {
-  const reac = this[reacKey]
-  if (reac) reac.deinit()
-}
-
 /*
 Used internally by `Reac`. Implements "magic" automatic subscriptions on
 observable access. Implements the interface required by `Sched`.
 */
-class ReacMoebius extends ob.Moebius {
+export class ReacMoebius extends ob.Moebius {
   depth() {return this.ref.depth()}
 
   /*
@@ -118,7 +91,7 @@ Small adapter that enables implicit reactivity with careful hierarchical
 scheduling. Expects external deinit such as via `.disconnectedCallback`.
 Use `ElementReac` for elements, and `TextReac` for text.
 */
-class Reac extends l.Emp {
+export class Reac extends l.Emp {
   constructor(node) {
     super()
     this.node = reqRunnerNode(node)
@@ -138,7 +111,7 @@ class Reac extends l.Emp {
   get sched() {return sc.Sched.main}
 }
 
-class ElementReac extends Reac {
+export class ElementReac extends Reac {
   constructor(node) {super(reqRunnerElement(node))}
 }
 
@@ -152,7 +125,7 @@ connected/disconnected callbacks, we have to rely on heuristics. The current
 heuristic is to unsubscribe if triggered when disconnected, but we may have to
 revise this in the future.
 */
-class TextReac extends Reac {
+export class TextReac extends Reac {
   constructor(node) {super(reqRunnerText(node))}
 
   trig() {

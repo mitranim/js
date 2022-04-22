@@ -14,6 +14,8 @@ Optionally combine with {{featLink dom_reg}} for automatic registration of eleme
 
 ## Usage
 
+`MixReac` is a "mixin" that adds reactivity to the class:
+
 ```js
 import * as o from '{{featUrl obs}}'
 import * as od from '{{featUrl obs_dom}}'
@@ -21,34 +23,15 @@ import * as dr from '{{featUrl dom_reg}}'
 
 const obs = o.obs({msg: `hello!`})
 
-class MyElem extends dr.HTMLElement {
-  constructor() {od.reac(new.target), super()}
-
+class MyElem extends od.MixReac(dr.HTMLElement) {
   // Automatically runs on `.connectedCallback`.
   // Subscribes to observables. Reruns on changes.
-  run() {
-    this.textContent = obs.msg
-  }
+  run() {this.textContent = obs.msg}
 }
 
 document.body.append(new MyElem())
 
 obs.msg = `hello world!`
-```
-
-`reac(new.target)` idempotently patches the class, acting like multiple inheritance. Newer JS syntax makes it cleaner, but has less browser support:
-
-```js
-class MyElem extends dr.HTMLElement {
-  static {reac(this)}
-}
-```
-
-[Decorators](https://github.com/tc39/proposal-decorators) are even cleaner:
-
-```js
-@reac
-class MyElem extends dr.HTMLElement {}
 ```
 
 Reactivity is also available for `Text`:
