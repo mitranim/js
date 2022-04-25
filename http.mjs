@@ -456,9 +456,15 @@ export class Ctx extends AbortController {
   }
 
   handleEvent({type}) {if (type === `abort`) this.deinit()}
+
   sub() {return new this.constructor(this.signal)}
-  abort() {return this.deinit()}
-  deinit() {return this.unlink(), super.abort()}
+
+  abort() {this.deinit()}
+
+  deinit() {
+    this.unlink()
+    if (!this.signal.aborted) super.abort()
+  }
 }
 
 // Also see `Cookie.fromPairs`.

@@ -30,7 +30,7 @@ Short overview of features:
 HTML rendering:
 
 ```js
-import {E, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.17/ren_str.mjs'
+import {E, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.18/ren_str.mjs'
 
 console.log(
   Html({title: `home`, body: Index()})
@@ -60,7 +60,7 @@ function Index() {
 Specialized syntax is available:
 
 ```js
-import {A, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.17/ren_str.mjs'
+import {A, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.18/ren_str.mjs'
 const {e, en} = ren
 
 console.log(
