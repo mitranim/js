@@ -1,6 +1,7 @@
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
+import * as i from '../iter.mjs'
 import * as d from '../dom.mjs'
 import * as dr from '../dom_reg.mjs'
 
@@ -196,7 +197,46 @@ t.test(function test_CustomElementRegistry() {
     t.is(cer.clsTagBase(SomeHeadCell), `th`)
     t.eq(cer.clsOpt(SomeHeadCell), {extends: `th`})
   })
+
+  t.test(function test_setDefiner() {
+    const cer = makeCer()
+    cer.setDefiner()
+
+    class Cls0 extends dr.HTMLElement {}
+    class Cls1 extends dr.HTMLElement {}
+    class Cls2 extends dr.HTMLElement {}
+
+    cer.reg(Cls0)
+    cer.reg(Cls1)
+
+    t.is(cer.ref, undefined)
+
+    t.eq(cer.tagToCls, i.mapOf(
+      `a-cls0`, Cls0,
+      `a-cls1`, Cls1,
+    ))
+
+    t.eq(cer.clsToTag, i.mapOf(
+      Cls0, `a-cls0`,
+      Cls1, `a-cls1`,
+    ))
+
+    class Definer extends Array {
+      define(tag, cls, opt) {
+        this.push([tag, cls, opt])
+        if (tag === `a-cls0`) cer.reg(Cls2)
+      }
+    }
+
+    const def = new Definer()
+    cer.setDefiner(def)
+
+    t.eq(def, Definer.of(
+      [`a-cls0`, Cls0, undefined],
+      [`a-cls2`, Cls2, undefined],
+      [`a-cls1`, Cls1, undefined],
+    ))
+  })
 })
 
 if (import.meta.main) console.log(`[test] ok!`)
-

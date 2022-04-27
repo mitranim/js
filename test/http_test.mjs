@@ -806,6 +806,20 @@ t.test(function test_Ctx() {
   t.test(function test_unlink() {
     testCtxUnlink(val => val.unlink())
   })
+
+  t.test(function test_deinit_idempotency() {
+    const ctx = new h.Ctx()
+    t.no(ctx.signal.aborted)
+
+    ctx.deinit()
+    t.ok(ctx.signal.aborted)
+
+    ctx.deinit()
+    t.ok(ctx.signal.aborted)
+
+    ctx.deinit()
+    t.ok(ctx.signal.aborted)
+  })
 })
 
 function testCtxDeinit(fun) {

@@ -167,13 +167,20 @@ export class CustomElementRegistry extends l.Emp {
     }
   }
 
-  unsetDefiner() {this.ref = undefined}
-
+  /*
+  We snapshot the registry before iterating, because each `.define` call may
+  invoke unknown side effects, which may register additional custom element
+  classes. Because `.ref` is already set, any further registration calls
+  immediately call `ref.define`. Without snapshotting the registry, we would
+  accidentally iterate over those newcomers and attempt to define them again,
+  causing an exception.
+  */
   setDefiner(ref) {
-    if ((this.ref = optDefiner(ref))) {
-      for (const [cls, tag] of this.clsToTag) {
-        this.ref.define(tag, cls, this.clsOpt(cls))
-      }
+    this.ref = optDefiner(ref)
+    if (!this.ref) return
+
+    for (const [cls, tag] of [...this.clsToTag]) {
+      ref.define(tag, cls, this.clsOpt(cls))
     }
   }
 

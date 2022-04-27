@@ -463,7 +463,7 @@ export class Ctx extends AbortController {
 
   deinit() {
     this.unlink()
-    if (!this.signal.aborted) super.abort()
+    super.abort()
   }
 }
 

@@ -229,7 +229,7 @@ export class Srv extends l.Emp {
   async serveConn(conn) {
     for await (const event of Deno.serveHttp(conn)) {
       const onEventErr = err => this.onEventErr(err, event)
-      event.respondWith(this.response(event.request)).catch(onEventErr)
+      event.respondWith(l.reqPromise(this.response(event.request))).catch(onEventErr)
     }
   }
 

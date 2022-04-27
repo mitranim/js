@@ -5,7 +5,7 @@ Registration can be delayed:
 ```js
 import * as dr from '{{featUrl dom_reg}}'
 
-dr.cer.unsetDefiner()
+dr.cer.setDefiner()
 
 class Btn extends HTMLButtonElement {
   // Registers `Btn` in `cer`, but NOT in `window.customElements`.

@@ -27,7 +27,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.18/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.19/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {
@@ -62,28 +62,28 @@ document.body.append(new MyLink(`click me`, `/some-link`))
 
 ### `class HTMLElement`
 
-Links: [source](../dom_reg.mjs#L5); [test/example](../test/dom_reg_test.mjs#L37).
+Links: [source](../dom_reg.mjs#L5); [test/example](../test/dom_reg_test.mjs#L38).
 
 This, and various other "HTML_X_Element" classes, are shortcuts provided by this library to enable automatic registration and compatibility with SSR imports. See examples in the readme.
 
 ### `function reg`
 
-Links: [source](../dom_reg.mjs#L77); [test/example](../test/dom_reg_test.mjs#L56).
+Links: [source](../dom_reg.mjs#L77); [test/example](../test/dom_reg_test.mjs#L57).
 
 Shortcut for calling `cer.reg`. Takes a custom element class and idempotently registers it with `customElements`, automatically deriving the custom element tag name _and_ the base tag for `extends`.
 
 ### `const cer`
 
-Links: [source](../dom_reg.mjs#L188); [test/example](../test/dom_reg_test.mjs#L64).
+Links: [source](../dom_reg.mjs#L195); [test/example](../test/dom_reg_test.mjs#L65).
 
 Wrapper and/or shim for `customElements` with a similarly-shaped API. Keeps track of which classes and tags have already been defined, enabling idempotent registration and name salting. In browsers it also calls `customElements.define`. Note that it doesn't "patch" the global. Directly using global `customElements` bypasses our registration mechanisms and may lead to redundant registration attempts.
 
 Registration can be delayed:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.18/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.19/dom_reg.mjs'
 
-dr.cer.unsetDefiner()
+dr.cer.setDefiner()
 
 class Btn extends HTMLButtonElement {
   // Registers `Btn` in `cer`, but NOT in `window.customElements`.
@@ -170,4 +170,4 @@ The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg
   * [`class HTMLVideoElement`](../dom_reg.mjs#L75)
   * [`function regAs`](../dom_reg.mjs#L78)
   * [`class CustomElementRegistry`](../dom_reg.mjs#L80)
-  * [`function clsTag`](../dom_reg.mjs#L204)
+  * [`function clsTag`](../dom_reg.mjs#L211)
