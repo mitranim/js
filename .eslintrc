@@ -9,11 +9,12 @@
       "prompt", "scroll", "self", "status", "stop", "top",
       // global (node)
       "root",
-      // other
+      /* other */
       "test",
-      // These global functions are broken
+      /* These global functions are broken */
       "isNaN", "isFinite",
     ],
+    "semi": ["error", "never"],
     "eqeqeq": ["error", "always", {"null": "never"}],
     "no-unused-vars": ["error", {"argsIgnorePattern": "^_", "varsIgnorePattern": "^_"}],
 

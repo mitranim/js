@@ -145,7 +145,7 @@ export function removeEvents(node, names, opt) {
 export function clip(val) {
   if (!(val = l.laxStr(val))) return
 
-  const node = document.createElement(`input`)
+  const node = document.createElement(`textarea`)
   node.value = val
 
   document.body.append(node)

@@ -579,8 +579,20 @@ Otherwise throws `AssertError`.
 The argument order matches `instanceof` and `l.isInst`.
 */
 export function inst(val, cls) {
+  l.reqCls(cls)
   if (l.isInst(val, cls)) return
-  throw new AssertError(`expected an instance of ${cls}, got ${l.show(val)}`)
+  throw new AssertError(`expected instance of ${cls}, got ${l.show(val)}`)
+}
+
+/*
+Asserts that the given value is either nil or an instance of the given class.
+Otherwise throws `AssertError`.
+The argument order matches `instanceof` and `l.isInst`.
+*/
+export function optInst(val, cls) {
+  l.reqCls(cls)
+  if (l.isNil(val) || l.isInst(val, cls)) return
+  throw new AssertError(`expected nil or instance of ${cls}, got ${l.show(val)}`)
 }
 
 /*
@@ -589,13 +601,13 @@ with a given non-empty error message.
 */
 export function throws(fun, cls, msg) {
   if (!l.isFun(fun)) {
-    throw new TypeError(`expected a function, got ${l.show(fun)}`)
+    throw new TypeError(`expected function, got ${l.show(fun)}`)
   }
   if (!l.isCls(cls) || !l.isSubCls(cls, Error)) {
-    throw new TypeError(`expected an error class, got ${l.show(cls)}`)
+    throw new TypeError(`expected error class, got ${l.show(cls)}`)
   }
   if (!l.isStr(msg) || !msg) {
-    throw new TypeError(`expected an error message, got ${l.show(msg)}`)
+    throw new TypeError(`expected error message, got ${l.show(msg)}`)
   }
 
   if (l.isFunAsync(fun)) return throwsAsync(fun, cls, msg)

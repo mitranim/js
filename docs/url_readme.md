@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.19/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.20/url.mjs'
 ```
 
 Example parsing:
@@ -308,7 +308,7 @@ new URLSearchParams(new u.Query(`one=two&one=three&four=five`))
 
 ### `class Url`
 
-Links: [source](../url.mjs#L77); [test/example](../test/url_test.mjs#L300).
+Links: [source](../url.mjs#L76); [test/example](../test/url_test.mjs#L300).
 
 Like [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) but much better. See [#Overview](#overview) for some differences.
 
@@ -443,15 +443,15 @@ The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
   * [`const RE_ORIGIN`](../url.mjs#L19)
   * [`const RE_PATHNAME`](../url.mjs#L20)
   * [`const RE_HASH`](../url.mjs#L21)
-  * [`const schemeKey`](../url.mjs#L329)
-  * [`const slashKey`](../url.mjs#L330)
-  * [`const usernameKey`](../url.mjs#L331)
-  * [`const passwordKey`](../url.mjs#L332)
-  * [`const hostnameKey`](../url.mjs#L333)
-  * [`const portKey`](../url.mjs#L334)
-  * [`const pathnameKey`](../url.mjs#L335)
-  * [`const queryKey`](../url.mjs#L336)
-  * [`const hashKey`](../url.mjs#L337)
-  * [`function urlParse`](../url.mjs#L339)
-  * [`function queryDec`](../url.mjs#L405)
-  * [`function queryEnc`](../url.mjs#L411)
+  * [`const schemeKey`](../url.mjs#L328)
+  * [`const slashKey`](../url.mjs#L329)
+  * [`const usernameKey`](../url.mjs#L330)
+  * [`const passwordKey`](../url.mjs#L331)
+  * [`const hostnameKey`](../url.mjs#L332)
+  * [`const portKey`](../url.mjs#L333)
+  * [`const pathnameKey`](../url.mjs#L334)
+  * [`const queryKey`](../url.mjs#L335)
+  * [`const hashKey`](../url.mjs#L336)
+  * [`function urlParse`](../url.mjs#L338)
+  * [`function queryDec`](../url.mjs#L404)
+  * [`function queryEnc`](../url.mjs#L410)

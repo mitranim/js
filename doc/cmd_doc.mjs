@@ -46,7 +46,7 @@ class Pkg extends o.MemGet {
     }
   }
 
-  get base() {return `https://cdn.jsdelivr.net/gh/mitranim/js`}
+  get base() {return `https://cdn.jsdelivr.net/npm/@mitranim/js`}
   get ver() {return VER}
   get url() {return s.inter(this.base, `@`, this.ver)}
   get readmeSrcPath() {return p.posix.join(DIR_DOC_SRC, `readme.md`)}

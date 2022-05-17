@@ -40,7 +40,7 @@ Complemented by:
 Creating new nodes:
 
 ```js
-import {E} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.19/ren_dom.mjs'
+import {E} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.20/ren_dom.mjs'
 
 document.body.append(
   E(`div`, {class: `outer`},
@@ -60,7 +60,7 @@ The following elements have been appended:
 Specialized syntax is available:
 
 ```js
-import {A, ren} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.19/ren_dom.mjs'
+import {A, ren} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.20/ren_dom.mjs'
 const {e} = ren
 
 document.body.append(
@@ -73,9 +73,9 @@ document.body.append(
 Imperative updates:
 
 ```js
-import {A} from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.19/ren_dom.mjs'
-import * as r from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.19/ren_dom.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/gh/mitranim/js@0.1.19/dom_reg.mjs'
+import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.20/ren_dom.mjs'
+import * as r from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.20/ren_dom.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.20/dom_reg.mjs'
 
 class SomeLink extends dr.HTMLAnchorElement {
   constructor(href, text) {
@@ -97,10 +97,11 @@ The following APIs are exported but undocumented. Check [ren_dom.mjs](../ren_dom
 
   * [`function E`](../ren_dom.mjs#L5)
   * [`function S`](../ren_dom.mjs#L6)
-  * [`function mut`](../ren_dom.mjs#L7)
-  * [`function mutProps`](../ren_dom.mjs#L8)
-  * [`function mutChi`](../ren_dom.mjs#L9)
-  * [`class RenDom`](../ren_dom.mjs#L15)
-  * [`class RenDomHtml`](../ren_dom.mjs#L186)
-  * [`const ren`](../ren_dom.mjs#L195)
-  * [`class RenDomSvg`](../ren_dom.mjs#L203)
+  * [`function F`](../ren_dom.mjs#L7)
+  * [`function mut`](../ren_dom.mjs#L8)
+  * [`function mutProps`](../ren_dom.mjs#L9)
+  * [`function mutChi`](../ren_dom.mjs#L10)
+  * [`class RenDom`](../ren_dom.mjs#L16)
+  * [`class RenDomHtml`](../ren_dom.mjs#L187)
+  * [`const ren`](../ren_dom.mjs#L196)
+  * [`class RenDomSvg`](../ren_dom.mjs#L204)

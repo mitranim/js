@@ -5,6 +5,7 @@ export {A, P, Raw} from './ren_base.mjs'
 export function E(...val) {return ren.E(...val)}
 export function S(...val) {return RenStrSvg.main.E(...val)}
 export function X(...val) {return RenStr.main.E(...val)}
+export function F(...val) {return ren.frag(...val)}
 
 /*
 Renders XML strings with a convenient React-inspired syntax. For better

@@ -68,11 +68,10 @@ export class Query extends s.StrMap {
 }
 
 /*
-Our lexicon is somewhere between IETF
+Our lexicon is a mixture of IETF standard and JS URL standard lexicons.
+They disagree on some terms.
 
-Reference:
-
-  https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
+Reference: https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 */
 export class Url extends l.Emp {
   constructor(val) {

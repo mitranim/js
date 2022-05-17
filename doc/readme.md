@@ -56,6 +56,12 @@ import * as l from '{{featUrl lang}}'
 import * as s from '{{featUrl str}}'
 ```
 
+Also available on NPM:
+
+```sh
+npm i -E @mitranim/js
+```
+
 ## Features
 
 {{features}}

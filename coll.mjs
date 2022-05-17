@@ -4,7 +4,7 @@ export function bset(val) {return new Bset(val)}
 export function bsetOf(...val) {return Bset.of(...val)}
 
 export class Bset extends Set {
-  constructor(val) {super().mut(val)}
+  constructor(...val) {super().mut(...val)}
 
   mut(val) {
     if (l.isNil(val)) return this
@@ -33,7 +33,7 @@ export function bmap(val) {return new Bmap(val)}
 export function bmapOf(...val) {return Bmap.of(...val)}
 
 export class Bmap extends Map {
-  constructor(val) {super().mut(val)}
+  constructor(...val) {super().mut(...val)}
 
   mut(val) {
     if (l.isNil(val)) return this

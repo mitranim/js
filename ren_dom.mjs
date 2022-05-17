@@ -4,6 +4,7 @@ export {A, P, Raw} from './ren_base.mjs'
 
 export function E(...val) {return ren.E(...val)}
 export function S(...val) {return RenDomSvg.main.E(...val)}
+export function F(...val) {return ren.frag(...val)}
 export function mut(...val) {return ren.mut(...val)}
 export function mutProps(...val) {return ren.mutProps(...val)}
 export function mutChi(...val) {return ren.mutChi(...val)}
@@ -125,7 +126,7 @@ export class RenDom extends rb.RenBase {
 
     const frag = this.frag(...chi)
     nodeClear(tar)
-    tar.append(frag)
+    tar.appendChild(frag)
     return tar
   }
 
@@ -139,7 +140,7 @@ export class RenDom extends rb.RenBase {
   appendChi(tar, val) {
     if (l.isNil(val)) return undefined
     if (l.isStr(val)) return this.appendStr(tar, val)
-    if (isNode(val)) return tar.append(val)
+    if (isNode(val)) return tar.appendChild(val)
     if (rb.isRaw(val)) return this.appendRaw(tar, val)
     if (l.isSeq(val)) return this.appendSeq(tar, val)
     return this.appendChi(tar, this.strOpt(val))
@@ -154,7 +155,7 @@ export class RenDom extends rb.RenBase {
   appendRaw(tar, val) {
     const buf = this.makeDef()
     buf.innerHTML = rb.reqRaw(val)
-    while (buf.firstChild) tar.append(buf.firstChild)
+    while (buf.firstChild) tar.appendChild(buf.firstChild)
   }
 
   // TODO: test deoptimization with non-array iterators.

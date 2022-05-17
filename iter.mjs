@@ -244,8 +244,21 @@ export function head(val) {
 
 function iter(val) {return l.hasMeth(val, `values`) ? val.values() : val[Symbol.iterator]()}
 
-export function last(val) {return val = values(val), val[val.length - 1]}
+/*
+Suboptimal for non-list iterators, but even an "optimal" version would be
+terrible. If user code needs to frequently pick the last value of some
+sequence, the sequence should be stored in a way that makes this efficient.
+Namely, it should be an array.
+*/
+export function last(val) {
+  if (!l.isObj(val)) return undefined
+  if (l.isList(val)) return val[val.length - 1]
+  if (l.isIter(val)) return last(values(val))
+  return val[last(keys(val))]
+}
+
 export function init(val) {return values(val).slice(0, -1)}
+
 export function tail(val) {return values(val).slice(1)}
 
 export function take(val, len) {
