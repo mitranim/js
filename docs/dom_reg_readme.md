@@ -27,7 +27,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.20/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.21/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {
@@ -81,7 +81,7 @@ Wrapper and/or shim for `customElements` with a similarly-shaped API. Keeps trac
 Registration can be delayed:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.20/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.21/dom_reg.mjs'
 
 dr.cer.setDefiner()
 

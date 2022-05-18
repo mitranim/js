@@ -242,7 +242,7 @@ Short for "attributes". Abbreviated for frequent use. This is a static instance
 which is considered "immutable", and where any "mutating" method makes a new
 mutable instance. Compare `P` which is a function.
 */
-export const A = new PropBui().frozen()
+export const A = /* @__PURE__ */ new PropBui().frozen()
 
 /*
 Short for "props" or "props builder". Abbreviated for frequent use. Shortcut for
@@ -283,7 +283,7 @@ function spaced(one, two) {
 }
 
 function deref(val) {
-  if (l.isNil(val)) return val
-  if (l.reqObj(val) instanceof PropBui) return val.$
+  if (!l.optObj(val)) return val
+  if (`$` in val) return val.$
   return val
 }

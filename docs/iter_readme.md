@@ -77,7 +77,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.20/iter.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.21/iter.mjs'
 ```
 
 ## Perf
