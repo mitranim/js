@@ -2,6 +2,9 @@ import * as l from './lang.mjs'
 
 const G = globalThis
 
+export const Node = G.Node || class Node extends l.Emp {}
+export const Text = G.Text || class Text extends Node {}
+export const Comment = G.Comment || class Comment extends Node {}
 export class HTMLElement extends (G.HTMLElement || Object) {constructor() {reg(new.target), super()}}
 
 const H = HTMLElement

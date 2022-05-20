@@ -106,8 +106,8 @@ The combination of wrapper object and inner object provides separate namespaces
 for methods and properties. This gives us an extensible, subclassable namespace
 for various shortcuts such as `.cls` and `.tarblan`. It also encourages the
 user to separate HTML/DOM attributes from the inputs to their own JS
-functions/classes. Mixing everything into "props" is a fundamental
-design mistake in JSX.
+functions/classes. Mixing everything into "props" is a fundamental design
+mistake.
 
 We could also get a separate "namespace" by subclassing `Map` or wrapping an
 array, but using an inner dict keeps our renderer code compatible with plain
@@ -126,15 +126,16 @@ instead of a dictionary, but the renderer code would have to be specialized for
 that, giving up compatibility with plain dicts.
 
 Constructing props via "builder" methods is slower than via inline object
-literals, but this encourages the user to avoid object rest/spread and provides
-"merge" shortcuts such as `.cls`, compensating for the overhead.
+literals, but easily compensates for the overhead by encouraging the user to
+avoid object rest/spread and providing more efficient "merge" shortcuts such as
+`.cls`.
 
 The cost of the wrapper is insignificant; the main cost is giving up object
 literals which are nearly free to construct.
 
-Using `Object.create(null)` for the inner dict gives us a performance drop in
-benchmarks. Using an empty but non-null prototype avoids that. Unclear if this
-makes any difference in actual apps.
+Using `Object.create(null)` for the inner dict would reduce our performance in
+benchmarks. Using an object with a clean but non-null prototype, via `Emp`,
+avoids that. Unclear if this makes any difference in actual apps.
 
 Custom frozen marker has much better performance than `Object.freeze` and
 `Object.isFrozen`.
@@ -171,6 +172,7 @@ export class PropBui extends l.Emp {
   href(val) {return this.set(`href`, val)}
   httpEquiv(val) {return this.set(`http-equiv`, val)}
   id(val) {return this.set(`id`, val)}
+  is(val) {return this.set(`is`, val)}
   lang(val) {return this.set(`lang`, val)}
   method(val) {return this.set(`method`, val)}
   name(val) {return this.set(`name`, val)}
@@ -238,9 +240,9 @@ const refKey = Symbol.for(`$`)
 const froKey = Symbol.for(`frozen`)
 
 /*
-Short for "attributes". Abbreviated for frequent use. This is a static instance
-which is considered "immutable", and where any "mutating" method makes a new
-mutable instance. Compare `P` which is a function.
+Short for "attributes". Abbreviated for frequent use. This is a static instance,
+considered "immutable". Any "mutating" method makes a new mutable instance.
+Compare `P` which is a function.
 */
 export const A = /* @__PURE__ */ new PropBui().frozen()
 
