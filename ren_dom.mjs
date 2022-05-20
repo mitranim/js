@@ -23,7 +23,10 @@ export class RenDom extends rb.RenBase {
   // Short for "fragment". Used internally. Also allows JSX compat.
   frag(...val) {return this.addChi(new DocumentFragment(), ...val)}
 
-  make(tag, props) {return document.createElement(this.reqTag(tag), props)}
+  make(tag, props) {
+    if (tag === `svg`) return makeSvg(this.reqTag(tag), this.deref(props))
+    return makeHtml(this.reqTag(tag), this.deref(props))
+  }
 
   mut(tar, props, ...chi) {
     this.mutProps(tar, props)
@@ -187,35 +190,61 @@ export class RenDom extends rb.RenBase {
 export class RenDomHtml extends RenDom {
   E(tag, props, ...chi) {
     if (this.isVoid(tag) && chi.length) throw this.voidErr(tag, chi)
+    if (tag === `svg`) return ensureSvg(RenDomSvg.main.E(tag, props, ...chi))
     return super.E(tag, props, ...chi)
   }
 }
 RenDomHtml.main = /* @__PURE__ */ new RenDomHtml()
 
 // Easier to remember, and iso with `ren_str.mjs`.
-export const ren = RenDomHtml.main
+export const ren = /* @__PURE__ */ RenDomHtml.main
 
 /*
 Renderer specialized for SVG elements. Unlike template-based systems, we can't
-automatically detect when to use the SVG namespace, because our markup consists
-of nested function calls which are evaluated inner-to-outer, rather than
-outer-to-inner. The user code must tell us, by using this renderer.
+always automatically detect when to use the SVG namespace, because our markup
+consists of nested function calls which are evaluated inner-to-outer, rather
+than outer-to-inner. The user code must tell us, by using this renderer.
 */
 export class RenDomSvg extends RenDom {
-  make(tag, props) {
-    l.reqStr(tag)
-    return document.createElementNS(`http://www.w3.org/2000/svg`, tag, props)
-  }
-
+  make(tag, props) {return makeSvg(this.reqTag(tag), this.deref(props))}
   makeDef() {return this.make(`svg`)}
 }
 RenDomSvg.main = /* @__PURE__ */ new RenDomSvg()
+
+const nsSvg = `http://www.w3.org/2000/svg`
+
+function makeHtml(tag, props) {
+  return document.createElement(tag, props)
+}
+
+function makeSvg(tag, props) {
+  return document.createElementNS(nsSvg, tag, props)
+}
 
 /*
 In many DOM APIs only `null` is considered nil/missing, while `undefined` is
 stringified to `'undefined'`.
 */
 function norm(val) {return l.isNil(val) ? null : val}
+
+/*
+Minor inefficiency. Can be avoided by using `RenDomSvg`,
+but not a big deal when not avoided.
+*/
+function ensureSvg(node) {
+  if (isElement(node) && node.childNodes) {
+    for (const child of node.childNodes) {
+      if (isNonSvg(child)) {
+        // eslint-disable-next-line no-self-assign
+        node.innerHTML = node.innerHTML
+        break
+      }
+    }
+  }
+  return node
+}
+
+function isNonSvg(node) {return isElement(node) && node.namespaceURI !== nsSvg}
 
 function errMismatch(tar, key, val, src) {
   return TypeError(`unable to set ${l.show(key)} ${l.show(val)} on ${l.show(tar)}: type mismatch with ${l.show(src)}`)

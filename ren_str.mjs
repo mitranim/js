@@ -160,7 +160,7 @@ export class RenStrHtml extends RenHtmlBase {
 RenStrHtml.main = /* @__PURE__ */ new RenStrHtml()
 
 // Easier to remember, and iso with `ren_dom.mjs`.
-export const ren = RenStrHtml.main
+export const ren = /* @__PURE__ */ RenStrHtml.main
 
 class Cache extends Map {
   // Short for "get or create".
