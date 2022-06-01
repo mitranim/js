@@ -17,9 +17,8 @@
 
 * [#Usage](#usage)
 * [#API](#api)
-  * [#`class HTMLElement`](#class-htmlelement)
   * [#`function reg`](#function-reg)
-  * [#`const cer`](#const-cer)
+  * [#`class Reg`](#class-reg)
   * [#Undocumented](#undocumented)
 
 ## Usage
@@ -27,7 +26,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {
@@ -60,117 +59,42 @@ document.body.append(new MyLink(`click me`, `/some-link`))
 
 ## API
 
-### `class HTMLElement`
-
-Links: [source](../dom_reg.mjs#L8); [test/example](../test/dom_reg_test.mjs#L38).
-
-This, and various other "HTML_X_Element" classes, are shortcuts provided by this library to enable automatic registration and compatibility with SSR imports. See examples in the readme.
-
 ### `function reg`
 
-Links: [source](../dom_reg.mjs#L80); [test/example](../test/dom_reg_test.mjs#L57).
+Links: [source](../dom_reg.mjs#L4); [test/example](../test/dom_reg_test.mjs#L16).
 
-Shortcut for calling `cer.reg`. Takes a custom element class and idempotently registers it with `customElements`, automatically deriving the custom element tag name _and_ the base tag for `extends`.
+Shortcut for calling `Reg.main.reg`. Takes a custom element class and idempotently registers it, automatically deriving the custom element tag name _and_ the base tag for `extends`.
 
-### `const cer`
+### `class Reg`
 
-Links: [source](../dom_reg.mjs#L198); [test/example](../test/dom_reg_test.mjs#L65).
+Links: [source](../dom_reg.mjs#L55); [test/example](../test/dom_reg_test.mjs#L22).
 
-Wrapper and/or shim for `customElements` with a similarly-shaped API. Keeps track of which classes and tags have already been defined, enabling idempotent registration and name salting. In browsers it also calls `customElements.define`. Note that it doesn't "patch" the global. Directly using global `customElements` bypasses our registration mechanisms and may lead to redundant registration attempts.
+Registry for custom DOM element classes. Somewhat analogous to the built-in `window.customElements`. Keeps track of which classes and tags have already been defined, enabling idempotent registration and name salting. In browsers it also wraps `window.customElements` by default, calling `window.customElements.define` for each registration. Note that it doesn't "patch" the global. Directly using global `customElements` bypasses our registration mechanisms and may lead to redundant registration attempts.
 
-Registration can be delayed:
+Registration can be deferred:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/dom_reg.mjs'
 
-dr.cer.setDefiner()
+dr.Reg.main.setDefiner()
 
 class Btn extends HTMLButtonElement {
-  // Registers `Btn` in `cer`, but NOT in `window.customElements`.
-  static {dr.regAs(this, `a-btn`)}
+  static localName = `some-btn`
+
+  // Registers `Btn` in `dr.Reg.main`, but NOT in `window.customElements`.
+  static {dr.reg(this)}
 }
 
 // The element is NOT yet upgraded to our custom class.
-document.body.append(document.createElement(`a-btn`))
+document.body.append(document.createElement(Btn.localName))
 
 // Registers the class and upgrades the element.
-dr.cer.setDefiner(customElements)
+dr.Reg.main.setDefiner(customElements)
 ```
 
 ### Undocumented
 
 The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg.mjs).
 
-  * [`const Node`](../dom_reg.mjs#L5)
-  * [`const Text`](../dom_reg.mjs#L6)
-  * [`const Comment`](../dom_reg.mjs#L7)
-  * [`class HTMLAnchorElement`](../dom_reg.mjs#L12)
-  * [`class HTMLAreaElement`](../dom_reg.mjs#L13)
-  * [`class HTMLAudioElement`](../dom_reg.mjs#L14)
-  * [`class HTMLBaseElement`](../dom_reg.mjs#L15)
-  * [`class HTMLBodyElement`](../dom_reg.mjs#L16)
-  * [`class HTMLBRElement`](../dom_reg.mjs#L17)
-  * [`class HTMLButtonElement`](../dom_reg.mjs#L18)
-  * [`class HTMLCanvasElement`](../dom_reg.mjs#L19)
-  * [`class HTMLDataElement`](../dom_reg.mjs#L20)
-  * [`class HTMLDataListElement`](../dom_reg.mjs#L21)
-  * [`class HTMLDetailsElement`](../dom_reg.mjs#L22)
-  * [`class HTMLDialogElement`](../dom_reg.mjs#L23)
-  * [`class HTMLDivElement`](../dom_reg.mjs#L24)
-  * [`class HTMLDListElement`](../dom_reg.mjs#L25)
-  * [`class HTMLEmbedElement`](../dom_reg.mjs#L26)
-  * [`class HTMLFieldSetElement`](../dom_reg.mjs#L27)
-  * [`class HTMLFontElement`](../dom_reg.mjs#L28)
-  * [`class HTMLFormElement`](../dom_reg.mjs#L29)
-  * [`class HTMLFrameElement`](../dom_reg.mjs#L30)
-  * [`class HTMLFrameSetElement`](../dom_reg.mjs#L31)
-  * [`class HTMLHeadElement`](../dom_reg.mjs#L32)
-  * [`class HTMLHeadingElement`](../dom_reg.mjs#L33)
-  * [`class HTMLHRElement`](../dom_reg.mjs#L34)
-  * [`class HTMLHtmlElement`](../dom_reg.mjs#L35)
-  * [`class HTMLIFrameElement`](../dom_reg.mjs#L36)
-  * [`class HTMLImageElement`](../dom_reg.mjs#L37)
-  * [`class HTMLInputElement`](../dom_reg.mjs#L38)
-  * [`class HTMLLabelElement`](../dom_reg.mjs#L39)
-  * [`class HTMLLegendElement`](../dom_reg.mjs#L40)
-  * [`class HTMLLIElement`](../dom_reg.mjs#L41)
-  * [`class HTMLLinkElement`](../dom_reg.mjs#L42)
-  * [`class HTMLMapElement`](../dom_reg.mjs#L43)
-  * [`class HTMLMarqueeElement`](../dom_reg.mjs#L44)
-  * [`class HTMLMenuElement`](../dom_reg.mjs#L45)
-  * [`class HTMLMetaElement`](../dom_reg.mjs#L46)
-  * [`class HTMLMeterElement`](../dom_reg.mjs#L47)
-  * [`class HTMLModElement`](../dom_reg.mjs#L48)
-  * [`class HTMLObjectElement`](../dom_reg.mjs#L49)
-  * [`class HTMLOListElement`](../dom_reg.mjs#L50)
-  * [`class HTMLOptGroupElement`](../dom_reg.mjs#L51)
-  * [`class HTMLOptionElement`](../dom_reg.mjs#L52)
-  * [`class HTMLOutputElement`](../dom_reg.mjs#L53)
-  * [`class HTMLParagraphElement`](../dom_reg.mjs#L54)
-  * [`class HTMLParamElement`](../dom_reg.mjs#L55)
-  * [`class HTMLPictureElement`](../dom_reg.mjs#L56)
-  * [`class HTMLPreElement`](../dom_reg.mjs#L57)
-  * [`class HTMLProgressElement`](../dom_reg.mjs#L58)
-  * [`class HTMLQuoteElement`](../dom_reg.mjs#L59)
-  * [`class HTMLScriptElement`](../dom_reg.mjs#L60)
-  * [`class HTMLSelectElement`](../dom_reg.mjs#L61)
-  * [`class HTMLSlotElement`](../dom_reg.mjs#L62)
-  * [`class HTMLSourceElement`](../dom_reg.mjs#L63)
-  * [`class HTMLSpanElement`](../dom_reg.mjs#L64)
-  * [`class HTMLStyleElement`](../dom_reg.mjs#L65)
-  * [`class HTMLTableCaptionElement`](../dom_reg.mjs#L66)
-  * [`class HTMLTableCellElement`](../dom_reg.mjs#L67)
-  * [`class HTMLTableColElement`](../dom_reg.mjs#L68)
-  * [`class HTMLTableElement`](../dom_reg.mjs#L69)
-  * [`class HTMLTableRowElement`](../dom_reg.mjs#L70)
-  * [`class HTMLTableSectionElement`](../dom_reg.mjs#L71)
-  * [`class HTMLTemplateElement`](../dom_reg.mjs#L72)
-  * [`class HTMLTextAreaElement`](../dom_reg.mjs#L73)
-  * [`class HTMLTimeElement`](../dom_reg.mjs#L74)
-  * [`class HTMLTitleElement`](../dom_reg.mjs#L75)
-  * [`class HTMLTrackElement`](../dom_reg.mjs#L76)
-  * [`class HTMLUListElement`](../dom_reg.mjs#L77)
-  * [`class HTMLVideoElement`](../dom_reg.mjs#L78)
-  * [`function regAs`](../dom_reg.mjs#L81)
-  * [`class CustomElementRegistry`](../dom_reg.mjs#L83)
-  * [`function clsTag`](../dom_reg.mjs#L214)
+  * [`const MixReg`](../dom_reg.mjs#L6)
+  * [`class BaseTags`](../dom_reg.mjs#L13)

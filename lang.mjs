@@ -229,6 +229,7 @@ export function reqCls(val) {return isCls(val) ? val : convFun(val, isCls)}
 export function optCls(val) {return isNil(val) ? val : reqCls(val)}
 export function onlyCls(val) {return isCls(val) ? val : undefined}
 
+// TODO tests.
 export function isSubCls(sub, sup) {return isCls(sub) && (sub === sup || isInst(sub.prototype, sup))}
 export function reqSubCls(val) {return isSubCls(val) ? val : convFun(val, isSubCls)}
 export function optSubCls(val) {return isNil(val) ? val : reqSubCls(val)}
@@ -333,6 +334,8 @@ export function optInst(val, cls) {
 }
 
 export function only(val, fun) {return reqValid(fun)(val) ? val : undefined}
+
+export function onlyInst(val, cls) {return isInst(val, cls) ? val : undefined}
 
 /* Cast */
 

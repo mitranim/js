@@ -1291,6 +1291,30 @@ t.test(function test_only() {
   })
 })
 
+t.test(function test_onlyInst() {
+  function none(val, cls) {t.is(l.onlyInst(val, cls), undefined)}
+  function same(val, cls) {t.is(l.onlyInst(val, cls), val)}
+
+  none(undefined, Object)
+  none(10, Object)
+  none(10, Number)
+  none(Object(10), String)
+  none(Object(10), Array)
+  none(`str`, Object)
+  none(`str`, String)
+  none(`str`, Number)
+  none(`str`, Array)
+  none(Object(`str`), Array)
+  none({}, Array)
+
+  same({}, Object)
+  same(Object(10), Object)
+  same(Object(10), Number)
+  same(Object(`str`), Object)
+  same(Object(`str`), String)
+  same([], Array)
+})
+
 t.test(function test_reqPrim() {
   t.throws(() => l.reqPrim([]), TypeError, `expected variant of isPrim`)
   t.throws(() => l.reqPrim({}), TypeError, `expected variant of isPrim`)

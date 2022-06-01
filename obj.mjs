@@ -25,6 +25,7 @@ export function patchInstances(tar, src, cls) {
   return tar
 }
 
+// TODO: patching should support `.mut` on fields that implement this interface.
 export class Dict extends l.Emp {
   constructor(val) {super().mut(val)}
   mut(val) {return this.mutFromStruct(val), this.reinit(), this}
@@ -147,6 +148,38 @@ export class ClsInstPh extends ClsFunPh {
     if (l.isInst(args[0], tar)) return args[0]
     return new tar(...args)
   }
+}
+
+export class Cache extends Map {
+  goc(key) {
+    if (!this.has(key)) this.set(key, this.make(key))
+    return this.get(key)
+  }
+  make() {}
+}
+
+export class WeakCache extends WeakMap {
+  goc(key) {
+    if (!this.has(key)) this.set(key, this.make(key))
+    return this.get(key)
+  }
+  make() {}
+}
+
+export class FunWeakCache extends WeakCache {
+  constructor(fun) {super().make = l.reqFun(fun)}
+}
+
+export function weakCache(fun) {
+  const ref = new FunWeakCache(fun)
+  return ref.goc.bind(ref)
+}
+
+// Mutates the target. Should be used with null-prototype targets.
+export class MakerPh extends l.Emp {
+  get(tar, key) {return key in tar ? tar[key] : (tar[key] = this.make(key, tar))}
+  make() {}
+  static new(...val) {return new Proxy(l.npo(), new this(...val))}
 }
 
 export function pub(tar, key, val) {

@@ -6,6 +6,7 @@ but simpler semantics and better performance.
 */
 
 import * as l from './lang.mjs'
+import * as o from './obj.mjs'
 
 /*
 The specification postulates the concept, but where's the standard list?
@@ -30,6 +31,9 @@ export class RenBase extends l.Emp {
   // Short for "element". Abbreviated for frequent use.
   E() {}
 
+  // Short for "fragment". Abbreviated for frequent use.
+  F() {}
+
   // Used for adapting various "props" inputs.
   deref(val) {return deref(val)}
 
@@ -52,12 +56,12 @@ export class RenBase extends l.Emp {
   isBool(key) {return BOOL_ATTRS.has(key)}
   isVoid(tag) {return VOID_ELEMS.has(tag)}
 
-  voidErr(tag, chi) {
-    return SyntaxError(`expected void element ${l.show(tag)} to have no children, got ${l.show(chi)}`)
+  throwVoidChi(tag, chi) {
+    throw SyntaxError(`expected void element ${l.show(tag)} to have no children, got ${l.show(chi)}`)
   }
 
-  get e() {return this[eKey] || (this[eKey] = new Proxy(this, new this.EPh()))}
-  get en() {return this[enKey] || (this[enKey] = new Proxy(this, new this.EnPh()))}
+  get e() {return this[eKey] || (this[eKey] = this.EPh.new(this))}
+  get en() {return this[enKey] || (this[enKey] = this.EnPh.new(this))}
   get EPh() {return EPh}
   get EnPh() {return EnPh}
 }
@@ -65,36 +69,33 @@ export class RenBase extends l.Emp {
 const eKey = Symbol.for(`e`)
 const enKey = Symbol.for(`en`)
 
-export class CachePh extends Map {
-  get(tar, key) {
-    if (!super.has(key)) super.set(key, this.make(tar, key))
-    return super.get(key)
-  }
-
-  has() {return false}
-  ownKeys() {return []}
-  make() {}
+class RenMakerPh extends o.MakerPh {
+  constructor(ren) {super().ren = l.reqInst(ren, RenBase)}
 }
 
 // Short for "E-binding proxy handler". Needs a better name.
-export class EPh extends CachePh {
-  make(tar, key) {return tar.E.bind(tar, key)}
+class EPh extends RenMakerPh {
+  make(key) {return this.ren.E.bind(this.ren, key)}
 }
 
 // Short for "E-no-props-binding proxy handler". Needs a better name.
-export class EnPh extends CachePh {
-  make(tar, key) {return tar.E.bind(tar, key, undefined)}
+class EnPh extends RenMakerPh {
+  make(key) {return this.ren.E.bind(this.ren, key, undefined)}
 }
 
-export function isRaw(val) {return l.isInst(val, Raw)}
+// TODO better name for this interface.
+export function isRaw(val) {return l.hasIn(val, `outerHTML`)}
 export function reqRaw(val) {return l.req(val, isRaw)}
 
 /*
-Marks "raw text" which shouldn't be escaped. In DOM rendering, this is included
-as `.innerHTML`. In string rendering, this is included as-is.
+Marks "raw text" which shouldn't be escaped. In DOM rendering, this should be
+parsed as `.innerHTML` and included into the parent at the appropriate
+position, without replacing the other children of that parent. In XML
+rendering, this should be included as-is at the appropriate position.
 */
 export class Raw extends String {
   constructor(val) {super(l.laxStr(val))}
+  get outerHTML() {return this.toString()}
 }
 
 /*
@@ -149,7 +150,7 @@ export class PropBui extends l.Emp {
 
   get $() {return this[refKey]}
 
-  has(key) {return key in this[refKey]}
+  has(key) {return l.hasIn(this[refKey], key)}
   get(key) {return this[refKey] ? this[refKey][l.reqStr(key)] : undefined}
 
   set(key, val) {
@@ -195,13 +196,15 @@ export class PropBui extends l.Emp {
   target(val) {return this.set(`target`, val)}
   type(val) {return this.set(`type`, val)}
   value(val) {return this.set(`value`, val)}
+  dataset(val) {return this.set(`dataset`, val)}
 
   /*
   The following shortcuts are "custom". Their names should avoid collision with
   known properties or attributes.
   */
   aria(key, val) {return this.set(`aria-` + l.reqStr(key), val)}
-  cls(val) {return this.set(`class`, spaced(this.get(`class`), val))}
+  data(key, val) {return this.set(`data-` + l.reqStr(key), val)}
+  cls(val) {return val ? this.set(`class`, spaced(this.get(`class`), val)) : this}
   submit() {return this.type(`submit`)} // Collides with <form> method.
   tarblan() {return this.target(`_blank`).rel(`noopener noreferrer`)}
 
@@ -278,6 +281,10 @@ export function reqTag(val) {return isTag(val) ? val : l.convFun(val, isTag)}
 
 export function isAttr(val) {return isName(val)}
 export function reqAttr(val) {return isAttr(val) ? val : l.convFun(val, isAttr)}
+
+export function isSeq(val) {
+  return l.isObj(val) && !l.isScalar(val) && (l.isList(val) || l.isIter(val))
+}
 
 function spaced(one, two) {
   one = l.laxStr(one), two = l.laxStr(two)

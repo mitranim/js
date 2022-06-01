@@ -1,8 +1,8 @@
 ## Overview
 
-{{codeHead}} provides a very simple and performant system for rendering XML/HTML strings. Good for servers and static sites. The syntax is React-inspired and compatible with JSX, but the semantics are much simpler and performance much higher.
+[ren_xml.mjs](../ren_xml.mjs) provides a very simple and performant system for rendering XML/HTML strings. Good for servers and static sites. The syntax is React-inspired and compatible with JSX, but the semantics are much simpler and performance much higher.
 
-Partially isomorphic with {{featLink ren_dom}}. Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
+Partially isomorphic with [`ren_dom`](ren_dom_readme.md). Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
 
 Short overview of features:
 
@@ -23,14 +23,14 @@ Short overview of features:
 * [#Overview](#overview)
 * [#Usage](#usage)
 * [#API](#api)
-{{toc}}
+  * [#Undocumented](#undocumented)
 
 ## Usage
 
 HTML rendering:
 
 ```js
-import {E, ren} from '{{featUrl ren_str}}'
+import {E, ren} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/ren_xml.mjs'
 
 console.log(
   Html({title: `home`, body: Index()})
@@ -60,7 +60,7 @@ function Index() {
 Specialized syntax is available:
 
 ```js
-import {A, ren} from '{{featUrl ren_str}}'
+import {A, ren} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/ren_xml.mjs'
 const {e, en} = ren
 
 console.log(
@@ -90,4 +90,30 @@ function Index() {
 
 ## API
 
-{{api}}
+### Undocumented
+
+The following APIs are exported but undocumented. Check [ren_xml.mjs](../ren_xml.mjs).
+
+  * [`function E`](../ren_xml.mjs#L6)
+  * [`function S`](../ren_xml.mjs#L7)
+  * [`function X`](../ren_xml.mjs#L8)
+  * [`function F`](../ren_xml.mjs#L9)
+  * [`class RenXml`](../ren_xml.mjs#L19)
+  * [`class RenHtmlBase`](../ren_xml.mjs#L81)
+  * [`class RenXmlSvg`](../ren_xml.mjs#L149)
+  * [`class RenXmlHtml`](../ren_xml.mjs#L162)
+  * [`const ren`](../ren_xml.mjs#L174)
+  * [`const elems`](../ren_xml.mjs#L176)
+  * [`class Node`](../ren_xml.mjs#L198)
+  * [`class Text`](../ren_xml.mjs#L211)
+  * [`class Comment`](../ren_xml.mjs#L216)
+  * [`class Element`](../ren_xml.mjs#L221)
+  * [`class HTMLElement`](../ren_xml.mjs#L257)
+  * [`class SVGElement`](../ren_xml.mjs#L261)
+  * [`function escapeAttr`](../ren_xml.mjs#L279)
+  * [`function escapeText`](../ren_xml.mjs#L292)
+  * [`function escapeChar`](../ren_xml.mjs#L299)
+  * [`const propsKey`](../ren_xml.mjs#L308)
+  * [`const parentNodeKey`](../ren_xml.mjs#L309)
+  * [`const childNodesKey`](../ren_xml.mjs#L310)
+  * [`const textContentKey`](../ren_xml.mjs#L311)

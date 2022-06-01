@@ -2,7 +2,7 @@
 
 [ren_dom.mjs](../ren_dom.mjs) provides a very simple and performant system for rendering DOM nodes in the browser. The syntax is React-inspired and compatible with JSX, but the semantics are much simpler and more universally useful.
 
-Partially isomorphic with [`ren_str`](ren_str_readme.md). Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
+Partially isomorphic with [`ren_xml`](ren_xml_readme.md). Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
 
 This is a port and rework of https://github.com/mitranim/prax, more specifically its DOM component. The semantics are exactly the same. The top-level API is very similar. The underlying implementation is more flexible. Docs are in progress. Read the linked repo's docs to understand the motivation, use cases, and semantics.
 
@@ -19,12 +19,12 @@ Short overview of features:
   * Render only once. Use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
     * Use [`dom_reg`](dom_reg_readme.md) for automatic element registration.
     * Use shortcuts such as `mut` for DOM updates.
-  * Partially isomorphic with [`ren_str`](ren_str_readme.md). Good for SSR/SPA hybrids.
+  * Partially isomorphic with [`ren_xml`](ren_xml_readme.md). Good for SSR/SPA hybrids.
   * Tiny with no external dependencies.
 
 Complemented by:
 
-  * [`ren_str`](ren_str_readme.md) for SSR.
+  * [`ren_xml`](ren_xml_readme.md) for SSR.
   * [`dom_reg`](dom_reg_readme.md) for automatically registering custom elements.
   * [`obs_dom`](obs_dom_readme.md) for making custom elements automatically react to [observables](obs_readme.md).
 
@@ -40,7 +40,7 @@ Complemented by:
 Creating new nodes:
 
 ```js
-import {E} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/ren_dom.mjs'
+import {E} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/ren_dom.mjs'
 
 document.body.append(
   E(`div`, {class: `outer`},
@@ -60,7 +60,7 @@ The following elements have been appended:
 Specialized syntax is available:
 
 ```js
-import {A, ren} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/ren_dom.mjs'
+import {A, ren} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/ren_dom.mjs'
 const {e} = ren
 
 document.body.append(
@@ -73,9 +73,9 @@ document.body.append(
 Imperative updates:
 
 ```js
-import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/ren_dom.mjs'
-import * as r from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/ren_dom.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/dom_reg.mjs'
+import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/ren_dom.mjs'
+import * as r from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/ren_dom.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/dom_reg.mjs'
 
 class SomeLink extends dr.HTMLAnchorElement {
   constructor(href, text) {
@@ -95,13 +95,19 @@ document.body.append(
 
 The following APIs are exported but undocumented. Check [ren_dom.mjs](../ren_dom.mjs).
 
-  * [`function E`](../ren_dom.mjs#L5)
-  * [`function S`](../ren_dom.mjs#L6)
-  * [`function F`](../ren_dom.mjs#L7)
-  * [`function mut`](../ren_dom.mjs#L8)
-  * [`function mutProps`](../ren_dom.mjs#L9)
-  * [`function mutChi`](../ren_dom.mjs#L10)
-  * [`class RenDom`](../ren_dom.mjs#L16)
-  * [`class RenDomHtml`](../ren_dom.mjs#L190)
-  * [`const ren`](../ren_dom.mjs#L200)
-  * [`class RenDomSvg`](../ren_dom.mjs#L208)
+  * [`function E`](../ren_dom.mjs#L6)
+  * [`function S`](../ren_dom.mjs#L7)
+  * [`function F`](../ren_dom.mjs#L8)
+  * [`function mut`](../ren_dom.mjs#L10)
+  * [`function mutProps`](../ren_dom.mjs#L11)
+  * [`function mutChi`](../ren_dom.mjs#L12)
+  * [`class RenDom`](../ren_dom.mjs#L18)
+  * [`class RenDomHtml`](../ren_dom.mjs#L192)
+  * [`const ren`](../ren_dom.mjs#L202)
+  * [`class RenDomSvg`](../ren_dom.mjs#L210)
+  * [`const elems`](../ren_dom.mjs#L216)
+  * [`const MixHtmlElem`](../ren_dom.mjs#L227)
+  * [`const MixSvgElem`](../ren_dom.mjs#L233)
+  * [`const MixElem`](../ren_dom.mjs#L239)
+  * [`const nsHtml`](../ren_dom.mjs#L255)
+  * [`const nsSvg`](../ren_dom.mjs#L256)

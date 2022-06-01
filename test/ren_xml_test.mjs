@@ -1,22 +1,10 @@
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
-import * as l from '../lang.mjs'
-import * as r from '../ren_str.mjs'
-import {E, A} from '../ren_str.mjs'
-import {testCommon} from './ren_base_test.mjs'
+import * as r from '../ren_xml.mjs'
+import {E, S, A} from '../ren_xml.mjs'
+import {eqm, testCommon} from './ren_base_test.mjs'
 
-/* Util */
-
-// Short for "equal markup".
-function eqm(val, exp) {
-  t.inst(val, r.Raw)
-  l.reqStr(exp)
-  t.is(val.valueOf(), exp)
-}
-
-/* Test */
-
-testCommon(r, eqm)
+testCommon(r)
 
 t.test(function test_overview() {
   const {e, en} = r.ren
@@ -35,7 +23,7 @@ t.test(function test_overview() {
   )
 })
 
-t.test(function test_RenStr() {
+t.test(function test_RenXml() {
   // Recommendation: prefer `class`, consider using `PropBui`/`A`.
   t.test(function test_class_vs_class_name() {
     eqm(
@@ -87,8 +75,8 @@ t.test(function test_RenStr() {
     })
   })
 
-  t.test(function test_frag() {
-    function F(...val) {return r.ren.frag(...val)}
+  t.test(function test_fragment() {
+    function F(...val) {return r.ren.F(...val)}
 
     t.inst(F(), r.Raw)
 
@@ -104,6 +92,61 @@ t.test(function test_RenStr() {
     t.is(`<!doctype html>`, r.ren.doc(undefined))
     t.is(`<!doctype html>`, r.ren.doc(``))
     t.is(`<!doctype html><html>text</html>`, r.ren.doc(E(`html`, {}, `text`)))
+  })
+
+  t.test(function test_svg_in_html() {
+    t.test(function test_E() {
+      eqm(
+        E(`button`, {},
+          `one `,
+          S(`svg`, {}, S(`polygon`)),
+          ` two`,
+        ),
+        `<button>one <svg><polygon></polygon></svg> two</button>`,
+      )
+    })
+
+    t.test(function test_custom_element_subclass() {
+      class IconBtn extends r.elems.HTMLButtonElement {
+        static localName = `icon-btn`
+        static options = {extends: `button`}
+
+        new() {
+          return this.chi(
+            `one `,
+            S(`svg`, {}, S(`polygon`)),
+            ` two`,
+          )
+        }
+      }
+
+      eqm(
+        new IconBtn().new(),
+        `<button is="icon-btn">one <svg><polygon></polygon></svg> two</button>`,
+      )
+    })
+  })
+
+  // Basic sanity check. TODO expand.
+  t.test(function test_custom_element() {
+    class SomeElem extends r.elems.HTMLElement {
+      static localName = `one`
+    }
+
+    const tar = new SomeElem()
+    tar.props({class: `two`})
+    tar.chi(`three`)
+
+    eqm(tar, `<one class="two">three</one>`)
+
+    tar.chi(`four `, tar.childNodes)
+    eqm(tar, `<one class="two">four three</one>`)
+
+    tar.chi(tar.childNodes, ` five`)
+    eqm(tar, `<one class="two">four three five</one>`)
+
+    tar.props({id: `six`})
+    eqm(tar, `<one class="two" id="six">four three five</one>`)
   })
 })
 

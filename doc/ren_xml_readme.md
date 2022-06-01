@@ -1,8 +1,8 @@
 ## Overview
 
-[ren_str.mjs](../ren_str.mjs) provides a very simple and performant system for rendering XML/HTML strings. Good for servers and static sites. The syntax is React-inspired and compatible with JSX, but the semantics are much simpler and performance much higher.
+{{codeHead}} provides a very simple and performant system for rendering XML/HTML strings. Good for servers and static sites. The syntax is React-inspired and compatible with JSX, but the semantics are much simpler and performance much higher.
 
-Partially isomorphic with [`ren_dom`](ren_dom_readme.md). Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
+Partially isomorphic with {{featLink ren_dom}}. Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
 
 Short overview of features:
 
@@ -23,14 +23,14 @@ Short overview of features:
 * [#Overview](#overview)
 * [#Usage](#usage)
 * [#API](#api)
-  * [#Undocumented](#undocumented)
+{{toc}}
 
 ## Usage
 
 HTML rendering:
 
 ```js
-import {E, ren} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/ren_str.mjs'
+import {E, ren} from '{{featUrl ren_xml}}'
 
 console.log(
   Html({title: `home`, body: Index()})
@@ -60,7 +60,7 @@ function Index() {
 Specialized syntax is available:
 
 ```js
-import {A, ren} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/ren_str.mjs'
+import {A, ren} from '{{featUrl ren_xml}}'
 const {e, en} = ren
 
 console.log(
@@ -90,19 +90,4 @@ function Index() {
 
 ## API
 
-### Undocumented
-
-The following APIs are exported but undocumented. Check [ren_str.mjs](../ren_str.mjs).
-
-  * [`function E`](../ren_str.mjs#L11)
-  * [`function S`](../ren_str.mjs#L12)
-  * [`function X`](../ren_str.mjs#L13)
-  * [`function F`](../ren_str.mjs#L14)
-  * [`class RenStr`](../ren_str.mjs#L23)
-  * [`class RenHtmlBase`](../ren_str.mjs#L80)
-  * [`class RenStrSvg`](../ren_str.mjs#L148)
-  * [`class RenStrHtml`](../ren_str.mjs#L152)
-  * [`const ren`](../ren_str.mjs#L169)
-  * [`function escapeAttr`](../ren_str.mjs#L194)
-  * [`function escapeText`](../ren_str.mjs#L207)
-  * [`function escapeChar`](../ren_str.mjs#L214)
+{{api}}

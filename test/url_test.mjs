@@ -1134,7 +1134,7 @@ t.test(function test_Url() {
 
       test(``, [{}])
       test(``, [[]])
-      test(``, [Object.create(null)])
+      test(``, [l.npo()])
       test(``, [Promise.resolve()])
       test(``, [u.url])
     })

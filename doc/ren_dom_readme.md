@@ -2,7 +2,7 @@
 
 {{codeHead}} provides a very simple and performant system for rendering DOM nodes in the browser. The syntax is React-inspired and compatible with JSX, but the semantics are much simpler and more universally useful.
 
-Partially isomorphic with {{featLink ren_str}}. Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
+Partially isomorphic with {{featLink ren_xml}}. Pairing these modules together, and using custom DOM elements for interactive behaviors, provides a good foundation for hybrid SSR/SPA. Read https://github.com/mitranim/prax for more.
 
 This is a port and rework of https://github.com/mitranim/prax, more specifically its DOM component. The semantics are exactly the same. The top-level API is very similar. The underlying implementation is more flexible. Docs are in progress. Read the linked repo's docs to understand the motivation, use cases, and semantics.
 
@@ -19,12 +19,12 @@ Short overview of features:
   * Render only once. Use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
     * Use {{featLink dom_reg}} for automatic element registration.
     * Use shortcuts such as `mut` for DOM updates.
-  * Partially isomorphic with {{featLink ren_str}}. Good for SSR/SPA hybrids.
+  * Partially isomorphic with {{featLink ren_xml}}. Good for SSR/SPA hybrids.
   * Tiny with no external dependencies.
 
 Complemented by:
 
-  * {{featLink ren_str}} for SSR.
+  * {{featLink ren_xml}} for SSR.
   * {{featLink dom_reg}} for automatically registering custom elements.
   * {{featLink obs_dom}} for making custom elements automatically react to {{featLink obs observables}}.
 

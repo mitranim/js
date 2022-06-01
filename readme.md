@@ -46,14 +46,14 @@ Alternatives that suck:
 Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import all core modules at once:
 
 ```js
-import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/all.mjs'
+import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/all.mjs'
 ```
 
 Otherwise, import specific modules you need. See the list below. Example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/lang.mjs'
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/str.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/lang.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/str.mjs'
 ```
 
 Also available on NPM:
@@ -76,7 +76,7 @@ npm i -E @mitranim/js
   * [`dom`](docs/dom_readme.md): shortcuts for working with the DOM.
   * [`dom_reg`](docs/dom_reg_readme.md): shortcuts for registering custom DOM elements.
   * [`ren_dom`](docs/ren_dom_readme.md): simple system for rendering DOM nodes in the browser. React-inspired syntax, JSX-compatible, better semantics and performance.
-  * [`ren_str`](docs/ren_str_readme.md): simple system for rendering XML/HTML on the server. React-inspired syntax, JSX-compatible, better semantics and performance.
+  * [`ren_xml`](docs/ren_xml_readme.md): simple system for rendering XML/HTML on the server. React-inspired syntax, JSX-compatible, better semantics and performance.
   * [`obs`](docs/obs_readme.md): observables via proxies.
   * [`obs_dom`](docs/obs_dom_readme.md): automatic reactivity for custom DOM elements.
   * [`cli`](docs/cli_readme.md): essential tools for CLI apps.

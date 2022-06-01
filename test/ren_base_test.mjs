@@ -3,6 +3,7 @@ import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as rb from '../ren_base.mjs'
 import {A, P} from '../ren_base.mjs'
+import * as dr from '../dom_reg.mjs'
 
 /* Util */
 
@@ -10,10 +11,17 @@ function* gen(...vals) {for (const val of vals) yield val}
 
 function testDerefOwn(src, exp) {t.own(src.$, exp)}
 
+// Short for "equal markup".
+export function eqm(val, exp) {
+  l.reqStr(exp)
+  t.ok(rb.isRaw(val))
+  t.is(val.outerHTML, exp)
+}
+
 /* Shared */
 
 // Shared component of "str" and "dom" tests.
-export function testCommon(r, eqm) {
+export function testCommon(r) {
   const {E, S} = r
 
   t.throws(() => E(`link`, {}, null), SyntaxError, `expected void element "link" to have no children, got [null]`)
@@ -62,24 +70,24 @@ export function testCommon(r, eqm) {
       })
 
       t.test(function test_empty_void_elem_self_closing() {
-        eqm(E(`area`), `<area>`)
-        eqm(E(`base`), `<base>`)
-        eqm(E(`br`), `<br>`)
-        eqm(E(`col`), `<col>`)
-        eqm(E(`embed`), `<embed>`)
-        eqm(E(`hr`), `<hr>`)
-        eqm(E(`img`), `<img>`)
-        eqm(E(`input`), `<input>`)
-        eqm(E(`link`), `<link>`)
-        eqm(E(`meta`), `<meta>`)
-        eqm(E(`param`), `<param>`)
-        eqm(E(`source`), `<source>`)
-        eqm(E(`track`), `<track>`)
-        eqm(E(`wbr`), `<wbr>`)
+        eqm(E(`area`), `<area/>`)
+        eqm(E(`base`), `<base/>`)
+        eqm(E(`br`), `<br/>`)
+        eqm(E(`col`), `<col/>`)
+        eqm(E(`embed`), `<embed/>`)
+        eqm(E(`hr`), `<hr/>`)
+        eqm(E(`img`), `<img/>`)
+        eqm(E(`input`), `<input/>`)
+        eqm(E(`link`), `<link/>`)
+        eqm(E(`meta`), `<meta/>`)
+        eqm(E(`param`), `<param/>`)
+        eqm(E(`source`), `<source/>`)
+        eqm(E(`track`), `<track/>`)
+        eqm(E(`wbr`), `<wbr/>`)
 
-        eqm(E(`link`, {}), `<link>`)
-        eqm(E(`link`, null), `<link>`)
-        eqm(E(`link`, undefined), `<link>`)
+        eqm(E(`link`, {}), `<link/>`)
+        eqm(E(`link`, null), `<link/>`)
+        eqm(E(`link`, undefined), `<link/>`)
       })
     })
 
@@ -93,7 +101,7 @@ export function testCommon(r, eqm) {
     t.test(function test_void_elem_attrs() {
       eqm(
         E(`link`, {rel: `stylesheet`, href: `main.css`}),
-        `<link rel="stylesheet" href="main.css">`,
+        `<link rel="stylesheet" href="main.css"/>`,
       )
 
       // Doesn't work in browsers because `value` doesn't become an attribute.
@@ -303,17 +311,17 @@ export function testCommon(r, eqm) {
 
       eqm(
         E(`input`, {autofocus: true, disabled: true, hidden: true}),
-        `<input autofocus="" disabled="" hidden="">`,
+        `<input autofocus="" disabled="" hidden=""/>`,
       )
 
       eqm(
         E(`input`, {hidden: false, autofocus: false, disabled: true}),
-        `<input disabled="">`,
+        `<input disabled=""/>`,
       )
 
       eqm(
         E(`input`, {hidden: true, autofocus: null, disabled: undefined}),
-        `<input hidden="">`,
+        `<input hidden=""/>`,
       )
     })
 
@@ -341,13 +349,13 @@ export function testCommon(r, eqm) {
     })
 
     t.test(function test_meta_attrs() {
-      eqm(E(`meta`, {httpEquiv: `content-type`}), `<meta http-equiv="content-type">`)
+      eqm(E(`meta`, {httpEquiv: `content-type`}), `<meta http-equiv="content-type"/>`)
 
-      eqm(E(`meta`, {'http-equiv': `content-type`}), `<meta http-equiv="content-type">`)
+      eqm(E(`meta`, {'http-equiv': `content-type`}), `<meta http-equiv="content-type"/>`)
 
       eqm(
         E(`meta`, {httpEquiv: `X-UA-Compatible`, content: `IE=edge,chrome=1`}),
-        `<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">`,
+        `<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>`,
       )
     })
   })
@@ -482,10 +490,10 @@ export function testCommon(r, eqm) {
 
     // Fragment's type and structure is different between `str.mjs` and
     // `dom.mjs`, and tested separately.
-    t.test(function test_frag() {
-      function F(...val) {return r.ren.frag(...val)}
+    t.test(function test_fragment() {
+      function F(...val) {return r.ren.F(...val)}
 
-      t.test(function test_frag_as_child() {
+      t.test(function test_fragment_as_child() {
         eqm(
           E(`div`, {}, F(null, `one`, undefined, [`two`], [])),
           `<div>onetwo</div>`,
@@ -498,12 +506,41 @@ export function testCommon(r, eqm) {
       })
     })
   })
+
+  // TODO better name, better tests.
+  t.test(function test_dom_reg_and_element_mixins() {
+    t.test(function test_simple() {
+      class SomeElem extends dr.MixReg(r.elems.HTMLElement) {
+        init() {return this.props(A.cls(`theme-prim`)).chi(`some text`)}
+      }
+
+      l.nop(new SomeElem())
+      t.is(SomeElem.localName, `some-elem`)
+      t.is(SomeElem.options, undefined)
+
+      t.is(new SomeElem().outerHTML, `<some-elem></some-elem>`)
+      t.is(new SomeElem().init().outerHTML, `<some-elem class="theme-prim">some text</some-elem>`)
+    })
+
+    t.test(function test_extended() {
+      class TestBtn extends dr.MixReg(r.elems.HTMLButtonElement) {
+        init() {return this.props(A.cls(`theme-prim`)).chi(`click me`)}
+      }
+
+      l.nop(new TestBtn())
+      t.is(TestBtn.localName, `test-btn`)
+      t.eq(TestBtn.options, {extends: `button`})
+
+      t.is(new TestBtn().outerHTML, `<button is="test-btn"></button>`)
+      t.is(new TestBtn().init().outerHTML, `<button is="test-btn" class="theme-prim">click me</button>`)
+    })
+  })
 }
 
 function testNonScalarChiStrict(E) {
   t.throws(() => E(`div`, {}, Symbol(`str`)),       TypeError, `unable to convert Symbol(str) to string`)
   t.throws(() => E(`div`, {}, {}),                  TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {}, Object.create(null)), TypeError, `unable to convert {} to string`)
+  t.throws(() => E(`div`, {}, l.npo()),             TypeError, `unable to convert {} to string`)
   t.throws(() => E(`div`, {}, new class {}()),      TypeError, `unable to convert [object Object] to string`)
   t.throws(() => E(`div`, {}, () => {}),            TypeError, `unable to convert [function () => {}] to string`)
   t.throws(() => E(`div`, {}, function fun() {}),   TypeError, `unable to convert [function fun] to string`)
@@ -513,7 +550,7 @@ function testNonScalarChiStrict(E) {
 function testNonScalarChiLax(E, eqm) {
   eqm(E(`div`, {}, Symbol(`str`)), `<div></div>`)
   eqm(E(`div`, {}, {}), `<div></div>`)
-  eqm(E(`div`, {}, Object.create(null)), `<div></div>`)
+  eqm(E(`div`, {}, l.npo()), `<div></div>`)
   eqm(E(`div`, {}, new class {}()), `<div></div>`)
   eqm(E(`div`, {}, () => {}), `<div></div>`)
   eqm(E(`div`, {}, function fun() {}), `<div></div>`)
@@ -523,7 +560,7 @@ function testNonScalarChiLax(E, eqm) {
 function testNonScalarPropStrict(E) {
   t.throws(() => E(`div`, {one: Symbol(`str`)}),       TypeError, `unable to convert Symbol(str) to string`)
   t.throws(() => E(`div`, {one: {}}),                  TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {one: Object.create(null)}), TypeError, `unable to convert {} to string`)
+  t.throws(() => E(`div`, {one: l.npo()}),             TypeError, `unable to convert {} to string`)
   t.throws(() => E(`div`, {one: new class {}()}),      TypeError, `unable to convert [object Object] to string`)
   t.throws(() => E(`div`, {}, () => {}),               TypeError, `unable to convert [function () => {}] to string`)
   t.throws(() => E(`div`, {}, function fun() {}),      TypeError, `unable to convert [function fun] to string`)
@@ -537,7 +574,7 @@ function testNonScalarPropStrict(E) {
 function testNonScalarPropLax(E, eqm) {
   eqm(E(`div`, {one: Symbol(`str`)}), `<div></div>`)
   eqm(E(`div`, {one: {}}), `<div></div>`)
-  eqm(E(`div`, {one: Object.create(null)}), `<div></div>`)
+  eqm(E(`div`, {one: l.npo()}), `<div></div>`)
   eqm(E(`div`, {one: new class {}()}), `<div></div>`)
   eqm(E(`div`, {}, () => {}), `<div></div>`)
   eqm(E(`div`, {}, function fun() {}), `<div></div>`)
@@ -586,7 +623,8 @@ t.test(function test_PropBui() {
   t.test(function test_cls() {
     t.throws(() => new rb.PropBui().cls(10), TypeError, `expected variant of isStr, got 10`)
 
-    testDerefOwn(new rb.PropBui().cls(), {class: ``})
+    t.is(new rb.PropBui().cls().$, undefined)
+
     testDerefOwn(new rb.PropBui().cls(`one`), {class: `one`})
     testDerefOwn(new rb.PropBui().cls(``).cls(`one`), {class: `one`})
     testDerefOwn(new rb.PropBui().cls(``).cls(`one`).cls(``), {class: `one`})

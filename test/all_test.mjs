@@ -15,6 +15,6 @@ import './url_test.mjs'
 import './path_test.mjs'
 import './dom_reg_test.mjs'
 import './ren_base_test.mjs'
-import './ren_str_test.mjs'
+import './ren_xml_test.mjs'
 
 if (import.meta.main) console.log(`[test] ok!`)

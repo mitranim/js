@@ -468,7 +468,7 @@ export function draftRenderAsync(src, ctx) {return draftParse(src).renderAsync(c
 /*
 Word of warning. Most apps shouldn't use string templating. Whenever possible,
 structured markup should be authored as code, not as string templates, with
-something like our `ren_str.mjs` or `ren_dom.mjs`. Markup-as-code allows MUCH
+something like our `ren_xml.mjs` or `ren_dom.mjs`. Markup-as-code allows MUCH
 better performance, doesn't need special build systems, and is compatible with
 common static analysis tools such as type checkers and linters. String-based
 templating should be used only when already committed to a dedicated markup

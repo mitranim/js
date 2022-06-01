@@ -1,5 +1,6 @@
 import * as l from './lang.mjs'
 import * as u from './url.mjs'
+import * as o from './obj.mjs'
 
 export const HAS_DOM = (
   typeof window === `object` && !!window &&
@@ -9,6 +10,14 @@ export const HAS_DOM = (
 export function isEvent(val) {return typeof Event === `function` && l.isInst(val, Event)}
 export function reqEvent(val) {return l.req(val, isEvent)}
 export function optEvent(val) {return l.opt(val, isEvent)}
+
+export function isChildNode(val) {return l.hasIn(val, `parentNode`)}
+export function reqChildNode(val) {return l.req(val, isChildNode)}
+export function optChildNode(val) {return l.opt(val, isChildNode)}
+
+export function isParentNode(val) {return l.hasIn(val, `childNodes`)}
+export function reqParentNode(val) {return l.req(val, isParentNode)}
+export function optParentNode(val) {return l.opt(val, isParentNode)}
 
 export function isNode(val) {return typeof Node === `function` && l.isInst(val, Node)}
 export function reqNode(val) {return l.req(val, isNode)}
@@ -166,14 +175,66 @@ export function selectText(val) {
   }
 }
 
-export function findAncestor(node, cls) {
+export function ancestor(tar, cls) {
   l.reqCls(cls)
-  while (optNode(node)) {
-    if (l.isInst(node, cls)) return node
-    node = node.parentNode
+  return findAncestor(tar, function test(val) {return l.isInst(val, cls)})
+}
+
+export function findAncestor(tar, fun) {
+  l.reqFun(fun)
+  while (l.isSome(tar)) {
+    if (fun(tar)) return tar
+    if (!isChildNode(tar)) break
+    tar = tar.parentNode
   }
   return undefined
 }
+
+export function descendant(val, cls) {
+  for (val of descendants(val, cls)) return val
+  return undefined
+}
+
+export function findDescendant(val, fun) {
+  for (val of findDescendants(val, fun)) return val
+  return undefined
+}
+
+export function descendants(tar, cls) {
+  l.reqCls(cls)
+  return findDescendants(tar, function test(val) {return l.isInst(val, cls)})
+}
+
+export function* findDescendants(val, fun) {
+  l.reqFun(fun)
+
+  if (l.isNil(val)) return
+  if (fun(val)) yield val
+
+  if (!isParentNode(val)) return
+  val = val.childNodes
+  if (val) for (val of val) yield* findDescendants(val, fun)
+}
+
+export const MixNode = o.weakCache(function MixNode(cls) {
+  return class MixNode extends cls {
+    anc(cls) {return ancestor(this, cls)}
+    findAnc(fun) {return findAncestor(this, fun)}
+
+    desc(cls) {return descendant(this, cls)}
+    findDesc(fun) {return findDescendant(this, fun)}
+
+    descs(cls) {return descendants(this, cls)}
+    findDescs(fun) {return findDescendants(this, fun)}
+
+    setText(src) {
+      const prev = this.textContent
+      const next = l.renderLax(src)
+      if (prev !== next) this.textContent = next
+      return this
+    }
+  }
+})
 
 export function loc(val) {return new Loc(val)}
 export function toLoc(val) {return l.toInst(val, Loc)}

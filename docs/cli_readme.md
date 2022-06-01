@@ -23,7 +23,7 @@
 CLI args:
 
 ```js
-import * as cl from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/cli.mjs'
+import * as cl from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/cli.mjs'
 
 const cli = cl.Flag.os()
 
@@ -34,7 +34,7 @@ console.log(...cli.args)
 Console clearing:
 
 ```js
-import * as cl from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/cli.mjs'
+import * as cl from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/cli.mjs'
 
 cl.emptty()
 ```
@@ -42,7 +42,7 @@ cl.emptty()
 Clearing the console only once, before running your code:
 
 ```js
-import 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/cli_emptty.mjs'
+import 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/cli_emptty.mjs'
 ```
 
 ## API

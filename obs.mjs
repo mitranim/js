@@ -2,6 +2,7 @@ import * as l from './lang.mjs'
 
 export function deinit(val) {if (isDe(val)) val.deinit()}
 
+// TODO move to `lang.mjs`.
 export function isDe(val) {return l.isComp(val) && l.hasMeth(val, `deinit`)}
 export function reqDe(val) {return l.req(val, isDe)}
 

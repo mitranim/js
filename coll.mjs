@@ -17,6 +17,8 @@ export class Bset extends Set {
     return this
   }
 
+  reset(src) {return this.clear(), this.mut(src)}
+
   clone() {return new this.constructor(this)}
   toArray() {return [...this.values()]}
   toJSON() {return this.toArray()}
@@ -51,6 +53,8 @@ export class Bmap extends Map {
     for (const key of l.structKeys(val)) this.set(key, val[key])
     return this
   }
+
+  reset(src) {return this.clear(), this.mut(src)}
 
   clone() {return new this.constructor(this)}
 

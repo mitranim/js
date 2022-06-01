@@ -4,12 +4,9 @@ import * as l from '../lang.mjs'
 import * as d from '../dom.mjs'
 import * as r from '../ren_dom.mjs'
 import {E} from '../ren_dom.mjs'
-import {testCommon} from './ren_base_test.mjs'
+import {eqm, testCommon} from './ren_base_test.mjs'
 
 /* Util */
-
-// Short for "equal markup".
-function eqm(node, str) {t.is(node.outerHTML, str)}
 
 function toChildTextTree(node) {
   d.reqNode(node)
@@ -19,11 +16,11 @@ function toChildTextTree(node) {
 
 /* Test */
 
-testCommon(r, eqm)
+testCommon(r)
 
 t.test(function test_RenDom() {
-  t.test(function test_frag() {
-    const F = r.ren.frag.bind(r.ren)
+  t.test(function test_fragment() {
+    const F = r.ren.F.bind(r.ren)
 
     t.inst(F(), DocumentFragment)
 

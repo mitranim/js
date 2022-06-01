@@ -39,4 +39,4 @@ SPA uses current URL:
 const page = route(h.ReqRou.from(window.location))
 ```
 
-For SSR/SPA isomorphic rendering, use the pair of "ren" modules: {{featLink ren_str}} on the server and {{featLink ren_dom}} in browsers.
+For SSR/SPA isomorphic rendering, use the pair of "ren" modules: {{featLink ren_xml}} on the server and {{featLink ren_dom}} in browsers.

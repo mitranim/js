@@ -2,136 +2,75 @@ import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
-import * as d from '../dom.mjs'
 import * as dr from '../dom_reg.mjs'
+import * as r from '../ren_xml.mjs'
 
-/* Util */
-
-function testCerMatch(cer, cls, tag) {
-  t.ok(cer.hasTag(tag))
-  t.ok(cer.hasCls(cls))
-  t.is(cer.clsTag(cls), tag)
-  t.is(cer.tagCls(tag), cls)
-}
-
-function testCerSize(cer, len) {
-  t.is(cer.clsToTag.size, len)
-  t.is(cer.tagToCls.size, len)
-}
+// `Reg` is tested below. This is a sanity check.
+t.test(function test_cer() {l.reqInst(dr.Reg.main, dr.Reg)})
 
 /*
-Not part of public module because it would be a waste of code.
-This "inheritance" between registries is relevant only for testing.
-*/
-function makeCer() {
-  const out = new dr.CustomElementRegistry()
-  out.baseTags = new Map(dr.cer.baseTags)
-  return out
-}
-
-/* Test */
-
-/*
-TODO: consider testing all base classes exported by this package. Can probably
-find them by iterating module exports.
-*/
-t.test(function test_HTMLElement() {
-  class Sub extends dr.HTMLElement {}
-  l.nop(new Sub())
-  testCerMatch(dr.cer, Sub, `a-sub`)
-
-  /*
-  Verifies registration via global `customElements`.
-  Without it, calling `new` would produce an exception.
-  */
-  if (d.HAS_DOM) {
-    t.is(new Sub().outerHTML, `<a-sub></a-sub>`)
-  }
-})
-
-/*
-`CustomElementRegistry..reg` is checked more thoroughly below.
+`Reg..reg` is checked more thoroughly below.
 This is a sanity check to verify that the global function uses
 this on the default instance.
 */
 t.test(function test_reg() {
-  class SomeDetails extends dr.HTMLDetailsElement {}
+  class SomeDetails extends r.elems.HTMLDetailsElement {}
   dr.reg(SomeDetails)
-  testCerMatch(dr.cer, SomeDetails, `some-details`)
+  testCerMatch(dr.Reg.main, SomeDetails, `some-details`, {extends: `details`})
 })
 
-
-// `CustomElementRegistry` is tested below. This is a sanity check.
-t.test(function test_cer() {
-  l.reqInst(dr.cer, dr.CustomElementRegistry)
-})
-
-t.test(function test_CustomElementRegistry() {
+t.test(function test_Reg() {
   t.test(function test_misc() {
-    const cer = makeCer()
+    const reg = new dr.Reg()
+    class SomeLink extends r.elems.HTMLAnchorElement {}
 
-    class SomeLink extends dr.HTMLAnchorElement {}
+    t.no(reg.clsHas(SomeLink))
+    t.no(reg.tagHas(`some-link`))
 
-    function test() {
-      t.is(cer.clsTag(SomeLink), undefined)
-      t.is(cer.clsTagSalted(SomeLink), `some-link`)
-      t.eq(cer.clsOpt(SomeLink), {extends: `a`})
-    }
-
-    test()
-    cer.clear()
-    test()
+    reg.reg(SomeLink)
+    testCerMatch(reg, SomeLink, `some-link`, {extends: `a`})
   })
 
-  t.test(function test_define() {
-    const cer = makeCer()
-
-    class Elem {}
-    cer.define(`some-elem`, Elem)
-
-    testCerMatch(cer, Elem, `some-elem`)
-    testCerSize(cer, 1)
-
-    t.throws(() => cer.define(`some-elem`, Elem), Error, `redundant registration of "some-elem"`)
-    t.throws(() => cer.define(`some-elem`, Object), Error, `redundant registration of "some-elem"`)
+  t.test(function test_with_localName() {
+    const reg = new dr.Reg()
+    class SomeLink extends r.elems.HTMLAnchorElement {
+      static localName = `my-link`
+    }
+    reg.reg(SomeLink)
+    testCerMatch(reg, SomeLink, `my-link`, {extends: `a`})
   })
 
   t.test(function test_reg() {
     t.test(function test_multiple_sequential_regs() {
-      const cer = makeCer()
+      const reg = new dr.Reg()
 
-      class Details extends dr.HTMLDetailsElement {}
+      class Details extends r.elems.HTMLDetailsElement {}
 
       function test0() {
-        cer.reg(Details)
-        testCerMatch(cer, Details, `a-details`)
-        testCerSize(cer, 1)
+        reg.reg(Details)
+        testCerMatch(reg, Details, `a-details`, {extends: `details`})
       }
 
       test0()
       test0()
       test0()
 
-      class SomeBtn extends dr.HTMLButtonElement {}
+      class SomeBtn extends r.elems.HTMLButtonElement {}
 
       function test1() {
-        cer.reg(SomeBtn)
-        testCerMatch(cer, SomeBtn, `some-btn`)
-        testCerSize(cer, 2)
+        reg.reg(SomeBtn)
+        testCerMatch(reg, SomeBtn, `some-btn`, {extends: `button`})
       }
 
       test1()
       test1()
       test1()
-
-      t.throws(() => cer.define(`some-btn`, SomeBtn), Error, `redundant registration of "some-btn"`)
 
       class SubBtn123 extends SomeBtn {}
 
       function test2() {
-        cer.reg(SubBtn123)
-        testCerMatch(cer, SubBtn123, `sub-btn123`)
-        testCerSize(cer, 3)
+        reg.reg(SubBtn123)
+        testCerMatch(reg, SubBtn123, `sub-btn123`, {extends: `button`})
       }
 
       test2()
@@ -140,83 +79,65 @@ t.test(function test_CustomElementRegistry() {
     })
 
     t.test(function test_salting() {
-      const cer = makeCer()
+      const reg = new dr.Reg()
 
       {
-        class SomeBtn extends dr.HTMLButtonElement {}
-        cer.reg(SomeBtn)
-
-        testCerMatch(cer, SomeBtn, `some-btn`)
-        testCerSize(cer, 1)
+        class SomeBtn extends r.elems.HTMLButtonElement {}
+        reg.reg(SomeBtn)
+        testCerMatch(reg, SomeBtn, `some-btn`, {extends: `button`})
       }
 
       {
-        class SomeBtn extends dr.HTMLButtonElement {}
-        cer.reg(SomeBtn)
-
-        testCerMatch(cer, SomeBtn, `some-btn-0`)
-        testCerSize(cer, 2)
+        class SomeBtn extends r.elems.HTMLButtonElement {}
+        reg.reg(SomeBtn)
+        testCerMatch(reg, SomeBtn, `some-btn-1`, {extends: `button`})
       }
 
       {
-        class SomeBtn extends dr.HTMLButtonElement {}
-        cer.reg(SomeBtn)
-
-        testCerMatch(cer, SomeBtn, `some-btn-1`)
-        testCerSize(cer, 3)
+        class SomeBtn extends r.elems.HTMLButtonElement {}
+        reg.reg(SomeBtn)
+        testCerMatch(reg, SomeBtn, `some-btn-2`, {extends: `button`})
       }
     })
   })
 
-  // Very similar to `.reg`. We only need minimal sanity checks.
-  t.test(function test_regAs() {
-    const cer = makeCer()
+  t.test(function test_tag_ambiguity() {
+    const reg = new dr.Reg()
 
-    class SomeBtn extends dr.HTMLButtonElement {
-      static {cer.regAs(this, `one-two-three`)}
+    class HeadCell extends r.elems.HTMLTableCellElement {
+      static options = {extends: `th`}
     }
 
-    testCerMatch(cer, SomeBtn, `one-two-three`)
-    testCerSize(cer, 1)
+    class BodyCell extends r.elems.HTMLTableCellElement {}
 
-    l.nop(new SomeBtn())
+    t.is(dr.BaseTags.main.find(HeadCell), `td`)
+    t.is(dr.BaseTags.main.find(BodyCell), `td`)
 
-    testCerMatch(cer, SomeBtn, `one-two-three`)
-    testCerSize(cer, 1)
-  })
+    reg.reg(HeadCell)
+    reg.reg(BodyCell)
 
-  t.test(function test_tag_ambiguity() {
-    const cer = makeCer()
-
-    class SomeBodyCell extends dr.HTMLTableCellElement {}
-    class SomeHeadCell extends dr.HTMLTableCellElement {static tag = `th`}
-
-    t.is(cer.clsTagBase(SomeBodyCell), `td`)
-    t.eq(cer.clsOpt(SomeBodyCell), {extends: `td`})
-
-    t.is(cer.clsTagBase(SomeHeadCell), `th`)
-    t.eq(cer.clsOpt(SomeHeadCell), {extends: `th`})
+    testCerMatch(reg, HeadCell, `head-cell`, {extends: `th`})
+    testCerMatch(reg, BodyCell, `body-cell`, {extends: `td`})
   })
 
   t.test(function test_setDefiner() {
-    const cer = makeCer()
-    cer.setDefiner()
+    const reg = new dr.Reg()
+    reg.setDefiner()
+    t.is(reg.definer, undefined)
 
-    class Cls0 extends dr.HTMLElement {}
-    class Cls1 extends dr.HTMLElement {}
-    class Cls2 extends dr.HTMLElement {}
+    class Cls0 extends r.elems.HTMLElement {}
+    class Cls1 extends r.elems.HTMLElement {}
+    class Cls2 extends r.elems.HTMLElement {}
 
-    cer.reg(Cls0)
-    cer.reg(Cls1)
+    reg.reg(Cls0)
+    reg.reg(Cls1)
 
-    t.is(cer.ref, undefined)
-
-    t.eq(cer.tagToCls, i.mapOf(
+    t.eq(reg.localNameToCls, i.mapOf(
       `a-cls0`, Cls0,
       `a-cls1`, Cls1,
     ))
 
-    t.eq(cer.clsToTag, i.mapOf(
+    t.eq(reg.clsToLocalName, i.mapOf(
       Cls0, `a-cls0`,
       Cls1, `a-cls1`,
     ))
@@ -224,12 +145,13 @@ t.test(function test_CustomElementRegistry() {
     class Definer extends Array {
       define(tag, cls, opt) {
         this.push([tag, cls, opt])
-        if (tag === `a-cls0`) cer.reg(Cls2)
+        if (tag === `a-cls0`) reg.reg(Cls2)
       }
     }
 
     const def = new Definer()
-    cer.setDefiner(def)
+    reg.setDefiner(def)
+    t.is(reg.definer, def)
 
     t.eq(def, Definer.of(
       [`a-cls0`, Cls0, undefined],
@@ -238,5 +160,26 @@ t.test(function test_CustomElementRegistry() {
     ))
   })
 })
+
+/* Util */
+
+function testCerMatch(reg, cls, tag, opt) {
+  t.ok(reg.clsHas(cls))
+  t.ok(reg.tagHas(tag))
+
+  t.is(reg.clsTag(cls), tag)
+  t.is(reg.tagCls(tag), cls)
+
+  t.ok(l.hasOwn(cls, `localName`))
+  t.is(cls.localName, tag)
+
+  if (opt) {
+    t.ok(l.hasOwn(cls, `options`))
+    t.eq(cls.options, opt)
+  }
+  else {
+    t.no(l.hasOwn(cls, `options`))
+  }
+}
 
 if (import.meta.main) console.log(`[test] ok!`)

@@ -30,7 +30,7 @@ const FEATS = [
   [`dom`, `shortcuts for working with the DOM.`],
   [`dom_reg`, `shortcuts for registering custom DOM elements.`],
   [`ren_dom`, `simple system for rendering DOM nodes in the browser. React-inspired syntax, JSX-compatible, better semantics and performance.`],
-  [`ren_str`, `simple system for rendering XML/HTML on the server. React-inspired syntax, JSX-compatible, better semantics and performance.`],
+  [`ren_xml`, `simple system for rendering XML/HTML on the server. React-inspired syntax, JSX-compatible, better semantics and performance.`],
   [`obs`, `observables via proxies.`],
   [`obs_dom`, `automatic reactivity for custom DOM elements.`],
   [`cli`, `essential tools for CLI apps.`],

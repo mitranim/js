@@ -1,10 +1,12 @@
 import * as l from './lang.mjs'
+import * as o from './obj.mjs'
 import * as rb from './ren_base.mjs'
 export {A, P, Raw} from './ren_base.mjs'
 
 export function E(...val) {return ren.E(...val)}
 export function S(...val) {return RenDomSvg.main.E(...val)}
-export function F(...val) {return ren.frag(...val)}
+export function F(...val) {return ren.F(...val)}
+
 export function mut(...val) {return ren.mut(...val)}
 export function mutProps(...val) {return ren.mutProps(...val)}
 export function mutChi(...val) {return ren.mutChi(...val)}
@@ -20,8 +22,8 @@ export class RenDom extends rb.RenBase {
   */
   E(tag, props, ...chi) {return this.mut(this.make(tag, props), props, ...chi)}
 
-  // Short for "fragment". Used internally. Also allows JSX compat.
-  frag(...val) {return this.addChi(new DocumentFragment(), ...val)}
+  // Short for "fragment".
+  F(...val) {return this.addChi(new DocumentFragment(), ...val)}
 
   make(tag, props) {
     if (tag === `svg`) return makeSvg(this.reqTag(tag), this.deref(props))
@@ -127,7 +129,7 @@ export class RenDom extends rb.RenBase {
     reqNode(tar)
     if (!chi.length) return nodeClear(tar)
 
-    const frag = this.frag(...chi)
+    const frag = this.F(...chi)
     nodeClear(tar)
     tar.appendChild(frag)
     return tar
@@ -145,7 +147,7 @@ export class RenDom extends rb.RenBase {
     if (l.isStr(val)) return this.appendStr(tar, val)
     if (isNode(val)) return tar.appendChild(val)
     if (rb.isRaw(val)) return this.appendRaw(tar, val)
-    if (l.isSeq(val)) return this.appendSeq(tar, val)
+    if (rb.isSeq(val)) return this.appendSeq(tar, val)
     return this.appendChi(tar, this.strOpt(val))
   }
 
@@ -157,7 +159,7 @@ export class RenDom extends rb.RenBase {
   */
   appendRaw(tar, val) {
     const buf = this.makeDef()
-    buf.innerHTML = rb.reqRaw(val)
+    buf.innerHTML = l.laxStr(val.outerHTML)
     while (buf.firstChild) tar.appendChild(buf.firstChild)
   }
 
@@ -172,7 +174,7 @@ export class RenDom extends rb.RenBase {
 
   replace(tar, ...chi) {
     reqNode(tar)
-    tar.parentNode.replaceChild(this.frag(...chi), tar)
+    tar.parentNode.replaceChild(this.F(...chi), tar)
   }
 
   makeDef() {return this.make(`div`)}
@@ -189,14 +191,14 @@ export class RenDom extends rb.RenBase {
 
 export class RenDomHtml extends RenDom {
   E(tag, props, ...chi) {
-    if (this.isVoid(tag) && chi.length) throw this.voidErr(tag, chi)
+    if (this.isVoid(tag) && chi.length) this.throwVoidChi(tag, chi)
     if (tag === `svg`) return ensureSvg(RenDomSvg.main.E(tag, props, ...chi))
     return super.E(tag, props, ...chi)
   }
 }
 RenDomHtml.main = /* @__PURE__ */ new RenDomHtml()
 
-// Easier to remember, and iso with `ren_str.mjs`.
+// Easier to remember, and iso with `ren_xml.mjs`.
 export const ren = /* @__PURE__ */ RenDomHtml.main
 
 /*
@@ -211,7 +213,36 @@ export class RenDomSvg extends RenDom {
 }
 RenDomSvg.main = /* @__PURE__ */ new RenDomSvg()
 
-const nsSvg = `http://www.w3.org/2000/svg`
+export const elems = /* @__PURE__ */ class ElemsPh extends o.MakerPh {
+  make(key) {
+    const val = globalThis[key]
+    if (l.isSubCls(val, HTMLElement)) return MixHtmlElem(val)
+    if (l.isSubCls(val, SVGElement)) return MixSvgElem(val)
+    if (l.isSubCls(val, Element)) return MixElem(val)
+    if (l.isSubCls(val, Node)) return val
+    return undefined
+  }
+}.new()
+
+export const MixHtmlElem = /* @__PURE__ */ o.weakCache(function MixHtmlElem(cls) {
+  return class MixHtmlElem extends MixElem(cls) {
+    get ren() {return RenDomHtml.main}
+  }
+})
+
+export const MixSvgElem = /* @__PURE__ */ o.weakCache(function MixSvgElem(cls) {
+  return class MixSvgElem extends MixElem(cls) {
+    get ren() {return RenDomSvg.main}
+  }
+})
+
+export const MixElem = /* @__PURE__ */ o.weakCache(function MixElem(cls) {
+  return class MixElem extends cls {
+    props(val) {return this.ren.mutProps(this, val)}
+    chi(...val) {return this.ren.mutChi(this, ...val)}
+    get ren() {return RenDom.main}
+  }
+})
 
 function makeHtml(tag, props) {
   return document.createElement(tag, props)
@@ -220,6 +251,9 @@ function makeHtml(tag, props) {
 function makeSvg(tag, props) {
   return document.createElementNS(nsSvg, tag, props)
 }
+
+export const nsHtml = `http://www.w3.org/1999/xhtml`
+export const nsSvg = `http://www.w3.org/2000/svg`
 
 /*
 In many DOM APIs only `null` is considered nil/missing, while `undefined` is

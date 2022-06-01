@@ -1,28 +1,35 @@
 import * as l from './lang.mjs'
+import * as o from './obj.mjs'
 import * as rb from './ren_base.mjs'
 export {A, P, Raw} from './ren_base.mjs'
 
 export function E(...val) {return ren.E(...val)}
-export function S(...val) {return RenStrSvg.main.E(...val)}
-export function X(...val) {return RenStr.main.E(...val)}
-export function F(...val) {return ren.frag(...val)}
+export function S(...val) {return RenXmlSvg.main.E(...val)}
+export function X(...val) {return RenXml.main.E(...val)}
+export function F(...val) {return ren.F(...val)}
 
 /*
 Renders XML strings with a convenient React-inspired syntax. For better
-compatibility between XML and HTML, uses full closing tags: `<tag></tag>`.
+compatibility between XML and HTML, uses full closing tags: `<tag/>` for void
+elements (none by default) and `<tag></tag>` for all other elements.
 
-Does not support HTML special cases such as void elements and boolean
-attributes. Use `RenStrHtml` and `RenStrSvg` as appropriate.
+Does not support HTML special cases such as whitelists of void elements and
+boolean attributes. Use `RenXmlHtml` and `RenXmlSvg` as appropriate.
 */
-export class RenStr extends rb.RenBase {
+export class RenXml extends rb.RenBase {
   // Short for "element".
   E(tag, props, ...chi) {return new rb.Raw(this.elem(tag, props, ...chi))}
 
-  // Short for "fragment". Allows JSX compat.
-  frag(...val) {return new rb.Raw(this.chi(...val))}
+  // Short for "fragment".
+  F(...val) {return new rb.Raw(this.chi(...val))}
 
   elem(tag, props, ...chi) {
     return this.open(tag, props) + this.chi(...chi) + this.close(tag)
+  }
+
+  elemVoid(tag, props, ...chi) {
+    if (chi.length) this.throwVoidChi(tag, chi)
+    return `<` + this.reqTag(tag) + this.props(props) + `/>`
   }
 
   open(tag, props) {return `<` + this.reqTag(tag) + this.props(props) + `>`}
@@ -30,14 +37,14 @@ export class RenStr extends rb.RenBase {
 
   chi(...val) {
     let out = ``
-    for (val of val) out += this.child(val)
+    for (val of val) out += l.laxStr(this.child(val))
     return out
   }
 
   // TODO: bench deopt with non-array iterators.
   child(val) {
-    if (rb.isRaw(val)) return val.valueOf()
-    if (l.isSeq(val)) return this.chi(...val)
+    if (rb.isRaw(val)) return l.laxStr(val.outerHTML)
+    if (rb.isSeq(val)) return this.chi(...val)
     return this.escapeText(this.strLax(val))
   }
 
@@ -68,10 +75,10 @@ export class RenStr extends rb.RenBase {
     return acc
   }
 }
-RenStr.main = /* @__PURE__ */ new RenStr()
+RenXml.main = /* @__PURE__ */ new RenXml()
 
 // Implements various special cases shared by HTML and SVG-in-HTML.
-export class RenHtmlBase extends RenStr {
+export class RenHtmlBase extends RenXml {
   elem(tag, props, ...chi) {
     return this.open(tag, props) + this.inner(props) + this.chi(...chi) + this.close(tag)
   }
@@ -134,50 +141,134 @@ export class RenHtmlBase extends RenStr {
     return this.attr(this.dataKey(key), this.strLax(val))
   }
 
-  styleKey(val) {return StyleKeyCache.main.goc(val)}
-  dataKey(val) {return DataKeyCache.main.goc(val)}
+  styleKey(key) {return styleKeys.goc(l.reqStr(key))}
+  dataKey(key) {return dataKeys.goc(l.reqStr(key))}
 }
 
 // Should be used for rendering SVG.
-export class RenStrSvg extends RenHtmlBase {}
-RenStrSvg.main = /* @__PURE__ */ new RenStrSvg()
+export class RenXmlSvg extends RenHtmlBase {
+  // E(tag, props, ...chi) {
+  //   return new rb.Raw(this.elem(tag, props, ...chi))
+  // }
+
+  // elem(tag, props, ...chi) {
+  //   // if (tag === `svg`) throw Error(`wtf`)
+  //   return super.elem(tag, props, ...chi)
+  // }
+}
+RenXmlSvg.main = /* @__PURE__ */ new RenXmlSvg()
 
 // Should be used for rendering HTML.
-export class RenStrHtml extends RenHtmlBase {
+export class RenXmlHtml extends RenHtmlBase {
   doc(...val) {return `<!doctype html>` + this.chi(...val)}
 
   elem(tag, props, ...chi) {
+    // if (tag === `svg`) throw Error(`wtf`)
     if (this.isVoid(tag)) return this.elemVoid(tag, props, ...chi)
     return super.elem(tag, props, ...chi)
   }
-
-  // TODO also forbid `.innerHTML` in props.
-  elemVoid(tag, props, ...chi) {
-    if (chi.length) throw this.voidErr(tag, chi)
-    return this.open(tag, props)
-  }
 }
-RenStrHtml.main = /* @__PURE__ */ new RenStrHtml()
+RenXmlHtml.main = /* @__PURE__ */ new RenXmlHtml()
 
 // Easier to remember, and iso with `ren_dom.mjs`.
-export const ren = /* @__PURE__ */ RenStrHtml.main
+export const ren = /* @__PURE__ */ RenXmlHtml.main
 
-class Cache extends Map {
-  // Short for "get or create".
-  goc(val) {
-    if (this.has(val)) return this.get(val)
-    this.set(val, val = this.make(val))
-    return val
+export const elems = /* @__PURE__ */ class ElemsPh extends o.MakerPh {
+  make(key) {
+    if (key === `Node`) return Node
+    if (key === `Text`) return Text
+    if (key === `Comment`) return Comment
+    if (key === `HTMLElement`) return HTMLElement
+    if (key === `SVGElement`) return SVGElement
+    if (key === `Element`) return Element
+
+    return class Element extends this.base(key) {
+      static get name() {return key}
+    }
   }
 
-  make() {}
+  base(key) {
+    if (!key.endsWith(`Element`)) return undefined
+    if (key.startsWith(`HTML`)) return HTMLElement
+    if (key.startsWith(`SVG`)) return SVGElement
+    return Element
+  }
+}.new()
+
+export class Node extends l.Emp {
+  get parentNode() {return this[parentNodeKey]}
+  set parentNode(val) {this[parentNodeKey] = l.optInst(val, Node) || null}
+  get childNodes() {return this[childNodesKey] || (this[childNodesKey] = new this.NodeList())}
+  set childNodes(val) {this[childNodesKey] = l.reqArr(val)}
+  get NodeList() {return Array}
 }
 
-class StyleKeyCache extends Cache {make(val) {return camelToKebab(val)}}
-StyleKeyCache.main = /* @__PURE__ */ new StyleKeyCache()
+class TextNode extends Node {
+  get textContent() {return l.laxStr(this[textContentKey])}
+  set textContent(val) {this[textContentKey] = l.render(val)}
+}
 
-class DataKeyCache extends Cache {make(val) {return camelToData(val)}}
-DataKeyCache.main = /* @__PURE__ */ new DataKeyCache()
+export class Text extends TextNode {
+  constructor(val) {super().textContent = val}
+  get outerHTML() {return escapeText(this.textContent)}
+}
+
+export class Comment extends TextNode {
+  constructor(val) {super().textContent = val}
+  get outerHTML() {return `<!--` + escapeText(this.textContent) + `-->`}
+}
+
+export class Element extends Node {
+  props(val) {
+    this[propsKey] = this[propsKey]?.with(val) || rb.A.with(val)
+    return this
+  }
+
+  chi(...val) {
+    for (val of (this.childNodes = flat(val))) {
+      if (isChildNode(val)) val.parentNode = this
+    }
+    return this
+  }
+
+  get innerHTML() {return this.ren.F(this.childNodes)}
+  set innerHTML(val) {this.chi(new rb.Raw(val))}
+
+  get outerHTML() {
+    const ren = this.ren
+    const cls = this.constructor
+    const name = ren.reqTag(cls.localName)
+    const base = cls.options?.extends
+    const tag = ren.reqTag(base || name)
+    const is = base && base !== name ? ren.attr(`is`, name) : ``
+    const props = this[propsKey]
+
+    // Same as `ren.elem` but inserts `is` when relevant.
+    return (
+      (`<` + l.reqStr(tag) + l.reqStr(is) + l.reqStr(ren.props(props)) + `>`) +
+      l.reqStr(ren.chi(...this.childNodes)) +
+      (`</` + l.reqStr(tag) + `>`)
+    )
+  }
+
+  get ren() {return RenXml.main}
+}
+
+export class HTMLElement extends Element {
+  get ren() {return RenXmlHtml.main}
+}
+
+export class SVGElement extends Element {
+  get ren() {return RenXmlSvg.main}
+}
+
+const styleKeys = /* @__PURE__ */ new class StyleKeys extends o.Cache {
+  make(val) {return camelToKebab(val)}
+}
+
+const dataKeys = /* @__PURE__ */ new class DataKeys extends o.Cache {
+  make(val) {return camelToData(val)}
+}
 
 /*
 https://www.w3.org/TR/html52/syntax.html#escaping-a-string
@@ -214,6 +305,11 @@ export function escapeChar(char) {
   return char
 }
 
+export const propsKey = Symbol.for(`props`)
+export const parentNodeKey = Symbol.for(`parentNode`)
+export const childNodesKey = Symbol.for(`childNodes`)
+export const textContentKey = Symbol.for(`textContent`)
+
 /*
 Reference:
 
@@ -229,3 +325,12 @@ but we may have to differentiate them later.
 */
 function camelToKebab(val) {return val.split(/(?=[A-Z])/g).map(lower).join(`-`)}
 function lower(val) {return val.toLowerCase()}
+
+// Adapted from `iter.mjs` to avoid dependency.
+function flat(val) {
+  for (const elem of val) if (l.isArr(elem)) return val.flat(Infinity)
+  return val
+}
+
+// Duplicated from `dom.mjs` to avoid dependency.
+function isChildNode(val) {return l.hasIn(val, `parentNode`)}

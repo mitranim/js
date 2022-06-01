@@ -32,7 +32,7 @@ HTTP request/response utils are ported and reworked from https://github.com/mitr
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -234,8 +234,8 @@ rou.groups // {key: `path`}
 Routing is imperative:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/http.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/lang.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/http.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/lang.mjs'
 
 const nextPage = route(window.location)
 
@@ -263,7 +263,7 @@ Short for "request router" or "request-response router". Advanced version of [#`
 Routing can be shared between SSR and SPA:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.23/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/http.mjs'
 
 function route(rou) {
   l.reqInst(rou, h.ReqRou)
@@ -299,7 +299,7 @@ SPA uses current URL:
 const page = route(h.ReqRou.from(window.location))
 ```
 
-For SSR/SPA isomorphic rendering, use the pair of "ren" modules: [`ren_str`](ren_str_readme.md) on the server and [`ren_dom`](ren_dom_readme.md) in browsers.
+For SSR/SPA isomorphic rendering, use the pair of "ren" modules: [`ren_xml`](ren_xml_readme.md) on the server and [`ren_dom`](ren_dom_readme.md) in browsers.
 
 ### `class Ctx`
 
