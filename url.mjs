@@ -1,3 +1,5 @@
+/* global URLSearchParams */
+
 import * as l from './lang.mjs'
 import * as s from './str.mjs'
 

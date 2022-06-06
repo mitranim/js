@@ -1,11 +1,15 @@
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
-import * as rb from '../ren_base.mjs'
-import {A, P} from '../ren_base.mjs'
+import * as p from '../prax.mjs'
+import {A} from '../prax.mjs'
 import * as dr from '../dom_reg.mjs'
+import * as dg from '../dom_glob_shim.mjs'
 
 /* Util */
+
+const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
+const E = ren.E
 
 function* gen(...vals) {for (const val of vals) yield val}
 
@@ -14,24 +18,152 @@ function testDerefOwn(src, exp) {t.own(src.$, exp)}
 // Short for "equal markup".
 export function eqm(val, exp) {
   l.reqStr(exp)
-  t.ok(rb.isRaw(val))
+  t.ok(p.isRaw(val))
   t.is(val.outerHTML, exp)
 }
 
-/* Shared */
+const Text = dg.glob.Text
 
-// Shared component of "str" and "dom" tests.
-export function testCommon(r) {
-  const {E, S} = r
+/* Test */
+
+t.test(function test_Raw() {
+  t.throws(() => new p.Raw({}), TypeError, `unable to convert {} to string`)
+  t.throws(() => new p.Raw([]), TypeError, `unable to convert [] to string`)
+
+  function test(src, exp) {
+    const tar = new p.Raw(src)
+    t.ok(p.isRaw(tar))
+    t.is(tar.outerHTML, exp)
+  }
+
+  test(undefined, ``)
+  test(null, ``)
+  test(``, ``)
+  test(10, `10`)
+  test(`str`, `str`)
+  test(`<script>alert("hacked")</script>`, `<script>alert("hacked")</script>`)
+})
+
+t.test(function test_PropBui() {
+  testPropBuiConstructor(val => new p.PropBui(val))
+
+  t.test(function test_set() {
+    const ref = new p.PropBui()
+
+    t.throws(() => ref.set(), TypeError, `expected variant of isStr, got undefined`)
+    t.throws(() => ref.set(10), TypeError, `expected variant of isStr, got 10`)
+
+    t.is(ref.set(`one`, 10), ref)
+    testDerefOwn(ref, {one: 10})
+
+    t.is(ref.set(`two`, 20), ref)
+    testDerefOwn(ref, {one: 10, two: 20})
+
+    t.is(ref.set(`one`, 30), ref)
+    testDerefOwn(ref, {one: 30, two: 20})
+  })
+
+  t.test(function test_cls() {
+    t.throws(() => new p.PropBui().cls(10), TypeError, `expected variant of isStr, got 10`)
+
+    t.is(new p.PropBui().cls().$, undefined)
+
+    testDerefOwn(new p.PropBui().cls(`one`), {class: `one`})
+    testDerefOwn(new p.PropBui().cls(``).cls(`one`), {class: `one`})
+    testDerefOwn(new p.PropBui().cls(``).cls(`one`).cls(``), {class: `one`})
+    testDerefOwn(new p.PropBui().cls(`one`).cls(`two`), {class: `one two`})
+  })
+
+  t.test(function test_href() {
+    testDerefOwn(new p.PropBui().href(), {href: undefined})
+    testDerefOwn(new p.PropBui().href(`/one`), {href: `/one`})
+  })
+
+  t.test(function test_tarblan() {
+    testDerefOwn(new p.PropBui().tarblan(), {target: `_blank`, rel: `noopener noreferrer`})
+  })
+})
+
+function testPropBuiConstructor(fun) {
+  function test(src) {
+    const out = fun(src)
+
+    t.inst(out, p.PropBui)
+    t.isnt(out, src)
+
+    t.own(out, {})
+    testDerefOwn(out, src)
+  }
+
+  test({})
+  test({one: 10})
+  test({one: 10, two: 20})
+}
+
+t.test(function test_PropBui_of() {
+  const P = p.PropBui.of.bind(p.PropBui)
+
+  testPropBuiConstructor(P)
+
+  t.test(function test_same_reference() {
+    function test(val) {t.is(P(val), val)}
+
+    test(P())
+    test(new p.PropBui())
+    test(P({one: 10}))
+    test(new p.PropBui({one: 10}))
+  })
+})
+
+t.test(function test_PropBui_A() {
+  t.inst(A, p.PropBui)
+
+  t.test(function test_setter_methods() {
+    function test(val, exp) {
+      t.isnt(val, A)
+      t.inst(val, p.PropBui)
+      testDerefOwn(val, exp)
+
+      // Further method calls mutate the same instance.
+      t.is(val.set(`994d2e`, `cac5c0`), val)
+    }
+
+    test(A.href(`/one`), {href: `/one`})
+    test(A.cls(`two`), {class: `two`})
+    test(A.href(`/one`).cls(`two`), {href: `/one`, class: `two`})
+  })
+
+  t.test(function test_mut() {
+    function test(src) {
+      const out = A.mut(src)
+      t.isnt(out, A)
+      testDerefOwn(out, {...src})
+    }
+
+    test()
+    test({})
+    test({one: 10})
+    test({one: 10, two: 20})
+  })
+})
+
+/*
+Adapted from a "shared" test for the defunct "ren" feature. The test mostly
+verifies serialization behaviors common between DOM and non-DOM environments.
+For DOM-specific behaviors (native or shimmed), see other tests.
+*/
+t.test(function test_Ren_serialization() {
+  function E(...val) {return ren.elemHtml(...val)}
+  function F(...val) {return ren.frag(...val)}
 
   t.throws(() => E(`link`, {}, null), SyntaxError, `expected void element "link" to have no children, got [null]`)
 
   t.test(function test_invalid() {
     t.test(function test_invalid_tag() {
-      t.throws(E,                                    TypeError, `expected variant of isTag, got undefined`)
-      t.throws(() => E(E),                           TypeError, `expected variant of isTag, got [function E]`)
-      t.throws(() => E({}),                          TypeError, `expected variant of isTag, got {}`)
-      t.throws(() => E({toString() {return `div`}}), TypeError, `expected variant of isTag, got {}`)
+      t.throws(E, TypeError, `expected variant of isStr, got undefined`)
+      t.throws(() => E(E), TypeError, `expected variant of isStr, got [function E]`)
+      t.throws(() => E({}), TypeError, `expected variant of isStr, got {}`)
+      t.throws(() => E({toString() {return `div`}}), TypeError, `expected variant of isStr, got {}`)
     })
 
     t.test(function test_invalid_props() {
@@ -41,7 +173,6 @@ export function testCommon(r) {
       t.throws(() => E(`div`, []),                          TypeError, `expected variant of isStruct, got []`)
       t.throws(() => E(`div`, E),                           TypeError, `expected variant of isObj, got [function E]`)
       t.throws(() => E(`div`, new String()),                TypeError, `expected variant of isStruct, got [object String]`)
-      t.throws(() => E(`div`, new r.Raw()),                 TypeError, `expected variant of isStruct, got [object Raw]`)
       t.throws(() => E(`div`, {attributes: 10}),            TypeError, `expected variant of isObj, got 10`)
       t.throws(() => E(`div`, {attributes: `str`}),         TypeError, `expected variant of isObj, got "str"`)
       t.throws(() => E(`div`, {attributes: []}),            TypeError, `expected variant of isStruct, got []`)
@@ -70,24 +201,24 @@ export function testCommon(r) {
       })
 
       t.test(function test_empty_void_elem_self_closing() {
-        eqm(E(`area`), `<area/>`)
-        eqm(E(`base`), `<base/>`)
-        eqm(E(`br`), `<br/>`)
-        eqm(E(`col`), `<col/>`)
-        eqm(E(`embed`), `<embed/>`)
-        eqm(E(`hr`), `<hr/>`)
-        eqm(E(`img`), `<img/>`)
-        eqm(E(`input`), `<input/>`)
-        eqm(E(`link`), `<link/>`)
-        eqm(E(`meta`), `<meta/>`)
-        eqm(E(`param`), `<param/>`)
-        eqm(E(`source`), `<source/>`)
-        eqm(E(`track`), `<track/>`)
-        eqm(E(`wbr`), `<wbr/>`)
+        eqm(E(`area`), `<area />`)
+        eqm(E(`base`), `<base />`)
+        eqm(E(`br`), `<br />`)
+        eqm(E(`col`), `<col />`)
+        eqm(E(`embed`), `<embed />`)
+        eqm(E(`hr`), `<hr />`)
+        eqm(E(`img`), `<img />`)
+        eqm(E(`input`), `<input />`)
+        eqm(E(`link`), `<link />`)
+        eqm(E(`meta`), `<meta />`)
+        eqm(E(`param`), `<param />`)
+        eqm(E(`source`), `<source />`)
+        eqm(E(`track`), `<track />`)
+        eqm(E(`wbr`), `<wbr />`)
 
-        eqm(E(`link`, {}), `<link/>`)
-        eqm(E(`link`, null), `<link/>`)
-        eqm(E(`link`, undefined), `<link/>`)
+        eqm(E(`link`, {}), `<link />`)
+        eqm(E(`link`, null), `<link />`)
+        eqm(E(`link`, undefined), `<link />`)
       })
     })
 
@@ -101,22 +232,23 @@ export function testCommon(r) {
     t.test(function test_void_elem_attrs() {
       eqm(
         E(`link`, {rel: `stylesheet`, href: `main.css`}),
-        `<link rel="stylesheet" href="main.css"/>`,
+        `<link rel="stylesheet" href="main.css" />`,
       )
 
       // Doesn't work in browsers because `value` doesn't become an attribute.
+      //
       // eqm(
       //   E(`input`, {type: `num`, value: `10`}),
-      //   `<input type="num" value="10">`,
+      //   `<input type="num" value="10" />`,
       // )
     })
 
     t.test(function test_attr_val_encoding() {
       t.test(function test_attr_non_scalar() {
         testNonScalarPropStrict(E)
-        r.ren.lax = true
+        ren.lax = true
         testNonScalarPropLax(E, eqm)
-        r.ren.lax = false
+        ren.lax = false
         testNonScalarPropStrict(E)
       })
 
@@ -159,9 +291,11 @@ export function testCommon(r) {
     })
 
     t.test(function test_class() {
-      // Recommendation: prefer `class`.
-      eqm(E(`div`, {class:     `one`}), `<div class="one"></div>`)
-      eqm(E(`div`, {className: `one`}), `<div class="one"></div>`)
+      // Recommendation: prefer `class`, consider using `PropBui`/`A`.
+      t.test(function test_class_vs_class_name() {
+        eqm(E(`div`, {class: `one`, className: `two`}), `<div class="two"></div>`)
+        eqm(E(`div`, {className: `one`, class: `two`}), `<div class="two"></div>`)
+      })
 
       t.test(function test_class_escaping() {
         eqm(
@@ -174,7 +308,6 @@ export function testCommon(r) {
     t.test(function test_style() {
       t.throws(() => E(`div`, {style: 10}),           TypeError, `unable to convert 10 to style`)
       t.throws(() => E(`div`, {style: []}),           TypeError, `unable to convert [] to style`)
-      t.throws(() => E(`div`, {style: new r.Raw()}),  TypeError, `unable to convert [object Raw] to style`)
       t.throws(() => E(`div`, {style: {margin: 10}}), TypeError, `invalid property "margin": expected variant of isStr, got 10`)
 
       eqm(
@@ -191,10 +324,14 @@ export function testCommon(r) {
         t.throws(() => E(`div`, {style: {margin: 10}}), TypeError, `invalid property "margin": expected variant of isStr, got 10`)
 
         eqm(E(`div`, {style: {margin: null}}), `<div></div>`)
-
         eqm(E(`div`, {style: {margin: undefined}}), `<div></div>`)
       })
 
+      /*
+      This style property is technically invalid, and should be ignored in
+      browsers. In our shim, when a style is provided as a string, we don't
+      parse or validate it, but we must ensure proper escaping.
+      */
       t.test(function test_style_escaping() {
         eqm(
           E(`div`, {style: `<one>&"</one>`}),
@@ -255,19 +392,17 @@ export function testCommon(r) {
     })
 
     t.test(function test_aria_attrs() {
-      // Not supported.
-      //
-      // t.test(function test_aria_props_camel() {
-      //   eqm(
-      //     E(`div`, {ariaCurrent: null, ariaChecked: undefined}),
-      //     `<div></div>`,
-      //   )
-      //
-      //   eqm(
-      //     E(`a`, {ariaCurrent: `page`, ariaChecked: `mixed`}),
-      //     `<a aria-current="page" aria-checked="mixed"></a>`,
-      //   )
-      // })
+      t.test(function test_aria_props_camel() {
+        eqm(
+          E(`div`, {ariaCurrent: null, ariaChecked: undefined}),
+          `<div></div>`,
+        )
+
+        eqm(
+          E(`a`, {ariaCurrent: `page`, ariaChecked: `mixed`}),
+          `<a aria-current="page" aria-checked="mixed"></a>`,
+        )
+      })
 
       t.test(function test_aria_attrs_kebab() {
         eqm(
@@ -281,28 +416,24 @@ export function testCommon(r) {
         )
       })
 
-      // Not supported.
-      //
-      // t.test(function test_aria_mixed() {
-      //   eqm(
-      //     E(`div`, {ariaCurrent: null, 'aria-checked': undefined}),
-      //     `<div></div>`,
-      //   )
-      //
-      //   eqm(
-      //     E(`a`, {ariaCurrent: `page`, 'aria-checked': `mixed`}),
-      //     `<a aria-current="page" aria-checked="mixed"></a>`,
-      //   )
-      // })
+      t.test(function test_aria_mixed() {
+        eqm(
+          E(`div`, {ariaCurrent: null, 'aria-checked': undefined}),
+          `<div></div>`,
+        )
 
-      // Not supported.
-      //
-      // t.test(function test_aria_multi_humped_camel() {
-      //   eqm(
-      //     E(`a`, {ariaAutoComplete: `page`}, `text`),
-      //     `<a aria-autocomplete="page">text</a>`,
-      //   )
-      // })
+        eqm(
+          E(`a`, {ariaCurrent: `page`, 'aria-checked': `mixed`}),
+          `<a aria-current="page" aria-checked="mixed"></a>`,
+        )
+      })
+
+      t.test(function test_aria_multi_humped_camel() {
+        eqm(
+          E(`a`, {ariaAutoComplete: `page`}, `text`),
+          `<a aria-autocomplete="page">text</a>`,
+        )
+      })
     })
 
     t.test(function test_bool_attrs() {
@@ -311,17 +442,17 @@ export function testCommon(r) {
 
       eqm(
         E(`input`, {autofocus: true, disabled: true, hidden: true}),
-        `<input autofocus="" disabled="" hidden=""/>`,
+        `<input autofocus="" disabled="" hidden="" />`,
       )
 
       eqm(
         E(`input`, {hidden: false, autofocus: false, disabled: true}),
-        `<input disabled=""/>`,
+        `<input disabled="" />`,
       )
 
       eqm(
         E(`input`, {hidden: true, autofocus: null, disabled: undefined}),
-        `<input hidden=""/>`,
+        `<input hidden="" />`,
       )
     })
 
@@ -349,13 +480,13 @@ export function testCommon(r) {
     })
 
     t.test(function test_meta_attrs() {
-      eqm(E(`meta`, {httpEquiv: `content-type`}), `<meta http-equiv="content-type"/>`)
+      eqm(E(`meta`, {httpEquiv: `content-type`}), `<meta http-equiv="content-type" />`)
 
-      eqm(E(`meta`, {'http-equiv': `content-type`}), `<meta http-equiv="content-type"/>`)
+      eqm(E(`meta`, {'http-equiv': `content-type`}), `<meta http-equiv="content-type" />`)
 
       eqm(
         E(`meta`, {httpEquiv: `X-UA-Compatible`, content: `IE=edge,chrome=1`}),
-        `<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>`,
+        `<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />`,
       )
     })
   })
@@ -363,9 +494,9 @@ export function testCommon(r) {
   t.test(function test_children() {
     t.test(function test_child_non_scalar() {
       testNonScalarChiStrict(E)
-      r.ren.lax = true
+      ren.lax = true
       testNonScalarChiLax(E, eqm)
-      r.ren.lax = false
+      ren.lax = false
       testNonScalarChiStrict(E)
     })
 
@@ -444,6 +575,30 @@ export function testCommon(r) {
 
     t.test(function test_child_escaping() {
       t.test(function test_escape_non_raw() {
+        /*
+        This horribly breaks inline scripts... which might be a decent default.
+        Users must escape them in an appropriate language-specific way and then
+        use `Raw`. We might be unable to provide a generic solution because
+        `<script>` allows an open set of languages/syntaxes. Even just for JS
+        and JSON, the correct way to escape </script> depends on the syntactic
+        context.
+        */
+        eqm(
+          E(`script`, {}, `console.log('</script>')`),
+          `<script>console.log('&lt;/script&gt;')</script>`,
+        )
+
+        /*
+        This generates broken markup. The test simply demonstrates the
+        possibility.
+        */
+        t.test(function test_dont_escape_raw() {
+          eqm(
+            E(`outer`, {}, new p.Raw(`<<&>>`)),
+            `<outer><<&>></outer>`,
+          )
+        })
+
         eqm(
           E(`div`, {}, `<one>&"</one>`),
           `<div>&lt;one&gt;&amp;"&lt;/one&gt;</div>`,
@@ -468,20 +623,21 @@ export function testCommon(r) {
       t.test(function test_dont_escape_raw() {
         t.test(function test_html() {
           eqm(
-            E(`outer`, {}, new r.Raw(`<inner>text</inner>`)),
+            E(`outer`, {}, new p.Raw(`<inner>text</inner>`)),
             `<outer><inner>text</inner></outer>`,
           )
 
           eqm(
-            E(`div`, {}, new r.Raw(`<a>one</a><b>two</b><c>three</c>`)),
+            E(`div`, {}, new p.Raw(`<a>one</a><b>two</b><c>three</c>`)),
             `<div><a>one</a><b>two</b><c>three</c></div>`,
           )
         })
 
-        // TODO: verify use of SVG namespace when rendering DOM.
         t.test(function test_svg() {
+          t.is(E(`svg`).namespaceURI, `http://www.w3.org/2000/svg`)
+
           eqm(
-            S(`svg`, {}, new r.Raw(`<line x1="12" y1="8" x2="12" y2="12"></line>`)),
+            E(`svg`, {}, new p.Raw(`<line x1="12" y1="8" x2="12" y2="12"></line>`)),
             `<svg><line x1="12" y1="8" x2="12" y2="12"></line></svg>`,
           )
         })
@@ -491,8 +647,6 @@ export function testCommon(r) {
     // Fragment's type and structure is different between `str.mjs` and
     // `dom.mjs`, and tested separately.
     t.test(function test_fragment() {
-      function F(...val) {return r.ren.F(...val)}
-
       t.test(function test_fragment_as_child() {
         eqm(
           E(`div`, {}, F(null, `one`, undefined, [`two`], [])),
@@ -507,35 +661,39 @@ export function testCommon(r) {
     })
   })
 
-  // TODO better name, better tests.
-  t.test(function test_dom_reg_and_element_mixins() {
+  // TODO better tests.
+  t.test(function test_custom_elements() {
     t.test(function test_simple() {
-      class SomeElem extends dr.MixReg(r.elems.HTMLElement) {
+      class SomeElem extends dg.glob.HTMLElement {
+        static customName = `elem-35e92d`
+        static {dr.reg(this)}
         init() {return this.props(A.cls(`theme-prim`)).chi(`some text`)}
       }
 
       l.nop(new SomeElem())
-      t.is(SomeElem.localName, `some-elem`)
-      t.is(SomeElem.options, undefined)
+      t.is(SomeElem.localName, `elem-35e92d`)
+      t.is(SomeElem.customName, `elem-35e92d`)
 
-      t.is(new SomeElem().outerHTML, `<some-elem></some-elem>`)
-      t.is(new SomeElem().init().outerHTML, `<some-elem class="theme-prim">some text</some-elem>`)
+      t.is(new SomeElem().outerHTML, `<elem-35e92d></elem-35e92d>`)
+      t.is(new SomeElem().init().outerHTML, `<elem-35e92d class="theme-prim">some text</elem-35e92d>`)
     })
 
     t.test(function test_extended() {
-      class TestBtn extends dr.MixReg(r.elems.HTMLButtonElement) {
+      class TestBtn extends dg.glob.HTMLButtonElement {
+        static customName = `elem-4873e3`
+        static {dr.reg(this)}
         init() {return this.props(A.cls(`theme-prim`)).chi(`click me`)}
       }
 
       l.nop(new TestBtn())
-      t.is(TestBtn.localName, `test-btn`)
-      t.eq(TestBtn.options, {extends: `button`})
+      t.eq(TestBtn.localName, `button`)
+      t.is(TestBtn.customName, `elem-4873e3`)
 
-      t.is(new TestBtn().outerHTML, `<button is="test-btn"></button>`)
-      t.is(new TestBtn().init().outerHTML, `<button is="test-btn" class="theme-prim">click me</button>`)
+      t.is(new TestBtn().outerHTML, `<button is="elem-4873e3"></button>`)
+      t.is(new TestBtn().init().outerHTML, `<button is="elem-4873e3" class="theme-prim">click me</button>`)
     })
   })
-}
+})
 
 function testNonScalarChiStrict(E) {
   t.throws(() => E(`div`, {}, Symbol(`str`)),       TypeError, `unable to convert Symbol(str) to string`)
@@ -583,107 +741,208 @@ function testNonScalarPropLax(E, eqm) {
   eqm(E(`div`, {one: new class extends Array {}(10, 20)}), `<div></div>`)
 }
 
-/* Test */
+t.test(function test_Ren_dom_behaviors() {
+  const E = ren.elemHtml
+  const F = ren.frag
 
-function testPropBuiConstructor(fun) {
+  t.test(function test_fragment() {
+    t.inst(F(), dg.glob.DocumentFragment)
+
+    t.is(
+      F(`one`, [10], E(`div`, {}, `two`, new dg.glob.Comment(`three`))).textContent,
+      `one10two`,
+    )
+  })
+
+  // Parts of this function are tested elsewhere.
+  // We only need a sanity check here.
+  t.test(function test_mutProps() {
+    t.throws(() => ren.mutProps(), TypeError, `expected variant of isElement, got undefined`)
+
+    t.test(function test_identity() {
+      const node = E(`div`)
+      t.is(ren.mutProps(node), node)
+    })
+
+    eqm(
+      ren.mutProps(E(`div`, {class: `one`}, `two`), {class: `three`}),
+      `<div class="three">two</div>`,
+    )
+  })
+
+  // Parts of this function are tested elsewhere.
+  // We only need a sanity check here.
+  t.test(function test_mut() {
+    t.throws(() => ren.mut(), TypeError, `expected variant of isElement, got undefined`)
+
+    t.test(function test_mut_identity() {
+      const node = E(`div`)
+      t.is(ren.mut(node), node)
+    })
+
+    t.test(function test_mut_removes_children() {
+      eqm(
+        ren.mut(E(`div`, {class: `one`}, `two`), {class: `three`}),
+        `<div class="three"></div>`,
+      )
+    })
+
+    t.test(function test_mut_replaces_children() {
+      eqm(
+        ren.mut(E(`div`, {class: `one`}, `two`), {class: `three`}, `four`),
+        `<div class="three">four</div>`,
+      )
+    })
+  })
+
+  t.test(function test_mutText() {
+    t.throws(() => ren.mutText(), TypeError, `expected variant of isNode, got undefined`)
+
+    const node = E(`div`, {class: `one`}, `two`)
+    eqm(node, `<div class="one">two</div>`)
+
+    t.throws(() => ren.mutText(node, {}), TypeError, `unable to convert {} to string`)
+    t.throws(() => ren.mutText(node, []), TypeError, `unable to convert [] to string`)
+    t.throws(() => ren.mutText(node, new p.Raw()), TypeError, `unable to convert [object Raw] to string`)
+
+    t.is(ren.mutText(node), node)
+    eqm(node, `<div class="one"></div>`)
+
+    t.is(ren.mutText(node, `three`), node)
+    eqm(node, `<div class="one">three</div>`)
+
+    t.is(ren.mutText(node, new String(`<four></four>`)), node)
+    eqm(node, `<div class="one">&lt;four&gt;&lt;/four&gt;</div>`)
+  })
+
+  t.test(function test_bool_attrs_as_props() {
+    t.ok(E(`input`, {type: `checkbox`, checked: true}).checked)
+    t.no(E(`input`, {type: `checkbox`, checked: false}).checked)
+  })
+
+  t.test(function test_child_flattening() {
+    const elem = (
+      E(`outer`, {},
+        undefined,
+        [[[``]]],
+        [[[`one`]]],
+        [
+          null,
+          E(`mid`, {},
+            undefined,
+            [`two`, [E(`inner`, {}, [[`three`]], undefined)]],
+            null,
+            `four`,
+          ),
+        ],
+        ``,
+        `five`,
+      )
+    )
+
+    t.is(
+      elem.textContent,
+      `onetwothreefourfive`,
+    )
+
+    eqm(
+      elem,
+      `<outer>one<mid>two<inner>three</inner>four</mid>five</outer>`,
+    )
+  })
+
+  t.test(function test_child_kidnapping() {
+    const one = new Text(`one`)
+    const two = new Text(`two`)
+    const three = new Text(`three`)
+
+    const prev = E(`div`, {}, one, two, three)
+    const next = E(`p`, {}, ...prev.childNodes)
+
+    eqm(prev, `<div></div>`)
+    eqm(next, `<p>onetwothree</p>`)
+
+    t.is(prev.textContent, ``)
+    t.is(next.textContent, `onetwothree`)
+  })
+
+  t.test(function test_replace() {
+    t.throws(() => ren.replace(), TypeError, `expected variant of isNode, got undefined`)
+    t.throws(() => ren.replace(E(`div`)), TypeError, `properties of null`)
+
+    {
+      const node = E(`div`, {}, new Text(`text`))
+      eqm(node, `<div>text</div>`)
+      ren.replace(node.firstChild, undefined)
+      eqm(node, `<div></div>`)
+    }
+
+    {
+      const node = E(`div`, {}, E(`one`), E(`two`), E(`three`))
+      eqm(node, `<div><one></one><two></two><three></three></div>`)
+
+      ren.replace(node.childNodes[1], `four`, null, `five`)
+      eqm(node, `<div><one></one>fourfive<three></three></div>`)
+    }
+  })
+})
+
+t.test(function test_Ren_overview_elemHtml() {
+  const E = ren.elemHtml
+
   function test(src) {
-    const out = fun(src)
-
-    t.inst(out, rb.PropBui)
-    t.isnt(out, src)
-
-    t.own(out, {})
-    testDerefOwn(out, src)
+    eqm(src, `<span id="one" class="two">three</span>`)
   }
 
-  test({})
-  test({one: 10})
-  test({one: 10, two: 20})
-}
-
-t.test(function test_PropBui() {
-  testPropBuiConstructor(val => new rb.PropBui(val))
-
-  t.test(function test_set() {
-    const ref = new rb.PropBui()
-
-    t.throws(() => ref.set(), TypeError, `expected variant of isStr, got undefined`)
-    t.throws(() => ref.set(10), TypeError, `expected variant of isStr, got 10`)
-
-    t.is(ref.set(`one`, 10), ref)
-    testDerefOwn(ref, {one: 10})
-
-    t.is(ref.set(`two`, 20), ref)
-    testDerefOwn(ref, {one: 10, two: 20})
-
-    t.is(ref.set(`one`, 30), ref)
-    testDerefOwn(ref, {one: 30, two: 20})
-  })
-
-  t.test(function test_cls() {
-    t.throws(() => new rb.PropBui().cls(10), TypeError, `expected variant of isStr, got 10`)
-
-    t.is(new rb.PropBui().cls().$, undefined)
-
-    testDerefOwn(new rb.PropBui().cls(`one`), {class: `one`})
-    testDerefOwn(new rb.PropBui().cls(``).cls(`one`), {class: `one`})
-    testDerefOwn(new rb.PropBui().cls(``).cls(`one`).cls(``), {class: `one`})
-    testDerefOwn(new rb.PropBui().cls(`one`).cls(`two`), {class: `one two`})
-  })
-
-  t.test(function test_href() {
-    testDerefOwn(new rb.PropBui().href(), {href: undefined})
-    testDerefOwn(new rb.PropBui().href(`/one`), {href: `/one`})
-  })
-
-  t.test(function test_tarblan() {
-    testDerefOwn(new rb.PropBui().tarblan(), {target: `_blank`, rel: `noopener noreferrer`})
-  })
+  test(E(`span`, {id: `one`, class: `two`}, `three`))
+  test(E(`span`).props({id: `one`, class: `two`}).chi(`three`))
+  test(E(`span`).props({id: `one`}).props({class: `two`}).chi(`three`))
 })
 
-t.test(function test_A() {
-  t.inst(A, rb.PropBui)
+t.test(function test_Ren_overview_E() {
+  function test(src) {
+    eqm(src, `<span id="one" class="two">three</span>`)
+  }
 
-  t.test(function test_setter_methods() {
-    function test(val, exp) {
-      t.isnt(val, A)
-      t.inst(val, rb.PropBui)
-      testDerefOwn(val, exp)
-
-      // Further method calls mutate the same instance.
-      t.is(val.set(`994d2e`, `cac5c0`), val)
-    }
-
-    test(A.href(`/one`), {href: `/one`})
-    test(A.cls(`two`), {class: `two`})
-    test(A.href(`/one`).cls(`two`), {href: `/one`, class: `two`})
-  })
-
-  t.test(function test_mut() {
-    function test(src) {
-      const out = A.mut(src)
-      t.isnt(out, A)
-      testDerefOwn(out, {...src})
-    }
-
-    test()
-    test({})
-    test({one: 10})
-    test({one: 10, two: 20})
-  })
+  test(E.span.props({id: `one`, class: `two`}).chi(`three`))
+  test(E.span.props({id: `one`}).props({class: `two`}).chi(`three`))
 })
 
-t.test(function test_P() {
-  testPropBuiConstructor(P)
+t.test(function test_Ren_custom_element() {
+  class SomeElem extends dg.glob.HTMLElement {
+    static customName = `elem-a5425a`
+    static {dr.reg(this)}
+    init() {return this.props({id: `one`, class: `two`}).chi(`three`)}
+  }
 
-  t.test(function test_same_reference() {
-    function test(val) {t.is(P(val), val)}
+  eqm(
+    new SomeElem().init(),
+    `<elem-a5425a id="one" class="two">three</elem-a5425a>`,
+  )
+})
 
-    test(P())
-    test(new rb.PropBui())
-    test(P({one: 10}))
-    test(new rb.PropBui({one: 10}))
-  })
+t.test(function test_renderDocument() {
+  t.throws(() => p.renderDocument({}), TypeError, `unable to convert {} to document`)
+  t.throws(() => p.renderDocument([]), TypeError, `unable to convert [] to document`)
+
+  function test(src, exp) {t.is(p.renderDocument(src), exp)}
+
+  test(undefined, ``)
+  test(null, ``)
+  test(``, ``)
+  test(`<html></html>`, `<!doctype html><html></html>`)
+
+  test(
+    E.html.chi(
+      E.head.chi(E.title.chi(`test`)),
+      E.body.props({class: `page`}).chi(
+        E.main.chi(
+          E.a.props(A.href(`/`).cls(`link`)).chi(`Home`),
+        ),
+      ),
+    ),
+    `<!doctype html><html><head><title>test</title></head><body class="page"><main><a href="/" class="link">Home</a></main></body></html>`,
+  )
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

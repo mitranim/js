@@ -48,6 +48,26 @@ export class Strict extends l.Emp {
 }
 
 /*
+Proxy handler that hides and/or forbids everything by default.
+To allow a specific operation, override the corresponding method.
+*/
+export class BlankPh extends l.Emp {
+  apply() {throw l.errImpl()}
+  construct() {throw l.errImpl()}
+  defineProperty() {return false}
+  deleteProperty() {return false}
+  get() {}
+  getOwnPropertyDescriptor() {}
+  getPrototypeOf() {return null}
+  has() {return false}
+  isExtensible() {return false}
+  ownKeys() {return []}
+  preventExtensions() {return false}
+  set() {return false}
+  setPrototypeOf() {return false}
+}
+
+/*
 Short for "proxy handler". Simple shortcut for stateless proxy handler classes.
 Static method `.of` idempotently creates and reuses one "main" instance.
 Might export later.
@@ -175,7 +195,7 @@ export function weakCache(fun) {
   return ref.goc.bind(ref)
 }
 
-// Mutates the target. Should be used with null-prototype targets.
+// Should be used with null-prototype targets. Create via static `.new`.
 export class MakerPh extends l.Emp {
   get(tar, key) {return key in tar ? tar[key] : (tar[key] = this.make(key, tar))}
   make() {}
@@ -200,6 +220,28 @@ export function priv(tar, key, val) {
     configurable: true,
   })
   return val
+}
+
+export function final(tar, key, val) {
+  Object.defineProperty(tar, reqObjKey(key), {
+    value: val,
+    writable: false,
+    enumerable: true,
+    configurable: true,
+  })
+}
+
+export function getter(tar, key, get) {return getSet(tar, key, get)}
+
+export function setter(tar, key, set) {return getSet(tar, key, undefined, set)}
+
+export function getSet(tar, key, get, set) {
+  Object.defineProperty(tar, reqObjKey(key), {
+    get,
+    set,
+    enumerable: false,
+    configurable: true,
+  })
 }
 
 /* Internal */

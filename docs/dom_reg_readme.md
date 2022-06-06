@@ -26,7 +26,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.25/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {
@@ -61,32 +61,32 @@ document.body.append(new MyLink(`click me`, `/some-link`))
 
 ### `function reg`
 
-Links: [source](../dom_reg.mjs#L4); [test/example](../test/dom_reg_test.mjs#L16).
+Links: [source](../dom_reg.mjs#L169); [test/example](../test/dom_reg_test.mjs#L16).
 
 Shortcut for calling `Reg.main.reg`. Takes a custom element class and idempotently registers it, automatically deriving the custom element tag name _and_ the base tag for `extends`.
 
 ### `class Reg`
 
-Links: [source](../dom_reg.mjs#L55); [test/example](../test/dom_reg_test.mjs#L22).
+Links: [source](../dom_reg.mjs#L171); [test/example](../test/dom_reg_test.mjs#L43).
 
 Registry for custom DOM element classes. Somewhat analogous to the built-in `window.customElements`. Keeps track of which classes and tags have already been defined, enabling idempotent registration and name salting. In browsers it also wraps `window.customElements` by default, calling `window.customElements.define` for each registration. Note that it doesn't "patch" the global. Directly using global `customElements` bypasses our registration mechanisms and may lead to redundant registration attempts.
 
 Registration can be deferred:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.25/dom_reg.mjs'
 
 dr.Reg.main.setDefiner()
 
 class Btn extends HTMLButtonElement {
-  static localName = `some-btn`
+  static customName = `some-btn`
 
   // Registers `Btn` in `dr.Reg.main`, but NOT in `window.customElements`.
   static {dr.reg(this)}
 }
 
 // The element is NOT yet upgraded to our custom class.
-document.body.append(document.createElement(Btn.localName))
+document.body.append(document.createElement(`button`, {is: `some-btn`}))
 
 // Registers the class and upgrades the element.
 dr.Reg.main.setDefiner(customElements)
@@ -96,5 +96,12 @@ dr.Reg.main.setDefiner(customElements)
 
 The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg.mjs).
 
-  * [`const MixReg`](../dom_reg.mjs#L6)
-  * [`class BaseTags`](../dom_reg.mjs#L13)
+  * [`class TagToCls`](../dom_reg.mjs#L13)
+  * [`class ClsToTag`](../dom_reg.mjs#L96)
+  * [`class CustomElementRegistry`](../dom_reg.mjs#L132)
+  * [`const customElements`](../dom_reg.mjs#L159)
+  * [`const MixReg`](../dom_reg.mjs#L163)
+  * [`function isDefiner`](../dom_reg.mjs#L268)
+  * [`function optDefiner`](../dom_reg.mjs#L269)
+  * [`function isCustomName`](../dom_reg.mjs#L272)
+  * [`function reqCustomName`](../dom_reg.mjs#L276)

@@ -1,6 +1,7 @@
 {
   "parserOptions": {"ecmaVersion": "latest", "sourceType": "module"},
-  "env": {"es2020": true, "browser": true},
+  "env": {"es2020": true},
+  "globals": {"console": "readonly", "URL": "readonly"},
   "rules": {
     "no-restricted-globals": ["error",
       // window (browser)

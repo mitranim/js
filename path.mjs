@@ -49,7 +49,7 @@ Default global instances are exported below.
 */
 export class Paths extends l.Emp {
   // "Directory separator".
-  get dirSep() {throw errImpl()}
+  get dirSep() {throw l.errImpl()}
 
   // "Extension separator".
   get extSep() {return `.`}
@@ -241,8 +241,6 @@ export const posix = new PathsPosix()
 export const windows = new PathsWindows()
 
 /* Internal */
-
-function errImpl() {return Error(`implement in subclass`)}
 
 // Must be called ONLY on the file name, without the directory path.
 function ext(val, sep) {

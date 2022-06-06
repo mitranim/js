@@ -8,14 +8,14 @@ import * as dr from '{{featUrl dom_reg}}'
 dr.Reg.main.setDefiner()
 
 class Btn extends HTMLButtonElement {
-  static localName = `some-btn`
+  static customName = `some-btn`
 
   // Registers `Btn` in `dr.Reg.main`, but NOT in `window.customElements`.
   static {dr.reg(this)}
 }
 
 // The element is NOT yet upgraded to our custom class.
-document.body.append(document.createElement(Btn.localName))
+document.body.append(document.createElement(`button`, {is: `some-btn`}))
 
 // Registers the class and upgrades the element.
 dr.Reg.main.setDefiner(customElements)

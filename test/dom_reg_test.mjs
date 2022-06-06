@@ -3,7 +3,7 @@ import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
 import * as dr from '../dom_reg.mjs'
-import * as r from '../ren_xml.mjs'
+import * as dg from '../dom_glob_shim.mjs'
 
 // `Reg` is tested below. This is a sanity check.
 t.test(function test_cer() {l.reqInst(dr.Reg.main, dr.Reg)})
@@ -14,52 +14,73 @@ This is a sanity check to verify that the global function uses
 this on the default instance.
 */
 t.test(function test_reg() {
-  class SomeDetails extends r.elems.HTMLDetailsElement {}
+  class SomeDetails extends dg.glob.HTMLDetailsElement {}
   dr.reg(SomeDetails)
-  testCerMatch(dr.Reg.main, SomeDetails, `some-details`, {extends: `details`})
+  testCerMatch(dr.Reg.main, SomeDetails, `details`, `some-details`)
+})
+
+t.test(function test_CustomElementRegistry() {
+  const reg = new dr.CustomElementRegistry()
+  reg.define(`one-two`, l.Emp)
+
+  t.test(function test_invalid() {
+    t.throws(() => reg.define(), TypeError, `expected variant of isCustomName, got undefined`)
+    t.throws(() => reg.define(`one`, l.Emp), TypeError, `expected variant of isCustomName, got "one"`)
+    t.throws(() => reg.define(`one-two`, 10), TypeError, `expected variant of isCls, got 10`)
+  })
+
+  t.test(function test_redundant() {
+    t.throws(() => reg.define(`one-two`, l.nop), Error, `redundant registration of "one-two"`)
+    t.throws(() => reg.define(`two-three`, l.Emp), Error, `redundant registration of [function Emp]`)
+  })
+
+  t.test(function test_get() {
+    t.is(reg.get(`one-two`), l.Emp)
+    t.is(reg.get(`two-three`), undefined)
+  })
 })
 
 t.test(function test_Reg() {
   t.test(function test_misc() {
     const reg = new dr.Reg()
-    class SomeLink extends r.elems.HTMLAnchorElement {}
+    class SomeLink extends dg.glob.HTMLAnchorElement {}
 
-    t.no(reg.clsHas(SomeLink))
-    t.no(reg.tagHas(`some-link`))
+    t.no(reg.hasCls(SomeLink))
+    t.no(reg.hasTag(`some-link`))
 
     reg.reg(SomeLink)
-    testCerMatch(reg, SomeLink, `some-link`, {extends: `a`})
+    testCerMatch(reg, SomeLink, `a`, `some-link`)
   })
 
   t.test(function test_with_localName() {
     const reg = new dr.Reg()
-    class SomeLink extends r.elems.HTMLAnchorElement {
-      static localName = `my-link`
+    class SomeLink extends dg.glob.HTMLAnchorElement {
+      static customName = `my-link`
     }
     reg.reg(SomeLink)
-    testCerMatch(reg, SomeLink, `my-link`, {extends: `a`})
+    testCerMatch(reg, SomeLink, `a`, `my-link`)
   })
 
   t.test(function test_reg() {
     t.test(function test_multiple_sequential_regs() {
       const reg = new dr.Reg()
 
-      class Details extends r.elems.HTMLDetailsElement {}
+      class Details extends dg.glob.HTMLDetailsElement {}
 
       function test0() {
         reg.reg(Details)
-        testCerMatch(reg, Details, `a-details`, {extends: `details`})
+        testCerMatch(reg, Details, `details`, `a-details`)
       }
 
       test0()
       test0()
       test0()
 
-      class SomeBtn extends r.elems.HTMLButtonElement {}
+      class SomeBtn extends dg.glob.HTMLButtonElement {}
 
       function test1() {
         reg.reg(SomeBtn)
-        testCerMatch(reg, SomeBtn, `some-btn`, {extends: `button`})
+        testCerMatch(reg, SomeBtn, `button`, `some-btn`)
       }
 
       test1()
@@ -70,7 +91,7 @@ t.test(function test_Reg() {
 
       function test2() {
         reg.reg(SubBtn123)
-        testCerMatch(reg, SubBtn123, `sub-btn123`, {extends: `button`})
+        testCerMatch(reg, SubBtn123, `button`, `sub-btn123`)
       }
 
       test2()
@@ -82,21 +103,21 @@ t.test(function test_Reg() {
       const reg = new dr.Reg()
 
       {
-        class SomeBtn extends r.elems.HTMLButtonElement {}
+        class SomeBtn extends dg.glob.HTMLButtonElement {}
         reg.reg(SomeBtn)
-        testCerMatch(reg, SomeBtn, `some-btn`, {extends: `button`})
+        testCerMatch(reg, SomeBtn, `button`, `some-btn`)
       }
 
       {
-        class SomeBtn extends r.elems.HTMLButtonElement {}
+        class SomeBtn extends dg.glob.HTMLButtonElement {}
         reg.reg(SomeBtn)
-        testCerMatch(reg, SomeBtn, `some-btn-1`, {extends: `button`})
+        testCerMatch(reg, SomeBtn, `button`, `some-btn-1`)
       }
 
       {
-        class SomeBtn extends r.elems.HTMLButtonElement {}
+        class SomeBtn extends dg.glob.HTMLButtonElement {}
         reg.reg(SomeBtn)
-        testCerMatch(reg, SomeBtn, `some-btn-2`, {extends: `button`})
+        testCerMatch(reg, SomeBtn, `button`, `some-btn-2`)
       }
     })
   })
@@ -104,20 +125,22 @@ t.test(function test_Reg() {
   t.test(function test_tag_ambiguity() {
     const reg = new dr.Reg()
 
-    class HeadCell extends r.elems.HTMLTableCellElement {
-      static options = {extends: `th`}
+    class HeadCell extends dg.glob.HTMLTableCellElement {
+      static localName = `th`
     }
 
-    class BodyCell extends r.elems.HTMLTableCellElement {}
+    class BodyCell extends dg.glob.HTMLTableCellElement {
+      static localName = `td`
+    }
 
-    t.is(dr.BaseTags.main.find(HeadCell), `td`)
-    t.is(dr.BaseTags.main.find(BodyCell), `td`)
+    t.is(dr.ClsToTag.main.localName(HeadCell), undefined)
+    t.is(dr.ClsToTag.main.localName(BodyCell), undefined)
 
     reg.reg(HeadCell)
     reg.reg(BodyCell)
 
-    testCerMatch(reg, HeadCell, `head-cell`, {extends: `th`})
-    testCerMatch(reg, BodyCell, `body-cell`, {extends: `td`})
+    testCerMatch(reg, HeadCell, `th`, `head-cell`)
+    testCerMatch(reg, BodyCell, `td`, `body-cell`)
   })
 
   t.test(function test_setDefiner() {
@@ -125,19 +148,19 @@ t.test(function test_Reg() {
     reg.setDefiner()
     t.is(reg.definer, undefined)
 
-    class Cls0 extends r.elems.HTMLElement {}
-    class Cls1 extends r.elems.HTMLElement {}
-    class Cls2 extends r.elems.HTMLElement {}
+    class Cls0 extends dg.glob.HTMLElement {}
+    class Cls1 extends dg.glob.HTMLElement {}
+    class Cls2 extends dg.glob.HTMLElement {}
 
     reg.reg(Cls0)
     reg.reg(Cls1)
 
-    t.eq(reg.localNameToCls, i.mapOf(
+    t.eq(reg.tagToCls, i.mapOf(
       `a-cls0`, Cls0,
       `a-cls1`, Cls1,
     ))
 
-    t.eq(reg.clsToLocalName, i.mapOf(
+    t.eq(reg.clsToTag, i.mapOf(
       Cls0, `a-cls0`,
       Cls1, `a-cls1`,
     ))
@@ -161,25 +184,41 @@ t.test(function test_Reg() {
   })
 })
 
+t.test(function test_MixReg() {
+  class SomeElem extends dr.MixReg(dg.glob.HTMLElement) {
+    static customName = `elem-47bd69`
+  }
+
+  t.no(dr.Reg.main.hasCls(SomeElem))
+  t.no(dr.Reg.main.hasTag(`elem-47bd69`))
+  t.is(dr.Reg.main.clsTag(SomeElem), undefined)
+  t.is(dr.Reg.main.tagCls(`elem-47bd69`), undefined)
+
+  l.nop(new SomeElem())
+
+  t.ok(dr.Reg.main.hasCls(SomeElem))
+  t.ok(dr.Reg.main.hasTag(`elem-47bd69`))
+  t.is(dr.Reg.main.clsTag(SomeElem), `elem-47bd69`)
+  t.is(dr.Reg.main.tagCls(`elem-47bd69`), SomeElem)
+
+  l.nop(new SomeElem())
+  l.nop(new SomeElem())
+})
+
 /* Util */
 
-function testCerMatch(reg, cls, tag, opt) {
-  t.ok(reg.clsHas(cls))
-  t.ok(reg.tagHas(tag))
+function testCerMatch(reg, cls, local, custom) {
+  t.ok(reg.hasCls(cls))
+  t.ok(reg.hasTag(custom))
 
-  t.is(reg.clsTag(cls), tag)
-  t.is(reg.tagCls(tag), cls)
+  t.is(reg.clsTag(cls), custom)
+  t.is(reg.tagCls(custom), cls)
 
   t.ok(l.hasOwn(cls, `localName`))
-  t.is(cls.localName, tag)
+  t.is(cls.localName, local)
 
-  if (opt) {
-    t.ok(l.hasOwn(cls, `options`))
-    t.eq(cls.options, opt)
-  }
-  else {
-    t.no(l.hasOwn(cls, `options`))
-  }
+  t.ok(l.hasOwn(cls, `customName`))
+  t.is(cls.customName, custom)
 }
 
 if (import.meta.main) console.log(`[test] ok!`)

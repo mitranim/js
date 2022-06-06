@@ -1,10 +1,12 @@
+/* eslint-env browser */
+
 import * as l from './lang.mjs'
 import * as u from './url.mjs'
 import * as o from './obj.mjs'
 
-export const HAS_DOM = (
-  typeof window === `object` && !!window &&
-  typeof document === `object` && !!document
+export const DOM_EXISTS = !!(
+  typeof window === `object` && window &&
+  typeof document === `object` && document
 )
 
 export function isEvent(val) {return typeof Event === `function` && l.isInst(val, Event)}
@@ -216,7 +218,11 @@ export function* findDescendants(val, fun) {
   if (val) for (val of val) yield* findDescendants(val, fun)
 }
 
-export const MixNode = o.weakCache(function MixNode(cls) {
+/*
+Takes a DOM node class and returns a subclass with various shortcuts for DOM
+inspection and manipulation.
+*/
+export const MixNode = /* @__PURE__ */ o.weakCache(function MixNode(cls) {
   return class MixNode extends cls {
     anc(cls) {return ancestor(this, cls)}
     findAnc(fun) {return findAncestor(this, fun)}

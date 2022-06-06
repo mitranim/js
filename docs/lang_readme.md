@@ -105,7 +105,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.25/lang.mjs'
 ```
 
 ## API
@@ -1005,10 +1005,12 @@ The following APIs are exported but undocumented. Check [lang.mjs](../lang.mjs).
   * [`function msgConv`](../lang.mjs#L448)
   * [`function msgType`](../lang.mjs#L449)
   * [`function errIn`](../lang.mjs#L450)
-  * [`function convType`](../lang.mjs#L454)
-  * [`function convSynt`](../lang.mjs#L459)
-  * [`function showFunName`](../lang.mjs#L466)
-  * [`function get`](../lang.mjs#L483)
-  * [`function reqIn`](../lang.mjs#L484)
-  * [`function reqGet`](../lang.mjs#L485)
-  * [`function structKeys`](../lang.mjs#L498)
+  * [`function errImpl`](../lang.mjs#L451)
+  * [`function convType`](../lang.mjs#L455)
+  * [`function convSynt`](../lang.mjs#L460)
+  * [`function showFunName`](../lang.mjs#L467)
+  * [`function get`](../lang.mjs#L484)
+  * [`function getOwn`](../lang.mjs#L485)
+  * [`function reqIn`](../lang.mjs#L486)
+  * [`function reqGet`](../lang.mjs#L487)
+  * [`function structKeys`](../lang.mjs#L500)

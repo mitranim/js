@@ -448,6 +448,7 @@ export function errInst(val, inst) {return errConv(val, inst.constructor.name)}
 export function msgConv(val, msg) {return `unable to convert ${show(val)} to ${msg}`}
 export function msgType(val, msg) {return `expected variant of ${msg}, got ${show(val)}`}
 export function errIn(val, key) {return TypeError(`unable to find ${show(key)} in ${show(val)}`)}
+export function errImpl() {return TypeError(`not implemented`)}
 
 function errOneOf(val, funs) {return TypeError(msgType(val, `[` + showFuns(funs) + `]`))}
 
@@ -481,6 +482,7 @@ Like `val?.[key]` but with sanity checks: works only on composite values and
 avoids accessing the property unless it satisfies the `in` check.
 */
 export function get(val, key) {return isComp(val) && key in val ? val[key] : undefined}
+export function getOwn(val, key) {return hasOwn(val, key) ? val[key] : undefined}
 export function reqIn(ref, key) {if (!hasIn(ref, key)) throw errIn(ref, key)}
 export function reqGet(ref, key) {return reqIn(ref, key), ref[key]}
 

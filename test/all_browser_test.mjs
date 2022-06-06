@@ -1,10 +1,11 @@
+/* eslint-env browser */
+
 const msgOk = `[test] ok!`
 const msgFail = `[test] fail`
 
 try {
   await import(`./all_test.mjs`)
   await import(`./dom_test.mjs`)
-  await import(`./ren_dom_test.mjs`)
 
   document.title = msgOk
   document.body.innerHTML = `<p class="size-double text-cen">${msgOk}</p>`

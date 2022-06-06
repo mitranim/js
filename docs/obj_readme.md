@@ -12,7 +12,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.24/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.25/obj.mjs'
 ```
 
 ## API
@@ -139,17 +139,22 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
   * [`function patchInstances`](../obj.mjs#L20)
   * [`class ClsDict`](../obj.mjs#L36)
   * [`class Strict`](../obj.mjs#L41)
-  * [`class StrictPh`](../obj.mjs#L80)
-  * [`class WeakTag`](../obj.mjs#L98)
-  * [`function memGet`](../obj.mjs#L107)
-  * [`class MemTag`](../obj.mjs#L109)
-  * [`class MemGet`](../obj.mjs#L113)
-  * [`class ClsFunPh`](../obj.mjs#L122)
-  * [`class ClsInstPh`](../obj.mjs#L138)
-  * [`class Cache`](../obj.mjs#L153)
-  * [`class WeakCache`](../obj.mjs#L161)
-  * [`class FunWeakCache`](../obj.mjs#L169)
-  * [`function weakCache`](../obj.mjs#L173)
-  * [`class MakerPh`](../obj.mjs#L179)
-  * [`function pub`](../obj.mjs#L185)
-  * [`function priv`](../obj.mjs#L195)
+  * [`class BlankPh`](../obj.mjs#L54)
+  * [`class StrictPh`](../obj.mjs#L100)
+  * [`class WeakTag`](../obj.mjs#L118)
+  * [`function memGet`](../obj.mjs#L127)
+  * [`class MemTag`](../obj.mjs#L129)
+  * [`class MemGet`](../obj.mjs#L133)
+  * [`class ClsFunPh`](../obj.mjs#L142)
+  * [`class ClsInstPh`](../obj.mjs#L158)
+  * [`class Cache`](../obj.mjs#L173)
+  * [`class WeakCache`](../obj.mjs#L181)
+  * [`class FunWeakCache`](../obj.mjs#L189)
+  * [`function weakCache`](../obj.mjs#L193)
+  * [`class MakerPh`](../obj.mjs#L199)
+  * [`function pub`](../obj.mjs#L205)
+  * [`function priv`](../obj.mjs#L215)
+  * [`function final`](../obj.mjs#L225)
+  * [`function getter`](../obj.mjs#L234)
+  * [`function setter`](../obj.mjs#L236)
+  * [`function getSet`](../obj.mjs#L238)
