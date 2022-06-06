@@ -1,11 +1,9 @@
-Registry for custom DOM element classes. Somewhat analogous to the built-in `window.customElements`. Keeps track of which classes and tags have already been defined, enabling idempotent registration and name salting. In browsers it also wraps `window.customElements` by default, calling `window.customElements.define` for each registration. Note that it doesn't "patch" the global. Directly using global `customElements` bypasses our registration mechanisms and may lead to redundant registration attempts.
+Registry for custom DOM element classes. Automatically derives tag name from class name, using salting when necessary to avoid collisions. Supports idempotent registration which can be safely called in an element constructor. Allows immediate registration, deferred registration, or a mix of those.
 
-Registration can be deferred:
+By default, this registry has **no global side effects**. To enable global registration, provide a "definer" to the registry.
 
 ```js
 import * as dr from '{{featUrl dom_reg}}'
-
-dr.Reg.main.setDefiner()
 
 class Btn extends HTMLButtonElement {
   static customName = `some-btn`

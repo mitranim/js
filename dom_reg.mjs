@@ -242,7 +242,7 @@ export class Reg extends l.Emp {
   }
 }
 
-Reg.main = /* @__PURE__ */ new Reg(customElements)
+Reg.main = /* @__PURE__ */ new Reg()
 
 function toTag(name) {
   const words = toWords(l.optStr(name))

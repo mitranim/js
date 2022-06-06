@@ -25,7 +25,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.25/coll.mjs'
+import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.26/coll.mjs'
 ```
 
 ## API
