@@ -1,3 +1,5 @@
+/* global Request */
+
 import './internal_test_init.mjs'
 import * as l from '../lang.mjs'
 import * as t from '../test.mjs'
@@ -187,21 +189,21 @@ t.test(function test_Run() {
 
     run.start = t.now()
     advanceTime()
-    l.req(run.elapsed(), l.isFinPos)
+    l.reqFinPos(run.elapsed())
     t.is(run.time(), NaN)
 
     t.throws(() => run.done(`str`), TypeError, `expected variant of isFinPos, got "str"`)
     t.throws(() => run.done(1, `str`), TypeError, `expected variant of isIntPos, got "str"`)
     run.done(t.now(), 17)
 
-    l.req(run.start, l.isFinPos)
-    l.req(run.end, l.isFinPos)
+    l.reqFinPos(run.start)
+    l.reqFinPos(run.end)
     t.ok(run.end >= run.start)
     t.is(run.runs, 17)
-    l.req(run.elapsed(), l.isFinPos)
-    l.req(run.time(), l.isFinPos)
+    l.reqFinPos(run.elapsed())
+    l.reqFinPos(run.time())
     t.is(run.time(), run.elapsed())
-    l.req(run.avg, l.isFinPos)
+    l.reqFinPos(run.avg)
     t.is(run.avg, run.time() / run.runs)
   })
 })
@@ -222,9 +224,9 @@ t.test(function test_TimeRunner() {
     const run = new t.Run(`name`)
     runner.run(advanceTime, run)
 
-    l.req(run.end, l.isFinPos)
-    l.req(run.runs, l.isFinPos)
-    l.req(run.time(), l.isFinPos)
+    l.reqFinPos(run.end)
+    l.reqFinPos(run.runs)
+    l.reqFinPos(run.time())
 
     t.ok(run.time() > runner.valueOf())
     t.ok(run.time() < (runner.valueOf() * 2))
@@ -257,10 +259,10 @@ t.test(function test_CountRunner() {
     const run = new t.Run(`name`)
     runner.run(advanceTime, run)
 
-    l.req(run.start, l.isFinPos)
-    l.req(run.end, l.isFinPos)
-    l.req(run.runs, l.isFinPos)
-    l.req(run.time(), l.isFinPos)
+    l.reqFinPos(run.start)
+    l.reqFinPos(run.end)
+    l.reqFinPos(run.runs)
+    l.reqFinPos(run.time())
     t.is(run.runs, runner.valueOf())
 
     t.ok(run.avg > 0)

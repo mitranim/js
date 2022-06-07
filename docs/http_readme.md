@@ -32,7 +32,7 @@ HTTP request/response utils are ported and reworked from https://github.com/mitr
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.26/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.27/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -42,19 +42,19 @@ const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
 
 ### `function jsonDecode`
 
-Links: [source](../http.mjs#L33); [test/example](../test/http_test.mjs#L60).
+Links: [source](../http.mjs#L35); [test/example](../test/http_test.mjs#L60).
 
 Sanity-checking wrapper for [`JSON.parse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse). If the input is nil or an empty string, returns `null`. Otherwise the input must be a primitive string. Throws on other inputs, without trying to stringify them.
 
 ### `function jsonEncode`
 
-Links: [source](../http.mjs#L34); [test/example](../test/http_test.mjs#L75).
+Links: [source](../http.mjs#L36); [test/example](../test/http_test.mjs#L75).
 
 Sanity-checking wrapper for [`JSON.stringify`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify). Equivalent to `JSON.stringify(val ?? null)`. If the input is `undefined`, returns `'null'` (string) rather than `undefined` (nil). Output is _always_ a valid JSON string.
 
 ### `class HttpErr`
 
-Links: [source](../http.mjs#L64); [test/example](../test/http_test.mjs#L89).
+Links: [source](../http.mjs#L66); [test/example](../test/http_test.mjs#L89).
 
 Subclass of `Error` for HTTP responses. The error message includes the HTTP status code, if any.
 
@@ -70,13 +70,13 @@ class HttpErr extends Error {
 
 ### `function reqBui`
 
-Links: [source](../http.mjs#L199); [test/example](../test/http_test.mjs#L437).
+Links: [source](../http.mjs#L201); [test/example](../test/http_test.mjs#L437).
 
 Same as `new` [#`ReqBui`](#class-reqbui) but syntactically shorter and a function.
 
 ### `class ReqBui`
 
-Links: [source](../http.mjs#L201); [test/example](../test/http_test.mjs#L450).
+Links: [source](../http.mjs#L204); [test/example](../test/http_test.mjs#L450).
 
 Request builder. Does _not_ subclass `Request`. Call `.req()` to create a native request, or the various `.fetchX()` methods to immediately execute. Unlike the native request, the body is not always a stream. This means `ReqBui` can be stored and reused several times.
 
@@ -170,7 +170,7 @@ class ReqBui extends RequestInit {
 
 ### `class Res`
 
-Links: [source](../http.mjs#L282); [test/example](../test/http_test.mjs#L578).
+Links: [source](../http.mjs#L285); [test/example](../test/http_test.mjs#L578).
 
 Subclass of `Response` with additional shortcuts for response handling. Always wraps a native response received from another source. [#`ReqBui`](#class-reqbui) automatically uses this for responses. You don't need to construct this.
 
@@ -209,7 +209,7 @@ class Res extends Response {
 
 ### `class Rou`
 
-Links: [source](../http.mjs#L324); [test/example](../test/http_test.mjs#L606).
+Links: [source](../http.mjs#L328); [test/example](../test/http_test.mjs#L606).
 
 Simple router that uses only URL and pathname. Suitable for SPA. For servers, use [#`ReqRou`](#class-reqrou) which supports requests and HTTP methods.
 
@@ -234,8 +234,8 @@ rou.groups // {key: `path`}
 Routing is imperative:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.26/http.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.26/lang.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.27/http.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.27/lang.mjs'
 
 const nextPage = route(window.location)
 
@@ -256,14 +256,14 @@ function PageArticle(rou) {
 
 ### `class ReqRou`
 
-Links: [source](../http.mjs#L371); [test/example](../test/http_test.mjs#L652).
+Links: [source](../http.mjs#L376); [test/example](../test/http_test.mjs#L652).
 
 Short for "request router" or "request-response router". Advanced version of [#`Rou`](#class-rou). Suitable for servers and SSR/SPA hybrid apps.
 
 Routing can be shared between SSR and SPA:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.26/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.27/http.mjs'
 
 function route(rou) {
   l.reqInst(rou, h.ReqRou)
@@ -303,7 +303,7 @@ For SSR/SPA isomorphic rendering, use [`prax`](prax_readme.md).
 
 ### `class Ctx`
 
-Links: [source](../http.mjs#L432); [test/example](../test/http_test.mjs#L745).
+Links: [source](../http.mjs#L438); [test/example](../test/http_test.mjs#L745).
 
 Subclass of built-in [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController). Features:
 
@@ -328,45 +328,45 @@ child.signal.aborted === true
 
 The following APIs are exported but undocumented. Check [http.mjs](../http.mjs).
 
-  * [`const GET`](../http.mjs#L12)
-  * [`const HEAD`](../http.mjs#L13)
-  * [`const OPTIONS`](../http.mjs#L14)
-  * [`const POST`](../http.mjs#L15)
-  * [`const PUT`](../http.mjs#L16)
-  * [`const PATCH`](../http.mjs#L17)
-  * [`const DELETE`](../http.mjs#L18)
-  * [`const HEAD_CACHE_CONTROL`](../http.mjs#L20)
-  * [`const HEAD_CONTENT_TYPE`](../http.mjs#L21)
-  * [`const HEAD_ETAG`](../http.mjs#L22)
-  * [`const HEAD_ACCEPT`](../http.mjs#L23)
-  * [`const HEAD_ORIGIN`](../http.mjs#L24)
-  * [`const HEAD_HOST`](../http.mjs#L25)
-  * [`const TYPE_TEXT`](../http.mjs#L27)
-  * [`const TYPE_HTML`](../http.mjs#L28)
-  * [`const TYPE_JSON`](../http.mjs#L29)
-  * [`const TYPE_FORM`](../http.mjs#L30)
-  * [`const TYPE_MULTI`](../http.mjs#L31)
-  * [`function isStatusInfo`](../http.mjs#L37)
-  * [`function isStatusOk`](../http.mjs#L40)
-  * [`function isStatusRedir`](../http.mjs#L43)
-  * [`function isStatusClientErr`](../http.mjs#L46)
-  * [`function isStatusServerErr`](../http.mjs#L49)
-  * [`function hasStatus`](../http.mjs#L52)
-  * [`function getStatus`](../http.mjs#L53)
-  * [`function isErrAbort`](../http.mjs#L59)
-  * [`class AbortError`](../http.mjs#L86)
-  * [`class HttpBui`](../http.mjs#L95)
-  * [`function resBui`](../http.mjs#L227)
-  * [`class ResBui`](../http.mjs#L230)
-  * [`function toRou`](../http.mjs#L322)
-  * [`function toReqRou`](../http.mjs#L369)
-  * [`function cookieSplitPairs`](../http.mjs#L471)
-  * [`function cookieSplitPair`](../http.mjs#L477)
-  * [`function cook`](../http.mjs#L490)
-  * [`class Cookie`](../http.mjs#L492)
-  * [`function reqBody`](../http.mjs#L620)
-  * [`function optBody`](../http.mjs#L621)
-  * [`const bodyFuns`](../http.mjs#L622)
+  * [`const GET`](../http.mjs#L14)
+  * [`const HEAD`](../http.mjs#L15)
+  * [`const OPTIONS`](../http.mjs#L16)
+  * [`const POST`](../http.mjs#L17)
+  * [`const PUT`](../http.mjs#L18)
+  * [`const PATCH`](../http.mjs#L19)
+  * [`const DELETE`](../http.mjs#L20)
+  * [`const HEAD_CACHE_CONTROL`](../http.mjs#L22)
+  * [`const HEAD_CONTENT_TYPE`](../http.mjs#L23)
+  * [`const HEAD_ETAG`](../http.mjs#L24)
+  * [`const HEAD_ACCEPT`](../http.mjs#L25)
+  * [`const HEAD_ORIGIN`](../http.mjs#L26)
+  * [`const HEAD_HOST`](../http.mjs#L27)
+  * [`const TYPE_TEXT`](../http.mjs#L29)
+  * [`const TYPE_HTML`](../http.mjs#L30)
+  * [`const TYPE_JSON`](../http.mjs#L31)
+  * [`const TYPE_FORM`](../http.mjs#L32)
+  * [`const TYPE_MULTI`](../http.mjs#L33)
+  * [`function isStatusInfo`](../http.mjs#L39)
+  * [`function isStatusOk`](../http.mjs#L42)
+  * [`function isStatusRedir`](../http.mjs#L45)
+  * [`function isStatusClientErr`](../http.mjs#L48)
+  * [`function isStatusServerErr`](../http.mjs#L51)
+  * [`function hasStatus`](../http.mjs#L54)
+  * [`function getStatus`](../http.mjs#L55)
+  * [`function isErrAbort`](../http.mjs#L61)
+  * [`class AbortError`](../http.mjs#L88)
+  * [`class HttpBui`](../http.mjs#L97)
+  * [`function resBui`](../http.mjs#L230)
+  * [`class ResBui`](../http.mjs#L233)
+  * [`function toRou`](../http.mjs#L325)
+  * [`function toReqRou`](../http.mjs#L373)
+  * [`function cookieSplitPairs`](../http.mjs#L477)
+  * [`function cookieSplitPair`](../http.mjs#L483)
+  * [`function cook`](../http.mjs#L496)
+  * [`class Cookie`](../http.mjs#L498)
+  * [`function reqBody`](../http.mjs#L626)
+  * [`function optBody`](../http.mjs#L627)
+  * [`const bodyFuns`](../http.mjs#L628)
 
 
 ## Misc

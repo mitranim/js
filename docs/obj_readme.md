@@ -12,7 +12,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.26/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.27/obj.mjs'
 ```
 
 ## API
@@ -144,17 +144,18 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
   * [`class WeakTag`](../obj.mjs#L118)
   * [`function memGet`](../obj.mjs#L127)
   * [`class MemTag`](../obj.mjs#L129)
-  * [`class MemGet`](../obj.mjs#L133)
-  * [`class ClsFunPh`](../obj.mjs#L142)
-  * [`class ClsInstPh`](../obj.mjs#L158)
-  * [`class Cache`](../obj.mjs#L173)
-  * [`class WeakCache`](../obj.mjs#L181)
-  * [`class FunWeakCache`](../obj.mjs#L189)
-  * [`function weakCache`](../obj.mjs#L193)
-  * [`class MakerPh`](../obj.mjs#L199)
-  * [`function pub`](../obj.mjs#L205)
-  * [`function priv`](../obj.mjs#L215)
-  * [`function final`](../obj.mjs#L225)
-  * [`function getter`](../obj.mjs#L234)
-  * [`function setter`](../obj.mjs#L236)
-  * [`function getSet`](../obj.mjs#L238)
+  * [`class MemGet`](../obj.mjs#L131)
+  * [`class ClsFunPh`](../obj.mjs#L140)
+  * [`class ClsInstPh`](../obj.mjs#L156)
+  * [`class Cache`](../obj.mjs#L171)
+  * [`class WeakCache`](../obj.mjs#L179)
+  * [`class FunWeakCache`](../obj.mjs#L187)
+  * [`function weakCache`](../obj.mjs#L191)
+  * [`class MakerPh`](../obj.mjs#L197)
+  * [`function mixin`](../obj.mjs#L203)
+  * [`function pub`](../obj.mjs#L216)
+  * [`function priv`](../obj.mjs#L226)
+  * [`function final`](../obj.mjs#L236)
+  * [`function getter`](../obj.mjs#L246)
+  * [`function setter`](../obj.mjs#L248)
+  * [`function getSet`](../obj.mjs#L250)

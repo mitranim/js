@@ -22,8 +22,8 @@ References:
 export const VOID = /* @__PURE__ */ new Set([`area`, `base`, `br`, `col`, `embed`, `hr`, `img`, `input`, `link`, `meta`, `param`, `source`, `track`, `wbr`])
 
 /*
-Creates or mutates DOM elements with a convenient React-inspired syntax.
-Shared component of HTML and SVG renderers.
+Short for "renderer". Creates or mutates DOM elements. Compatible with native
+DOM API and `dom_shim.mjs`.
 */
 export class Ren extends l.Emp {
   constructor(doc) {
@@ -51,13 +51,6 @@ export class Ren extends l.Emp {
   */
   get S() {return o.priv(this, `S`, new Proxy(this, new RenSvgPh()))}
 
-  /*
-  Short for "mixin". This lazily-initialized method takes a class and creates a
-  subclass with additional methods `.props` and `.chi`, which are shortcuts for
-  mutating properties and child nodes by using this renderer.
-  */
-  get Mix() {return o.priv(this, `Mix`, o.weakCache(this.MixRen.bind(this)))}
-
   elemHtml(tag, props, ...chi) {
     if (tag === `svg`) {
       return this.alignNs(this.elemSvg(tag, props, ...chi))
@@ -76,7 +69,11 @@ export class Ren extends l.Emp {
     return this.mut(this.make(tag, props), props, ...chi)
   }
 
-  frag(...val) {return this.appendSeq(this.doc.createDocumentFragment(), val)}
+  frag(...val) {
+    const tar = this.doc.createDocumentFragment()
+    this.appendList(tar, val)
+    return tar
+  }
 
   makeHtml(tag, props) {return this.makeNs(nsHtml, tag, deref(props))}
 
@@ -190,62 +187,70 @@ export class Ren extends l.Emp {
     return this.mutAttr(tar, key, val)
   }
 
-  /*
-  Implementation note. We buffer children in a temporary fragment BEFORE
-  clearing the target node in order to handle the case when `tar.childNodes` is
-  among the given children. Stealing the children before clearing the remaining
-  ones ensures that we get to keep them and append them back.
-  */
   mutChi(tar, ...chi) {
     reqNode(tar)
 
-    if (tar.hasChildNodes()) {
-      const frag = this.frag(...chi)
+    if (!chi.length) {
       this.clear(tar)
-      tar.appendChild(frag)
-    }
-    else {
-      this.appendSeq(tar, chi)
+      return tar
     }
 
+    if (!tar.hasChildNodes()) {
+      for (chi of chi) this.appendChi(tar, chi)
+      return tar
+    }
+
+    const frag = this.frag(...chi)
+    this.clear(tar)
+    tar.appendChild(frag)
     return tar
   }
 
-  // TODO: test deoptimization with non-array iterators.
-  appendSeq(tar, val) {
-    for (val of val) this.appendChi(tar, val)
+  appendChi(tar, src) {
+    if (l.isNil(src)) return tar
+    if (l.isStr(src)) return tar.append(src), tar
+    if (isNode(src)) return tar.appendChild(src), tar
+    if (isRaw(src)) return this.appendRaw(tar, src), tar
+    if (isSeq(src)) {
+      if (l.isList(src)) return this.appendList(tar, src), tar
+      return this.appendSeq(tar, src), tar
+    }
+    return this.appendChi(tar, this.strOpt(src)), tar
+  }
+
+  appendList(tar, src) {
+    let ind = 0
+    for (;;) {
+      const len = l.reqNum(src.length)
+      if (!(ind < len)) return tar
+      this.appendChi(tar, src[ind])
+      ind += 1 + l.reqNum(src.length) - len
+    }
+  }
+
+  appendSeq(tar, src) {
+    for (src of src) this.appendChi(tar, src)
     return tar
   }
-
-  appendChi(tar, val) {
-    if (l.isNil(val)) return undefined
-    if (l.isStr(val)) return void this.appendStr(tar, val)
-    if (isNode(val)) return void tar.appendChild(val)
-    if (isRaw(val)) return void this.appendRaw(tar, val)
-    if (isSeq(val)) return void this.appendSeq(tar, val)
-    return void this.appendChi(tar, this.strOpt(val))
-  }
-
-  appendStr(tar, val) {if (l.reqStr(val)) tar.append(val)}
 
   /*
   Might be stupidly inefficient. Need benchmarks.
   Might not be compatible with SVG rendering. Needs SVG testing.
   */
-  appendRaw(tar, val) {
+  appendRaw(tar, src) {
     if (!tar.hasChildNodes() && `innerHTML` in tar) {
-      tar.innerHTML = l.laxStr(val.outerHTML)
-      return
+      tar.innerHTML = l.laxStr(src.outerHTML)
+      return tar
     }
 
     const buf = this.makeBuf(tar)
-    buf.innerHTML = l.laxStr(val.outerHTML)
-    this.move(buf, tar)
+    buf.innerHTML = l.laxStr(src.outerHTML)
+    return this.move(tar, buf)
   }
 
-  mutText(tar, val) {
+  mutText(tar, src) {
     reqNode(tar)
-    setOpt(tar, `textContent`, tar.textContent, this.strLax(val))
+    setOpt(tar, `textContent`, tar.textContent, this.strLax(src))
     return tar
   }
 
@@ -256,16 +261,20 @@ export class Ren extends l.Emp {
 
   clear(tar) {
     while (tar.hasChildNodes()) tar.removeChild(tar.lastChild)
+    return tar
   }
 
-  move(src, tar) {
-    while (src.hasChildNodes()) tar.appendChild(src.removeChild(src.firstChild))
+  move(tar, src) {
+    if (src !== tar) {
+      while (src.hasChildNodes()) tar.appendChild(src.removeChild(src.firstChild))
+    }
+    return tar
   }
 
-  loop(tar, val, fun) {
-    if ((val = deref(val))) {
-      for (const key of l.structKeys(val)) {
-        fun.call(this, tar, key, val[key])
+  loop(tar, src, fun) {
+    if ((src = deref(src))) {
+      for (const key of l.structKeys(src)) {
+        fun.call(this, tar, key, src[key])
       }
     }
     return tar
@@ -308,23 +317,28 @@ export class Ren extends l.Emp {
     throw SyntaxError(`expected void element ${l.show(tag)} to have no children, got ${l.show(chi)}`)
   }
 
+  /*
+  Patches the prototype of the given class, adding methods from `MixRen`,
+  connected to the current renderer.
+  */
   patchProto(cls) {
-    l.reqCls(cls)
-    o.priv(cls.prototype, `props`, selfMutProps)
-    o.priv(cls.prototype, `chi`, selfMutChi)
-    o.priv(cls.prototype, `ren`, this)
+    o.mixin(cls, MixRen(l.Emp))
+    cls.ren = this
     return this
   }
 
+  /*
+  Short for "mixin". This lazily-initialized method takes a class and creates a
+  subclass with additional methods `.props` and `.chi`, which are shortcuts for
+  mutating properties and child nodes by using this renderer.
+  */
+  get Mix() {return o.priv(this, `Mix`, o.weakCache(this.MixRen.bind(this)))}
+
   // Short for "mixin with renderer support". See the `.Mix` getter.
   MixRen(cls) {
-    class MixRen extends cls {
-      props(val) {return this.ren.mutProps(this, val)}
-      chi(...val) {return this.ren.mutChi(this, ...val)}
-      get ren() {return this.constructor.ren}
-    }
-    MixRen.ren = this
-    return MixRen
+    cls = MixRen(cls)
+    cls.ren = this
+    return cls
   }
 
   static native() {
@@ -348,6 +362,14 @@ export class RenHtmlPh extends o.BlankPh {
 export class RenSvgPh extends o.BlankPh {
   get(ren, key) {return ren.makeSvg(key)}
 }
+
+export const MixRen = /* @__PURE__ */ o.weakCache(function MixRen(cls) {
+  return class MixRen extends cls {
+    get ren() {return this.constructor.ren}
+    props(val) {return this.ren.mutProps(this, val)}
+    chi(...val) {return this.ren.mutChi(this, ...val)}
+  }
+})
 
 // Must match `dom_shim.mjs`.
 const parentNodeKey = Symbol.for(`parentNode`)
@@ -544,7 +566,7 @@ export function renderDocument(src) {
 }
 
 export function isSeq(val) {
-  return l.isObj(val) && !l.isScalar(val) && (l.isList(val) || l.isIter(val))
+  return l.isObj(val) && !l.isScalar(val) && (l.isList(val) || l.isIterator(val))
 }
 
 export function isRaw(val) {return l.hasIn(val, `outerHTML`)}
@@ -595,9 +617,6 @@ function spaced(one, two) {
   one = l.laxStr(one), two = l.laxStr(two)
   return one + (one && two && ` `) + two
 }
-
-function selfMutProps(val) {return this.ren.mutProps(this, val)}
-function selfMutChi(...val) {return this.ren.mutChi(this, ...val)}
 
 function optAt(key, val, fun) {
   if (l.isNil(val) || fun(val)) return val

@@ -1,3 +1,5 @@
+/* eslint-env browser */
+
 /*
 This module has tools mostly for client code such as browsers apps. For server
 code, see `http_srv.mjs`. The modules are split because browser apps are more
@@ -198,6 +200,7 @@ export class HttpBui extends l.Emp {
 
 export function reqBui(val) {return new ReqBui(val)}
 
+// Short for "request builder".
 export class ReqBui extends HttpBui {
   async fetch() {return new this.Res(await fetch(l.reqScalar(this.url), this))}
   async fetchOk() {return (await this.fetch()).okRes()}
@@ -321,6 +324,7 @@ export class Res extends Response {
 
 export function toRou(val) {return l.toInst(val, Rou)}
 
+// Short for "router".
 export class Rou extends l.Emp {
   constructor(url) {
     super()
@@ -368,6 +372,7 @@ export class Rou extends l.Emp {
 
 export function toReqRou(val) {return l.toInst(val, ReqRou)}
 
+// Short for "request router".
 export class ReqRou extends Rou {
   constructor(req) {
     l.reqInst(req, Request)
@@ -429,6 +434,7 @@ export class ReqRou extends Rou {
   }
 }
 
+// Short for "context". Supports chains/trees, like Go context.
 export class Ctx extends AbortController {
   constructor(sig) {
     l.setProto(super(), new.target)

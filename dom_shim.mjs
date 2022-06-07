@@ -465,8 +465,7 @@ export class Element extends Textable {
       this[styleKey] = undefined
     }
     else if (this.isDatasetChange(key)) {
-      const tar = this[datasetKey]
-      if (tar) tar.attrDel(key)
+      this[datasetKey]?.attrDel(key)
     }
   }
 
@@ -478,8 +477,7 @@ export class Element extends Textable {
       this[styleKey]?.dec()
     }
     else if (this.isDatasetChange(key)) {
-      const tar = this[datasetKey]
-      if (tar) tar.attrSet(key, val)
+      this[datasetKey]?.attrSet(key, val)
     }
   }
 
@@ -627,7 +625,6 @@ export class Element extends Textable {
   }
 
   isStyleChange(key) {return key === `style` && styleKey in this}
-
   isDatasetChange(key) {return key.startsWith(`data-`) && datasetKey in this}
 
   foldInnerHTML(acc, val) {
@@ -734,6 +731,24 @@ export class HTMLInputElement extends TextInputElement {
 
 export class HTMLTextAreaElement extends TextInputElement {}
 
+export class HTMLScriptElement extends HTMLElement {
+  /*
+  Difference from all other elements: inner text is not escaped. We have to
+  duplicate the special case for `isRaw` because it has precedence over scalars.
+  */
+  foldInnerHTML(acc, val) {
+    if (isText(val)) return acc + l.laxStr(val.textContent)
+    if (p.isRaw(val)) return acc + l.laxStr(val.outerHTML)
+    if (l.isScalar(val)) return acc + l.render(val)
+    return super.foldInnerHTML(acc, val)
+  }
+}
+
+/*
+Has various deviations from the standard. For example, in a standard
+`SVGElement`, the property `.className` is an object rather than a string.
+Our implementation doesn't support any of that for now.
+*/
 export class SVGElement extends Element {
   get namespaceURI() {return super.namespaceURI || p.nsSvg}
   set namespaceURI(val) {super.namespaceURI = val}
@@ -1018,16 +1033,18 @@ class DatasetPh extends DictPh {
 }
 
 /*
-Analogous to `DOMTokenList` but more limited.
-Doesn't implement the "list interface", only the methods.
+Analogous to `DOMTokenList` but specialized for class manipulation.
+For technical reasons, this doesn't implement the normal JS "list interface".
+It implements only the getters/setters/methods specific to `DOMTokenList`
+and the various iterable interfaces.
 */
 export class ClassList extends l.Emp {
-  constructor(val) {super()[refKey] = reqElement(val)}
+  constructor(val) {super().ref = val}
 
-  get ref() {return this[refKey]}
+  /* Standard behaviors. */
+
   get value() {return this.ref.className}
   set value(val) {this.ref.className = val}
-  get length() {return this.toArray().length}
 
   item(ind) {return ind >= 0 ? norm(this.toArray()[ind]) : null}
 
@@ -1072,7 +1089,6 @@ export class ClassList extends l.Emp {
     return this.remove(val), false
   }
 
-  toArray() {return split(this.value.trim(), /\s+/g)}
   toString() {return this.value}
 
   keys() {return this.toArray().keys()}
@@ -1080,6 +1096,12 @@ export class ClassList extends l.Emp {
   entries() {return this.toArray().entries()}
   forEach(...val) {return this.toArray().forEach(...val)}
   [Symbol.iterator]() {return this.values()}
+
+  /* Non-standard extensions. */
+
+  get ref() {return this[refKey]}
+  set ref(val) {this[refKey] = reqElement(val)}
+  toArray() {return split(this.value.trim(), /\s+/g)}
 }
 
 /* Namespaces */

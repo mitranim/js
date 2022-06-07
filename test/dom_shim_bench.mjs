@@ -49,14 +49,16 @@ t.bench(function bench_document_createCommentNode() {l.nop(ds.document.createCom
 t.bench(function bench_Comment_textContent() {l.nop(comment.textContent)})
 t.bench(function bench_Comment_outerHTML() {l.nop(comment.outerHTML)})
 
+t.bench(function bench_new_DocumentFragment() {l.nop(new ds.DocumentFragment())})
+t.bench(function bench_document_createDocumentFragment() {l.nop(ds.document.createDocumentFragment())})
+
 t.bench(function bench_NamedNodeMap_toString() {l.nop(attrComplex.toString())})
 
 t.bench(function bench_StylePh_new() {l.nop(new ds.StylePh(elemSimple))})
 t.bench(function bench_StylePh_encode() {l.nop(style.encode())})
 
 t.bench(function bench_new_Element_simple_with_localName() {
-  const node = new ds.Element()
-  node.localName = `unknown`
+  new ds.Element().localName = `unknown`
 })
 
 // Kinda slow, but faster than native DOM implementations at the time of writing.

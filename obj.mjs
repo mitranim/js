@@ -126,9 +126,7 @@ export class WeakTag extends WeakSet {
 
 export function memGet(cls) {return MemTag.main.goc(cls)}
 
-export class MemTag extends WeakTag {
-  make(cls) {patchCls(cls, memGetAt)}
-}
+export class MemTag extends WeakTag {make(cls) {return memPatch(cls)}}
 
 export class MemGet extends Strict {
   constructor() {memGet(new.target), super()}
@@ -202,6 +200,19 @@ export class MakerPh extends l.Emp {
   static new(...val) {return new Proxy(l.npo(), new this(...val))}
 }
 
+export function mixin(tar, src) {
+  const pro = l.reqCls(tar).prototype
+  src = l.reqCls(src).prototype
+
+  while (src) {
+    for (const [key, val] of descriptors(src)) {
+      if (!(key in pro)) Object.defineProperty(pro, key, val)
+    }
+    src = Object.getPrototypeOf(src)
+  }
+  return tar
+}
+
 export function pub(tar, key, val) {
   Object.defineProperty(tar, reqObjKey(key), {
     value: val,
@@ -229,6 +240,7 @@ export function final(tar, key, val) {
     enumerable: true,
     configurable: true,
   })
+  return val
 }
 
 export function getter(tar, key, get) {return getSet(tar, key, get)}
@@ -246,25 +258,26 @@ export function getSet(tar, key, get, set) {
 
 /* Internal */
 
-function patchCls(cls, fun) {
-  const proto = l.req(cls, l.isCls).prototype
-  const descs = Object.getOwnPropertyDescriptors(proto)
-
-  for (const key of Object.keys(descs)) {
-    if (key === `constructor`) continue
-    fun(proto, key, descs[key])
-  }
-  return cls
+function descriptors(val) {
+  return Object.entries(Object.getOwnPropertyDescriptors(val))
 }
 
-function memGetAt(tar, key, desc) {
-  const {get} = desc
-  if (!get || desc.set || !desc.configurable) return
+function memPatch(cls) {
+  const tar = l.reqCls(cls).prototype
 
-  desc.get = function memGet() {return pub(this, key, get.call(this))}
-  desc.set = function memSet(val) {pub(this, key, val)}
+  for (const [key, desc] of descriptors(tar)) {
+    if (key === `constructor`) continue
 
-  Object.defineProperty(tar, key, desc)
+    const {get} = desc
+    if (!get || desc.set || !desc.configurable) continue
+
+    desc.get = function memGet() {return pub(this, key, get.call(this))}
+    desc.set = function memSet(val) {pub(this, key, val)}
+
+    Object.defineProperty(tar, key, desc)
+  }
+
+  return cls
 }
 
 function descIn(tar, key) {

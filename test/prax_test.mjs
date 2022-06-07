@@ -9,7 +9,12 @@ import * as dg from '../dom_glob_shim.mjs'
 /* Util */
 
 const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
+
 const E = ren.E
+
+const Text = dg.glob.Text
+
+const NATIVE = ren.doc === globalThis.document
 
 function* gen(...vals) {for (const val of vals) yield val}
 
@@ -17,12 +22,23 @@ function testDerefOwn(src, exp) {t.own(src.$, exp)}
 
 // Short for "equal markup".
 export function eqm(val, exp) {
-  l.reqStr(exp)
   t.ok(p.isRaw(val))
+  l.reqStr(exp)
   t.is(val.outerHTML, exp)
 }
 
-const Text = dg.glob.Text
+export function eqm2(val, native, shimmed) {
+  t.ok(p.isRaw(val))
+  l.reqStr(native)
+  l.reqStr(shimmed)
+
+  if (NATIVE) {
+    t.is(val.outerHTML, native)
+  }
+  else {
+    t.is(val.outerHTML, shimmed)
+  }
+}
 
 /* Test */
 
@@ -201,28 +217,32 @@ t.test(function test_Ren_serialization() {
       })
 
       t.test(function test_empty_void_elem_self_closing() {
-        eqm(E(`area`), `<area />`)
-        eqm(E(`base`), `<base />`)
-        eqm(E(`br`), `<br />`)
-        eqm(E(`col`), `<col />`)
-        eqm(E(`embed`), `<embed />`)
-        eqm(E(`hr`), `<hr />`)
-        eqm(E(`img`), `<img />`)
-        eqm(E(`input`), `<input />`)
-        eqm(E(`link`), `<link />`)
-        eqm(E(`meta`), `<meta />`)
-        eqm(E(`param`), `<param />`)
-        eqm(E(`source`), `<source />`)
-        eqm(E(`track`), `<track />`)
-        eqm(E(`wbr`), `<wbr />`)
+        eqm2(E(`area`), `<area>`, `<area />`)
+        eqm2(E(`base`), `<base>`, `<base />`)
+        eqm2(E(`br`), `<br>`, `<br />`)
+        eqm2(E(`col`), `<col>`, `<col />`)
+        eqm2(E(`embed`), `<embed>`, `<embed />`)
+        eqm2(E(`hr`), `<hr>`, `<hr />`)
+        eqm2(E(`img`), `<img>`, `<img />`)
+        eqm2(E(`input`), `<input>`, `<input />`)
+        eqm2(E(`link`), `<link>`, `<link />`)
+        eqm2(E(`meta`), `<meta>`, `<meta />`)
+        eqm2(E(`param`), `<param>`, `<param />`)
+        eqm2(E(`source`), `<source>`, `<source />`)
+        eqm2(E(`track`), `<track>`, `<track />`)
+        eqm2(E(`wbr`), `<wbr>`, `<wbr />`)
 
-        eqm(E(`link`, {}), `<link />`)
-        eqm(E(`link`, null), `<link />`)
-        eqm(E(`link`, undefined), `<link />`)
+        eqm2(E(`link`, {}), `<link>`, `<link />`)
+        eqm2(E(`link`, null), `<link>`, `<link />`)
+        eqm2(E(`link`, undefined), `<link>`, `<link />`)
       })
     })
 
     t.test(function test_normal_elems() {
+      const node = E(`div`)
+      t.eq([...node.attributes], [])
+      t.eq([...node.childNodes], [])
+
       eqm(E(`div`), `<div></div>`)
       eqm(E(`a-elem`), `<a-elem></a-elem>`)
     })
@@ -230,17 +250,11 @@ t.test(function test_Ren_serialization() {
 
   t.test(function test_props() {
     t.test(function test_void_elem_attrs() {
-      eqm(
+      eqm2(
         E(`link`, {rel: `stylesheet`, href: `main.css`}),
+        `<link rel="stylesheet" href="main.css">`,
         `<link rel="stylesheet" href="main.css" />`,
       )
-
-      // Doesn't work in browsers because `value` doesn't become an attribute.
-      //
-      // eqm(
-      //   E(`input`, {type: `num`, value: `10`}),
-      //   `<input type="num" value="10" />`,
-      // )
     })
 
     t.test(function test_attr_val_encoding() {
@@ -440,18 +454,21 @@ t.test(function test_Ren_serialization() {
       t.throws(() => E(`input`, {hidden: ``}), TypeError, `invalid property "hidden": expected variant of isBool, got ""`)
       t.throws(() => E(`input`, {hidden: 10}), TypeError, `invalid property "hidden": expected variant of isBool, got 10`)
 
-      eqm(
+      eqm2(
         E(`input`, {autofocus: true, disabled: true, hidden: true}),
+        `<input autofocus="" disabled="" hidden="">`,
         `<input autofocus="" disabled="" hidden="" />`,
       )
 
-      eqm(
+      eqm2(
         E(`input`, {hidden: false, autofocus: false, disabled: true}),
+        `<input disabled="">`,
         `<input disabled="" />`,
       )
 
-      eqm(
+      eqm2(
         E(`input`, {hidden: true, autofocus: null, disabled: undefined}),
+        `<input hidden="">`,
         `<input hidden="" />`,
       )
     })
@@ -480,12 +497,21 @@ t.test(function test_Ren_serialization() {
     })
 
     t.test(function test_meta_attrs() {
-      eqm(E(`meta`, {httpEquiv: `content-type`}), `<meta http-equiv="content-type" />`)
+      eqm2(
+        E(`meta`, {httpEquiv: `content-type`}),
+        `<meta http-equiv="content-type">`,
+        `<meta http-equiv="content-type" />`,
+      )
 
-      eqm(E(`meta`, {'http-equiv': `content-type`}), `<meta http-equiv="content-type" />`)
+      eqm2(
+        E(`meta`, {'http-equiv': `content-type`}),
+        `<meta http-equiv="content-type">`,
+        `<meta http-equiv="content-type" />`,
+      )
 
-      eqm(
+      eqm2(
         E(`meta`, {httpEquiv: `X-UA-Compatible`, content: `IE=edge,chrome=1`}),
+        `<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">`,
         `<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />`,
       )
     })
@@ -575,27 +601,30 @@ t.test(function test_Ren_serialization() {
 
     t.test(function test_child_escaping() {
       t.test(function test_escape_non_raw() {
-        /*
-        This horribly breaks inline scripts... which might be a decent default.
-        Users must escape them in an appropriate language-specific way and then
-        use `Raw`. We might be unable to provide a generic solution because
-        `<script>` allows an open set of languages/syntaxes. Even just for JS
-        and JSON, the correct way to escape </script> depends on the syntactic
-        context.
-        */
         eqm(
-          E(`script`, {}, `console.log('</script>')`),
-          `<script>console.log('&lt;/script&gt;')</script>`,
+          E(`span`, {}, `console.log('</script>')`),
+          `<span>console.log('&lt;/script&gt;')</span>`,
         )
 
         /*
-        This generates broken markup. The test simply demonstrates the
-        possibility.
+        However, `HTMLScriptElement` is a special case!
+
+        This example, if printed as HTML, would produce broken markup with a
+        broken script inside. Users must escape script content in an
+        appropriate language-specific way and then use `Raw`. We might be
+        unable to provide a generic solution because `<script>` allows an open
+        set of languages/syntaxes. Even just for JS and JSON, the correct way
+        to escape </script> depends on the syntactic context.
         */
+        eqm(
+          E(`script`, {}, `console.log('</script>')`),
+          `<script>console.log('</script>')</script>`,
+        )
+
         t.test(function test_dont_escape_raw() {
           eqm(
-            E(`outer`, {}, new p.Raw(`<<&>>`)),
-            `<outer><<&>></outer>`,
+            E(`outer`, {}, new p.Raw(`<one>two</one>`)),
+            `<outer><one>two</one></outer>`,
           )
         })
 
@@ -795,6 +824,38 @@ t.test(function test_Ren_dom_behaviors() {
     })
   })
 
+  t.test(function test_child_stealing() {
+    t.test(function test_stealing_from_self() {
+      const one = new Text(`one`)
+      const two = new Text(`two`)
+      const three = new Text(`three`)
+
+      const tar = E(`div`)
+      tar.appendChild(one)
+      tar.appendChild(two)
+      tar.appendChild(three)
+
+      // Flat structure is important for this test.
+      t.eq([...tar.childNodes], [one, two, three])
+
+      ren.mutChi(tar, three, tar.childNodes)
+
+      eqm(tar, `<div>threeonetwo</div>`)
+    })
+
+    t.test(function test_stealing_from_another() {
+      const one = new Text(`one`)
+      const two = new Text(`two`)
+      const three = new Text(`three`)
+
+      const prev = E(`div`, {}, one, two, three)
+      const next = E(`p`, {}, prev.childNodes)
+
+      eqm(prev, `<div></div>`)
+      eqm(next, `<p>onetwothree</p>`)
+    })
+  })
+
   t.test(function test_mutText() {
     t.throws(() => ren.mutText(), TypeError, `expected variant of isNode, got undefined`)
 
@@ -851,38 +912,27 @@ t.test(function test_Ren_dom_behaviors() {
     )
   })
 
-  t.test(function test_child_kidnapping() {
-    const one = new Text(`one`)
-    const two = new Text(`two`)
-    const three = new Text(`three`)
-
-    const prev = E(`div`, {}, one, two, three)
-    const next = E(`p`, {}, ...prev.childNodes)
-
-    eqm(prev, `<div></div>`)
-    eqm(next, `<p>onetwothree</p>`)
-
-    t.is(prev.textContent, ``)
-    t.is(next.textContent, `onetwothree`)
-  })
-
   t.test(function test_replace() {
     t.throws(() => ren.replace(), TypeError, `expected variant of isNode, got undefined`)
     t.throws(() => ren.replace(E(`div`)), TypeError, `properties of null`)
 
     {
-      const node = E(`div`, {}, new Text(`text`))
-      eqm(node, `<div>text</div>`)
-      ren.replace(node.firstChild, undefined)
-      eqm(node, `<div></div>`)
+      const tar = E(`div`, {}, new Text(`text`))
+      eqm(tar, `<div>text</div>`)
+      ren.replace(tar.firstChild, undefined)
+      eqm(tar, `<div></div>`)
     }
 
     {
-      const node = E(`div`, {}, E(`one`), E(`two`), E(`three`))
-      eqm(node, `<div><one></one><two></two><three></three></div>`)
+      const one = E(`one`)
+      const two = E(`two`)
+      const three = E(`three`)
+      const tar = E(`div`, {}, one, two, three)
 
-      ren.replace(node.childNodes[1], `four`, null, `five`)
-      eqm(node, `<div><one></one>fourfive<three></three></div>`)
+      eqm(tar, `<div><one></one><two></two><three></three></div>`)
+
+      ren.replace(two, `four`, null, `five`)
+      eqm(tar, `<div><one></one>fourfive<three></three></div>`)
     }
   })
 })
