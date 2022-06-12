@@ -33,7 +33,7 @@ implement that.
 export function emptty(soft) {
   soft = l.laxBool(soft)
 
-  const {Deno} = globalThis
+  const Deno = globalThis.Deno
 
   if (Deno?.isatty) {
     if (Deno.isatty()) {
@@ -43,7 +43,7 @@ export function emptty(soft) {
     return false
   }
 
-  const {process} = globalThis
+  const process = globalThis.process
 
   if (process?.stdout) {
     if (process.stdout.isTTY) {

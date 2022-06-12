@@ -1,37 +1,40 @@
 /* global Deno */
 
 import * as l from './lang.mjs'
+import * as o from './obj.mjs'
 import * as s from './str.mjs'
 import * as u from './url.mjs'
 import * as h from './http.mjs'
 import * as io from './io_deno.mjs'
 import * as p from './path.mjs'
 
-export class ContentTypeMap extends Map {
+export class ContentTypeMap extends o.MixMain(Map) {
   guess(val) {return this.get(p.posix.ext(toPathname(val)))}
-}
 
-ContentTypeMap.main = /* @__PURE__ */ new ContentTypeMap()
-  .set(`.css`, `text/css`)
-  .set(`.gif`, `image/gif`)
-  .set(`.htm`, `text/html`)
-  .set(`.html`, `text/html`)
-  .set(`.ico`, `image/x-icon`)
-  .set(`.jpeg`, `image/jpeg`)
-  .set(`.jpg`, `image/jpeg`)
-  .set(`.js`, `application/javascript`)
-  .set(`.json`, `application/json`)
-  .set(`.mjs`, `application/javascript`)
-  .set(`.pdf`, `application/pdf`)
-  .set(`.png`, `image/png`)
-  .set(`.svg`, `image/svg+xml`)
-  .set(`.tif`, `image/tiff`)
-  .set(`.tiff`, `image/tiff`)
-  .set(`.xml`, `text/xml`)
-  .set(`.zip`, `application/zip`)
-  .set(`.webp`, `image/webp`)
-  .set(`.woff`, `font/woff`)
-  .set(`.woff2`, `font/woff2`)
+  static get default() {
+    return new this()
+      .set(`.css`, `text/css`)
+      .set(`.gif`, `image/gif`)
+      .set(`.htm`, `text/html`)
+      .set(`.html`, `text/html`)
+      .set(`.ico`, `image/x-icon`)
+      .set(`.jpeg`, `image/jpeg`)
+      .set(`.jpg`, `image/jpeg`)
+      .set(`.js`, `application/javascript`)
+      .set(`.json`, `application/json`)
+      .set(`.mjs`, `application/javascript`)
+      .set(`.pdf`, `application/pdf`)
+      .set(`.png`, `image/png`)
+      .set(`.svg`, `image/svg+xml`)
+      .set(`.tif`, `image/tiff`)
+      .set(`.tiff`, `image/tiff`)
+      .set(`.xml`, `text/xml`)
+      .set(`.zip`, `application/zip`)
+      .set(`.webp`, `image/webp`)
+      .set(`.woff`, `font/woff`)
+      .set(`.woff2`, `font/woff2`)
+  }
+}
 
 export class DirBase extends l.Emp {
   urlPathToFsPath() {return undefined}

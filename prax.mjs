@@ -11,7 +11,7 @@ Taken from non-authoritative sources.
 
   https://www.w3.org/TR/html52/infrastructure.html#boolean-attribute
 */
-export const BOOL = /* @__PURE__ */ new Set([`allowfullscreen`, `allowpaymentrequest`, `async`, `autofocus`, `autoplay`, `checked`, `controls`, `default`, `disabled`, `formnovalidate`, `hidden`, `ismap`, `itemscope`, `loop`, `multiple`, `muted`, `nomodule`, `novalidate`, `open`, `playsinline`, `readonly`, `required`, `reversed`, `selected`, `truespeed`])
+export const BOOL = new Set([`allowfullscreen`, `allowpaymentrequest`, `async`, `autofocus`, `autoplay`, `checked`, `controls`, `default`, `disabled`, `formnovalidate`, `hidden`, `ismap`, `itemscope`, `loop`, `multiple`, `muted`, `nomodule`, `novalidate`, `open`, `playsinline`, `readonly`, `required`, `reversed`, `selected`, `truespeed`])
 
 /*
 References:
@@ -19,7 +19,7 @@ References:
   https://www.w3.org/TR/html52/
   https://www.w3.org/TR/html52/syntax.html#writing-html-documents-elements
 */
-export const VOID = /* @__PURE__ */ new Set([`area`, `base`, `br`, `col`, `embed`, `hr`, `img`, `input`, `link`, `meta`, `param`, `source`, `track`, `wbr`])
+export const VOID = new Set([`area`, `base`, `br`, `col`, `embed`, `hr`, `img`, `input`, `link`, `meta`, `param`, `source`, `track`, `wbr`])
 
 /*
 Short for "renderer". Creates or mutates DOM elements. Compatible with native
@@ -101,7 +101,6 @@ export class Ren extends l.Emp {
   mutProps(tar, val) {return this.loop(reqElement(tar), val, this.mutProp)}
 
   mutProp(tar, key, val) {
-    if (key === `is`) return undefined
     if (key === `attributes`) return this.mutAttrs(tar, val)
     if (key === `class`) return this.mutCls(tar, val)
     if (key === `className`) return this.mutCls(tar, val)
@@ -220,11 +219,15 @@ export class Ren extends l.Emp {
 
   appendList(tar, src) {
     let ind = 0
+
     for (;;) {
       const len = l.reqNum(src.length)
-      if (!(ind < len)) return tar
+      if (!(ind >= 0 && ind < len)) return tar
+
       this.appendChi(tar, src[ind])
-      ind += 1 + l.reqNum(src.length) - len
+
+      ind += 1
+      ind -= l.reqFin(reduction(len, src.length))
     }
   }
 
@@ -327,20 +330,6 @@ export class Ren extends l.Emp {
     return this
   }
 
-  /*
-  Short for "mixin". This lazily-initialized method takes a class and creates a
-  subclass with additional methods `.props` and `.chi`, which are shortcuts for
-  mutating properties and child nodes by using this renderer.
-  */
-  get Mix() {return o.priv(this, `Mix`, o.weakCache(this.MixRen.bind(this)))}
-
-  // Short for "mixin with renderer support". See the `.Mix` getter.
-  MixRen(cls) {
-    cls = MixRen(cls)
-    cls.ren = this
-    return cls
-  }
-
   static native() {
     return new this(globalThis.document).patchProto(globalThis.Element)
   }
@@ -363,13 +352,17 @@ export class RenSvgPh extends o.BlankPh {
   get(ren, key) {return ren.makeSvg(key)}
 }
 
-export const MixRen = /* @__PURE__ */ o.weakCache(function MixRen(cls) {
-  return class MixRen extends cls {
-    get ren() {return this.constructor.ren}
-    props(val) {return this.ren.mutProps(this, val)}
-    chi(...val) {return this.ren.mutChi(this, ...val)}
+export function MixRen(val) {return MixRenCache.main.goc(val)}
+
+export class MixRenCache extends o.WeakCache {
+  make(cls) {
+    return class MixRenCls extends cls {
+      get ren() {return this.constructor.ren}
+      props(val) {return this.ren.mutProps(this, val)}
+      chi(...val) {return this.ren.mutChi(this, ...val)}
+    }
   }
-})
+}
 
 // Must match `dom_shim.mjs`.
 const parentNodeKey = Symbol.for(`parentNode`)
@@ -391,17 +384,21 @@ When used with the native DOM, the `.parentNode` getter and setter affect only
 JS code, without affecting native operations. Native DOM implementations
 completely bypass both.
 */
-export const MixChild = /* @__PURE__ */ o.weakCache(function MixChild(cls) {
-  return class MixChild extends cls {
-    constructor(val) {
-      super()
-      if (l.optObj(val)) this.parentNode = val
-    }
+export function MixChild(val) {return MixChildCache.main.goc(val)}
 
-    get parentNode() {return super.parentNode || norm(this[parentNodeKey])}
-    set parentNode(val) {this[parentNodeKey] = val}
+export class MixChildCache extends o.WeakCache {
+  make(cls) {
+    return class MixChildCls extends cls {
+      constructor(val) {
+        super()
+        if (l.optObj(val)) this.parentNode = val
+      }
+
+      get parentNode() {return super.parentNode || norm(this[parentNodeKey])}
+      set parentNode(val) {this[parentNodeKey] = val}
+    }
   }
-})
+}
 
 /*
 Short for "props builder". Provides various shortcuts for building and merging
@@ -446,7 +443,7 @@ avoids that. Unclear if this makes any difference in actual apps.
 Custom frozen marker has much better performance than `Object.freeze` and
 `Object.isFrozen`.
 */
-export class PropBui extends l.Emp {
+export class PropBui extends o.MixMain(l.Emp) {
   constructor(val) {
     super()
     this[refKey] = deref(val)
@@ -476,6 +473,7 @@ export class PropBui extends l.Emp {
   dataset(val) {return this.set(`dataset`, val)}
   disabled(val) {return this.set(`disabled`, !!val)}
   for(val) {return this.set(`for`, val)}
+  height(val) {return this.set(`height`, val)}
   hidden(val) {return this.set(`hidden`, !!val)}
   href(val) {return this.set(`href`, val)}
   httpEquiv(val) {return this.set(`http-equiv`, val)}
@@ -503,13 +501,12 @@ export class PropBui extends l.Emp {
   target(val) {return this.set(`target`, val)}
   type(val) {return this.set(`type`, val)}
   value(val) {return this.set(`value`, val)}
+  width(val) {return this.set(`width`, val)}
 
   /*
   The following shortcuts are "custom". Their names should avoid collision with
   known properties or attributes.
   */
-  aria(key, val) {return this.set(`aria-` + l.reqStr(key), val)}
-  data(key, val) {return this.set(`data-` + l.reqStr(key), val)}
   cls(val) {return val ? this.set(`class`, spaced(this.get(`class`), val)) : this}
   button() {return this.type(`button`)}
   submit() {return this.type(`submit`)}
@@ -544,17 +541,12 @@ export class PropBui extends l.Emp {
     if (l.reqObj(val) instanceof this) return val
     return new this(val)
   }
+
+  static get default() {return new this().frozen()}
 }
 
 const refKey = Symbol.for(`$`)
 const frozenKey = Symbol.for(`frozen`)
-
-/*
-Short for "attributes". Abbreviated for frequent use. This is a static instance,
-considered "immutable". Any "mutating" method makes a new mutable instance.
-Compare `P` which is a function.
-*/
-export const A = /* @__PURE__ */ new PropBui().frozen()
 
 export function renderDocument(src) {
   const pre = `<!doctype html>`
@@ -622,3 +614,5 @@ function optAt(key, val, fun) {
   if (l.isNil(val) || fun(val)) return val
   throw TypeError(`invalid property ${l.show(key)}: ` + l.msgType(val, l.showFunName(fun)))
 }
+
+function reduction(one, two) {return one > two ? one - two : 0}

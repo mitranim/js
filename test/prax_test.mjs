@@ -2,22 +2,18 @@ import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as p from '../prax.mjs'
-import {A} from '../prax.mjs'
 import * as dr from '../dom_reg.mjs'
 import * as dg from '../dom_glob_shim.mjs'
 
 /* Util */
 
 const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
-
 const E = ren.E
-
+const A = p.PropBui.main
 const Text = dg.glob.Text
-
 const NATIVE = ren.doc === globalThis.document
 
 function* gen(...vals) {for (const val of vals) yield val}
-
 function testDerefOwn(src, exp) {t.own(src.$, exp)}
 
 // Short for "equal markup".
@@ -405,49 +401,30 @@ t.test(function test_Ren_serialization() {
       })
     })
 
+    /*
+    The DOM standard defines various aria getters/setters for the `Element`
+    interface, such as `.ariaCurrent` and more. We don't implement them because
+    Firefox doesn't implement them. It would be a compatibility footgun,
+    leading to code that works with a shim and in various environments, but
+    breaks in FF.
+    */
     t.test(function test_aria_attrs() {
-      t.test(function test_aria_props_camel() {
-        eqm(
-          E(`div`, {ariaCurrent: null, ariaChecked: undefined}),
-          `<div></div>`,
-        )
+      // This test would work with shim and in FF, but not in Chrome.
+      //
+      // eqm(
+      //   E(`span`, {ariaCurrent: `page`, ariaChecked: `mixed`}),
+      //   `<span ariaCurrent="page" ariaChecked="mixed"></span>`,
+      // )
 
-        eqm(
-          E(`a`, {ariaCurrent: `page`, ariaChecked: `mixed`}),
-          `<a aria-current="page" aria-checked="mixed"></a>`,
-        )
-      })
+      eqm(
+        E(`span`, {'aria-current': null, 'aria-checked': undefined}),
+        `<span></span>`,
+      )
 
-      t.test(function test_aria_attrs_kebab() {
-        eqm(
-          E(`div`, {'aria-current': null, 'aria-checked': undefined}),
-          `<div></div>`,
-        )
-
-        eqm(
-          E(`a`, {'aria-current': `page`, 'aria-checked': `mixed`}),
-          `<a aria-current="page" aria-checked="mixed"></a>`,
-        )
-      })
-
-      t.test(function test_aria_mixed() {
-        eqm(
-          E(`div`, {ariaCurrent: null, 'aria-checked': undefined}),
-          `<div></div>`,
-        )
-
-        eqm(
-          E(`a`, {ariaCurrent: `page`, 'aria-checked': `mixed`}),
-          `<a aria-current="page" aria-checked="mixed"></a>`,
-        )
-      })
-
-      t.test(function test_aria_multi_humped_camel() {
-        eqm(
-          E(`a`, {ariaAutoComplete: `page`}, `text`),
-          `<a aria-autocomplete="page">text</a>`,
-        )
-      })
+      eqm(
+        E(`span`, {'aria-current': `page`, 'aria-checked': `mixed`}),
+        `<span aria-current="page" aria-checked="mixed"></span>`,
+      )
     })
 
     t.test(function test_bool_attrs() {

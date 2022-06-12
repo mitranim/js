@@ -490,123 +490,6 @@ export class Element extends Textable {
     return false
   }
 
-  get ariaAtomic() {return this.getAttribute(`aria-atomic`)}
-  set ariaAtomic(val) {this.attrSet(`aria-atomic`, val)}
-
-  get ariaAutoComplete() {return this.getAttribute(`aria-autocomplete`)}
-  set ariaAutoComplete(val) {this.attrSet(`aria-autocomplete`, val)}
-
-  get ariaBusy() {return this.getAttribute(`aria-busy`)}
-  set ariaBusy(val) {this.attrSet(`aria-busy`, val)}
-
-  get ariaChecked() {return this.getAttribute(`aria-checked`)}
-  set ariaChecked(val) {this.attrSet(`aria-checked`, val)}
-
-  get ariaColCount() {return this.getAttribute(`aria-colcount`)}
-  set ariaColCount(val) {this.attrSet(`aria-colcount`, val)}
-
-  get ariaColIndex() {return this.getAttribute(`aria-colindex`)}
-  set ariaColIndex(val) {this.attrSet(`aria-colindex`, val)}
-
-  get ariaColSpan() {return this.getAttribute(`aria-colspan`)}
-  set ariaColSpan(val) {this.attrSet(`aria-colspan`, val)}
-
-  get ariaCurrent() {return this.getAttribute(`aria-current`)}
-  set ariaCurrent(val) {this.attrSet(`aria-current`, val)}
-
-  get ariaDescription() {return this.getAttribute(`aria-description`)}
-  set ariaDescription(val) {this.attrSet(`aria-description`, val)}
-
-  get ariaDisabled() {return this.getAttribute(`aria-disabled`)}
-  set ariaDisabled(val) {this.attrSet(`aria-disabled`, val)}
-
-  get ariaExpanded() {return this.getAttribute(`aria-expanded`)}
-  set ariaExpanded(val) {this.attrSet(`aria-expanded`, val)}
-
-  get ariaHasPopup() {return this.getAttribute(`aria-haspopup`)}
-  set ariaHasPopup(val) {this.attrSet(`aria-haspopup`, val)}
-
-  get ariaHidden() {return this.getAttribute(`aria-hidden`)}
-  set ariaHidden(val) {this.attrSet(`aria-hidden`, val)}
-
-  get ariaInvalid() {return this.getAttribute(`aria-invalid`)}
-  set ariaInvalid(val) {this.attrSet(`aria-invalid`, val)}
-
-  get ariaKeyShortcuts() {return this.getAttribute(`aria-keyshortcuts`)}
-  set ariaKeyShortcuts(val) {this.attrSet(`aria-keyshortcuts`, val)}
-
-  get ariaLabel() {return this.getAttribute(`aria-label`)}
-  set ariaLabel(val) {this.attrSet(`aria-label`, val)}
-
-  get ariaLevel() {return this.getAttribute(`aria-level`)}
-  set ariaLevel(val) {this.attrSet(`aria-level`, val)}
-
-  get ariaLive() {return this.getAttribute(`aria-live`)}
-  set ariaLive(val) {this.attrSet(`aria-live`, val)}
-
-  get ariaModal() {return this.getAttribute(`aria-modal`)}
-  set ariaModal(val) {this.attrSet(`aria-modal`, val)}
-
-  get ariaMultiLine() {return this.getAttribute(`aria-multiline`)}
-  set ariaMultiLine(val) {this.attrSet(`aria-multiline`, val)}
-
-  get ariaMultiSelectable() {return this.getAttribute(`aria-multiselectable`)}
-  set ariaMultiSelectable(val) {this.attrSet(`aria-multiselectable`, val)}
-
-  get ariaOrientation() {return this.getAttribute(`aria-orientation`)}
-  set ariaOrientation(val) {this.attrSet(`aria-orientation`, val)}
-
-  get ariaPlaceholder() {return this.getAttribute(`aria-placeholder`)}
-  set ariaPlaceholder(val) {this.attrSet(`aria-placeholder`, val)}
-
-  get ariaPosInSet() {return this.getAttribute(`aria-posinset`)}
-  set ariaPosInSet(val) {this.attrSet(`aria-posinset`, val)}
-
-  get ariaPressed() {return this.getAttribute(`aria-pressed`)}
-  set ariaPressed(val) {this.attrSet(`aria-pressed`, val)}
-
-  get ariaReadOnly() {return this.getAttribute(`aria-readonly`)}
-  set ariaReadOnly(val) {this.attrSet(`aria-readonly`, val)}
-
-  get ariaRelevant() {return this.getAttribute(`aria-relevant`)}
-  set ariaRelevant(val) {this.attrSet(`aria-relevant`, val)}
-
-  get ariaRequired() {return this.getAttribute(`aria-required`)}
-  set ariaRequired(val) {this.attrSet(`aria-required`, val)}
-
-  get ariaRoleDescription() {return this.getAttribute(`aria-roledescription`)}
-  set ariaRoleDescription(val) {this.attrSet(`aria-roledescription`, val)}
-
-  get ariaRowCount() {return this.getAttribute(`aria-rowcount`)}
-  set ariaRowCount(val) {this.attrSet(`aria-rowcount`, val)}
-
-  get ariaRowIndex() {return this.getAttribute(`aria-rowindex`)}
-  set ariaRowIndex(val) {this.attrSet(`aria-rowindex`, val)}
-
-  get ariaRowSpan() {return this.getAttribute(`aria-rowspan`)}
-  set ariaRowSpan(val) {this.attrSet(`aria-rowspan`, val)}
-
-  get ariaSelected() {return this.getAttribute(`aria-selected`)}
-  set ariaSelected(val) {this.attrSet(`aria-selected`, val)}
-
-  get ariaSetSize() {return this.getAttribute(`aria-setsize`)}
-  set ariaSetSize(val) {this.attrSet(`aria-setsize`, val)}
-
-  get ariaSort() {return this.getAttribute(`aria-sort`)}
-  set ariaSort(val) {this.attrSet(`aria-sort`, val)}
-
-  get ariaValueMax() {return this.getAttribute(`aria-valuemax`)}
-  set ariaValueMax(val) {this.attrSet(`aria-valuemax`, val)}
-
-  get ariaValueMin() {return this.getAttribute(`aria-valuemin`)}
-  set ariaValueMin(val) {this.attrSet(`aria-valuemin`, val)}
-
-  get ariaValueNow() {return this.getAttribute(`aria-valuenow`)}
-  set ariaValueNow(val) {this.attrSet(`aria-valuenow`, val)}
-
-  get ariaValueText() {return this.getAttribute(`aria-valuetext`)}
-  set ariaValueText(val) {this.attrSet(`aria-valuetext`, val)}
-
   /* Non-standard extensions. */
 
   Style() {return new StylePh(this)}
@@ -1127,10 +1010,10 @@ export class GlobPh extends o.MakerPh {
   }
 }
 
-export const glob = /* @__PURE__ */ GlobPh.new()
-export const dom = /* @__PURE__ */ new DOMImplementation()
-export const document = /* @__PURE__ */ dom.createHTMLDocument()
-export const customElements = /* @__PURE__ */ document.customElements
+export const glob = GlobPh.new()
+export const dom = new DOMImplementation()
+export const document = dom.createHTMLDocument()
+export const customElements = document.customElements
 
 /* Misc */
 
@@ -1188,17 +1071,17 @@ export function unescapeMatch(str, dec, hex, exa) {
   return str
 }
 
-export const styleToCssCache = /* @__PURE__ */ new class StyleKeys extends o.Cache {
+export const styleToCssCache = new class StyleKeys extends o.Cache {
   make(val) {return camelToKebab(val)}
-}
+}()
 
-export const camelToDataCache = /* @__PURE__ */ new class DataKeys extends o.Cache {
+export const camelToDataCache = new class DataKeys extends o.Cache {
   make(val) {return camelToData(val)}
-}
+}()
 
-export const dataToCamelCache = /* @__PURE__ */ new class DataKeys extends o.Cache {
+export const dataToCamelCache = new class DataKeys extends o.Cache {
   make(val) {return dataToCamel(val)}
-}
+}()
 
 /* Internal */
 

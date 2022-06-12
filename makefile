@@ -5,8 +5,9 @@ RUN := $(if $(run),--run="$(run)",)
 FEAT := $(or $(feat),all_deno)
 VERB := $(if $(filter $(verb),true),--verb,)
 PREC := $(if $(filter $(prec),true),--prec,)
+ONCE := $(if $(filter $(once),true),--once,)
 TEST := test/$(FEAT)_test.mjs $(VERB) $(RUN)
-BENCH := test/$(FEAT)_bench.mjs $(VERB) $(PREC) $(RUN)
+BENCH := test/$(FEAT)_bench.mjs $(VERB) $(PREC) $(ONCE) $(RUN)
 CMD_SRV := test/cmd_srv.mjs
 CMD_DOC := doc/cmd_doc.mjs
 CMD_VER_INC := doc/cmd_ver_inc.mjs

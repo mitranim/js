@@ -1,4 +1,5 @@
 import * as l from './lang.mjs'
+import * as o from './obj.mjs'
 
 export const PICO_IN_SEC = 1_000_000_000_000
 export const NANO_IN_SEC = 1_000_000_000
@@ -270,19 +271,21 @@ export class Finite extends Number {
     if (Number.isSafeInteger(val)) return val.toString()
     return this.fmt.format(val)
   }
+
+  /*
+  Reference:
+
+    https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
+
+  Magic "20" seems to be the maximum allowed value. `Infinity` is not accepted.
+  */
+  static get fmt() {
+    return o.pub(this, `fmt`, new Intl.NumberFormat(`en-US`, {
+      useGrouping: false,
+      maximumFractionDigits: 20,
+    }))
+  }
 }
-
-/*
-Reference:
-
-  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
-
-Magic "20" seems to be the maximum allowed value. `Infinity` is not accepted.
-*/
-Finite.fmt = /* @__PURE__ */ new Intl.NumberFormat(`en-US`, {
-  useGrouping: false,
-  maximumFractionDigits: 20,
-})
 
 export class Sec extends Finite {
   picoStr() {return this.format(this.pico()) + ` ps`}

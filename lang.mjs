@@ -88,6 +88,7 @@ export function reqSym(val) {return isSym(val) ? val : convFun(val, isSym)}
 export function optSym(val) {return isNil(val) ? val : reqSym(val)}
 export function onlySym(val) {return isSym(val) ? val : undefined}
 
+// TODO tune perf.
 export function isKey(val) {return isPrim(val) && !isJunk(val)}
 export function reqKey(val) {return isKey(val) ? val : convFun(val, isKey)}
 export function optKey(val) {return isNil(val) ? val : reqKey(val)}

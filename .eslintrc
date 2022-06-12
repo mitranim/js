@@ -1,7 +1,20 @@
 {
   "parserOptions": {"ecmaVersion": "latest", "sourceType": "module"},
   "env": {"es2020": true},
-  "globals": {"console": "readonly", "URL": "readonly"},
+  "globals": {
+    "console": "readonly",
+    "URL": "readonly",
+    "URLSearchParams": "readonly",
+    "fetch": "readonly",
+    "Request": "readonly",
+    "Response": "readonly",
+    "Headers": "readonly",
+    "AbortController": "readonly",
+    "AbortSignal": "readonly",
+    "Intl": "readonly",
+    "setTimeout": "readonly",
+    "clearTimeout": "readonly",
+  },
   "rules": {
     "no-restricted-globals": ["error",
       // window (browser)

@@ -5,9 +5,9 @@ This benchmark shows the performance impact of subclassing `Array`. At the time
 of writing, in V8 9+, subclasses of `Array` have horrifically bad performance.
 The fundamental structure doesn't seem to be significantly affected.
 Instantiation, prealloc, length, reading and setting values via bracket
-notation, seems to be fine. But various built-in methods are completely fucked.
-In this benchmark we can observe between x10 and x500 slower depending on the
-method and dataset. This includes both instance and static methods.
+notation, all seem to be fine. But various built-in methods are completely
+fucked. In this benchmark we can observe between x10 and x500 slower depending
+on the method and dataset. This includes both instance and static methods.
 
 By reimplementing all methods in JS, it seems possible to rectify the problem
 partially, but not fully. Depending on the method and dataset, we can be

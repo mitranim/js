@@ -10,10 +10,15 @@ export const run = cli.get(`run`)
 export const verb = cli.boolOpt(`verb`)
 export const more = cli.boolOpt(`more`)
 export const prec = cli.boolOpt(`prec`)
+export const once = cli.boolOpt(`once`)
 
 t.conf.testFilterFrom(run)
 t.conf.benchFilterFrom(run)
+
 if (verb) t.conf.testRep = t.conf.benchRep
+
+// Allows to bench code in "slow mode", without much warmup.
+if (once) t.conf.benchRunner = new t.CountRunner(1)
 
 // Opt-in for benchmarks that require more precision than whole nanoseconds.
 if (prec) t.conf.benchRep = t.ConsoleAvgReporter.with(t.tsPico)

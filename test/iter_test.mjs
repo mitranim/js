@@ -12,10 +12,12 @@ function unreachable() {throw Error(`unreachable`)}
 async function* agen() {unreachable()}
 function* copygen(val) {for (val of val) yield val}
 function fail() {unreachable()}
+class Arr extends Array {}
 
 function testSeqs(src, fun) {
   t.ok(Array.isArray(src))
   fun(function make() {return src.slice()})
+  fun(function make() {return Arr.from(src)})
   fun(function make() {return new Set(src)})
   fun(function make() {return args(...src)})
   fun(function make() {return copygen(src)})
@@ -173,25 +175,29 @@ function testValues(fun, backref) {
   testFunEmptyList(fun)
   testNoAsyncIterator(fun)
 
-  t.test(function test_all() {
-    function test(src, exp) {t.eq(fun(src), exp)}
+  testColls(
+    [10, 20],
+    {one: 10, two: 20},
+    function testColl(make) {
+      const src = make()
+      const out = fun(src)
 
-    testColls(
-      [10, 20],
-      {one: 10, two: 20},
-      function testColl(make) {
-        const src = make()
-        const out = fun(src)
-        t.eq(out, [10, 20])
-        backref(out, src)
-      }
-    )
+      t.ok(i.isTrueArr(out))
+      t.eq(out, [10, 20])
+      backref(out, src)
+    }
+  )
 
-    function values() {return [10, 20]}
+  function test(src, exp) {
+    const out = fun(src)
+    t.eq(out, exp)
+    t.ok(i.isTrueArr(out))
+  }
 
-    test({values}, [values])
-    test({values, [Symbol.iterator]: l.nop}, [10, 20])
-  })
+  function values() {return [10, 20]}
+
+  test({values}, [values])
+  test({values, [Symbol.iterator]: l.nop}, [10, 20])
 }
 
 /*
@@ -305,24 +311,6 @@ t.test(function test_includes() {
   test([10, NaN, 20, NaN, 30], 40,        false)
 })
 
-t.test(function test_concat() {
-  testFunEmptyList(i.concat)
-
-  testColls(
-    [10, 20],
-    {one: 10, two: 20},
-    function prev(prev) {
-      testColls(
-        [20, [30]],
-        {two: 20, three: [30]},
-        function next(next) {
-          t.eq(i.concat(prev(), next()), [10, 20, 20, [30]])
-        }
-      )
-    }
-  )
-})
-
 t.test(function test_append() {
   testFunEmpty(
     function test(val) {return i.append(val, 10)},
@@ -351,6 +339,33 @@ t.test(function test_prepend() {
       t.eq(i.prepend(make(), 40), [40, 10, 20, 30])
     },
   )
+})
+
+t.test(function test_concat() {
+  testFunEmptyList(i.concat)
+
+  t.eq(i.concat(), [])
+  t.eq(i.concat([], undefined, null, []), [])
+
+  testColls([], {}, function testColl(make) {
+    t.eq(i.concat(make()), [])
+  })
+
+  testColls([10, 20], {one: 10, two: 20}, function testColls1(one) {
+    t.eq(i.concat(one()), [10, 20])
+
+    testColls([20, [30]], {two: 20, three: [30]}, function testColls2(two) {
+      t.eq(i.concat(two()), [20, [30]])
+      t.eq(i.concat(one(), two()), [10, 20, 20, [30]])
+
+      testColls([40], {four: 40}, function testColls3(three) {
+        t.eq(i.concat(three()), [40])
+        t.eq(i.concat(one(), three()), [10, 20, 40])
+        t.eq(i.concat(two(), three()), [20, [30], 40])
+        t.eq(i.concat(one(), two(), three()), [10, 20, 20, [30], 40])
+      })
+    })
+  })
 })
 
 function testFunEmptyList(fun) {testFunEmpty(fun, [])}
@@ -478,7 +493,7 @@ t.test(function test_map() {
 // We only need to check the basics.
 // `map` uses `mapMut` and has a more thorough test.
 t.test(function test_mapMut() {
-  t.throws(() => i.mapMut(undefined, l.id), TypeError, `expected variant of isArr, got undefined`)
+  t.throws(() => i.mapMut(undefined, l.id), TypeError, `expected variant of isTrueArr, got undefined`)
 
   function test(src, fun, exp) {
     t.is(i.mapMut(src, fun), src)

@@ -38,6 +38,22 @@ export class ClsDict extends Dict {
   mutFromStruct(val) {return patchInstances(this, val, this.cls)}
 }
 
+/*
+Tool for classes that define a default singleton.
+By default, instantiates the class with no arguments.
+Subclasses may override `static get default` to customize.
+*/
+export function MixMain(cls) {
+  return class MixMainCls extends cls {
+    static get main() {
+      const key = Symbol.for(`main`)
+      return l.hasOwn(this, key) ? this[key] : this[key] = this.default
+    }
+
+    static get default() {return new this()}
+  }
+}
+
 export class Strict extends l.Emp {
   constructor() {
     super()
@@ -72,11 +88,8 @@ Short for "proxy handler". Simple shortcut for stateless proxy handler classes.
 Static method `.of` idempotently creates and reuses one "main" instance.
 Might export later.
 */
-class Ph extends l.Emp {
-  static of(val) {
-    if (!l.hasOwn(this, `main`)) this.main = new this()
-    return new Proxy(val, this.main)
-  }
+class Ph extends MixMain(l.Emp) {
+  static of(val) {return new Proxy(val, this.main)}
 }
 
 /*
@@ -126,12 +139,17 @@ export class WeakTag extends WeakSet {
 
 export function memGet(cls) {return MemTag.main.goc(cls)}
 
-export class MemTag extends WeakTag {make(cls) {return memPatch(cls)}}
+export class MemTag extends MixMain(WeakTag) {
+  make(cls) {return memPatch(cls)}
+}
 
 export class MemGet extends Strict {
   constructor() {memGet(new.target), super()}
 }
-MemTag.main = /* @__PURE__ */ new MemTag()
+
+export class CallPh extends Ph {
+  apply(tar, self, args) {return tar.call.apply(self, args)}
+}
 
 /*
 When used to proxy a class, this allows to call that class as a function,
@@ -168,7 +186,7 @@ export class ClsInstPh extends ClsFunPh {
   }
 }
 
-export class Cache extends Map {
+export class Cache extends MixMain(Map) {
   goc(key) {
     if (!this.has(key)) this.set(key, this.make(key))
     return this.get(key)
@@ -176,21 +194,12 @@ export class Cache extends Map {
   make() {}
 }
 
-export class WeakCache extends WeakMap {
+export class WeakCache extends MixMain(WeakMap) {
   goc(key) {
     if (!this.has(key)) this.set(key, this.make(key))
     return this.get(key)
   }
   make() {}
-}
-
-export class FunWeakCache extends WeakCache {
-  constructor(fun) {super().make = l.reqFun(fun)}
-}
-
-export function weakCache(fun) {
-  const ref = new FunWeakCache(fun)
-  return ref.goc.bind(ref)
 }
 
 // Should be used with null-prototype targets. Create via static `.new`.

@@ -86,10 +86,11 @@ export class ClsMap extends Bmap {
 export function pkOpt(val) {return l.hasMeth(val, `pk`) ? val.pk() : undefined}
 
 // Short for "primary key".
-export function pk(val) {
-  const key = pkOpt(val)
+export function pk(val) {return pkOf(pkOpt(val), val)}
+
+export function pkOf(key, src) {
   if (l.isPk(key)) return key
-  throw TypeError(`expected primary key of ${l.show(val)}, got ${l.show(key)}`)
+  throw TypeError(`expected primary key of ${l.show(src)}, got ${l.show(key)}`)
 }
 
 export class Coll extends Bmap {
@@ -99,19 +100,19 @@ export class Coll extends Bmap {
   }
 
   add(val) {
-    this.set(pk(val), val)
+    this.set(pkOf(this.getKey(val), val), val)
     return this
   }
 
   addOpt(val) {
-    const key = pkOpt(val)
+    const key = this.getKey(val)
     if (l.isPk(key)) this.set(key, val)
     return this
   }
 
+  getKey(val) {return pkOpt(val)}
   toArray() {return [...this.values()]}
   toJSON() {return this.toArray()}
-
   [Symbol.iterator]() {return this.values()}
 }
 

@@ -1,4 +1,5 @@
 import * as l from './lang.mjs'
+import * as o from './obj.mjs'
 
 export function deinit(val) {if (isDe(val)) val.deinit()}
 
@@ -49,7 +50,7 @@ export class De extends StaticProxied {get ph() {return DeinitPh.main}}
 export class Obs extends Proxied {get Ph() {return ObsPh}}
 export class DeObs extends Proxied {get Ph() {return DeObsPh}}
 
-export const ctx = /* @__PURE__ */ new class Ctx extends l.Emp {
+export const ctx = new class Ctx extends l.Emp {
   constructor() {super().subber = undefined}
 
   sub(obs) {
@@ -79,7 +80,7 @@ doesn't immediately run its entries. Our observables simply bypass it when
 unpaused. Also note that this is fully synchronous. Compare the timed scheduler
 in `sched.mjs`.
 */
-export class Sched extends Set {
+export class Sched extends o.MixMain(Set) {
   constructor(val) {super(val).p = 0}
   isPaused() {return this.p > 0}
   pause() {return this.p++, this}
@@ -113,7 +114,6 @@ export class Sched extends Set {
   */
   deinit() {this.clear()}
 }
-Sched.main = /* @__PURE__ */ new Sched()
 
 /*
 Extremely simple implementation of an observable in a "traditional" sense.
@@ -284,7 +284,7 @@ export class Ph extends l.Emp {
   proDeinit() {deinit(self(this))}
 }
 
-export class DeinitPh extends Ph {
+export class DeinitPh extends o.MixMain(Ph) {
   drop(val) {deinit(val)}
 
   proDeinit() {
@@ -293,7 +293,6 @@ export class DeinitPh extends Ph {
     deinit(val)
   }
 }
-DeinitPh.main = /* @__PURE__ */ new DeinitPh()
 
 export class ObsPh extends Ph {
   constructor() {super().obs = new this.ImpObs()}

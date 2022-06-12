@@ -25,7 +25,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.27/coll.mjs'
+import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.28/coll.mjs'
 ```
 
 ## API
@@ -138,7 +138,7 @@ co.pk(new Person({name: `Mira`}))
 
 ### `class Coll`
 
-Links: [source](../coll.mjs#L95); [test/example](../test/coll_test.mjs#L207).
+Links: [source](../coll.mjs#L96); [test/example](../test/coll_test.mjs#L207).
 
 Short for "collection". Ordered map where values are indexed on their "primary key" determined by the function [#`pk`](#function-pk) which is also exported by this module. Unlike a normal JS map, this is considered a sequence of values, not a sequence of key-value pairs. Order is preserved, iterating the values is decently fast, and the index allows fast access by key without additional iteration.
 
@@ -164,7 +164,7 @@ Coll {
 
 ### `class ClsColl`
 
-Links: [source](../coll.mjs#L118); [test/example](../test/coll_test.mjs#L247).
+Links: [source](../coll.mjs#L119); [test/example](../test/coll_test.mjs#L247).
 
 Variant of [#`Coll`](#class-coll) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsColl`. Elements added with `.add` are idempotently instantiated.
 
@@ -196,7 +196,7 @@ Persons {
 
 ### `class Vec`
 
-Links: [source](../coll.mjs#L125); [test/example](../test/coll_test.mjs#L256).
+Links: [source](../coll.mjs#L126); [test/example](../test/coll_test.mjs#L256).
 
 Short for "vector". Thin wrapper around a plain array. Features:
 
@@ -219,7 +219,7 @@ The overhead of the wrapper is insignificant.
 
 ### `class ClsVec`
 
-Links: [source](../coll.mjs#L155); [test/example](../test/coll_test.mjs#L364).
+Links: [source](../coll.mjs#L156); [test/example](../test/coll_test.mjs#L364).
 
 Variant of [#`Vec`](#class-vec) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsVec`. Elements added with `.add` are idempotently instantiated.
 
@@ -257,4 +257,5 @@ The following APIs are exported but undocumented. Check [coll.mjs](../coll.mjs).
 
   * [`class ClsSet`](../coll.mjs#L29)
   * [`class ClsMap`](../coll.mjs#L80)
-  * [`class Que`](../coll.mjs#L168)
+  * [`function pkOf`](../coll.mjs#L91)
+  * [`class Que`](../coll.mjs#L169)

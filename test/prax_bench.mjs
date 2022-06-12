@@ -3,13 +3,13 @@ import * as itc from './internal_test_coll.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as p from '../prax.mjs'
-import {A} from '../prax.mjs'
 import * as dg from '../dom_glob_shim.mjs'
 
 /* Util */
 
 const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
 const {E} = ren
+const A = p.PropBui.main
 
 function P(val) {return p.PropBui.of(val)}
 

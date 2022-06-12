@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.27/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.28/url.mjs'
 ```
 
 Example parsing:
@@ -141,31 +141,31 @@ u.url(`/profile`).mutQuery({action: `edit`}).toString()
 
 ### `function query`
 
-Links: [source](../url.mjs#L25); [test/example](../test/url_test.mjs#L8).
+Links: [source](../url.mjs#L23); [test/example](../test/url_test.mjs#L8).
 
 Same as `new` [#`Query`](#class-query) but syntactically shorter and a function.
 
 ### `function toQuery`
 
-Links: [source](../url.mjs#L26); [test/example](../test/url_test.mjs#L10).
+Links: [source](../url.mjs#L24); [test/example](../test/url_test.mjs#L10).
 
 Idempotently converts input to [#`Query`](#class-query) via [`toInst`](lang_readme.md#function-toinst). If already an instance, returns as-is. Otherwise uses `new`. Should be used when you don't intend to mutate the output.
 
 ### `function url`
 
-Links: [source](../url.mjs#L28); [test/example](../test/url_test.mjs#L31).
+Links: [source](../url.mjs#L26); [test/example](../test/url_test.mjs#L31).
 
 Same as `new` [#`Url`](#class-url) but syntactically shorter and a function.
 
 ### `function toUrl`
 
-Links: [source](../url.mjs#L29); [test/example](../test/url_test.mjs#L33).
+Links: [source](../url.mjs#L27); [test/example](../test/url_test.mjs#L33).
 
 Idempotently converts input to [#`Url`](#class-url) via [`toInst`](lang_readme.md#function-toinst). If already an instance, returns as-is. Otherwise uses `new`. Should be used when you don't intend to mutate the output.
 
 ### `function urlJoin`
 
-Links: [source](../url.mjs#L31); [test/example](../test/url_test.mjs#L54).
+Links: [source](../url.mjs#L29); [test/example](../test/url_test.mjs#L54).
 
 Shortcut for `Url.join`. Correctly appends to URL path without mangling the other components.
 
@@ -183,7 +183,7 @@ Url {
 
 ### `class Query`
 
-Links: [source](../url.mjs#L33); [test/example](../test/url_test.mjs#L67).
+Links: [source](../url.mjs#L31); [test/example](../test/url_test.mjs#L67).
 
 Like [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) but much better. See [#Overview](#overview) for some differences.
 
@@ -308,7 +308,7 @@ new URLSearchParams(new u.Query(`one=two&one=three&four=five`))
 
 ### `class Url`
 
-Links: [source](../url.mjs#L78); [test/example](../test/url_test.mjs#L300).
+Links: [source](../url.mjs#L76); [test/example](../test/url_test.mjs#L300).
 
 Like [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) but much better. See [#Overview](#overview) for some differences.
 
@@ -431,27 +431,32 @@ u.url(`scheme://host:123/path?key=val#hash`).hostPath() === `host:123/path`
 
 The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
 
-  * [`const RE_URL`](../url.mjs#L12)
-  * [`const RE_SCHEME`](../url.mjs#L13)
-  * [`const RE_SLASH`](../url.mjs#L14)
-  * [`const RE_PROTOCOL`](../url.mjs#L15)
-  * [`const RE_USERNAME`](../url.mjs#L16)
-  * [`const RE_PASSWORD`](../url.mjs#L17)
-  * [`const RE_HOSTNAME`](../url.mjs#L18)
-  * [`const RE_PORT`](../url.mjs#L19)
-  * [`const RE_HOST`](../url.mjs#L20)
-  * [`const RE_ORIGIN`](../url.mjs#L21)
-  * [`const RE_PATHNAME`](../url.mjs#L22)
-  * [`const RE_HASH`](../url.mjs#L23)
-  * [`const schemeKey`](../url.mjs#L330)
-  * [`const slashKey`](../url.mjs#L331)
-  * [`const usernameKey`](../url.mjs#L332)
-  * [`const passwordKey`](../url.mjs#L333)
-  * [`const hostnameKey`](../url.mjs#L334)
-  * [`const portKey`](../url.mjs#L335)
-  * [`const pathnameKey`](../url.mjs#L336)
-  * [`const queryKey`](../url.mjs#L337)
-  * [`const hashKey`](../url.mjs#L338)
-  * [`function urlParse`](../url.mjs#L340)
-  * [`function queryDec`](../url.mjs#L406)
-  * [`function queryEnc`](../url.mjs#L412)
+  * [`const RE_URL`](../url.mjs#L10)
+  * [`const RE_SCHEME`](../url.mjs#L11)
+  * [`const RE_SLASH`](../url.mjs#L12)
+  * [`const RE_PROTOCOL`](../url.mjs#L13)
+  * [`const RE_USERNAME`](../url.mjs#L14)
+  * [`const RE_PASSWORD`](../url.mjs#L15)
+  * [`const RE_HOSTNAME`](../url.mjs#L16)
+  * [`const RE_PORT`](../url.mjs#L17)
+  * [`const RE_HOST`](../url.mjs#L18)
+  * [`const RE_ORIGIN`](../url.mjs#L19)
+  * [`const RE_PATHNAME`](../url.mjs#L20)
+  * [`const RE_HASH`](../url.mjs#L21)
+  * [`function loc`](../url.mjs#L328)
+  * [`function toLoc`](../url.mjs#L329)
+  * [`class Loc`](../url.mjs#L339)
+  * [`const stateKey`](../url.mjs#L392)
+  * [`const titleKey`](../url.mjs#L393)
+  * [`const schemeKey`](../url.mjs#L395)
+  * [`const slashKey`](../url.mjs#L396)
+  * [`const usernameKey`](../url.mjs#L397)
+  * [`const passwordKey`](../url.mjs#L398)
+  * [`const hostnameKey`](../url.mjs#L399)
+  * [`const portKey`](../url.mjs#L400)
+  * [`const pathnameKey`](../url.mjs#L401)
+  * [`const queryKey`](../url.mjs#L402)
+  * [`const hashKey`](../url.mjs#L403)
+  * [`function urlParse`](../url.mjs#L405)
+  * [`function queryDec`](../url.mjs#L471)
+  * [`function queryEnc`](../url.mjs#L477)

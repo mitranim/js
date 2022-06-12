@@ -3,7 +3,10 @@ Tools for async batching and scheduling of hierarchical runs,
 from ancestors to descendants. See `Sched`.
 */
 
+/* eslint-env browser */
+
 import * as l from './lang.mjs'
+import * as o from './obj.mjs'
 
 // Base implementation used by other timers. Nop by itself.
 export class BaseTimer extends l.Emp {
@@ -82,7 +85,7 @@ export class Que extends Set {
 Short for "scheduler". Tool for scheduling hierarchical runs, from ancestors to
 descendants. Inputs report their "depth", which allows us to determine order.
 */
-export class Sched extends l.Emp {
+export class Sched extends o.MixMain(l.Emp) {
   constructor() {
     super()
     this.ques = []
@@ -113,7 +116,6 @@ export class Sched extends l.Emp {
   get Timer() {return RofTimer}
   get Que() {return Que}
 }
-Sched.main = /* @__PURE__ */ new Sched()
 
 export function isDep(val) {return l.hasMeth(val, `depth`)}
 export function reqDep(val) {return l.req(val, isDep)}

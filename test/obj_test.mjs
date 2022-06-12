@@ -360,6 +360,18 @@ function testClearPrototype(...classes) {
   }
 }
 
+t.test(function test_MixMain() {
+  class Super extends o.MixMain(l.Emp) {}
+  class Sub extends Super {}
+
+  t.inst(Super.main, Super)
+  t.is(Super.main, Super.main)
+
+  t.inst(Sub.main, Sub)
+  t.is(Sub.main, Sub.main)
+  t.isnt(Sub.main, Super.main)
+})
+
 t.test(function test_ClsFunPh() {
   class Cls {constructor(...val) {this.val = val}}
 

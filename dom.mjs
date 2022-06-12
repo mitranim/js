@@ -1,7 +1,6 @@
 /* eslint-env browser */
 
 import * as l from './lang.mjs'
-import * as u from './url.mjs'
 import * as o from './obj.mjs'
 
 export const DOM_EXISTS = !!(
@@ -46,7 +45,7 @@ export function mutDoc(head, body) {
   DocBodyMut.main.mut(body)
 }
 
-export class DocHeadMut extends WeakSet {
+export class DocHeadMut extends o.MixMain(WeakSet) {
   get head() {return document.head}
   get title() {return document.title}
   set title(val) {document.title = val}
@@ -72,9 +71,8 @@ export class DocHeadMut extends WeakSet {
     }
   }
 }
-DocHeadMut.main = /* @__PURE__ */ new DocHeadMut()
 
-export class DocBodyMut extends l.Emp {
+export class DocBodyMut extends o.MixMain(l.Emp) {
   get foc() {return DocFoc.main}
   get doc() {return document}
 
@@ -85,14 +83,13 @@ export class DocBodyMut extends l.Emp {
     this.foc.pop()
   }
 }
-DocBodyMut.main = /* @__PURE__ */ new DocBodyMut()
 
 /*
 Short for "document focus". Can stash/pop the path to the focused node, which is
 useful when replacing the document body. Array subclasses have performance
 issues, but this is not a bottleneck.
 */
-export class DocFoc extends Array {
+export class DocFoc extends o.MixMain(Array) {
   get doc() {return document}
 
   clear() {this.length = 0}
@@ -115,8 +112,6 @@ export class DocFoc extends Array {
     this.reverse()
   }
 }
-
-DocFoc.main = /* @__PURE__ */ new DocFoc()
 
 function copy(val) {return Array.prototype.slice.call(val)}
 function indexOf(list, val) {return Array.prototype.indexOf.call(list, val)}
@@ -222,89 +217,26 @@ export function* findDescendants(val, fun) {
 Takes a DOM node class and returns a subclass with various shortcuts for DOM
 inspection and manipulation.
 */
-export const MixNode = /* @__PURE__ */ o.weakCache(function MixNode(cls) {
-  return class MixNode extends cls {
-    anc(cls) {return ancestor(this, cls)}
-    findAnc(fun) {return findAncestor(this, fun)}
+export function MixNode(val) {return MixNodeCache.main.goc(val)}
 
-    desc(cls) {return descendant(this, cls)}
-    findDesc(fun) {return findDescendant(this, fun)}
+export class MixNodeCache extends o.WeakCache {
+  make(cls) {
+    return class MixNodeCls extends cls {
+      anc(cls) {return ancestor(this, cls)}
+      findAnc(fun) {return findAncestor(this, fun)}
 
-    descs(cls) {return descendants(this, cls)}
-    findDescs(fun) {return findDescendants(this, fun)}
+      desc(cls) {return descendant(this, cls)}
+      findDesc(fun) {return findDescendant(this, fun)}
 
-    setText(src) {
-      const prev = this.textContent
-      const next = l.renderLax(src)
-      if (prev !== next) this.textContent = next
-      return this
+      descs(cls) {return descendants(this, cls)}
+      findDescs(fun) {return findDescendants(this, fun)}
+
+      setText(src) {
+        const prev = this.textContent
+        const next = l.renderLax(src)
+        if (prev !== next) this.textContent = next
+        return this
+      }
     }
   }
-})
-
-export function loc(val) {return new Loc(val)}
-export function toLoc(val) {return l.toInst(val, Loc)}
-
-/*
-Short for "location". Variant of `Url` with awareness of DOM APIs. Uses both
-`window.location` and `window.history`, providing various shortcuts for
-manipulating location and history.
-
-Additional properties are symbolic for consistency with `Url`.
-Getters and setters also perform type checking.
-*/
-export class Loc extends u.Url {
-  constructor(val) {
-    super()
-    this[stateKey] = undefined
-    this[titleKey] = ``
-    this.reset(val)
-  }
-
-  get state() {return this[stateKey]}
-  set state(val) {this[stateKey] = val}
-
-  get title() {return this[titleKey]}
-  set title(val) {this[titleKey] = l.laxStr(val)}
-
-  withState(val) {return this.clone().setState(val)}
-  setState(val) {return this.state = val, this}
-
-  withTitle(val) {return this.clone().setTitle(val)}
-  setTitle(val) {return this.title = val, this}
-
-  push() {this.history.pushState(this.state, this.title, this)}
-  replace() {this.history.replaceState(this.state, this.title, this)}
-  reload() {this.location.href = this}
-
-  // Allows `new Loc(loc)` and `loc.clone()`.
-  resetFromUrl(val) {
-    super.resetFromUrl(val)
-    this.state = val.state
-    this.title = val.title
-    return this
-  }
-
-  eq(val) {
-    return (
-      !!l.optInst(val, Loc) &&
-      l.is(this.state, val.state) &&
-      l.is(this.title, val.title) &&
-      l.is(this.href, val.href)
-    )
-  }
-
-  get history() {return this.constructor.history}
-  get location() {return this.constructor.location}
-
-  static get history() {return window.history}
-  static get location() {return window.location}
-
-  // Note: at the time of writing, browsers don't store the title anywhere.
-  static current() {
-    return new this(this.location).setState(this.history.state)
-  }
 }
-
-export const stateKey = Symbol.for(`state`)
-export const titleKey = Symbol.for(`title`)

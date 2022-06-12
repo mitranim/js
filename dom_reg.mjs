@@ -10,90 +10,92 @@ Represents a hidden part of native DOM implementations: mapping from element
 names to class names. The native DOM API doesn't expose such a registry, so we
 have to implement it ourselves.
 */
-export class TagToCls extends StrMap {}
-
-TagToCls.main = /* @__PURE__ */ new TagToCls()
-  .set(`a`, `HTMLAnchorElement`)
-  .set(`area`, `HTMLAreaElement`)
-  .set(`audio`, `HTMLAudioElement`)
-  .set(`base`, `HTMLBaseElement`)
-  .set(`body`, `HTMLBodyElement`)
-  .set(`br`, `HTMLBRElement`)
-  .set(`button`, `HTMLButtonElement`)
-  .set(`canvas`, `HTMLCanvasElement`)
-  .set(`data`, `HTMLDataElement`)
-  .set(`datalist`, `HTMLDataListElement`)
-  .set(`details`, `HTMLDetailsElement`)
-  .set(`dialog`, `HTMLDialogElement`)
-  .set(`div`, `HTMLDivElement`)
-  .set(`dl`, `HTMLDListElement`)
-  .set(`embed`, `HTMLEmbedElement`)
-  .set(`fieldset`, `HTMLFieldSetElement`)
-  .set(`font`, `HTMLFontElement`)
-  .set(`form`, `HTMLFormElement`)
-  .set(`frame`, `HTMLFrameElement`)
-  .set(`frameset`, `HTMLFrameSetElement`)
-  .set(`head`, `HTMLHeadElement`)
-  .set(`heading`, `HTMLHeadingElement`)
-  .set(`hr`, `HTMLHRElement`)
-  .set(`html`, `HTMLHtmlElement`)
-  .set(`iframe`, `HTMLIFrameElement`)
-  .set(`image`, `HTMLImageElement`)
-  .set(`input`, `HTMLInputElement`)
-  .set(`label`, `HTMLLabelElement`)
-  .set(`legend`, `HTMLLegendElement`)
-  .set(`li`, `HTMLLIElement`)
-  .set(`link`, `HTMLLinkElement`)
-  .set(`map`, `HTMLMapElement`)
-  .set(`marquee`, `HTMLMarqueeElement`)
-  .set(`menu`, `HTMLMenuElement`)
-  .set(`meta`, `HTMLMetaElement`)
-  .set(`meter`, `HTMLMeterElement`)
-  .set(`del`, `HTMLModElement`)
-  .set(`ins`, `HTMLModElement`)
-  .set(`object`, `HTMLObjectElement`)
-  .set(`ol`, `HTMLOListElement`)
-  .set(`optgroup`, `HTMLOptGroupElement`)
-  .set(`option`, `HTMLOptionElement`)
-  .set(`output`, `HTMLOutputElement`)
-  .set(`p`, `HTMLParagraphElement`)
-  .set(`param`, `HTMLParamElement`)
-  .set(`picture`, `HTMLPictureElement`)
-  .set(`pre`, `HTMLPreElement`)
-  .set(`progress`, `HTMLProgressElement`)
-  .set(`q`, `HTMLQuoteElement`)
-  .set(`blockquote`, `HTMLQuoteElement`)
-  .set(`script`, `HTMLScriptElement`)
-  .set(`select`, `HTMLSelectElement`)
-  .set(`slot`, `HTMLSlotElement`)
-  .set(`source`, `HTMLSourceElement`)
-  .set(`span`, `HTMLSpanElement`)
-  .set(`style`, `HTMLStyleElement`)
-  .set(`caption`, `HTMLTableCaptionElement`)
-  .set(`th`, `HTMLTableCellElement`)
-  .set(`td`, `HTMLTableCellElement`)
-  .set(`col`, `HTMLTableColElement`)
-  .set(`colgroup`, `HTMLTableColElement`)
-  .set(`table`, `HTMLTableElement`)
-  .set(`tr`, `HTMLTableRowElement`)
-  .set(`tfoot`, `HTMLTableSectionElement`)
-  .set(`thead`, `HTMLTableSectionElement`)
-  .set(`tbody`, `HTMLTableSectionElement`)
-  .set(`template`, `HTMLTemplateElement`)
-  .set(`textarea`, `HTMLTextAreaElement`)
-  .set(`time`, `HTMLTimeElement`)
-  .set(`title`, `HTMLTitleElement`)
-  .set(`track`, `HTMLTrackElement`)
-  .set(`ul`, `HTMLUListElement`)
-  .set(`video`, `HTMLVideoElement`)
-  .set(`svg`, `SVGSvgElement`)
+export class TagToCls extends o.MixMain(StrMap) {
+  static get default() {
+    return new this()
+      .set(`a`, `HTMLAnchorElement`)
+      .set(`area`, `HTMLAreaElement`)
+      .set(`audio`, `HTMLAudioElement`)
+      .set(`base`, `HTMLBaseElement`)
+      .set(`body`, `HTMLBodyElement`)
+      .set(`br`, `HTMLBRElement`)
+      .set(`button`, `HTMLButtonElement`)
+      .set(`canvas`, `HTMLCanvasElement`)
+      .set(`data`, `HTMLDataElement`)
+      .set(`datalist`, `HTMLDataListElement`)
+      .set(`details`, `HTMLDetailsElement`)
+      .set(`dialog`, `HTMLDialogElement`)
+      .set(`div`, `HTMLDivElement`)
+      .set(`dl`, `HTMLDListElement`)
+      .set(`embed`, `HTMLEmbedElement`)
+      .set(`fieldset`, `HTMLFieldSetElement`)
+      .set(`font`, `HTMLFontElement`)
+      .set(`form`, `HTMLFormElement`)
+      .set(`frame`, `HTMLFrameElement`)
+      .set(`frameset`, `HTMLFrameSetElement`)
+      .set(`head`, `HTMLHeadElement`)
+      .set(`heading`, `HTMLHeadingElement`)
+      .set(`hr`, `HTMLHRElement`)
+      .set(`html`, `HTMLHtmlElement`)
+      .set(`iframe`, `HTMLIFrameElement`)
+      .set(`image`, `HTMLImageElement`)
+      .set(`input`, `HTMLInputElement`)
+      .set(`label`, `HTMLLabelElement`)
+      .set(`legend`, `HTMLLegendElement`)
+      .set(`li`, `HTMLLIElement`)
+      .set(`link`, `HTMLLinkElement`)
+      .set(`map`, `HTMLMapElement`)
+      .set(`marquee`, `HTMLMarqueeElement`)
+      .set(`menu`, `HTMLMenuElement`)
+      .set(`meta`, `HTMLMetaElement`)
+      .set(`meter`, `HTMLMeterElement`)
+      .set(`del`, `HTMLModElement`)
+      .set(`ins`, `HTMLModElement`)
+      .set(`object`, `HTMLObjectElement`)
+      .set(`ol`, `HTMLOListElement`)
+      .set(`optgroup`, `HTMLOptGroupElement`)
+      .set(`option`, `HTMLOptionElement`)
+      .set(`output`, `HTMLOutputElement`)
+      .set(`p`, `HTMLParagraphElement`)
+      .set(`param`, `HTMLParamElement`)
+      .set(`picture`, `HTMLPictureElement`)
+      .set(`pre`, `HTMLPreElement`)
+      .set(`progress`, `HTMLProgressElement`)
+      .set(`q`, `HTMLQuoteElement`)
+      .set(`blockquote`, `HTMLQuoteElement`)
+      .set(`script`, `HTMLScriptElement`)
+      .set(`select`, `HTMLSelectElement`)
+      .set(`slot`, `HTMLSlotElement`)
+      .set(`source`, `HTMLSourceElement`)
+      .set(`span`, `HTMLSpanElement`)
+      .set(`style`, `HTMLStyleElement`)
+      .set(`caption`, `HTMLTableCaptionElement`)
+      .set(`th`, `HTMLTableCellElement`)
+      .set(`td`, `HTMLTableCellElement`)
+      .set(`col`, `HTMLTableColElement`)
+      .set(`colgroup`, `HTMLTableColElement`)
+      .set(`table`, `HTMLTableElement`)
+      .set(`tr`, `HTMLTableRowElement`)
+      .set(`tfoot`, `HTMLTableSectionElement`)
+      .set(`thead`, `HTMLTableSectionElement`)
+      .set(`tbody`, `HTMLTableSectionElement`)
+      .set(`template`, `HTMLTemplateElement`)
+      .set(`textarea`, `HTMLTextAreaElement`)
+      .set(`time`, `HTMLTimeElement`)
+      .set(`title`, `HTMLTitleElement`)
+      .set(`track`, `HTMLTrackElement`)
+      .set(`ul`, `HTMLUListElement`)
+      .set(`video`, `HTMLVideoElement`)
+      .set(`svg`, `SVGSvgElement`)
+  }
+}
 
 /*
 Represents a hidden part of native DOM implementations: mapping from class names
 to element names. The native DOM API doesn't expose such a registry, so we have
 to implement it ourselves.
 */
-export class ClsToTag extends StrMap {
+export class ClsToTag extends o.MixMain(StrMap) {
   invert(src) {
     for (const [key, val] of src) this.set(val, this.has(val) ? undefined : key)
     return this
@@ -124,12 +126,12 @@ export class ClsToTag extends StrMap {
   }
 
   get re() {return /^(?:HTML|SVG)(\w*)Element$/}
+
+  static get default() {return new this().invert(TagToCls.main)}
 }
 
-ClsToTag.main = /* @__PURE__ */ new ClsToTag().invert(TagToCls.main)
-
 // Shim/polyfill for the built-in `CustomElementRegistry`.
-export class CustomElementRegistry extends l.Emp {
+export class CustomElementRegistry extends o.MixMain(l.Emp) {
   constructor() {
     super()
     this.set = new Set()
@@ -154,21 +156,22 @@ export class CustomElementRegistry extends l.Emp {
   }
 }
 
-CustomElementRegistry.main = /* @__PURE__ */ new CustomElementRegistry()
+export function MixReg(val) {return MixRegCache.main.goc(val)}
 
-export const customElements = /* @__PURE__ */ (
-  globalThis.customElements || CustomElementRegistry.main
-)
-
-export const MixReg = /* @__PURE__ */ o.weakCache(function MixReg(cls) {
-  return class MixReg extends cls {
-    constructor(...val) {reg(new.target), super(...val)}
+export class MixRegCache extends o.WeakCache {
+  make(cls) {
+    return class MixRegCls extends cls {
+      constructor(...val) {
+        reg(new.target)
+        super(...val)
+      }
+    }
   }
-})
+}
 
 export function reg(cls) {return Reg.main.reg(cls)}
 
-export class Reg extends l.Emp {
+export class Reg extends o.MixMain(l.Emp) {
   constructor(def) {
     super()
     this.pending = new Set()
@@ -241,8 +244,6 @@ export class Reg extends l.Emp {
     this.tagToCls.set(tag, cls)
   }
 }
-
-Reg.main = /* @__PURE__ */ new Reg()
 
 function toTag(name) {
   const words = toWords(l.optStr(name))

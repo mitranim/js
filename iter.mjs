@@ -13,6 +13,7 @@ export function alloc(len) {return Array(l.reqNat(len))}
 
 export function arr(val) {
   if (l.isNil(val)) return []
+  if (isTrueArr(val)) return val.slice()
   if (l.isList(val)) return arrFromList(val)
   if (l.isArrble(val)) return arrFromList(val.toArray())
   if (l.isSeq(val)) return values(val)
@@ -20,16 +21,9 @@ export function arr(val) {
 }
 
 function arrFromList(val) {
-  if (isTrueArr(val)) return arrCopy(val)
+  if (isTrueArr(val)) return val.slice()
+  if (l.isArr(val)) return [].concat(val)
   return Array.prototype.slice.call(val)
-}
-
-function arrCopy(val) {
-  const buf = alloc(reqTrueArr(val).length)
-  let ind = -1
-  const len = val.length
-  while (++ind < len) buf[ind] = val[ind]
-  return buf
 }
 
 function arrFromIter(val) {
@@ -76,8 +70,8 @@ function copyMap(val, out) {for (val of l.reqMap(val).values()) out.push(val)}
 
 function valuesFromStruct(src) {
   const out = Object.keys(src)
-  let ind = -1
   const len = out.length
+  let ind = -1
   while (++ind < len) out[ind] = src[out[ind]]
   return out
 }
@@ -93,8 +87,8 @@ export function entries(val) {
 
 function entriesFromList(val) {
   const out = alloc(val.length)
-  let ind = -1
   const len = val.length
+  let ind = -1
   while (++ind < len) out[ind] = [ind, val[ind]]
   return out
 }
@@ -102,8 +96,8 @@ function entriesFromList(val) {
 // Like `Object.entries` but much faster.
 function structEntries(src) {
   const out = Object.keys(src)
-  let ind = -1
   const len = out.length
+  let ind = -1
   while (++ind < len) out[ind] = [out[ind], src[out[ind]]]
   return out
 }
@@ -112,16 +106,19 @@ export function reify(val) {return hasIter(val) ? map(val, reify) : val}
 
 function hasIter(val) {return l.isList(val) ? some(val, hasIter) : l.isIterator(val)}
 
-// Slightly suboptimal but not worth more code.
 export function indexOf(src, val) {
-  return findIndex(src, function test(elem) {return l.is(elem, val)})
+  if (l.isNil(src)) return -1
+  const len = l.reqList(src).length
+  let ind = -1
+  while (++ind < len) if (l.is(src[ind], val)) return ind
+  return -1
 }
 
 export function findIndex(src, fun) {
   l.reqFun(fun)
   if (l.opt(src, l.isList)) {
-    let ind = -1
     const len = src.length
+    let ind = -1
     while (++ind < len) if (fun(src[ind])) return ind
   }
   return -1
@@ -131,9 +128,18 @@ export function includes(src, val) {
   return l.isSet(src) ? src.has(val) : values(src).includes(val)
 }
 
-export function concat(one, two) {return values(one).concat(values(two))}
 export function append(src, val) {return values(src).concat([val])}
+
 export function prepend(src, val) {return [val].concat(values(src))}
+
+export function concat(...val) {
+  switch (val.length) {
+    case 0: return []
+    case 1: return values(val[0])
+    case 2: return values(val[0]).concat(values(val[1]))
+    default: return [].concat(...mapMut(val, values))
+  }
+}
 
 export function len(val) {
   if (!l.isObj(val)) return 0
@@ -168,10 +174,10 @@ export function each(val, fun) {
 export function map(val, fun) {return mapMut(valuesCopy(val), fun)}
 
 export function mapMut(val, fun) {
-  l.reqArr(val)
+  val = reqTrueArr(val)
   l.reqFun(fun)
-  let ind = -1
   const len = val.length
+  let ind = -1
   while (++ind < len) val[ind] = fun(val[ind])
   return val
 }
@@ -353,8 +359,8 @@ export function range(min, max) {
   if (!(max >= min)) throw Error(`invalid range [${min},${max})`)
 
   const out = alloc(max - min)
-  let ind = -1
   const len = out.length
+  let ind = -1
   while (++ind < len) out[ind] = min + ind
   return out
 }
@@ -409,5 +415,5 @@ function isStructSync(val) {return l.isStruct(val) && !(Symbol.asyncIterator in 
 
 // At the time of writing, in V8, array subclasses have inferior performance.
 // We enforce plain arrays for consistent performance.
-function isTrueArr(val) {return l.isArr(val) && val.constructor === Array}
-function reqTrueArr(val) {return isTrueArr(val) ? val : l.errFun(val, isTrueArr)}
+export function isTrueArr(val) {return l.isArr(val) && val.constructor === Array}
+export function reqTrueArr(val) {return l.req(val, isTrueArr)}

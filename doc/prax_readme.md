@@ -127,11 +127,11 @@ Rendering a complete document with doctype:
 
 ```js
 import * as p from '{{featUrl prax}}'
-import {A} from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_glob_shim}}'
 
 const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
 const {E} = ren
+const A = p.PropBui.main
 
 console.log(p.renderDocument(
   E.html.props(A.lang(`en`)).chi(
