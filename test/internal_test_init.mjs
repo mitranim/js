@@ -26,6 +26,9 @@ if (prec) t.conf.benchRep = t.ConsoleAvgReporter.with(t.tsPico)
 // Indicates benchmark accuracy. Should be single digit nanoseconds.
 t.bench(function bench_baseline() {})
 
+// See comment on `readFull`.
+export async function testStream(src, exp) {t.is(await readFull(src), exp)}
+
 /*
 Stuck here for now because it's used by multiple tests, and we don't want this
 anywhere in the public API. This is useful for testing, but violates the
@@ -41,7 +44,7 @@ export async function readFull(src) {
   for (;;) {
     const {value, done} = await read.read()
     if (done) break
-    out += chunkToStr(value)
+    out += l.reqStr(chunkToStr(value))
   }
 
   return out

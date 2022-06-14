@@ -1,3 +1,5 @@
+/* eslint-env browser */
+
 /*
 Client for "live reloading" in browsers.
 Served and fed by the broadcaster in `live_deno.mjs`.
@@ -96,7 +98,7 @@ export function main() {
     const path = new URL(next.href).pathname
 
     return filter(
-      document.head.querySelectorAll(`link[rel=stylesheet]`),
+      document.head.querySelectorAll(`link`),
       prev => new URL(prev.href).pathname === path,
     )
   }

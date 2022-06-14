@@ -38,7 +38,7 @@ lint_w:
 	watchexec -r -c -d=0 -e=mjs -n -- $(MAKE) lint
 
 lint:
-	deno lint --rules-exclude=no-empty,require-yield,require-await,constructor-super
+	deno lint --rules-exclude=no-empty,require-yield,require-await,constructor-super,no-self-assign
 
 doc_w:
 	$(DENO) --watch $(CMD_DOC) --watch

@@ -11,7 +11,7 @@ await t.test(async function test_WritableReadableStream() {
     src.write(`hello world!`)
     src.close()
 
-    t.is(await iti.readFull(src), `hello world!`)
+    await iti.testStream(src, `hello world!`)
   })
 
   await t.test(async function test_idempotent_deinit() {
@@ -21,7 +21,7 @@ await t.test(async function test_WritableReadableStream() {
     src.deinit()
     src.deinit()
 
-    t.is(await iti.readFull(src), ``)
+    await iti.testStream(src, ``)
   })
 
   await t.test(async function test_error() {

@@ -212,6 +212,10 @@ export class DateTime extends Date {
   yearStr() {return zeroed(this.getFullYear(), 4)}
   monthStr() {return zeroed(this.getMonth() + 1, 2)}
   dayStr() {return zeroed(this.getDate(), 2)}
+
+  static date(year, month, day) {
+    return this.UTC(l.reqInt(year), l.reqInt(month), l.reqInt(day), 0, 0, 0, 0)
+  }
 }
 
 export class DateValid extends DateTime {

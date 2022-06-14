@@ -63,6 +63,7 @@ export class DirBase extends l.Emp {
     return (await this.resolveSiteFile(url)) || (await this.resolveNotFound())
   }
 
+  // TODO: code 404.
   resolveNotFound() {return this.resolveFile(this.notFound)}
 
   get index() {return `index.html`}

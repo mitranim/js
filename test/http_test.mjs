@@ -597,7 +597,7 @@ await t.test(async function test_Res() {
 })
 
 async function testResSimple(res, src) {
-  t.is(await iti.readFull(res.body), `hello world`)
+  await iti.testStream(res.body, `hello world`)
   t.is(res.res, src)
   t.is(res.status, 400)
   t.no(res.ok)

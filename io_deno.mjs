@@ -136,7 +136,7 @@ export function reqCloser(val) {return l.req(val, isCloser)}
 function optClose(val) {if (isCloser(val)) val.close()}
 
 // Adapter between `Deno.Reader` and standard `ReadableStream`.
-export class StreamSource extends l.Emp {
+export class ReaderStreamSource extends l.Emp {
   constructor(src) {
     super()
     this.src = reqReader(src)
@@ -185,7 +185,7 @@ export class StreamSource extends l.Emp {
 export class FileStream extends ReadableStream {
   constructor(src, path) {
     super(src)
-    this.src = l.reqInst(src, StreamSource)
+    this.src = l.reqInst(src, ReaderStreamSource)
     this.path = p.optPath(path)
   }
 
@@ -197,7 +197,88 @@ export class FileStream extends ReadableStream {
     return new this(await this.Source.open(path), path)
   }
 
-  static get Source() {return StreamSource}
+  static get Source() {return ReaderStreamSource}
+}
+
+/*
+Concatenates inputs into one stream. Supported inputs:
+
+  * Nils.
+  * `ReadableStream` instances.
+  * `Uint8Array` instances.
+  * String values.
+  * Stringable primitives such as numbers.
+  * Stringable objects such as `URL` instances.
+
+Other inputs are rejected with an exception.
+
+This class uses only standard web APIs, nothing Deno-related. If we end up
+writing other stream tools, we'll move this to a dedicated module.
+*/
+export class ConcatStreamSource extends l.Emp {
+  constructor(...src) {
+    super()
+    this.src = src.map(this.usable, this).filter(l.id)
+  }
+
+  async pull(ctr) {
+    try {await this.pullUnchecked(ctr)}
+    catch (err) {
+      this.deinit(err)
+      ctr.error(err)
+    }
+  }
+
+  async pullUnchecked(ctr) {
+    while (this.src.length) {
+      const src = this.src[0]
+      if (l.isNil(src)) {
+        this.src.shift()
+        continue
+      }
+
+      if (l.isInst(src, Uint8Array)) {
+        this.src.shift()
+        ctr.enqueue(src)
+        return
+      }
+
+      const {done, value} = await src.read()
+      if (done) {
+        this.src.shift()
+        continue
+      }
+
+      ctr.enqueue(value)
+      return
+    }
+
+    ctr.close()
+  }
+
+  cancel(why) {return this.deinit(why)}
+
+  deinit(why) {
+    for (const val of this.src) deinit(val, why)
+    this.src.length = 0
+  }
+
+  usable(val) {
+    if (l.isNil(val)) return val
+    if (l.isInst(val, ReadableStream)) return val.getReader()
+    if (l.isInst(val, Uint8Array)) return val
+    return new TextEncoder().encode(l.renderLax(val))
+  }
+
+  static stream(...val) {return new this.Stream(new this(...val))}
+  static get Stream() {return ReadableStream}
+}
+
+// Readers implement only `.cancel`. However, as a policy, we always support
+// `.deinit` which is our "standard" deinitialization interface.
+function deinit(val, why) {
+  if (l.hasMeth(val, `cancel`)) val.cancel(why)
+  else if (l.hasMeth(val, `deinit`)) val.deinit(why)
 }
 
 export class EnvMap extends cl.EnvMap {

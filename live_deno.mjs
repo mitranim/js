@@ -91,3 +91,48 @@ export class LiveDirs extends hd.Dirs {
     }
   }
 }
+
+/*
+Takes a URL for the "live" client script and an arbitrary response. If the
+response is HTML, returns a modified response with an HTML script tag that
+loads the live client. Otherwise returns the response as-is.
+
+The client URL can be acquired from a `LiveBroad` instance, constructed via URL
+tools, hardcoded, etc.
+*/
+export function withLiveClient(url, res) {
+  l.reqInst(res, Response)
+  if (isResHtml(res)) {
+    return new Response(
+      io.ConcatStreamSource.stream(res.body, script(url)),
+      res,
+    )
+  }
+  return res
+}
+
+/*
+Interpolating arbitrary strings into HTML is a horrible malpractice. NEVER do
+this in production code. ALWAYS use structured markup tools like our `prax.mjs`
+module. However, in this case it would be an excessive dependency for such a
+small use case. This is a development tool, the input should be trusted and
+shouldn't contain characters that require escaping.
+*/
+function script(src) {
+  src = l.render(src)
+  return `<script type="module" src="${l.reqStr(src)}"></script>`
+}
+
+// May consider moving to `http_srv.mjs` later.
+function isResHtml(res) {
+  return contentTypeMatch(res?.headers.get(h.HEAD_CONTENT_TYPE), h.TYPE_HTML)
+}
+
+// May consider moving to `http_srv.mjs` later.
+function contentTypeMatch(src, exp) {
+  src = strNorm(src)
+  exp = strNorm(exp)
+  return src === exp || src.startsWith(exp + `;`)
+}
+
+function strNorm(val) {return l.laxStr(val).trim().toLowerCase()}
