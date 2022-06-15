@@ -368,7 +368,7 @@ export class Element extends Textable {
 
   get tagName() {return norm(this.localName?.toUpperCase())}
 
-  get namespaceURI() {return norm(this[namespaceURIKey] || this.ownerDocument?.namespaceURI)}
+  get namespaceURI() {return norm(this[namespaceURIKey])}
   set namespaceURI(val) {this[namespaceURIKey] = l.optStr(val)}
 
   get parentNode() {return super.parentNode}
@@ -445,13 +445,11 @@ export class Element extends Textable {
   }
 
   get outerHTML() {
-    const tag = this.tagString()
-    if (!tag) throw Error(`missing localName`)
-    return (
-      `<` + tag + this.attrPrefix() + this.attrString() + `>` +
-      l.laxStr(this.innerHTML) +
-      `</` + tag + `>`
-    )
+    if (outerHtmlDyn.has()) return this.outerHtml()
+
+    outerHtmlDyn.set(this)
+    try {return this.outerHtml()}
+    finally {outerHtmlDyn.set()}
   }
 
   hasAttribute(key) {return !!this[attributesKey]?.has(key)}
@@ -508,7 +506,19 @@ export class Element extends Textable {
   }
 
   isStyleChange(key) {return key === `style` && styleKey in this}
+
   isDatasetChange(key) {return key.startsWith(`data-`) && datasetKey in this}
+
+  outerHtml() {
+    const tag = this.tagString()
+    if (!tag) throw Error(`missing localName`)
+
+    return (
+      `<` + tag + this.attrPrefix() + this.attrString() + `>` +
+      l.laxStr(this.innerHTML) +
+      `</` + tag + `>`
+    )
+  }
 
   foldInnerHTML(acc, val) {
     if (l.isNil(val)) return acc
@@ -521,7 +531,7 @@ export class Element extends Textable {
 
   isVoid() {return p.VOID.has(this.localName)}
 
-  tagString() {return this.localName}
+  tagString() {return l.laxStr(this.localName)}
 
   attrString() {return l.laxStr(this[attributesKey]?.toString())}
 
@@ -534,16 +544,19 @@ export class Element extends Textable {
   }
 
   attrXmlns() {
-    const ns = this[namespaceURIKey]
-    if (!ns || this[attributesKey]?.has(`xmlns`)) return ``
+    if (this[attributesKey]?.has(`xmlns`)) return ``
 
-    const docNs = this[ownerDocumentKey]?.namespaceURI
-    if (
-      docNs === ns ||
-      (docNs === p.nsHtml && ns === p.nsSvg && this.localName === `svg`)
-    ) return ``
+    const chiNs = this[namespaceURIKey]
+    if (!chiNs) return ``
 
-    return NamedNodeMap.attr(`xmlns`, ns)
+    const doc = this[ownerDocumentKey]
+    if (isHtmlDoc(doc)) return ``
+
+    const parNs = l.get(this.parentNode, `namespaceURI`)
+    if (parNs && parNs !== chiNs) return NamedNodeMap.attr(`xmlns`, chiNs)
+
+    if (outerHtmlDyn.get() !== this) return ``
+    return NamedNodeMap.attr(`xmlns`, chiNs)
   }
 }
 
@@ -551,14 +564,14 @@ export class HTMLElement extends Element {
   get namespaceURI() {return super.namespaceURI || p.nsHtml}
   set namespaceURI(val) {super.namespaceURI = val}
 
-  get outerHTML() {
+  outerHtml() {
     if (this.isVoid()) {
       if (this.innerHTML) {
         throw Error(`unexpected innerHTML in void element ${this.localName}`)
       }
       return `<` + this.tagString() + this.attrPrefix() + this.attrString() + ` />`
     }
-    return super.outerHTML
+    return super.outerHtml()
   }
 }
 
@@ -666,10 +679,10 @@ export class Document extends Node {
   get nodeType() {return Node.DOCUMENT_NODE}
   get nodeName() {return `#document`}
 
-  get childNodes() {return [this.doctype, this.documentElement].filter(l.id)}
-
   get implementation() {return this[implementationKey]}
   set implementation(val) {this[implementationKey] = optDomImpl(val)}
+
+  get childNodes() {return [this.doctype, this.documentElement].filter(l.id)}
 
   get doctype() {return norm(this[doctypeKey])}
 
@@ -730,9 +743,7 @@ export class Document extends Node {
     return tar
   }
 
-  createElementNS(ns, localName, opt) {
-    if (ns === p.nsHtml) return this.createElement(localName, opt)
-
+  createElementNS(ns, localName) {
     l.reqStr(ns)
     l.reqStr(localName)
 
@@ -742,7 +753,7 @@ export class Document extends Node {
     const tar = new cls()
     tar.owned(this)
     tar.localName = localName
-    if (ns !== this.namespaceURI) tar.namespaceURI = ns
+    tar.namespaceURI = ns
     return tar
   }
 
@@ -750,7 +761,24 @@ export class Document extends Node {
 
   get customElements() {return this.implementation.customElements}
   titleNode() {return norm(this.head?.childNodes?.find(isTitle))}
-  baseClassByTag(tag) {return this.implementation.baseClassByTag(tag)}
+  baseClassByTag() {return Element}
+}
+
+export class HTMLDocument extends Document {
+  createElement(localName, opt) {
+    const tar = super.createElement(localName, opt)
+    tar.namespaceURI = p.nsHtml
+    return tar
+  }
+
+  createElementNS(ns, localName, opt) {
+    if (ns === p.nsHtml) return this.createElement(localName, opt)
+    return super.createElementNS(ns, localName, opt)
+  }
+
+  baseClassByTag(tag) {
+    return glob[l.reqStr(dr.TagToCls.main.get(tag) || `HTMLElement`)]
+  }
 }
 
 export class DOMImplementation extends l.Emp {
@@ -758,18 +786,20 @@ export class DOMImplementation extends l.Emp {
 
   createDocumentType(...val) {return new DocumentType(...val)}
 
-  createDocument(ns, name, typ) {
-    const doc = this.Document()
+  // Browser implementations appear to ignore the namespace.
+  createDocument(_ns, name, typ) {
+    const doc = new this.Document()
     doc.implementation = this
-    doc.namespaceURI = ns
     if (optDocumentType(typ)) doc.doctype = typ
     if (l.laxStr(name)) doc.documentElement = doc.createElement(name)
     return doc
   }
 
   createHTMLDocument(title) {
-    const typ = this.createDocumentType(`html`, ``, ``)
-    const doc = this.createDocument(p.nsHtml, `html`, typ)
+    const doc = new this.HTMLDocument()
+    doc.implementation = this
+    doc.doctype = this.createDocumentType(`html`, ``, ``)
+    doc.documentElement = doc.createElement(`html`)
     doc.documentElement.appendChild(doc.createElement(`head`))
     doc.documentElement.appendChild(doc.createElement(`body`))
     if (l.isSome(title)) doc.title = title
@@ -778,13 +808,9 @@ export class DOMImplementation extends l.Emp {
 
   /* Non-standard extensions. */
 
-  Document(...val) {return new Document(...val)}
-
+  get Document() {return Document}
+  get HTMLDocument() {return HTMLDocument}
   get customElements() {return dr.CustomElementRegistry.main}
-
-  baseClassByTag(tag) {
-    return glob[l.reqStr(dr.TagToCls.main.get(tag) || `HTMLElement`)]
-  }
 }
 
 /* Non-standard classes */
@@ -1083,6 +1109,8 @@ export const dataToCamelCache = new class DataKeys extends o.Cache {
   make(val) {return dataToCamel(val)}
 }()
 
+export const outerHtmlDyn = new o.Dyn()
+
 /* Internal */
 
 function head(val) {return val?.[0]}
@@ -1151,3 +1179,9 @@ function indexOf(src, val) {
   while (++ind < len) if (l.is(src[ind], val)) return ind
   return -1
 }
+
+/*
+Questionable, TODO improve. Unable to use `.namespaceURI` because the `Document`
+interface doesn't implement this, or expose the namespace in any other way.
+*/
+function isHtmlDoc(doc) {return l.isInst(doc, HTMLDocument)}

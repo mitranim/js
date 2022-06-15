@@ -12,7 +12,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.29/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/obj.mjs'
 ```
 
 ## API
@@ -152,10 +152,11 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
   * [`class Cache`](../obj.mjs#L189)
   * [`class WeakCache`](../obj.mjs#L197)
   * [`class MakerPh`](../obj.mjs#L206)
-  * [`function mixin`](../obj.mjs#L212)
-  * [`function pub`](../obj.mjs#L225)
-  * [`function priv`](../obj.mjs#L235)
-  * [`function final`](../obj.mjs#L245)
-  * [`function getter`](../obj.mjs#L255)
-  * [`function setter`](../obj.mjs#L257)
-  * [`function getSet`](../obj.mjs#L259)
+  * [`class Dyn`](../obj.mjs#L216)
+  * [`function mixin`](../obj.mjs#L224)
+  * [`function pub`](../obj.mjs#L237)
+  * [`function priv`](../obj.mjs#L247)
+  * [`function final`](../obj.mjs#L257)
+  * [`function getter`](../obj.mjs#L267)
+  * [`function setter`](../obj.mjs#L269)
+  * [`function getSet`](../obj.mjs#L271)

@@ -209,6 +209,18 @@ export class MakerPh extends l.Emp {
   static new(...val) {return new Proxy(l.npo(), new this(...val))}
 }
 
+/*
+Short for "dynamic". Represents a dynamically scoped variable, as opposed to
+regular lexically scoped variables.
+*/
+export class Dyn extends l.Emp {
+  constructor($) {super().$ = $}
+  has() {return l.isSome(this.$)}
+  get() {return this.$}
+  set($) {this.$ = $}
+  swap($) {try {return this.$} finally {this.$ = $}}
+}
+
 export function mixin(tar, src) {
   const pro = l.reqCls(tar).prototype
   src = l.reqCls(src).prototype

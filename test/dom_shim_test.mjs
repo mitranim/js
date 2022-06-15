@@ -620,7 +620,7 @@ t.test(function test_Element_namespaceURI() {
   t.is(tar.namespaceURI, null)
 
   tar.ownerDocument = ds.document
-  t.is(tar.namespaceURI, `http://www.w3.org/1999/xhtml`)
+  t.is(tar.namespaceURI, null)
 
   tar.namespaceURI = p.nsSvg
   t.is(tar.namespaceURI, `http://www.w3.org/2000/svg`)
@@ -1333,6 +1333,176 @@ t.test(function test_Element_outerHTML() {
 
   tar.append(` `, inner)
   eqm(tar, `<span id="one" style="two: three; four: five;" class="six" data-seven="eight" hidden="">nine <ten class="eleven">twelve</ten></span>`)
+})
+
+t.test(function test_xmlns_standalone() {
+  const tar = new ds.Element()
+  testNsExisting(tar)
+})
+
+t.test(function test_xmlns_inside_Document() {
+  const tar = new ds.Element()
+  tar.ownerDocument = ds.dom.createDocument(p.nsHtml, null, null)
+  testNsExisting(tar)
+})
+
+t.test(function test_xmlns_inside_HTMLDocument() {
+  const tar = new ds.Element()
+
+  tar.ownerDocument = ds.document
+  testNsMissing(tar)
+
+  tar.ownerDocument = ds.dom.createHTMLDocument()
+  testNsMissing(tar)
+})
+
+function testNsExisting(tar) {
+  tar.localName = `one`
+
+  tar.namespaceURI = p.nsHtml
+  eqm(tar, `<one xmlns="http://www.w3.org/1999/xhtml"></one>`)
+
+  tar.namespaceURI = p.nsSvg
+  eqm(tar, `<one xmlns="http://www.w3.org/2000/svg"></one>`)
+
+  tar.namespaceURI = p.nsMathMl
+  eqm(tar, `<one xmlns="http://www.w3.org/1998/Math/MathML"></one>`)
+}
+
+function testNsMissing(tar) {
+  tar.localName = `one`
+
+  tar.namespaceURI = p.nsHtml
+  eqm(tar, `<one></one>`)
+
+  tar.namespaceURI = p.nsSvg
+  eqm(tar, `<one></one>`)
+
+  tar.namespaceURI = p.nsMathMl
+  eqm(tar, `<one></one>`)
+}
+
+t.test(function test_xmlns_inside_parent() {
+  const par = new ds.Element()
+  par.localName = `parent`
+
+  const chi = new ds.Element()
+  chi.localName = `child`
+
+  par.appendChild(chi)
+
+  par.namespaceURI = p.nsHtml
+  chi.namespaceURI = p.nsHtml
+  eqm(par, `<parent xmlns="http://www.w3.org/1999/xhtml"><child></child></parent>`)
+
+  par.namespaceURI = p.nsHtml
+  chi.namespaceURI = p.nsSvg
+  eqm(par, `<parent xmlns="http://www.w3.org/1999/xhtml"><child xmlns="http://www.w3.org/2000/svg"></child></parent>`)
+
+  par.namespaceURI = p.nsSvg
+  chi.namespaceURI = p.nsHtml
+  eqm(par, `<parent xmlns="http://www.w3.org/2000/svg"><child xmlns="http://www.w3.org/1999/xhtml"></child></parent>`)
+
+  par.namespaceURI = p.nsSvg
+  chi.namespaceURI = p.nsSvg
+  eqm(par, `<parent xmlns="http://www.w3.org/2000/svg"><child></child></parent>`)
+})
+
+/*
+At the time of writing, this insanity matches browser implementations.
+
+XML namespaces ARE part of the DOM standard. Non-HTML elements ARE frequently
+embedded in HTML elements. However, HTML documents, as opposed to XML
+documents, DO NOT support explicit namespacing. When serializing elements that
+belong to an HTML document, the `xmlns` attribute is NOT automatically
+generated. When parsing an HTML document, the `xmlns` attribute is IGNORED.
+Namespaces are supported only through special-cased tags such as `svg`.
+*/
+t.test(function test_xmlns_svg_inside_html_inside_HTMLDocument() {
+  const one = ds.document.createElement(`one`)
+  const two = ds.document.createElementNS(p.nsSvg, `two`)
+  const three = ds.document.createElementNS(p.nsSvg, `three`)
+  const four = ds.document.createElementNS(p.nsHtml, `four`)
+
+  one.appendChild(two)
+  two.appendChild(three)
+  three.appendChild(four)
+
+  eqm(one, `<one><two><three><four></four></three></two></one>`)
+})
+
+t.test(function test_xmlns_several_layers() {
+  const doc = ds.dom.createDocument(p.nsHtml, null, null)
+
+  const one = doc.createElementNS(p.nsHtml, `one`)
+  const two = doc.createElementNS(p.nsHtml, `two`)
+  const three = doc.createElementNS(p.nsSvg, `three`)
+  const four = doc.createElementNS(p.nsSvg, `four`)
+  const five = doc.createElementNS(p.nsHtml, `five`)
+  const six = doc.createElementNS(p.nsHtml, `six`)
+
+  t.is(one.namespaceURI, p.nsHtml)
+  t.is(two.namespaceURI, p.nsHtml)
+  t.is(three.namespaceURI, p.nsSvg)
+  t.is(four.namespaceURI, p.nsSvg)
+  t.is(five.namespaceURI, p.nsHtml)
+  t.is(six.namespaceURI, p.nsHtml)
+
+  eqm(one, `<one xmlns="http://www.w3.org/1999/xhtml"></one>`)
+  eqm(two, `<two xmlns="http://www.w3.org/1999/xhtml"></two>`)
+  eqm(three, `<three xmlns="http://www.w3.org/2000/svg"></three>`)
+  eqm(four, `<four xmlns="http://www.w3.org/2000/svg"></four>`)
+  eqm(five, `<five xmlns="http://www.w3.org/1999/xhtml"></five>`)
+  eqm(six, `<six xmlns="http://www.w3.org/1999/xhtml"></six>`)
+
+  one.appendChild(two)
+  two.appendChild(three)
+  three.appendChild(four)
+  four.appendChild(five)
+  five.appendChild(six)
+
+  eqm(one, `<one xmlns="http://www.w3.org/1999/xhtml"><two><three xmlns="http://www.w3.org/2000/svg"><four><five xmlns="http://www.w3.org/1999/xhtml"><six></six></five></four></three></two></one>`)
+  eqm(two, `<two xmlns="http://www.w3.org/1999/xhtml"><three xmlns="http://www.w3.org/2000/svg"><four><five xmlns="http://www.w3.org/1999/xhtml"><six></six></five></four></three></two>`)
+  eqm(three, `<three xmlns="http://www.w3.org/2000/svg"><four><five xmlns="http://www.w3.org/1999/xhtml"><six></six></five></four></three>`)
+  eqm(four, `<four xmlns="http://www.w3.org/2000/svg"><five xmlns="http://www.w3.org/1999/xhtml"><six></six></five></four>`)
+  eqm(five, `<five xmlns="http://www.w3.org/1999/xhtml"><six></six></five>`)
+  eqm(six, `<six xmlns="http://www.w3.org/1999/xhtml"></six>`)
+})
+
+/*
+See the comment on `test_xmlns_svg_inside_html_inside_HTMLDocument` for the
+explanation why `xmlns` is not rendered here.
+*/
+t.test(function test_xmlns_several_layers_inside_HTMLDocument() {
+  const doc = ds.document
+  const one = doc.createElementNS(p.nsHtml, `one`)
+  const two = doc.createElementNS(p.nsHtml, `two`)
+  const three = doc.createElementNS(p.nsSvg, `three`)
+  const four = doc.createElementNS(p.nsSvg, `four`)
+  const five = doc.createElementNS(p.nsHtml, `five`)
+  const six = doc.createElementNS(p.nsHtml, `six`)
+
+  t.is(one.namespaceURI, p.nsHtml)
+  t.is(two.namespaceURI, p.nsHtml)
+  t.is(three.namespaceURI, p.nsSvg)
+  t.is(four.namespaceURI, p.nsSvg)
+  t.is(five.namespaceURI, p.nsHtml)
+  t.is(six.namespaceURI, p.nsHtml)
+
+  eqm(one, `<one></one>`)
+  eqm(two, `<two></two>`)
+  eqm(three, `<three></three>`)
+  eqm(four, `<four></four>`)
+  eqm(five, `<five></five>`)
+  eqm(six, `<six></six>`)
+
+  one.appendChild(two)
+  two.appendChild(three)
+  three.appendChild(four)
+  four.appendChild(five)
+  five.appendChild(six)
+
+  eqm(one, `<one><two><three><four><five><six></six></five></four></three></two></one>`)
 })
 
 t.test(function test_HTMLAnchorElement() {

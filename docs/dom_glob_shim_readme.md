@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.29/dom_glob_shim.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/dom_glob_shim.mjs'
 
 console.log(dg.document)
 console.log(dg.glob)

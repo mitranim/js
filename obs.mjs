@@ -50,28 +50,22 @@ export class De extends StaticProxied {get ph() {return DeinitPh.main}}
 export class Obs extends Proxied {get Ph() {return ObsPh}}
 export class DeObs extends Proxied {get Ph() {return DeObsPh}}
 
-export const ctx = new class Ctx extends l.Emp {
-  constructor() {super().subber = undefined}
-
+export const dyn = new class Dyn extends o.Dyn {
   sub(obs) {
-    const val = this.subber
+    const val = this.$
     if (l.isFun(val)) val(obs)
     else if (isSubber(val)) val.subTo(obs)
   }
 
-  swap(next) {
-    const prev = this.subber
-    this.subber = next
-    return prev
-  }
-
   inert(fun, ...val) {
-    const sub = this.subber
-    this.subber = undefined
+    const prev = this.swap()
     try {return fun(...val)}
-    finally {this.subber = sub}
+    finally {this.swap(prev)}
   }
 }()
+
+// For backwards compatibility, for now.
+export const ctx = dyn
 
 /*
 Extremely simple scheduler for our observables. Provides reentrant pause/resume
@@ -140,16 +134,16 @@ export class ImpObs extends Set {
 
 /*
 Name is short for "reactive" or "recurring", because it's both. Base class for
-implementing automatic subscriptions. Invoking `.run` sets up context via `ctx`
+implementing automatic subscriptions. Invoking `.run` sets up context via `dyn`
 and calls `.onRun`. During the call, observables may find the `Rec` instance in
-`ctx` and register themselves for future triggers. The link is two-way;
+`dyn` and register themselves for future triggers. The link is two-way;
 observables must refer to `Rec` to trigger it, and `Rec` must refer to
 observables to unsubscribe when deinited. Rerunning `.run` clears previous
 observables.
 
 This is half of our "invisible magic" for automatic subscriptions. The other
 half is proxy handlers such as `ObsPh`, which trap property access such as
-`someObs.someField` and secretly use `ctx` to find the current "subber" such as
+`someObs.someField` and secretly use `dyn` to find the current "subber" such as
 `Rec` and establish subscriptions.
 
 `Rec` itself has a nop run. See subclasses.
@@ -167,7 +161,7 @@ export class Rec extends Set {
     if (this.act) throw Error(`unexpected overlapping rec.run`)
 
     const sch = Sched.main
-    const subber = ctx.swap(this)
+    const subber = dyn.swap(this)
 
     // The try pyramid demonstrates the need for Swift-like `defer`.
     try {
@@ -186,7 +180,7 @@ export class Rec extends Set {
       }
       finally {this.act = false}
     }
-    finally {ctx.swap(subber)}
+    finally {dyn.swap(subber)}
   }
 
   trig() {}
@@ -308,7 +302,7 @@ export class ObsPh extends Ph {
   }
 
   getIn(tar, key) {
-    if (!hasPriv(tar, key)) ctx.sub(this.obs)
+    if (!hasPriv(tar, key)) dyn.sub(this.obs)
     return tar[key]
   }
 
