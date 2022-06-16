@@ -121,7 +121,7 @@ u.url(`/api`).addPath(`msgs`, 123, `get`).toString()
 Example query dict support:
 
 ```js
-u.url(`/profile`).mutQuery({action: `edit`}).toString()
+u.url(`/profile`).queryMut({action: `edit`}).toString()
 // `'/profile?action=edit'
 ```
 

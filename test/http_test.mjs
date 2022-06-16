@@ -970,6 +970,23 @@ t.test(function test_Cookie() {
       ],
     )
   })
+
+  t.test(function test_new() {
+    t.eq(
+      h.Cookie.new(),
+      new h.Cookie().setPath(`/`),
+    )
+
+    t.eq(
+      h.Cookie.new(`one`),
+      new h.Cookie().setName(`one`).setPath(`/`),
+    )
+
+    t.eq(
+      h.Cookie.new(`one`, `two`),
+      new h.Cookie().setName(`one`).setValue(`two`).setPath(`/`),
+    )
+  })
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

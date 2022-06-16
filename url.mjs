@@ -180,7 +180,6 @@ export class Url extends l.Emp {
   setSearch(val) {return this.search = val, this}
   setSearchParams(val) {return this.searchParams = val, this}
   setQuery(val) {return this.query = val, this}
-  mutQuery(val) {return this.query.mut(val), this}
   setHash(val) {return this.hash = val, this}
   setHashExact(val) {return this[hashKey] = toHash(val), this}
   setProtocol(val) {return this.protocol = val, this}
@@ -248,6 +247,9 @@ export class Url extends l.Emp {
     this[pathnameKey] = s.inter(this[pathnameKey], `/`, l.renderLax(seg))
     return this
   }
+
+  queryMut(val) {return this.query.mut(val), this}
+  querySet(key, val) {return this.query.set(key, val), this}
 
   // TODO: consider supporting `window.Location` for better performance.
   // Benchmark first. Avoid code bloat.

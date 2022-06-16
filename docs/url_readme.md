@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.31/url.mjs'
 ```
 
 Example parsing:
@@ -128,7 +128,7 @@ u.url(`/api`).addPath(`msgs`, 123, `get`).toString()
 Example query dict support:
 
 ```js
-u.url(`/profile`).mutQuery({action: `edit`}).toString()
+u.url(`/profile`).queryMut({action: `edit`}).toString()
 // `'/profile?action=edit'
 ```
 
@@ -443,20 +443,20 @@ The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
   * [`const RE_ORIGIN`](../url.mjs#L19)
   * [`const RE_PATHNAME`](../url.mjs#L20)
   * [`const RE_HASH`](../url.mjs#L21)
-  * [`function loc`](../url.mjs#L328)
-  * [`function toLoc`](../url.mjs#L329)
-  * [`class Loc`](../url.mjs#L339)
-  * [`const stateKey`](../url.mjs#L392)
-  * [`const titleKey`](../url.mjs#L393)
-  * [`const schemeKey`](../url.mjs#L395)
-  * [`const slashKey`](../url.mjs#L396)
-  * [`const usernameKey`](../url.mjs#L397)
-  * [`const passwordKey`](../url.mjs#L398)
-  * [`const hostnameKey`](../url.mjs#L399)
-  * [`const portKey`](../url.mjs#L400)
-  * [`const pathnameKey`](../url.mjs#L401)
-  * [`const queryKey`](../url.mjs#L402)
-  * [`const hashKey`](../url.mjs#L403)
-  * [`function urlParse`](../url.mjs#L405)
-  * [`function queryDec`](../url.mjs#L471)
-  * [`function queryEnc`](../url.mjs#L477)
+  * [`function loc`](../url.mjs#L330)
+  * [`function toLoc`](../url.mjs#L331)
+  * [`class Loc`](../url.mjs#L341)
+  * [`const stateKey`](../url.mjs#L394)
+  * [`const titleKey`](../url.mjs#L395)
+  * [`const schemeKey`](../url.mjs#L397)
+  * [`const slashKey`](../url.mjs#L398)
+  * [`const usernameKey`](../url.mjs#L399)
+  * [`const passwordKey`](../url.mjs#L400)
+  * [`const hostnameKey`](../url.mjs#L401)
+  * [`const portKey`](../url.mjs#L402)
+  * [`const pathnameKey`](../url.mjs#L403)
+  * [`const queryKey`](../url.mjs#L404)
+  * [`const hashKey`](../url.mjs#L405)
+  * [`function urlParse`](../url.mjs#L407)
+  * [`function queryDec`](../url.mjs#L473)
+  * [`function queryEnc`](../url.mjs#L479)

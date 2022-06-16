@@ -46,28 +46,28 @@ export function lenUni(val) {
   return out
 }
 
-export function ell(val, len) {return trunc(val, len, `…`)}
+export function ell(src, len) {return trunc(src, len, `…`)}
 
-export function trunc(val, len, suf) {
-  val = l.laxStr(val)
-  l.reqNat(len)
-  l.reqStr(suf)
+export function trunc(src, len, suf) {
+  src = l.laxStr(src)
+  len = l.reqNat(len)
+  suf = l.laxStr(suf)
 
   if (!len) return ``
-  if (val.length <= len) return val
+  if (src.length <= len) return src
 
   let chars = 0
   let prev = 0
   let ind = 0
 
-  for (const char of val) {
-    if ((chars + 1) > len) return val.slice(0, ind - prev) + suf
+  for (const char of src) {
+    if ((chars + 1) > len) return src.slice(0, ind - prev) + suf
     chars++
     prev = char.length
     ind += prev
   }
 
-  return val
+  return src
 }
 
 export function trim(val) {return l.laxStr(val).trim()}

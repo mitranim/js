@@ -20,11 +20,13 @@ export function isParentNode(val) {return l.hasIn(val, `childNodes`)}
 export function reqParentNode(val) {return l.req(val, isParentNode)}
 export function optParentNode(val) {return l.opt(val, isParentNode)}
 
-export function isNode(val) {return typeof Node === `function` && l.isInst(val, Node)}
+// See `dom_shim.mjs` → `Node`.
+export function isNode(val) {return l.hasIn(val, `nodeType`)}
 export function reqNode(val) {return l.req(val, isNode)}
 export function optNode(val) {return l.opt(val, isNode)}
 
-export function isElement(val) {return typeof Element === `function` && l.isInst(val, Element)}
+// See `dom_shim.mjs` → `Node.ELEMENT_NODE`.
+export function isElement(val) {return isNode(val) && val.nodeType === 1}
 export function reqElement(val) {return l.req(val, isElement)}
 export function optElement(val) {return l.opt(val, isElement)}
 

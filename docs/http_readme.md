@@ -32,7 +32,7 @@ HTTP request/response utils are ported and reworked from https://github.com/mitr
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.31/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -234,8 +234,8 @@ rou.groups // {key: `path`}
 Routing is imperative:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/http.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/lang.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.31/http.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.31/lang.mjs'
 
 const nextPage = route(window.location)
 
@@ -263,7 +263,7 @@ Short for "request router" or "request-response router". Advanced version of [#`
 Routing can be shared between SSR and SPA:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.31/http.mjs'
 
 function route(rou) {
   l.reqInst(rou, h.ReqRou)
@@ -364,9 +364,9 @@ The following APIs are exported but undocumented. Check [http.mjs](../http.mjs).
   * [`function cookieSplitPair`](../http.mjs#L483)
   * [`function cook`](../http.mjs#L496)
   * [`class Cookie`](../http.mjs#L498)
-  * [`function reqBody`](../http.mjs#L626)
-  * [`function optBody`](../http.mjs#L627)
-  * [`const bodyFuns`](../http.mjs#L628)
+  * [`function reqBody`](../http.mjs#L628)
+  * [`function optBody`](../http.mjs#L629)
+  * [`const bodyFuns`](../http.mjs#L630)
 
 
 ## Misc

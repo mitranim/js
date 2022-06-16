@@ -677,11 +677,21 @@ t.test(function test_Url() {
     test(`?one=two`, u.query(`three=four`), `?three=four`)
   })
 
-  t.test(function test_mutQuery() {
-    function test(src, val, exp) {testStr(u.url(src).mutQuery(val), exp)}
+  t.test(function test_queryMut() {
+    function test(src, val, exp) {testStr(u.url(src).queryMut(val), exp)}
 
     test(``, u.query(`key=val`), `?key=val`)
     test(`?one=two`, u.query(`three=four`), `?one=two&three=four`)
+  })
+
+  t.test(function test_querySet() {
+    function test(src, key, val, exp) {
+      testStr(u.url(src).querySet(key, val), exp)
+    }
+
+    test(``, `one`, `two`, `?one=two`)
+    test(`?one=two`, `three`, `four`, `?one=two&three=four`)
+    test(`/one?two=three`, `four`, `five`, `/one?two=three&four=five`)
   })
 
   t.test(function test_hash() {

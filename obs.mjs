@@ -64,9 +64,6 @@ export const dyn = new class Dyn extends o.Dyn {
   }
 }()
 
-// For backwards compatibility, for now.
-export const ctx = dyn
-
 /*
 Extremely simple scheduler for our observables. Provides reentrant pause/resume
 and batch flushing. Note that even in the "unpaused" state, the scheduler

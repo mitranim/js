@@ -321,14 +321,17 @@ export class Ren extends l.Emp {
   }
 
   /*
-  Patches the prototype of the given class, adding methods from `MixRen`,
-  connected to the current renderer.
+  Patches the given class, connecting it to the current renderer and adding
+  methods from the mixin class `.MixRenCache`. Subclasses may override the
+  mixin class.
   */
   patchProto(cls) {
-    o.mixin(cls, MixRen(l.Emp))
+    o.mixin(cls, this.MixRenCache.main.goc(l.Emp))
     cls.ren = this
     return this
   }
+
+  get MixRenCache() {return MixRenCache}
 
   static native() {
     return new this(globalThis.document).patchProto(globalThis.Element)
@@ -351,8 +354,6 @@ export class RenHtmlPh extends o.BlankPh {
 export class RenSvgPh extends o.BlankPh {
   get(ren, key) {return ren.makeSvg(key)}
 }
-
-export function MixRen(val) {return MixRenCache.main.goc(val)}
 
 export class MixRenCache extends o.WeakCache {
   make(cls) {

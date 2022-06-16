@@ -17,9 +17,9 @@ Optionally combine with [`dom_reg`](dom_reg_readme.md) for automatic registratio
 `MixReac` is a "mixin" that adds reactivity to the class:
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/obs.mjs'
-import * as od from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/obs_dom.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.30/dom_reg.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.31/obs.mjs'
+import * as od from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.31/obs_dom.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.31/dom_reg.mjs'
 
 const obs = o.obs({msg: `hello!`})
 

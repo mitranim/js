@@ -597,9 +597,11 @@ export class Cookie extends l.Emp {
     return buf
   }
 
-  static set(key, val) {
-    new this().setName(key).setValue(val).setPath(`/`).install()
+  static new(key, val) {
+    return new this().setName(key).setValue(val).setPath(`/`)
   }
+
+  static set(key, val) {return this.new(key, val).install()}
 
   static del(key) {
     reqCookieName(key)
