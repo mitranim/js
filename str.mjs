@@ -3,6 +3,12 @@
 import * as l from './lang.mjs'
 import * as co from './coll.mjs'
 
+/*
+TODO try the following regex. May require a different split algo.
+See `github.com/mitranim/gg/str.go`.
+
+  `\p{Lu}\p{Ll}+\d*|\p{Lu}+\d*|\p{Ll}+\d*`
+*/
 export const RE_WORD = /[\p{Lu}\d]+(?=\W|_|$)|[\p{Lu}\d]+(?=\p{Lu}\p{Ll}|\W|_|$)|\p{Lu}[\p{Ll}\d]*(?=\p{Lu}|\W|_|$)|[\p{Ll}\d]+(?=\p{Lu}|\W|_|$)|[\p{Lu}\d]+(?=\p{Ll}|\W|_|$)|[\p{L}\d]+(?=\W|_|$)/gu
 export const RE_EMBED = /{{([^{}]*)}}/g
 
@@ -165,9 +171,7 @@ Features:
   * Support for arbitrary iterators.
   * Parsing of bool and numeric values.
 */
-export class StrMap extends Map {
-  constructor(val) {super().mut(val)}
-
+export class StrMap extends co.Bmap {
   has(key) {return super.has(l.reqStr(key))}
   get(key) {return this.has(key) ? super.get(key)[0] : undefined}
   getAll(key) {return super.get(l.reqStr(key))}
@@ -198,8 +202,6 @@ export class StrMap extends Map {
 
   delete(key) {return super.delete(l.reqStr(key))}
 
-  clear() {return (super.size && super.clear()), this}
-
   reset(val) {
     if (l.isInst(val, StrMap)) return this.resetFromStrMap(val)
     return this.clear().mut(val)
@@ -212,16 +214,8 @@ export class StrMap extends Map {
     return this
   }
 
-  mut(val) {
-    if (l.isNil(val)) return this
-    if (l.isIter(val)) return this.mutFromIter(val)
-    if (l.isStruct(val)) return this.mutFromStruct(val)
-    throw l.errInst(val, this)
-  }
-
   mutFromIter(src) {
-    l.reqIter(src)
-    for (const [key, val] of src) this.appendAny(key, val)
+    for (const [key, val] of l.reqIter(src)) this.appendAny(key, val)
     return this
   }
 
@@ -236,11 +230,7 @@ export class StrMap extends Map {
     return out
   }
 
-  toDictAll() {
-    const out = l.npo()
-    for (const [key, val] of this.entries()) out[key] = val
-    return out
-  }
+  toDictAll() {return super.toDict()}
 
   boolOpt(key) {return boolOpt(this.get(key))}
   bool(key) {return bool(this.get(key))}

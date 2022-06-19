@@ -55,7 +55,7 @@ export class Bmap extends Map {
   }
 
   reset(src) {return this.clear(), this.mut(src)}
-
+  clear() {return (super.size && super.clear()), this}
   clone() {return new this.constructor(this)}
 
   toDict() {

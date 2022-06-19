@@ -30,4 +30,37 @@ t.test(function test_DirRelFil() {
   t.is(dir.urlPathToFsPath(`/scripts/../one`), undefined)
 })
 
+t.test(function test_ContentTypeMap() {
+  t.throws(() => hd.ContentTypeMap.main.guess(), TypeError, `unable to convert undefined to string`)
+  t.throws(() => hd.ContentTypeMap.main.guess(10), TypeError, `unable to convert 10 to string`)
+  t.throws(() => hd.ContentTypeMap.main.guess({}), TypeError, `unable to convert {} to string`)
+  t.throws(() => hd.ContentTypeMap.main.guess([]), TypeError, `unable to convert [] to string`)
+
+  function test(src, exp) {
+    t.is(hd.ContentTypeMap.main.guess(src), exp)
+  }
+
+  test(``, undefined)
+
+  test(`css`, undefined)
+  test(`.css`, undefined)
+  test(`one.css`, `text/css`)
+  test(`one two.css`, `text/css`)
+  test(`one/two.css`, `text/css`)
+  test(`one/two three.css`, `text/css`)
+  test(`one two/three.css`, `text/css`)
+
+  test(`html`, undefined)
+  test(`.html`, undefined)
+  test(`one.html`, `text/html`)
+  test(`one two.html`, `text/html`)
+  test(`one/two.html`, `text/html`)
+  test(`one/two three.html`, `text/html`)
+  test(`one two/three.html`, `text/html`)
+
+  test(`wtf`, undefined)
+  test(`.wtf`, undefined)
+  test(`one.wtf`, undefined)
+})
+
 if (import.meta.main) console.log(`[test] ok!`)

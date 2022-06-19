@@ -547,6 +547,9 @@ t.test(function test_Url() {
     t.throws(() => u.url().pathname = `#`, SyntaxError, `unable to convert "#" to pathname`)
     t.throws(() => u.url().pathname = `one?two`, SyntaxError, `unable to convert "one?two" to pathname`)
     t.throws(() => u.url().pathname = `one#two`, SyntaxError, `unable to convert "one#two" to pathname`)
+
+    // Known inconsistency with `URL`, which supports idempotent transcoding
+    // from non-URL-safe to URL-safe. We only allow URL-safe inputs here.
     t.throws(() => u.url().pathname = `one two`, SyntaxError, `unable to convert "one two" to pathname`)
 
     function test(src, exp) {t.is(u.url(src).pathname, exp)}
@@ -926,7 +929,7 @@ t.test(function test_Url() {
 
   t.test(function test_href() {
     t.throws(() => u.url().href = 10, TypeError, `unable to convert 10 to Url`)
-    t.throws(() => u.url().href = `one two`, SyntaxError, `unable to convert "one two" to URL`)
+    t.throws(() => u.url().href = `one two`, SyntaxError, `unable to convert "one two" to url`)
 
     function test(src, exp) {t.is(u.url(src).href, exp)}
     function same(src) {test(src, src)}
@@ -959,7 +962,7 @@ t.test(function test_Url() {
 
   t.test(function test_setHref() {
     t.throws(() => u.url().setHref(10), TypeError, `unable to convert 10 to Url`)
-    t.throws(() => u.url().setHref(`one two`), SyntaxError, `unable to convert "one two" to URL`)
+    t.throws(() => u.url().setHref(`one two`), SyntaxError, `unable to convert "one two" to url`)
 
     function test(src, val, exp) {testStr(u.url(src).setHref(val), exp)}
 

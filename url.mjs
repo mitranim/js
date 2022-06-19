@@ -404,7 +404,7 @@ export const pathnameKey = Symbol.for(`pathname`)
 export const queryKey = Symbol.for(`query`)
 export const hashKey = Symbol.for(`hash`)
 
-export function urlParse(val) {return reqGroups(val, RE_URL, `URL`)}
+export function urlParse(val) {return reqGroups(val, RE_URL, `url`)}
 
 // TODO consider moving to `str.mjs`. Might rename.
 function reqGroups(val, reg, msg) {

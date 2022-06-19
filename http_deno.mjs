@@ -9,7 +9,7 @@ import * as io from './io_deno.mjs'
 import * as p from './path.mjs'
 
 export class ContentTypeMap extends o.MixMain(Map) {
-  guess(val) {return this.get(p.posix.ext(toPathname(val)))}
+  guess(val) {return this.get(p.posix.ext(val))}
 
   static get default() {
     return new this()
@@ -213,6 +213,7 @@ export class HttpFileStream extends io.FileStream {
   get Res() {return Response}
 }
 
+// TODO ability to store multiple listeners.
 export class Srv extends l.Emp {
   lis = undefined
 
