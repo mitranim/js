@@ -39,7 +39,7 @@ const FEATS = [
   [`test`, `tools for testing and benchmarking.`],
 ]
 
-class Pkg extends o.MemGet {
+class Pkg extends o.Strict {
   constructor(feats) {
     super()
     this.feats = new co.Coll()
@@ -48,6 +48,7 @@ class Pkg extends o.MemGet {
     }
   }
 
+  static {o.memGet(this)}
   get base() {return `https://cdn.jsdelivr.net/npm/@mitranim/js`}
   get ver() {return VER}
   get url() {return s.inter(this.base, `@`, this.ver)}
@@ -73,7 +74,7 @@ class Pkg extends o.MemGet {
   featUrl(name) {return this.feat(name).selfUrl}
 }
 
-class Feat extends o.MemGet {
+class Feat extends o.Strict {
   constructor(pkg, name, desc) {
     super()
     this.pkg = l.reqInst(pkg, Pkg)
@@ -83,6 +84,7 @@ class Feat extends o.MemGet {
 
   pk() {return this.name}
 
+  static {o.memGet(this)}
   get codePath() {return s.str(this.name, `.mjs`)}
   get docCodePath() {return u.urlJoin(`..`, this.codePath)}
   get codeHead() {return mdLink(this.codePath, this.docCodePath)}
@@ -216,7 +218,7 @@ ${s.joinLines(i.map(idents, toUndocBullet))}
   featUrl(name) {return this.pkg.featUrl(name)}
 }
 
-class Ident extends o.MemGet {
+class Ident extends o.Strict {
   constructor(feat, line, type, name) {
     super()
     this.feat = l.reqInst(feat, Feat)
@@ -227,6 +229,7 @@ class Ident extends o.MemGet {
 
   pk() {return this.name}
 
+  static {o.memGet(this)}
   get row() {return this.line + 1}
   get testRow() {return this.$testRow()}
   get testLine() {return this.$testLine()}

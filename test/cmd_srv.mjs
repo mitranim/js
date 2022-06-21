@@ -20,11 +20,11 @@ const srv = new class Srv extends hd.Srv {
   async res(req) {
     const rou = new h.ReqRou(req)
 
-    return (
+    return ld.withLiveClient(this.bro.clientPath, await (
       (await this.bro.res(rou)) ||
       (await this.dirs.resolveSiteFileWithNotFound(req.url))?.res() ||
       rou.notFound()
-    )
+    ))
   }
 
   async watch() {

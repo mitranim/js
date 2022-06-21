@@ -28,7 +28,8 @@ export class Bset extends Set {
 
 export class ClsSet extends Bset {
   get cls() {return Object}
-  add(val) {return super.add(l.toInst(val, this.cls))}
+  add(val) {return super.add(this.make(val))}
+  make(val) {return l.toInst(val, this.cls)}
 }
 
 export function bmap(val) {return new Bmap(val)}
@@ -79,7 +80,8 @@ export class Bmap extends Map {
 
 export class ClsMap extends Bmap {
   get cls() {return Object}
-  set(key, val) {super.set(key, l.toInst(val, this.cls))}
+  set(key, val) {super.set(key, this.make(val))}
+  make(val) {return l.toInst(val, this.cls)}
 }
 
 // Short for "primary key optional".
@@ -119,12 +121,13 @@ export class Coll extends Bmap {
 export class ClsColl extends Coll {
   get cls() {return Object}
   set(key, val) {return super.set(key, l.reqInst(val, this.cls))}
-  add(val) {return super.add(l.toInst(val, this.cls))}
-  addOpt(val) {return super.addOpt(l.toInst(val, this.cls))}
+  add(val) {return super.add(this.make(val))}
+  addOpt(val) {return super.addOpt(this.make(val))}
+  make(val) {return l.toInst(val, this.cls)}
 }
 
 export class Vec extends l.Emp {
-  constructor(val) {super().$ = l.laxArr(val)}
+  constructor(val) {super().$ = l.laxTrueArr(val)}
 
   add(val) {return this.$.push(val), this}
 
@@ -142,28 +145,17 @@ export class Vec extends l.Emp {
 
   [Symbol.iterator]() {return this.$.values()}
 
-  static of(...val) {return new this(Array.of(...val))}
-
-  static from(val) {
-    if (l.isNil(val)) return new this()
-    return new this(Array.from(l.reqIter(val)))
-  }
-
   static make(len) {return new this(Array(l.reqNat(len)))}
+  static from(val) {return new this(l.toTrueArr(val))}
+  static of(...val) {return new this(Array.of(...val))}
 }
 
 // Short for "class vector".
 export class ClsVec extends Vec {
-  constructor(val) {
-    super(val)
-    if (!this.$.every(selfIsInst, this)) {
-      this.$ = this.$.map(selfToInst, this)
-    }
-  }
-
-  add(val) {return super.add(l.toInst(val, this.cls))}
-
   get cls() {return Object}
+  constructor(src) {super().addFrom(src)}
+  add(val) {return super.add(this.make(val))}
+  make(val) {return l.toInst(val, this.cls)}
 }
 
 export class Que extends Set {
@@ -188,8 +180,3 @@ export class Que extends Set {
     return this
   }
 }
-
-/* Internal */
-
-function selfIsInst(val) {return l.isInst(val, this.cls)}
-function selfToInst(val) {return l.toInst(val, this.cls)}

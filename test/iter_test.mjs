@@ -74,34 +74,67 @@ t.test(function test_alloc() {
 })
 
 t.test(function test_arr() {
+  const fun = i.arr
+  testArrOrArrCopy(fun)
+
+  function same(src) {t.is(fun(src), src)}
+
+  function diff(src) {
+    t.isnt(fun(src), src)
+    t.eq(fun(src), [...src])
+  }
+
+  same(Array.of())
+  same(Array.of(10))
+  same(Array.of(10, 20))
+
+  diff(Arr.of())
+  diff(Arr.of(10))
+  diff(Arr.of(10, 20))
+})
+
+t.test(function test_arrCopy() {
+  const fun = i.arrCopy
+  testArrOrArrCopy(fun)
+
+  function diff(src) {
+    t.isnt(fun(src), src)
+    t.eq(fun(src), [...src])
+  }
+
+  diff(Array.of())
+  diff(Array.of(10))
+  diff(Array.of(10, 20))
+
+  diff(Arr.of())
+  diff(Arr.of(10))
+  diff(Arr.of(10, 20))
+})
+
+function testArrOrArrCopy(fun) {
   t.test(function test_invalid() {
-    testNoAsyncIterator(i.arr)
-    t.throws(() => i.arr(10),        TypeError, `unable to convert 10 to array`)
-    t.throws(() => i.arr(`str`),     TypeError, `unable to convert "str" to array`)
-    t.throws(() => i.arr(l.nop),     TypeError, `unable to convert [function nop] to array`)
-    t.throws(() => i.arr({}),        TypeError, `unable to convert {} to array`)
-    t.throws(() => i.arr(new Map()), TypeError, `unable to convert [object Map] to array`)
+    testNoAsyncIterator(fun)
+    t.throws(() => fun(10),        TypeError, `unable to convert 10 to array`)
+    t.throws(() => fun(`str`),     TypeError, `unable to convert "str" to array`)
+    t.throws(() => fun(l.nop),     TypeError, `unable to convert [function nop] to array`)
+    t.throws(() => fun({}),        TypeError, `unable to convert {} to array`)
+    t.throws(() => fun(new Map()), TypeError, `unable to convert [object Map] to array`)
   })
 
   t.test(function test_nil() {
-    function test(val) {t.eq(i.arr(val), [])}
+    function test(val) {t.eq(fun(val), [])}
     test(undefined)
     test(null)
   })
 
   testSeqs(
     [10, 20, 30],
-    function testSeq(make) {
-      const src = make()
-      const out = i.arr(src)
-      t.isnt(src, out)
-      t.eq(out, [10, 20, 30])
-    },
+    function testSeq(make) {t.eq(fun(make()), [10, 20, 30])},
   )
 
   // This is considered a list.
-  t.eq(i.arr(new String(`str`)), [`s`, `t`, `r`])
-})
+  t.eq(fun(new String(`str`)), [`s`, `t`, `r`])
+}
 
 t.test(function test_slice() {
   t.throws(() => i.slice([], `str`), TypeError, `expected variant of isInt, got "str"`)
@@ -182,7 +215,7 @@ function testValues(fun, backref) {
       const src = make()
       const out = fun(src)
 
-      t.ok(i.isTrueArr(out))
+      t.ok(l.isTrueArr(out))
       t.eq(out, [10, 20])
       backref(out, src)
     }
@@ -191,7 +224,7 @@ function testValues(fun, backref) {
   function test(src, exp) {
     const out = fun(src)
     t.eq(out, exp)
-    t.ok(i.isTrueArr(out))
+    t.ok(l.isTrueArr(out))
   }
 
   function values() {return [10, 20]}
@@ -501,6 +534,39 @@ t.test(function test_mapMut() {
   }
 
   test([10, 20, 30], l.inc, [11, 21, 31])
+})
+
+t.test(function test_mapCls() {
+  const map = i.mapCls
+  const nonCls = () => {}
+
+  t.throws(() => map([]), TypeError, `expected variant of isCls, got undefined`)
+  t.throws(() => map([], `str`), TypeError, `expected variant of isCls, got "str"`)
+  t.throws(() => map([], 10), TypeError, `expected variant of isCls, got 10`)
+  t.throws(() => map([], {}), TypeError, `expected variant of isCls, got {}`)
+  t.throws(() => map([], nonCls), TypeError, `expected variant of isCls, got [function nonCls]`)
+
+  function test(src, cls, exp) {
+    const out = map(src, cls)
+    t.isnt(out, src)
+    t.eq(out, exp)
+  }
+
+  // Note: JS classes throw exceptions if called without `new`.
+  // This also verifies that `mapCls` uses `new`.
+  class Dec {constructor(val) {return [val - 1]}}
+  class Inc {constructor(val) {return [val + 1]}}
+
+  testColls([], {}, function testEmpty(make) {test(make(), Dec, [])})
+
+  testColls(
+    [10, 20, 30],
+    {one: 10, two: 20, three: 30},
+    function testLong(make) {
+      test(make(), Inc, [[11], [21], [31]])
+      test(make(), Dec, [[9], [19], [29]])
+    },
+  )
 })
 
 function testFunIterInit(fun) {

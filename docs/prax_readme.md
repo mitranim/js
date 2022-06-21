@@ -40,7 +40,7 @@ Rendering is done by `Ren`. You must create an instance, which should be a singl
 Browser example:
 
 ```js
-import {Ren, A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/prax.mjs'
+import {Ren, A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/prax.mjs'
 
 const ren = new Ren(document).patchProto(Element)
 const {E} = ren
@@ -66,7 +66,7 @@ The following elements (not strings) have been appended:
 For string rendering, use `.outerHTML`:
 
 ```js
-import {Ren, A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/prax.mjs'
+import {Ren, A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/prax.mjs'
 
 const ren = new Ren(document).patchProto(Element)
 const {E} = ren
@@ -91,8 +91,8 @@ console.log(
 Usage with custom elements. The methods `.props` and `.chi` are provided by patching the prototype of the given base element class, which is entirely opt-in.
 
 ```js
-import {Ren, A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/prax.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/dom_reg.mjs'
+import {Ren, A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/prax.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/dom_reg.mjs'
 
 const ren = new Ren(document).patchProto(Element)
 
@@ -114,22 +114,22 @@ document.body.append(
 For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right "dom globals" for the right environment, and pass those globals to the `Ren` you're instantiating. The rest will just work.
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/prax.mjs'
 
 // Choose the right one.
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/dom_glob_shim.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/dom_glob_native.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/dom_glob_shim.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/dom_glob_native.mjs'
 
-const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
+const ren = p.Ren.from(dg.glob)
 ```
 
 Rendering a complete document with doctype:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/dom_glob_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/dom_glob_shim.mjs'
 
-const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
+const ren = p.Ren.from(dg.glob)
 const {E} = ren
 const A = p.PropBui.main
 

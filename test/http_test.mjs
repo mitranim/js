@@ -971,19 +971,19 @@ t.test(function test_Cookie() {
     )
   })
 
-  t.test(function test_new() {
+  t.test(function test_make() {
     t.eq(
-      h.Cookie.new(),
+      h.Cookie.make(),
       new h.Cookie().setPath(`/`),
     )
 
     t.eq(
-      h.Cookie.new(`one`),
+      h.Cookie.make(`one`),
       new h.Cookie().setName(`one`).setPath(`/`),
     )
 
     t.eq(
-      h.Cookie.new(`one`, `two`),
+      h.Cookie.make(`one`, `two`),
       new h.Cookie().setName(`one`).setValue(`two`).setPath(`/`),
     )
   })

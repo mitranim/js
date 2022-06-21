@@ -17,6 +17,8 @@
     "TextDecoder": "readonly",
     "TextEncoder": "readonly",
     "ReadableStream": "readonly",
+    "performance": "readonly",
+    "crypto": "readonly",
   },
   "rules": {
     "no-restricted-globals": ["error",

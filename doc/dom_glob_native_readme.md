@@ -13,7 +13,6 @@
 ```js
 import * as dg from '{{featUrl dom_glob_native}}'
 
-console.log(dg.document)
 console.log(dg.glob)
 ```
 

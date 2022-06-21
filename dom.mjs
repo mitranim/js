@@ -118,13 +118,15 @@ export class DocFoc extends o.MixMain(Array) {
 function copy(val) {return Array.prototype.slice.call(val)}
 function indexOf(list, val) {return Array.prototype.indexOf.call(list, val)}
 
+export function eventKill(val) {eventPrevent(val), eventStop(val)}
+
+export function eventPrevent(val) {if (optEvent(val)) val.preventDefault()}
+
 export function eventStop(val) {
   if (optEvent(val)) {
-    val.preventDefault()
     val.stopPropagation()
     val.stopImmediatePropagation()
   }
-  return val
 }
 
 export function isEventModified(val) {
@@ -174,9 +176,11 @@ export function selectText(val) {
   }
 }
 
-export function ancestor(tar, cls) {
+export function ancestor(tar, cls) {return findAncestor(tar, clsTest(cls))}
+
+function clsTest(cls) {
   l.reqCls(cls)
-  return findAncestor(tar, function test(val) {return l.isInst(val, cls)})
+  return function test(val) {return l.isInst(val, cls)}
 }
 
 export function findAncestor(tar, fun) {
@@ -199,10 +203,7 @@ export function findDescendant(val, fun) {
   return undefined
 }
 
-export function descendants(tar, cls) {
-  l.reqCls(cls)
-  return findDescendants(tar, function test(val) {return l.isInst(val, cls)})
-}
+export function descendants(tar, cls) {return findDescendants(tar, clsTest(cls))}
 
 export function* findDescendants(val, fun) {
   l.reqFun(fun)
@@ -214,6 +215,26 @@ export function* findDescendants(val, fun) {
   val = val.childNodes
   if (val) for (val of val) yield* findDescendants(val, fun)
 }
+
+export function findNextSibling(tar, fun) {
+  l.reqFun(fun)
+  while (l.isSome((tar = l.get(tar, `nextSibling`)))) {
+    if (fun(tar)) return tar
+  }
+  return undefined
+}
+
+export function nextSibling(tar, cls) {return findNextSibling(tar, clsTest(cls))}
+
+export function findPrevSibling(tar, fun) {
+  l.reqFun(fun)
+  while (l.isSome((tar = l.get(tar, `previousSibling`)))) {
+    if (fun(tar)) return tar
+  }
+  return undefined
+}
+
+export function prevSibling(tar, cls) {return findPrevSibling(tar, clsTest(cls))}
 
 /*
 Takes a DOM node class and returns a subclass with various shortcuts for DOM

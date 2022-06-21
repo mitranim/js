@@ -12,6 +12,7 @@ CMD_SRV := test/cmd_srv.mjs
 CMD_DOC := doc/cmd_doc.mjs
 CMD_VER_INC := doc/cmd_ver_inc.mjs
 PKG := package.json
+HOOK_PRE_COMMIT_FILE := .git/hooks/pre-commit
 
 # This is a "function" that must be defined with "=", not ":=".
 VER = $(shell jq -r '.version' < $(PKG))
@@ -67,15 +68,14 @@ untag:
 push:
 	git push origin $(VER) $$(git symbolic-ref --short HEAD)
 
-define PRE_COMMIT
+define HOOK_PRE_COMMIT
 #!/bin/sh
 export NO_COLOR=""
 make doc && git add readme.md docs/*.md
 endef
-export PRE_COMMIT
+export HOOK_PRE_COMMIT
 
 # Should be run once, after cloning the repo.
 hook:
-	$(eval OUT := .git/hooks/pre-commit)
-	echo "$${PRE_COMMIT}" > $(OUT)
-	chmod +x $(OUT)
+	echo "$${HOOK_PRE_COMMIT}" > $(HOOK_PRE_COMMIT_FILE)
+	chmod +x $(HOOK_PRE_COMMIT_FILE)

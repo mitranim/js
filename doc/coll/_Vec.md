@@ -9,7 +9,7 @@ Short for "vector". Thin wrapper around a plain array. Features:
 Differences and advantages over `Array`:
 
   * Better constructor signature.
-    * Constructor takes exactly one argument, which is either {{link lang isNil nil}} or an {{link lang isArr array}}.
+    * Constructor takes exactly one argument, which is either {{link lang isNil nil}} or an {{link lang isTrueArr array}}.
     * For comparison, the `Array` constructor has special cases that make subclassing difficult.
   * Can be subclassed without trashing performance.
     * At the time of writing, subclasses of `Array` suffer horrible deoptimization in V8.

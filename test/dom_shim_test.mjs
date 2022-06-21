@@ -5,6 +5,8 @@ import * as p from '../prax.mjs'
 import * as ds from '../dom_shim.mjs'
 import {eqm} from './prax_test.mjs'
 
+const dom = ds.document.implementation
+
 function fragOf(...val) {
   const buf = new ds.DocumentFragment()
   buf.append(...val)
@@ -327,7 +329,7 @@ t.test(function test_Node_isConnected() {
   t.no(child.isConnected)
   t.no(parent.isConnected)
 
-  const doc = ds.dom.createHTMLDocument()
+  const doc = dom.createHTMLDocument()
   t.ok(doc.isConnected)
 
   doc.body.appendChild(parent)
@@ -418,7 +420,7 @@ t.test(function test_Node_ownerDocument() {
   const node = new ds.Node()
   t.is(node.ownerDocument, null)
 
-  const doc = ds.dom.createHTMLDocument()
+  const doc = dom.createHTMLDocument()
 
   doc.body.appendChild(node)
   t.is(node.ownerDocument, null)
@@ -638,7 +640,7 @@ t.test(function test_Element_parentNode_and_lifecycle() {
     t.own(tar, {con, dis})
   }
 
-  const body = ds.dom.createHTMLDocument().body
+  const body = dom.createHTMLDocument().body
 
   t.test(function test_only_connectedCallback() {
     class Elem extends Counted {connectedCallback() {this.con++}}
@@ -1342,7 +1344,7 @@ t.test(function test_xmlns_standalone() {
 
 t.test(function test_xmlns_inside_Document() {
   const tar = new ds.Element()
-  tar.ownerDocument = ds.dom.createDocument(p.nsHtml, null, null)
+  tar.ownerDocument = dom.createDocument(p.nsHtml, null, null)
   testNsExisting(tar)
 })
 
@@ -1352,7 +1354,7 @@ t.test(function test_xmlns_inside_HTMLDocument() {
   tar.ownerDocument = ds.document
   testNsMissing(tar)
 
-  tar.ownerDocument = ds.dom.createHTMLDocument()
+  tar.ownerDocument = dom.createHTMLDocument()
   testNsMissing(tar)
 })
 
@@ -1432,7 +1434,7 @@ t.test(function test_xmlns_svg_inside_html_inside_HTMLDocument() {
 })
 
 t.test(function test_xmlns_several_layers() {
-  const doc = ds.dom.createDocument(p.nsHtml, null, null)
+  const doc = dom.createDocument(p.nsHtml, null, null)
 
   const one = doc.createElementNS(p.nsHtml, `one`)
   const two = doc.createElementNS(p.nsHtml, `two`)

@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as ds from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/dom_shim.mjs'
+import * as ds from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/dom_shim.mjs'
 ```
 
 ## API
@@ -96,15 +96,15 @@ The following APIs are exported but undocumented. Check [dom_shim.mjs](../dom_sh
   * [`class ClassList`](../dom_shim.mjs#L950)
   * [`class GlobPh`](../dom_shim.mjs#L1020)
   * [`const glob`](../dom_shim.mjs#L1039)
-  * [`const dom`](../dom_shim.mjs#L1040)
-  * [`const document`](../dom_shim.mjs#L1041)
-  * [`const customElements`](../dom_shim.mjs#L1042)
-  * [`function escapeAttr`](../dom_shim.mjs#L1052)
-  * [`function escapeText`](../dom_shim.mjs#L1065)
-  * [`function escapeChar`](../dom_shim.mjs#L1072)
-  * [`function unescape`](../dom_shim.mjs#L1081)
-  * [`function unescapeMatch`](../dom_shim.mjs#L1085)
-  * [`const styleToCssCache`](../dom_shim.mjs#L1100)
-  * [`const camelToDataCache`](../dom_shim.mjs#L1104)
-  * [`const dataToCamelCache`](../dom_shim.mjs#L1108)
-  * [`const outerHtmlDyn`](../dom_shim.mjs#L1112)
+  * [`const document`](../dom_shim.mjs#L1040)
+  * [`const customElements`](../dom_shim.mjs#L1041)
+  * [`function auto`](../dom_shim.mjs#L1043)
+  * [`function escapeAttr`](../dom_shim.mjs#L1056)
+  * [`function escapeText`](../dom_shim.mjs#L1069)
+  * [`function escapeChar`](../dom_shim.mjs#L1076)
+  * [`function unescape`](../dom_shim.mjs#L1085)
+  * [`function unescapeMatch`](../dom_shim.mjs#L1089)
+  * [`const styleToCssCache`](../dom_shim.mjs#L1104)
+  * [`const camelToDataCache`](../dom_shim.mjs#L1108)
+  * [`const dataToCamelCache`](../dom_shim.mjs#L1112)
+  * [`const outerHtmlDyn`](../dom_shim.mjs#L1116)

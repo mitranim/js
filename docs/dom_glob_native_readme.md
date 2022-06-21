@@ -11,9 +11,8 @@
 ## Usage
 
 ```js
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.32/dom_glob_native.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/dom_glob_native.mjs'
 
-console.log(dg.document)
 console.log(dg.glob)
 ```
 
@@ -24,6 +23,3 @@ console.log(dg.glob)
 The following APIs are exported but undocumented. Check [dom_glob_native.mjs](../dom_glob_native.mjs).
 
   * [`const glob`](../dom_glob_native.mjs#L6)
-  * [`const dom`](../dom_glob_native.mjs#L7)
-  * [`const document`](../dom_glob_native.mjs#L8)
-  * [`const customElements`](../dom_glob_native.mjs#L9)

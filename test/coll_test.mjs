@@ -255,7 +255,7 @@ t.test(function test_ClsColl() {
 
 t.test(function test_Vec() {
   t.test(function test_constructor() {
-    t.throws(() => new co.Vec(`str`), TypeError, `expected variant of isArr, got "str"`)
+    t.throws(() => new co.Vec(`str`), TypeError, `expected variant of isTrueArr, got "str"`)
 
     t.test(function test_reuse() {
       function test(src) {t.is(new co.Vec(src).$, src)}

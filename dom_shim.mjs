@@ -1037,9 +1037,13 @@ export class GlobPh extends o.MakerPh {
 }
 
 export const glob = GlobPh.new()
-export const dom = new DOMImplementation()
-export const document = dom.createHTMLDocument()
+export const document = new DOMImplementation().createHTMLDocument()
 export const customElements = document.customElements
+
+export function auto() {
+  if (isDocument(l.get(globalThis, `document`))) return globalThis
+  return glob
+}
 
 /* Misc */
 

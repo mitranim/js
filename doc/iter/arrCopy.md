@@ -1,1 +1,1 @@
-Like {{link iter arr}}, converts an arbitrary sequence to an array. Unlike `arr,` always makes a copy. Mutating the output doesn't affect the original.
+Similar to {{link iter arr}}, but always makes a copy, even if the input is already a true array.

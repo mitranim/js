@@ -4,6 +4,7 @@ import './lang_test.mjs'
 
 import './cli_test.mjs'
 import './coll_test.mjs'
+import './arr_test.mjs'
 import './http_test.mjs'
 import './http_srv_test.mjs'
 import './iter_test.mjs'

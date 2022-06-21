@@ -125,6 +125,36 @@ function testRender(fun) {
   t.is(fun(new Cents(3400)), `34`)
 }
 
+t.test(function test_toTrueArr() {
+  t.throws(() => l.toTrueArr(10), TypeError, `expected variant of isIter, got 10`)
+  t.throws(() => l.toTrueArr(`str`), TypeError, `expected variant of isIter, got "str"`)
+  t.throws(() => l.toTrueArr({}), TypeError, `expected variant of isIter, got {}`)
+
+  function same(src) {t.is(l.toTrueArr(src), src)}
+
+  function copy(src) {
+    const out = l.toTrueArr(src)
+
+    t.isnt(out, src)
+    t.isnt(l.toTrueArr(src), l.toTrueArr(src))
+
+    t.ok(l.isTrueArr(out))
+    t.eq(out, [...src])
+  }
+
+  t.eq(l.toTrueArr(), [])
+
+  same([])
+  same([10])
+  same([10, 20])
+
+  class Arr extends Array {}
+
+  copy(Arr.of())
+  copy(Arr.of(10))
+  copy(Arr.of(10, 20))
+})
+
 t.test(function test_truthy() {
   t.is(l.truthy(), !!(undefined))
   t.is(l.truthy(0), !!(0))
@@ -549,6 +579,21 @@ t.test(function test_isArr() {
 
   t.ok(l.isArr([]))
   t.ok(l.isArr(new Arr()))
+})
+
+t.test(function test_isTrueArr() {
+  class Arr extends Array {}
+
+  t.no(l.isTrueArr())
+  t.no(l.isTrueArr(``))
+  t.no(l.isTrueArr(args(10, 20)))
+  t.no(l.isTrueArr(inherit([])))
+
+  t.no(l.isTrueArr(new Arr()))
+  t.no(l.isTrueArr(Arr.of()))
+
+  t.ok(l.isTrueArr([]))
+  t.ok(l.isTrueArr(Array.of()))
 })
 
 t.test(function test_isReg() {

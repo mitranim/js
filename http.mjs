@@ -597,11 +597,11 @@ export class Cookie extends l.Emp {
     return buf
   }
 
-  static new(key, val) {
+  static make(key, val) {
     return new this().setName(key).setValue(val).setPath(`/`)
   }
 
-  static set(key, val) {return this.new(key, val).install()}
+  static set(key, val) {return this.make(key, val).install()}
 
   static del(key) {
     reqCookieName(key)
@@ -616,6 +616,8 @@ export class Cookie extends l.Emp {
 }
 
 /* Internal */
+
+const sigKey = Symbol.for(`sig`)
 
 // Semi-placeholder. May tighten up.
 function isHeadKey(val) {return l.isStr(val) && val !== ``}
@@ -632,8 +634,6 @@ export const bodyFuns = [l.isScalar, isUint8Array, isReadableStream, isFormData]
 function isUint8Array(val) {return l.isInst(val, Uint8Array)}
 function isReadableStream(val) {return l.isInst(val, ReadableStream)}
 function isFormData(val) {return typeof FormData === `function` && l.isInst(val, FormData)}
-
-const sigKey = Symbol.for(`sig`)
 
 function isCookieName(val) {return l.isStr(val) && !/[;=]/.test(val)}
 function optCookieName(val) {return l.opt(val, isCookieName)}

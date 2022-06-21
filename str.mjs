@@ -1,5 +1,3 @@
-/* global crypto */
-
 import * as l from './lang.mjs'
 import * as co from './coll.mjs'
 
@@ -123,7 +121,7 @@ export class Words extends co.Vec {
   // Same as `iter.mjs` → `mapMut`. Avoiding import.
   mapMut(fun) {
     l.reqFun(fun)
-    const {$: arr} = this
+    const arr = this.$
     let ind = -1
     while (++ind < arr.length) arr[ind] = fun(arr[ind])
     return this
@@ -131,7 +129,7 @@ export class Words extends co.Vec {
 
   mapHead(fun) {
     l.reqFun(fun)
-    const {$: arr} = this
+    const arr = this.$
     if (arr.length) arr[0] = fun(arr[0])
     return this
   }
@@ -254,7 +252,7 @@ export function regTest(val, reg) {
 }
 
 export function boolOpt(val) {
-  l.opt(val, l.isStr)
+  l.optStr(val)
   if (val === `false`) return false
   if (val === `true`) return true
   return undefined

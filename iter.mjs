@@ -11,17 +11,19 @@ export function more(val) {return val.next().done === false}
 
 export function alloc(len) {return Array(l.reqNat(len))}
 
-export function arr(val) {
+export function arr(val) {return l.isTrueArr(val) ? val : arrCopy(val)}
+
+export function arrCopy(val) {
   if (l.isNil(val)) return []
-  if (isTrueArr(val)) return val.slice()
-  if (l.isList(val)) return arrFromList(val)
+  if (l.isTrueArr(val)) return val.slice()
   if (l.isArrble(val)) return arrFromList(val.toArray())
+  if (l.isList(val)) return arrFromList(val)
   if (l.isSeq(val)) return values(val)
   throw l.errConv(val, `array`)
 }
 
 function arrFromList(val) {
-  if (isTrueArr(val)) return val.slice()
+  if (l.isTrueArr(val)) return val.slice()
   if (l.isArr(val)) return [].concat(val)
   return Array.prototype.slice.call(val)
 }
@@ -33,10 +35,7 @@ function arrFromIter(val) {
 }
 
 export function slice(val, start, next) {
-  l.opt(start, l.isInt)
-  l.opt(next, l.isInt)
-  if (!start && !next) return arr(val)
-  return arr(val).slice(start, next)
+  return arr(val).slice(l.optInt(start), l.optInt(next))
 }
 
 export function keys(val) {
@@ -48,14 +47,14 @@ export function keys(val) {
 }
 
 export function values(val) {
-  if (isTrueArr(val)) return val
+  if (l.isTrueArr(val)) return val
   return valuesCopy(val)
 }
 
 export function valuesCopy(val) {
   if (!l.isObj(val)) return []
-  if (l.isList(val)) return arrFromList(val)
   if (l.isArrble(val)) return arrFromList(val.toArray())
+  if (l.isList(val)) return arrFromList(val)
   if (l.isSet(val)) return withBuf(val, copySet)
   if (l.isMap(val)) return withBuf(val, copyMap)
   if (l.isIter(val) && l.hasMeth(val, `values`)) return arrFromIter(val.values())
@@ -116,7 +115,7 @@ export function indexOf(src, val) {
 
 export function findIndex(src, fun) {
   l.reqFun(fun)
-  if (l.opt(src, l.isList)) {
+  if (l.optList(src)) {
     const len = src.length
     let ind = -1
     while (++ind < len) if (fun(src[ind])) return ind
@@ -174,12 +173,17 @@ export function each(val, fun) {
 export function map(val, fun) {return mapMut(valuesCopy(val), fun)}
 
 export function mapMut(val, fun) {
-  val = reqTrueArr(val)
+  val = l.reqTrueArr(val)
   l.reqFun(fun)
   const len = val.length
   let ind = -1
   while (++ind < len) val[ind] = fun(val[ind])
   return val
+}
+
+export function mapCls(src, cls) {
+  l.reqCls(cls)
+  return map(src, function make(val) {return new cls(val)})
 }
 
 export function mapCompact(val, fun) {return compact(map(val, fun))}
@@ -235,10 +239,10 @@ export function some(val, fun) {
   return false
 }
 
-export function flat(val) {
-  val = arr(val)
-  for (const elem of val) if (l.isArr(elem)) return val.flat(Infinity)
-  return val
+export function flat(src) {
+  src = arr(src)
+  for (const val of src) if (l.isArr(val)) return src.flat(Infinity)
+  return src
 }
 
 export function head(val) {
@@ -412,8 +416,3 @@ export function omitKeys(val, keys) {
 function getLength(val) {return l.get(val, `length`)}
 function getSize(val) {return l.get(val, `size`)}
 function isStructSync(val) {return l.isStruct(val) && !(Symbol.asyncIterator in val)}
-
-// At the time of writing, in V8, array subclasses have inferior performance.
-// We enforce plain arrays for consistent performance.
-export function isTrueArr(val) {return l.isArr(val) && val.constructor === Array}
-export function reqTrueArr(val) {return l.req(val, isTrueArr)}

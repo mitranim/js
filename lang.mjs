@@ -162,6 +162,16 @@ export function optArr(val) {return isNil(val) ? val : reqArr(val)}
 export function onlyArr(val) {return isArr(val) ? val : undefined}
 export function laxArr(val) {return isNil(val) ? [] : reqArr(val)}
 
+/*
+At the time of writing, in V8, array subclasses perform MUCH worse than true
+arrays. In some hotspots we enforce true arrays for consistent performance.
+*/
+export function isTrueArr(val) {return isArr(val) && val.constructor === Array}
+export function reqTrueArr(val) {return isTrueArr(val) ? val : convFun(val, isTrueArr)}
+export function optTrueArr(val) {return isNil(val) ? val : reqTrueArr(val)}
+export function onlyTrueArr(val) {return isTrueArr(val) ? val : undefined}
+export function laxTrueArr(val) {return isNil(val) ? [] : reqTrueArr(val)}
+
 export function isReg(val) {return isInst(val, RegExp)}
 export function reqReg(val) {return isReg(val) ? val : convFun(val, isReg)}
 export function optReg(val) {return isNil(val) ? val : reqReg(val)}
@@ -358,6 +368,12 @@ export function show(val) {
   if (isFun(val)) return showFun(val)
   if (isObj(val)) return showObj(val)
   return String(val)
+}
+
+export function toTrueArr(val) {
+  if (isNil(val)) return []
+  if (isTrueArr(val)) return val
+  return [...reqIter(val)]
 }
 
 /* Misc */

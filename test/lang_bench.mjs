@@ -14,8 +14,8 @@ const dictEmpty = Object.freeze(Object.create(null))
 const someStr = `hello world`
 
 class DateSub extends Date {
-  constructor(val) {
-    super(val)
+  constructor(...val) {
+    super(...val)
     this.toISOString = this.toISOString
   }
 }

@@ -213,14 +213,30 @@ export class DateTime extends Date {
   monthStr() {return zeroed(this.getMonth() + 1, 2)}
   dayStr() {return zeroed(this.getDate(), 2)}
 
-  static date(year, month, day) {
+  // Workaround for the atrocious `Date` API that lacks the ability to simply
+  // replace the Unix timestamp. Inefficient, avoid in hotspots.
+  mut(src) {
+    src = date(src)
+    this.setUTCFullYear(src.getUTCFullYear())
+    this.setUTCMonth(src.getUTCMonth())
+    this.setUTCDate(src.getUTCDate())
+    this.setUTCHours(src.getUTCHours())
+    this.setUTCMinutes(src.getUTCMinutes())
+    this.setUTCSeconds(src.getUTCSeconds())
+    this.setUTCMilliseconds(src.getUTCMilliseconds())
+    return this
+  }
+
+  static date(...val) {return new this(this.dateTs(...val))}
+
+  static dateTs(year, month, day) {
     return this.UTC(l.reqInt(year), l.reqInt(month), l.reqInt(day), 0, 0, 0, 0)
   }
 }
 
 export class DateValid extends DateTime {
-  constructor(val) {
-    super(val)
+  constructor(...val) {
+    super(...val)
     l.reqValidDate(this)
   }
 }

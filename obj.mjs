@@ -99,10 +99,10 @@ This behavior is similar to Python classes.
 
 The "get" trap is similar to `l.reqGet(tar, key)`, with a key difference: it
 invokes inherited getters on the proxy rather than on the target object. This
-ensures compatibility with `memGet` and `MemGet`, which tend to invoke getters
-in a chain. For slightly better performance we assume that own properties
-aren't getters, but the difference is much lower than the overhead of the proxy
-trap.
+ensures compatibility with `memGet`, which may invoke a getter than invokes
+another getter, etc. For slightly better performance we assume that own
+properties aren't getters, but the difference is much lower than the overhead
+of the proxy trap.
 
 At the time of writing, in V8, the overhead of generating the object descriptor
 is fairly low and eclipsed by the cost of searching the prototype chain
@@ -141,10 +141,6 @@ export function memGet(cls) {return MemTag.main.goc(cls)}
 
 export class MemTag extends MixMain(WeakTag) {
   make(cls) {return memPatch(cls)}
-}
-
-export class MemGet extends Strict {
-  constructor() {memGet(new.target), super()}
 }
 
 export class CallPh extends Ph {

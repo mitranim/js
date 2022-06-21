@@ -5,17 +5,24 @@ import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
 
-itc.deoptSeqHof(i.arr)
 t.bench(function bench_arr_spread_native() {l.reqArr([...itc.numArgs])})
 t.bench(function bench_arr_gen_spread_native() {l.reqArr([...itc.gen(itc.numArgs)])})
+
+itc.deoptSeqHof(i.arr)
 t.bench(function bench_arr_our_arr_from_array_nums() {i.arr(itc.numArr)})
 t.bench(function bench_arr_our_arr_from_array_dicts() {i.arr(itc.dictArr)})
 t.bench(function bench_arr_our_arr_from_arguments() {i.arr(itc.numArgs)})
 t.bench(function bench_arr_our_arr_from_gen() {i.arr(itc.gen(itc.numArgs))})
 
+itc.deoptSeqHof(i.arrCopy)
+t.bench(function bench_arr_our_arrCopy_from_array_nums() {i.arrCopy(itc.numArr)})
+t.bench(function bench_arr_our_arrCopy_from_array_dicts() {i.arrCopy(itc.dictArr)})
+t.bench(function bench_arr_our_arrCopy_from_arguments() {i.arrCopy(itc.numArgs)})
+t.bench(function bench_arr_our_arrCopy_from_gen() {i.arrCopy(itc.gen(itc.numArgs))})
+
 itc.deoptKeysFun(i.keys)
 t.bench(function bench_keys_array_native_spread() {l.reqArr([...itc.numArr.keys()])})
-t.bench(function bench_keys_array_native_our_arr() {i.arr(itc.numArr.keys())})
+t.bench(function bench_keys_array_native_our_arr() {i.arrCopy(itc.numArr.keys())})
 t.bench(function bench_keys_array_lodash() {l.reqArr(lo.keys(itc.numArr))})
 t.bench(function bench_keys_array_our_keys() {l.reqArr(i.keys(itc.numArr))})
 
@@ -178,6 +185,13 @@ t.bench(function bench_map_array_our_map() {l.reqArr(i.map(itc.numArr, l.inc))})
 t.bench(function bench_map_dict_values_specialized() {l.reqArr(mapDictValuesSpecialized(itc.numDict, l.inc))})
 t.bench(function bench_map_dict_values_our_map() {l.reqArr(i.map(itc.numDict, l.inc))})
 t.bench(function bench_map_set_with_our_map() {l.reqArr(i.map(itc.numSet, l.inc))})
+
+itc.deoptCollHof(mapClsDumb)
+itc.deoptCollHof(mapClsClosure)
+itc.deoptCollHof(i.mapCls)
+t.bench(function bench_mapCls_array_dumb() {l.reqArr(mapClsDumb(itc.numArr, l.Emp))})
+t.bench(function bench_mapCls_array_closure() {l.reqArr(mapClsClosure(itc.numArr, l.Emp))})
+t.bench(function bench_mapCls_array_actual() {l.reqArr(i.mapCls(itc.numArr, l.Emp))})
 
 itc.deoptSeqHof(mapCompactDumb)
 itc.deoptSeqHof(i.mapCompact)
@@ -629,3 +643,17 @@ function repeat(len, val) {
 function headFromValues(val) {return i.values(val)[0]}
 
 function isEven(val) {return !(val % 2)}
+
+function mapClsDumb(src, cls) {
+  src = i.valuesCopy(src)
+  l.reqCls(cls)
+  const len = src.length
+  let ind = -1
+  while (++ind < len) src[ind] = new cls(src[ind])
+  return src
+}
+
+function mapClsClosure(src, cls) {
+  l.reqCls(cls)
+  return i.map(src, function make(val) {return new cls(val)})
+}

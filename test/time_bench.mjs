@@ -10,8 +10,26 @@ const durLong = Object.freeze(ti.dur(DUR_LONG))
 const durDict = {...durLong}
 const dateShort = new ti.DateShort(`1234-05-06`)
 const sec = new ti.Sec(1024)
+const dateNow = new Date()
+const dateTimeNow = new ti.DateTime()
+const tsNow = Date.now()
+const dateTimeMut = new ti.DateTime()
 
 /* Bench */
+
+t.bench(function bench_date_now_timestamp() {l.nop(Date.now())})
+t.bench(function bench_date_now_Date() {l.nop(new Date())})
+t.bench(function bench_date_now_DateTime() {l.nop(new ti.DateTime())})
+
+t.bench(function bench_date_from_timestamp_Date() {l.nop(new Date(tsNow))})
+t.bench(function bench_date_from_timestamp_DateTime() {l.nop(new ti.DateTime(tsNow))})
+
+t.bench(function bench_date_to_timestamp_Date() {l.nop(dateNow.valueOf())})
+t.bench(function bench_date_to_timestamp_DateTime() {l.nop(dateTimeNow.valueOf())})
+
+t.bench(function bench_date_DateTime_mut() {l.nop(dateTimeMut.mut(dateTimeNow))})
+
+t.bench(function bench_date_DateShort_to_string() {l.nop(dateShort.toString())})
 
 t.bench(function bench_Dur_from_nil() {l.nop(ti.dur())})
 
@@ -37,8 +55,6 @@ t.bench(function bench_Dur_build_full() {
 })
 
 t.bench(function bench_Dur_toString() {l.nop(durLong.toString())})
-
-t.bench(function bench_date_short_to_string() {l.nop(dateShort.toString())})
 
 t.bench(function bench_new_Pico() {l.nop(new ti.Pico(1024))})
 t.bench(function bench_new_Nano() {l.nop(new ti.Nano(1024))})

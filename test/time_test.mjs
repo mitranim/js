@@ -220,6 +220,21 @@ t.test(function test_DateTime() {
       t.is(new ti.DateTime(src).dateStr(), exp)
     })
   })
+
+  t.test(function test_mut() {
+    const src = Date.UTC(1234, 5, 6, 7, 8, 9, 10)
+    t.is(new Date(src).toISOString(), `1234-06-06T07:08:09.010Z`)
+
+    const tar = new ti.DateTime()
+    tar.mut(src)
+
+    t.is(tar.valueOf(), src)
+    t.is(tar.toISOString(), `1234-06-06T07:08:09.010Z`)
+
+    tar.mut(0)
+    t.is(tar.valueOf(), 0)
+    t.is(tar.toISOString(), `1970-01-01T00:00:00.000Z`)
+  })
 })
 
 t.test(function test_DateShort() {

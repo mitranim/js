@@ -333,9 +333,9 @@ export class Ren extends l.Emp {
 
   get MixRenCache() {return MixRenCache}
 
-  static native() {
-    return new this(globalThis.document).patchProto(globalThis.Element)
-  }
+  static from(glob) {return new this(glob.document).patchProto(glob.Element)}
+
+  static native() {return this.from(globalThis)}
 }
 
 // Marks "raw text" which must be preserved as-is without escaping.

@@ -7,7 +7,7 @@ import * as dg from '../dom_glob_shim.mjs'
 
 /* Util */
 
-const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
+const ren = p.Ren.from(dg.glob)
 const E = ren.E
 const A = p.PropBui.main
 const Text = dg.glob.Text

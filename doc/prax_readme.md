@@ -120,7 +120,7 @@ import * as p from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_glob_shim}}'
 import * as dg from '{{featUrl dom_glob_native}}'
 
-const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
+const ren = p.Ren.from(dg.glob)
 ```
 
 Rendering a complete document with doctype:
@@ -129,7 +129,7 @@ Rendering a complete document with doctype:
 import * as p from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_glob_shim}}'
 
-const ren = new p.Ren(dg.document).patchProto(dg.glob.Element)
+const ren = p.Ren.from(dg.glob)
 const {E} = ren
 const A = p.PropBui.main
 
