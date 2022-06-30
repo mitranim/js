@@ -706,9 +706,6 @@ t.test(function test_StrMap() {
   })
 
   t.test(function test_has() {
-    t.throws(() => s.strMap().has(), TypeError, `expected variant of isStr, got undefined`)
-    t.throws(() => s.strMap().has(10), TypeError, `expected variant of isStr, got 10`)
-
     t.no(s.strMap().has(`one`))
     t.no(s.strMap({one: `two`}).has(`two`))
     t.no(s.strMap({one: `two`}).has(`three`))
@@ -721,9 +718,6 @@ t.test(function test_StrMap() {
   })
 
   t.test(function test_get() {
-    t.throws(() => s.strMap().get(), TypeError, `expected variant of isStr, got undefined`)
-    t.throws(() => s.strMap().get(10), TypeError, `expected variant of isStr, got 10`)
-
     function none(val) {t.is(val, undefined)}
 
     none(s.strMap().get(`one`))
@@ -740,9 +734,6 @@ t.test(function test_StrMap() {
   })
 
   t.test(function test_getAll() {
-    t.throws(() => s.strMap().getAll(), TypeError, `expected variant of isStr, got undefined`)
-    t.throws(() => s.strMap().getAll(10), TypeError, `expected variant of isStr, got 10`)
-
     function none(val) {t.is(val, undefined)}
 
     none(s.strMap().getAll(`one`))
@@ -882,9 +873,6 @@ t.test(function test_StrMap() {
   })
 
   t.test(function test_delete() {
-    t.throws(() => s.strMap().delete(), TypeError, `expected variant of isStr, got undefined`)
-    t.throws(() => s.strMap().delete(10), TypeError, `expected variant of isStr, got 10`)
-
     function no(ref, key) {
       const exp = [...ref]
       t.no(ref.delete(key))

@@ -14,6 +14,7 @@ Port and rework of https://github.com/mitranim/jol.
   * [#`function bmap`](#function-bmap)
   * [#`function bmapOf`](#function-bmapof)
   * [#`class Bmap`](#class-bmap)
+  * [#`class TypedMap`](#class-typedmap)
   * [#`function pkOpt`](#function-pkopt)
   * [#`function pk`](#function-pk)
   * [#`class Coll`](#class-coll)
@@ -25,7 +26,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/coll.mjs'
+import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/coll.mjs'
 ```
 
 ## API
@@ -80,7 +81,7 @@ new co.Bmap().set(10, 20).set(30, 40)
 
 ### `class Bmap`
 
-Links: [source](../coll.mjs#L38); [test/example](../test/coll_test.mjs#L107).
+Links: [source](../coll.mjs#L38); [test/example](../test/coll_test.mjs#L184).
 
 Short for "better map". Variant of built-in `Map` with additional common-sense behaviors:
 
@@ -93,9 +94,25 @@ Short for "better map". Variant of built-in `Map` with additional common-sense b
   * Adding entries from another collection can be done any time by calling `.mut`, not just in the constructor.
   * Has additional instantiation shortcuts such as static `.of`.
 
+### `class TypedMap`
+
+Links: [source](../coll.mjs#L81); [test/example](../test/coll_test.mjs#L186).
+
+Variant of [#`Bmap`](#class-bmap) with support for key and value checks. Subclasses must override methods `.key` and `.val`. These methods are automatically called by `.set`. Method `.key` must validate and return the given key, and method `.val` must validate and return the given value. Use type assertions provided by [`lang`](lang_readme.md).
+
+```js
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/lang.mjs'
+import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/coll.mjs'
+
+class StrNatMap extends co.TypedMap {
+  key(key) {return l.reqStr(key)}
+  val(val) {return l.reqNat(val)}
+}
+```
+
 ### `function pkOpt`
 
-Links: [source](../coll.mjs#L88); [test/example](../test/coll_test.mjs#L178).
+Links: [source](../coll.mjs#L103); [test/example](../test/coll_test.mjs#L224).
 
 Short for "primary key optional". Takes an arbitrary value and returns its "primary key". This is used internally by [#`Coll`](#class-coll) and [#`ClsColl`](#class-clscoll).
 
@@ -119,7 +136,7 @@ console.log(co.pkOpt(new Person({name: `Kara`})))
 
 ### `function pk`
 
-Links: [source](../coll.mjs#L91); [test/example](../test/coll_test.mjs#L195).
+Links: [source](../coll.mjs#L106); [test/example](../test/coll_test.mjs#L241).
 
 Short for "primary key". Similar to [#`pkOpt`](#function-pkopt), but the input _must_ produce a non-nil primary key, otherwise this panics. This is used internally by [#`Coll`](#class-coll) and [#`ClsColl`](#class-clscoll).
 
@@ -138,7 +155,7 @@ co.pk(new Person({name: `Mira`}))
 
 ### `class Coll`
 
-Links: [source](../coll.mjs#L98); [test/example](../test/coll_test.mjs#L207).
+Links: [source](../coll.mjs#L113); [test/example](../test/coll_test.mjs#L253).
 
 Short for "collection". Ordered map where values are indexed on their "primary key" determined by the function [#`pk`](#function-pk) which is also exported by this module. Unlike a normal JS map, this is considered a sequence of values, not a sequence of key-value pairs. Order is preserved, iterating the values is decently fast, and the index allows fast access by key without additional iteration.
 
@@ -164,7 +181,7 @@ Coll {
 
 ### `class ClsColl`
 
-Links: [source](../coll.mjs#L121); [test/example](../test/coll_test.mjs#L247).
+Links: [source](../coll.mjs#L136); [test/example](../test/coll_test.mjs#L293).
 
 Variant of [#`Coll`](#class-coll) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsColl`. Elements added with `.add` are idempotently instantiated.
 
@@ -196,13 +213,13 @@ Persons {
 
 ### `class Vec`
 
-Links: [source](../coll.mjs#L129); [test/example](../test/coll_test.mjs#L256).
+Links: [source](../coll.mjs#L144); [test/example](../test/coll_test.mjs#L302).
 
 Short for "vector". Thin wrapper around a plain array. Features:
 
   * Implements the [iterable interface](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols).
-  * Compatible with spread (`...` operator).
-  * Compatible with `for..of`.
+  * Compatible with spread operator `...`.
+  * Compatible with `for of`.
   * JSON-encodes like an array.
   * Can wrap a pre-existing array.
 
@@ -213,13 +230,13 @@ Differences and advantages over `Array`:
     * For comparison, the `Array` constructor has special cases that make subclassing difficult.
   * Can be subclassed without trashing performance.
     * At the time of writing, subclasses of `Array` suffer horrible deoptimization in V8.
-    * `Vec` always uses a plain array, avoiding this problem.
+    * `Vec` always uses a [true](lang_readme.md#function-istruearr), avoiding this problem.
 
 The overhead of the wrapper is insignificant.
 
 ### `class ClsVec`
 
-Links: [source](../coll.mjs#L154); [test/example](../test/coll_test.mjs#L364).
+Links: [source](../coll.mjs#L173); [test/example](../test/coll_test.mjs#L427).
 
 Variant of [#`Vec`](#class-vec) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsVec`. Elements added with `.add` are idempotently instantiated.
 
@@ -256,6 +273,7 @@ Persons {
 The following APIs are exported but undocumented. Check [coll.mjs](../coll.mjs).
 
   * [`class ClsSet`](../coll.mjs#L29)
-  * [`class ClsMap`](../coll.mjs#L81)
-  * [`function pkOf`](../coll.mjs#L93)
-  * [`class Que`](../coll.mjs#L161)
+  * [`class CompatMap`](../coll.mjs#L91)
+  * [`class ClsMap`](../coll.mjs#L96)
+  * [`function pkOf`](../coll.mjs#L108)
+  * [`class Que`](../coll.mjs#L180)

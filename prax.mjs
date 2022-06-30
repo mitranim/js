@@ -75,9 +75,14 @@ export class Ren extends l.Emp {
     return tar
   }
 
-  makeHtml(tag, props) {return this.makeNs(nsHtml, tag, deref(props))}
+  makeHtml(tag, props) {
+    if (tag === `svg`) return this.makeSvg(tag, props)
+    return this.makeNs(nsHtml, tag, deref(props))
+  }
 
-  makeSvg(tag, props) {return this.makeNs(nsSvg, tag, deref(props))}
+  makeSvg(tag, props) {
+    return this.makeNs(nsSvg, tag, deref(props))
+  }
 
   makeNs(ns, tag, props) {
     return this.doc.createElementNS(l.reqStr(ns), l.reqStr(tag), deref(props))
@@ -369,8 +374,9 @@ export class MixRenCache extends o.WeakCache {
 const parentNodeKey = Symbol.for(`parentNode`)
 
 /*
-Takes a DOM element class and modifies the constructor signature, allowing early
-access to the parent node.
+Very similar to `o.MixChild`, but specialized for DOM elements. Takes a DOM
+element class and modifies the constructor signature, allowing early access to
+the parent node.
 
 Normally, node constructors are nullary. With this mixin, the constructor takes
 an optional reference to a parent node. When given, the child-to-parent
@@ -384,6 +390,10 @@ relations early.
 When used with the native DOM, the `.parentNode` getter and setter affect only
 JS code, without affecting native operations. Native DOM implementations
 completely bypass both.
+
+Implementation note. This doesn't reuse `o.MixChild` because we need
+`super.parentNode` to use the native DOM accessor, not the accessor
+defined by `o.MixChild`.
 */
 export function MixChild(val) {return MixChildCache.main.goc(val)}
 
@@ -397,6 +407,9 @@ export class MixChildCache extends o.WeakCache {
 
       get parentNode() {return super.parentNode || norm(this[parentNodeKey])}
       set parentNode(val) {this[parentNodeKey] = val}
+
+      getParent() {return this.parentNode}
+      setParent(val) {return this.parentNode = val, this}
     }
   }
 }

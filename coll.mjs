@@ -78,6 +78,21 @@ export class Bmap extends Map {
   }
 }
 
+export class TypedMap extends Bmap {
+  key() {throw l.errImpl()}
+  val() {throw l.errImpl()}
+  set(key, val) {return super.set(this.key(key), this.val(val))}
+}
+
+/*
+TODO better name. Restricts keys to strings for compatibility with dicts,
+without restricting values.
+*/
+export class CompatMap extends TypedMap {
+  key(key) {return l.reqStr(key)}
+  val(val) {return val}
+}
+
 export class ClsMap extends Bmap {
   get cls() {return Object}
   set(key, val) {super.set(key, this.make(val))}
@@ -128,7 +143,7 @@ export class ClsColl extends Coll {
 
 export class Vec extends l.Emp {
   constructor(val) {super().$ = l.laxTrueArr(val)}
-
+  mut(val) {return this.clear(), this.addFrom(val)}
   add(val) {return this.$.push(val), this}
 
   addFrom(val) {
@@ -136,7 +151,11 @@ export class Vec extends l.Emp {
     return this
   }
 
-  clear() {return this.$.length = 0, this}
+  clear() {
+    if (this.$.length) this.$.length = 0
+    return this
+  }
+
   clone() {return new this.constructor(this.$.slice())}
   toArray() {return this.$} // Used by `iter.mjs`.
   toJSON() {return this.toArray()}
@@ -153,7 +172,7 @@ export class Vec extends l.Emp {
 // Short for "class vector".
 export class ClsVec extends Vec {
   get cls() {return Object}
-  constructor(src) {super().addFrom(src)}
+  constructor(src) {super().mut(src)}
   add(val) {return super.add(this.make(val))}
   make(val) {return l.toInst(val, this.cls)}
 }

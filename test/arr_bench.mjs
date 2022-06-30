@@ -54,7 +54,8 @@ The following overrides are knowingly skipped:
 
   * `.at`: skip because subclasses have normal performance. The native
     implementation of `.at` is actually stupidly slow on true arrays as well as
-    subclasses, but that's not really our problem.
+    subclasses, but that's not really our problem. (Native is tens of
+    nanoseconds; custom is single digit nanoseconds.)
   * `.includes`: not worth the code. True arrays seem to employ weird caching in
     V8 to "look good" in benchmarks. Subclasses don't have this caching, but
     seem to perform well regardless.
@@ -103,8 +104,10 @@ t.ok(numArray.includes(numFound))
 
 function stable() {return 0}
 
-// This dumb subclass is the "control group" for our testing.
-// In V8, it has horrible performance for many native methods.
+/*
+This dumb subclass is the "control group" for our testing.
+In V8, it has horrible performance for many native methods.
+*/
 class List extends Array {}
 
 const numList = List.from(numArray)
@@ -123,8 +126,10 @@ const strArr = a.Arr.from(strArray)
 
 t.ok(strArray.map(Number).every(l.isNat))
 
-// Intended for idempotent mutation by various benchmarks.
-// Elements may be reordered, but size must remain constant.
+/*
+Intended for idempotent mutation by various benchmarks.
+Elements may be reordered, but size must remain constant.
+*/
 const mutArray = Array.from(numArray)
 const mutList = List.from(numArray)
 const mutArr = a.Arr.from(numArray)

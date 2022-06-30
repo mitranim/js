@@ -193,10 +193,14 @@ export function findAncestor(tar, fun) {
   return undefined
 }
 
-export function descendant(val, cls) {
-  for (val of descendants(val, cls)) return val
-  return undefined
-}
+/*
+Implementation note. In a native DOM environment, we could transparently use
+`.querySelector` when the given class is registered through `dom_reg.mjs` and
+has `.localName` and `.customName` defined as static properties. You would
+expect `.querySelector` to perform better. However, in testing, it seems to
+perform worse than our approach.
+*/
+export function descendant(src, cls) {return findDescendant(src, clsTest(cls))}
 
 export function findDescendant(val, fun) {
   for (val of findDescendants(val, fun)) return val

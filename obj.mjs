@@ -217,6 +217,25 @@ export class Dyn extends l.Emp {
   swap($) {try {return this.$} finally {this.$ = $}}
 }
 
+// Must match `dom_shim.mjs`.
+export const parentNodeKey = Symbol.for(`parentNode`)
+
+export function MixChild(val) {return MixChildCache.main.goc(val)}
+
+export class MixChildCache extends WeakCache {
+  make(cls) {
+    return class MixChildCls extends cls {
+      // Would prefer the name ".parent", but it seems preferable to match
+      // the DOM API. We're using the exact same concept, after all.
+      get parentNode() {return this[parentNodeKey]}
+      set parentNode(val) {this[parentNodeKey] = val}
+
+      getParent() {return this.parentNode}
+      setParent(val) {return this.parentNode = val, this}
+    }
+  }
+}
+
 export function mixin(tar, src) {
   const pro = l.reqCls(tar).prototype
   src = l.reqCls(src).prototype

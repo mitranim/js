@@ -104,41 +104,47 @@ t.test(function test_bmapOf() {
   )
 })
 
-t.test(function test_Bmap() {
+function testBmap(Cls) {
   // Delegates to `.mut` which is tested separately. This is a sanity check.
   t.test(function test_constructor() {
-    t.throws(() => co.bmap(10), TypeError, `unable to convert 10 to Bmap`)
+    t.throws(() => new Cls(10), TypeError, `unable to convert 10 to ${Cls.name}`)
 
-    t.eq(co.bmap(), co.bmap())
-    t.eq(co.bmap([[10, 20]]), co.bmap().set(10, 20))
-    t.eq(co.bmap([[`one`, `two`]]), co.bmap().set(`one`, `two`))
-    t.eq(co.bmap({one: `two`}), co.bmap().set(`one`, `two`))
+    t.eq(new Cls(), new Cls())
+    t.eq(new Cls([[10, 20]]), new Cls().set(10, 20))
+    t.eq(new Cls([[`one`, `two`]]), new Cls().set(`one`, `two`))
+    t.eq(new Cls({one: `two`}), new Cls().set(`one`, `two`))
+  })
+
+  t.test(function test_static_of() {
+    t.eq(Cls.of(), new Cls())
+    t.eq(Cls.of(10, 20), new Cls().set(10, 20))
+    t.eq(Cls.of(10, 20, 30, 40), new Cls().set(10, 20).set(30, 40))
   })
 
   t.test(function test_mut() {
     t.test(function test_mut_from_nil() {
-      t.eq(co.bmap().mut(), co.bmap())
-      t.eq(co.bmapOf(10, 20).mut(), co.bmapOf(10, 20))
+      t.eq(new Cls().mut(), new Cls())
+      t.eq(Cls.of(10, 20).mut(), Cls.of(10, 20))
     })
 
     t.test(function test_mut_from_iter() {
-      t.eq(co.bmap().mut([[10, 20]]), co.bmapOf(10, 20))
-      t.eq(co.bmap().mut([[10, 20], [30, 40]]), co.bmapOf(10, 20, 30, 40))
-      t.eq(co.bmapOf(10, 20).mut([[30, 40]]), co.bmapOf(10, 20, 30, 40))
-      t.eq(co.bmapOf(10, 20).mut([[10, 30]]), co.bmapOf(10, 30))
+      t.eq(new Cls().mut([[10, 20]]), Cls.of(10, 20))
+      t.eq(new Cls().mut([[10, 20], [30, 40]]), Cls.of(10, 20, 30, 40))
+      t.eq(Cls.of(10, 20).mut([[30, 40]]), Cls.of(10, 20, 30, 40))
+      t.eq(Cls.of(10, 20).mut([[10, 30]]), Cls.of(10, 30))
     })
 
     t.test(function test_from_struct() {
-      t.eq(co.bmap().mut({one: 10}), co.bmapOf(`one`, 10))
-      t.eq(co.bmap().mut({one: 10, two: 20}), co.bmapOf(`one`, 10, `two`, 20))
-      t.eq(co.bmap({one: 10}).mut({two: 20}), co.bmapOf(`one`, 10, `two`, 20))
-      t.eq(co.bmap({one: 10}).mut({one: 20}), co.bmapOf(`one`, 20))
+      t.eq(new Cls().mut({one: 10}), Cls.of(`one`, 10))
+      t.eq(new Cls().mut({one: 10, two: 20}), Cls.of(`one`, 10, `two`, 20))
+      t.eq(new Cls({one: 10}).mut({two: 20}), Cls.of(`one`, 10, `two`, 20))
+      t.eq(new Cls({one: 10}).mut({one: 20}), Cls.of(`one`, 20))
     })
   })
 
   t.test(function test_toDict() {
     t.test(function test_full() {
-      function test(src) {t.eq(co.bmap(src).toDict(), src)}
+      function test(src) {t.eq(new Cls(src).toDict(), src)}
 
       test({})
       test({one: 10})
@@ -148,7 +154,7 @@ t.test(function test_Bmap() {
     })
 
     t.test(function test_partial() {
-      function test(src, exp) {t.eq(co.bmap(src).toDict(), exp)}
+      function test(src, exp) {t.eq(new Cls(src).toDict(), exp)}
 
       test(undefined, {})
       test([[10, 20]], {})
@@ -158,7 +164,7 @@ t.test(function test_Bmap() {
 
   t.test(function test_toJSON() {
     function test(src, exp) {
-      t.is(JSON.stringify(co.bmap(src)), JSON.stringify(exp))
+      t.is(JSON.stringify(new Cls(src)), JSON.stringify(exp))
     }
 
     function same(src) {test(src, src)}
@@ -172,6 +178,46 @@ t.test(function test_Bmap() {
     test(undefined, {})
     test([[10, 20]], {})
     test([[10, 20], [`three`, 40], [50, 60], [{}, []]], {three: 40})
+  })
+}
+
+t.test(function test_Bmap() {testBmap(co.Bmap)})
+
+t.test(function test_TypedMap() {
+  t.test(function test_not_implemented() {
+    const tar = new co.TypedMap()
+    t.throws(() => tar.key(), TypeError, `not implemented`)
+    t.throws(() => tar.val(), TypeError, `not implemented`)
+  })
+
+  t.test(function test_any() {
+    testBmap(class AnyMap extends co.TypedMap {
+      key(key) {return key}
+      val(val) {return val}
+    })
+  })
+
+  t.test(function test_specific() {
+    class StrNatMap extends co.TypedMap {
+      key(key) {return l.reqStr(key)}
+      val(val) {return l.reqNat(val)}
+    }
+
+    t.throws(() => StrNatMap.of(10, 20), TypeError, `expected variant of isStr, got 10`)
+    t.throws(() => new StrNatMap().set(10, 20), TypeError, `expected variant of isStr, got 10`)
+
+    t.throws(() => StrNatMap.of(`one`, `two`), TypeError, `expected variant of isNat, got "two"`)
+    t.throws(() => new StrNatMap().set(`one`, `two`), TypeError, `expected variant of isNat, got "two"`)
+
+    t.eq(
+      StrNatMap.of(`one`, 10),
+      new StrNatMap().set(`one`, 10),
+    )
+
+    t.eq(
+      StrNatMap.of(`one`, 10, `two`, 20),
+      new StrNatMap().set(`one`, 10).set(`two`, 20),
+    )
   })
 })
 
@@ -358,6 +404,23 @@ t.test(function test_Vec() {
     test(1)
     test(2)
     test(3)
+  })
+
+  t.test(function test_mut() {
+    function test(src, inp, exp) {
+      const tar = new co.Vec(src)
+      t.is(tar.mut(inp), tar)
+      t.eq(tar.$, exp)
+    }
+
+    test([], [], [])
+    test([], [10], [10])
+    test([], [10, 20], [10, 20])
+    test([10], [], [])
+    test([10, 20], [], [])
+    test([10], [20], [20])
+    test([10], [20, 30], [20, 30])
+    test([10, 20], [30, 40], [30, 40])
   })
 })
 

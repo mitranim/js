@@ -12,7 +12,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/obj.mjs'
 ```
 
 ## API
@@ -152,10 +152,13 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
   * [`class WeakCache`](../obj.mjs#L193)
   * [`class MakerPh`](../obj.mjs#L202)
   * [`class Dyn`](../obj.mjs#L212)
-  * [`function mixin`](../obj.mjs#L220)
-  * [`function pub`](../obj.mjs#L233)
-  * [`function priv`](../obj.mjs#L243)
-  * [`function final`](../obj.mjs#L253)
-  * [`function getter`](../obj.mjs#L263)
-  * [`function setter`](../obj.mjs#L265)
-  * [`function getSet`](../obj.mjs#L267)
+  * [`const parentNodeKey`](../obj.mjs#L221)
+  * [`function MixChild`](../obj.mjs#L223)
+  * [`class MixChildCache`](../obj.mjs#L225)
+  * [`function mixin`](../obj.mjs#L239)
+  * [`function pub`](../obj.mjs#L252)
+  * [`function priv`](../obj.mjs#L262)
+  * [`function final`](../obj.mjs#L272)
+  * [`function getter`](../obj.mjs#L282)
+  * [`function setter`](../obj.mjs#L284)
+  * [`function getSet`](../obj.mjs#L286)

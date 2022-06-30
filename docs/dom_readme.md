@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as d from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/dom.mjs'
+import * as d from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/dom.mjs'
 ```
 
 ## API
@@ -67,12 +67,12 @@ The following APIs are exported but undocumented. Check [dom.mjs](../dom.mjs).
   * [`function selectText`](../dom.mjs#L168)
   * [`function ancestor`](../dom.mjs#L179)
   * [`function findAncestor`](../dom.mjs#L186)
-  * [`function descendant`](../dom.mjs#L196)
-  * [`function findDescendant`](../dom.mjs#L201)
-  * [`function descendants`](../dom.mjs#L206)
-  * [`function findNextSibling`](../dom.mjs#L219)
-  * [`function nextSibling`](../dom.mjs#L227)
-  * [`function findPrevSibling`](../dom.mjs#L229)
-  * [`function prevSibling`](../dom.mjs#L237)
-  * [`function MixNode`](../dom.mjs#L243)
-  * [`class MixNodeCache`](../dom.mjs#L245)
+  * [`function descendant`](../dom.mjs#L203)
+  * [`function findDescendant`](../dom.mjs#L205)
+  * [`function descendants`](../dom.mjs#L210)
+  * [`function findNextSibling`](../dom.mjs#L223)
+  * [`function nextSibling`](../dom.mjs#L231)
+  * [`function findPrevSibling`](../dom.mjs#L233)
+  * [`function prevSibling`](../dom.mjs#L241)
+  * [`function MixNode`](../dom.mjs#L247)
+  * [`class MixNodeCache`](../dom.mjs#L249)

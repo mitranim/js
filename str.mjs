@@ -149,7 +149,10 @@ export class Words extends co.Vec {
 export function lower(val) {return l.laxStr(val).toLowerCase()}
 export function upper(val) {return l.laxStr(val).toUpperCase()}
 
-// Probably suboptimal.
+/*
+Probably suboptimal. Doesn't explicitly support surrogate pairs, but doesn't
+seem to break them either. See the test.
+*/
 export function title(val) {
   val = lower(val)
   if (!val.length) return val
@@ -169,10 +172,13 @@ Features:
   * Support for arbitrary iterators.
   * Parsing of bool and numeric values.
 */
-export class StrMap extends co.Bmap {
-  has(key) {return super.has(l.reqStr(key))}
+export class StrMap extends co.TypedMap {
+  key(key) {return l.reqStr(key)}
+  val(val) {return l.reqTrueArr(val)}
+
+  has(key) {return super.has(key)}
   get(key) {return this.has(key) ? super.get(key)[0] : undefined}
-  getAll(key) {return super.get(l.reqStr(key))}
+  getAll(key) {return super.get(key)}
 
   set(key, val) {return this.delete(key), this.append(key, val)}
   setAll(key, val) {return this.delete(key), this.appendAll(key, val)}
@@ -197,8 +203,6 @@ export class StrMap extends co.Bmap {
   appendAny(key, val) {
     return l.isArr(val) ? this.appendAll(key, val) : this.append(key, val)
   }
-
-  delete(key) {return super.delete(l.reqStr(key))}
 
   reset(val) {
     if (l.isInst(val, StrMap)) return this.resetFromStrMap(val)
@@ -548,18 +552,26 @@ export function san(str, ...inp) {return interpolate(str, inp, l.render)}
 
 export function sanLax(str, ...inp) {return interpolate(str, inp, l.renderLax)}
 
-// Internal tool for "tag" functions for template strings.
-export function interpolate(str, inp, fun) {
-  l.reqArr(str)
-  l.reqArr(inp)
+// Internal tool for "tag functions" for template strings.
+export function interpolate(src, inp, fun) {
+  src = l.reqArr(src)
+  inp = l.reqArr(inp)
 
   let out = ``
   let ind = -1
 
   while (++ind < inp.length) {
-    out += str[ind]
-    out += fun(inp[ind])
+    out += l.reqStr(src[ind])
+    out += l.reqStr(fun(inp[ind]))
   }
-  if (ind < str.length) out += str[ind]
+  if (ind < src.length) out += l.reqStr(src[ind])
   return out
+}
+
+/*
+Stricter variant of `String` that treats nil as empty string and doesn't allow
+arbitrary non-stringable garbage.
+*/
+export class Str extends String {
+  constructor(src) {super(l.renderLax(src))}
 }

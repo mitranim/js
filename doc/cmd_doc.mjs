@@ -1,11 +1,6 @@
+import * as a from '../all.mjs'
 import * as io from '../io_deno.mjs'
-import * as l from '../lang.mjs'
-import * as s from '../str.mjs'
 import * as cl from '../cli.mjs'
-import * as co from '../coll.mjs'
-import * as o from '../obj.mjs'
-import * as i from '../iter.mjs'
-import * as u from '../url.mjs'
 import * as p from '../path.mjs'
 
 const VER = (await io.readJson(`package.json`)).version
@@ -39,24 +34,24 @@ const FEATS = [
   [`test`, `tools for testing and benchmarking.`],
 ]
 
-class Pkg extends o.Strict {
+class Pkg extends a.Strict {
   constructor(feats) {
     super()
-    this.feats = new co.Coll()
+    this.feats = new a.Coll()
     for (const [name, desc] of feats) {
       this.feats.add(new Feat(this, name, desc))
     }
   }
 
-  static {o.memGet(this)}
+  static {a.memGet(this)}
   get base() {return `https://cdn.jsdelivr.net/npm/@mitranim/js`}
   get ver() {return VER}
-  get url() {return s.inter(this.base, `@`, this.ver)}
+  get url() {return a.inter(this.base, `@`, this.ver)}
   get readmeSrcPath() {return p.posix.join(DIR_DOC_SRC, `readme.md`)}
-  get readmeSrcText() {return io.readText(this.readmeSrcPath).then(s.trim)}
+  get readmeSrcText() {return io.readText(this.readmeSrcPath).then(a.trim)}
   get readmeOutPath() {return `readme.md`}
   get readmeOutText() {return this.$readmeOutText()}
-  get features() {return s.joinLinesOpt(i.map(this.feats, toHeadlineBullet))}
+  get features() {return a.joinLinesOpt(a.map(this.feats, toHeadlineBullet))}
 
   async $readmeOutText() {return renderNamed(this.readmeSrcText, this, this.readmeSrcPath)}
 
@@ -67,36 +62,36 @@ class Pkg extends o.Strict {
   feat(name) {
     return (
       this.feats.get(name) ??
-      l.panic(Error(`unable to find feat ${l.show(name)}`))
+      a.panic(Error(`unable to find feat ${a.show(name)}`))
     )
   }
 
   featUrl(name) {return this.feat(name).selfUrl}
 }
 
-class Feat extends o.Strict {
+class Feat extends a.Strict {
   constructor(pkg, name, desc) {
     super()
-    this.pkg = l.reqInst(pkg, Pkg)
-    this.name = l.reqStr(name)
-    this.desc = l.reqStr(desc)
+    this.pkg = a.reqInst(pkg, Pkg)
+    this.name = a.reqStr(name)
+    this.desc = a.reqStr(desc)
   }
 
   pk() {return this.name}
 
-  static {o.memGet(this)}
-  get codePath() {return s.str(this.name, `.mjs`)}
-  get docCodePath() {return u.urlJoin(`..`, this.codePath)}
+  static {a.memGet(this)}
+  get codePath() {return a.str(this.name, `.mjs`)}
+  get docCodePath() {return a.urlJoin(`..`, this.codePath)}
   get codeHead() {return mdLink(this.codePath, this.docCodePath)}
   get codeText() {return io.readText(this.codePath)}
   get codeLines() {return this.$codeLines()}
-  get testPath() {return p.posix.join(DIR_TEST, s.str(this.name, `_test.mjs`))}
-  get docTestPath() {return u.urlJoin(`..`, this.testPath)}
+  get testPath() {return p.posix.join(DIR_TEST, a.str(this.name, `_test.mjs`))}
+  get docTestPath() {return a.urlJoin(`..`, this.testPath)}
   get testText() {return io.readText(this.testPath)}
   get testLines() {return this.$testLines()}
-  get readmeName() {return s.str(this.name, `_readme.md`)}
+  get readmeName() {return a.str(this.name, `_readme.md`)}
   get readmeSrcPath() {return p.posix.join(DIR_DOC_SRC, this.readmeName)}
-  get readmeSrcText() {return io.readText(this.readmeSrcPath).then(s.trim)}
+  get readmeSrcText() {return io.readText(this.readmeSrcPath).then(a.trim)}
   get readmeOutPath() {return p.posix.join(DIR_DOC_OUT, this.readmeName)}
   get readmeOutText() {return this.$readmeOutText()}
   get idents() {return this.$idents()}
@@ -115,14 +110,14 @@ class Feat extends o.Strict {
   get docLink() {return mdLink(coded(this.name), this.readmeOutPath)}
   get docRelPath() {return this.readmeName}
   get docRelLink() {return mdLink(coded(this.name), this.docRelPath)}
-  get headline() {return s.str(this.docLink, s.optPre(this.desc, `: `))}
+  get headline() {return a.str(this.docLink, a.optPre(this.desc, `: `))}
 
-  async $codeLines() {return s.lines(await this.codeText)}
-  async $testLines() {return s.lines(await this.testText)}
+  async $codeLines() {return a.lines(await this.codeText)}
+  async $testLines() {return a.lines(await this.testText)}
   async $readmeOutText() {return renderNamed(this.readmeSrcText, this, this.readmeSrcPath)}
 
   async $idents() {
-    const buf = new co.Coll()
+    const buf = new a.Coll()
     for (const [ind, text] of (await this.codeLines).entries()) {
       const mat = text.match(/^export\s+(?:async\s+)?(\w+)\s+(\w+)\b/)
       if (mat) buf.add(new Ident(this, ind, mat[1], mat[2]))
@@ -132,15 +127,15 @@ class Feat extends o.Strict {
 
   async $identGroups() {
     const idents = await this.idents
-    const flags = new Map(await Promise.all(i.map(idents, identWithHasDoc)))
-    return i.partition(idents, val => flags.get(val))
+    const flags = new Map(await Promise.all(a.map(idents, identWithHasDoc)))
+    return a.partition(idents, val => flags.get(val))
   }
 
   async $identsWithDoc() {return (await this.identGroups)[0]}
   async $identsWithoutDoc() {return (await this.identGroups)[1]}
 
   async $identTestLines() {
-    const buf = new Map/*<str, nat>*/()
+    const buf = new StrNatMap()
     for (const [ind, text] of (await this.testLines).entries()) {
       const mat = (
         text.match(/^t[.]test[(]function test_(\w+)[(]/) ||
@@ -152,47 +147,47 @@ class Feat extends o.Strict {
   }
 
   async $toc() {
-    return s.joinLinesOpt([(await this.tocDoc), (await this.tocUndoc)])
+    return a.joinLinesOpt([(await this.tocDoc), (await this.tocUndoc)])
   }
 
   async $tocDoc() {
-    return s.joinLines(i.map((await this.identsWithDoc), toDocLinkBullet))
+    return a.joinLines(a.map((await this.identsWithDoc), toDocLinkBullet))
   }
 
   async $tocUndoc() {
     const idents = await this.identsWithoutDoc
     if (!idents.length) return ``
-    return s.str(INDENT, `* `, mdLink(`#Undocumented`, `#undocumented`))
+    return a.str(INDENT, `* `, mdLink(`#Undocumented`, `#undocumented`))
   }
 
   async $api() {
-    return s.joinLinesOpt([(await this.apiDoc), (await this.apiUndoc)])
+    return a.joinLinesOpt([(await this.apiDoc), (await this.apiUndoc)])
   }
 
   async $apiDoc() {
-    return s.joinLines(await Promise.all(i.map((await this.identsWithDoc), identDoc)))
+    return a.joinLines(await Promise.all(a.map((await this.identsWithDoc), identDoc)))
   }
 
   async $apiUndoc() {
     const idents = await this.identsWithoutDoc
     if (!idents.length) return ``
 
-    return s.san`### Undocumented
+    return a.san`### Undocumented
 
 The following APIs are exported but undocumented. Check ${this.codeHead}.
 
-${s.joinLines(i.map(idents, toUndocBullet))}
+${a.joinLines(a.map(idents, toUndocBullet))}
 `
   }
 
   identAddr(name) {
-    return s.inter(l.show(this.codePath), ` → `, l.show(l.reqStr(name)))
+    return a.inter(a.show(this.codePath), ` → `, a.show(a.reqStr(name)))
   }
 
   async ident(name) {
     return (
       (await this.idents).get(name) ??
-      l.panic(Error(`unable to find ident ${this.identAddr(name)}`))
+      a.panic(Error(`unable to find ident ${this.identAddr(name)}`))
     )
   }
 
@@ -218,40 +213,40 @@ ${s.joinLines(i.map(idents, toUndocBullet))}
   featUrl(name) {return this.pkg.featUrl(name)}
 }
 
-class Ident extends o.Strict {
+class Ident extends a.Strict {
   constructor(feat, line, type, name) {
     super()
-    this.feat = l.reqInst(feat, Feat)
-    this.line = l.reqNat(line)
-    this.type = l.reqStr(type)
-    this.name = l.reqStr(name)
+    this.feat = a.reqInst(feat, Feat)
+    this.line = a.reqNat(line)
+    this.type = a.reqStr(type)
+    this.name = a.reqStr(name)
   }
 
   pk() {return this.name}
 
-  static {o.memGet(this)}
+  static {a.memGet(this)}
   get row() {return this.line + 1}
   get testRow() {return this.$testRow()}
   get testLine() {return this.$testLine()}
   get head() {return coded(this.type, ` `, this.name)}
   get codedName() {return coded(this.name)}
-  get codeLink() {return s.str(this.feat.docCodePath, `#L`, this.row)}
+  get codeLink() {return a.str(this.feat.docCodePath, `#L`, this.row)}
   get testLink() {return this.$testLink()}
   get sourceHead() {return mdLink(`source`, this.codeLink)}
   get testHead() {return this.$testHead()}
   get url() {return this.feat.url}
   get doc() {return this.$doc()}
-  get docName() {return s.str(toDocName(this.name), `.md`)}
+  get docName() {return a.str(toDocName(this.name), `.md`)}
   get docPath() {return p.posix.join(DIR_DOC_SRC, this.feat.name, this.docName)}
   get docHead() {return this.$docHead()}
-  get docSrcText() {return io.readTextOpt(this.docPath).then(s.trim)}
+  get docSrcText() {return io.readTextOpt(this.docPath).then(a.trim)}
   get docOutText() {return this.$docOutText()}
   get docLink() {return mdLinkInter(this.head)}
-  get docShortLink() {return mdLink(s.str(`#`, this.codedName), mdHash(this.head))}
+  get docShortLink() {return mdLink(a.str(`#`, this.codedName), mdHash(this.head))}
   get docLinks() {return this.$docLinks()}
   get hasDoc() {return this.$hasDoc()}
   get undocHead() {return mdLink(this.head, this.codeLink)}
-  get docPkgLinkPath() {return s.str(this.feat.readmeName, mdHash(this.head))}
+  get docPkgLinkPath() {return a.str(this.feat.readmeName, mdHash(this.head))}
   get addr() {return this.feat.identAddr(this.name)}
 
   link(...val) {return this.feat.link(...val)}
@@ -267,15 +262,15 @@ class Ident extends o.Strict {
   featIdentLink(text) {
     return (
       text
-      ? mdLink(s.str(`#`, text), mdHash(this.head))
+      ? mdLink(a.str(`#`, text), mdHash(this.head))
       : this.docShortLink
     )
   }
 
   featLink(name, text) {return this.feat.pkg.featLink(name, text)}
 
-  async $testRow() {return l.reqNat(await this.testLine) + 1}
-  async $testLink() {return s.str(this.feat.docTestPath, `#L`, (await this.testRow))}
+  async $testRow() {return a.reqNat(await this.testLine) + 1}
+  async $testLink() {return a.str(this.feat.docTestPath, `#L`, (await this.testRow))}
   async $testHead() {return mdLink(`test/example`, await this.testLink)}
 
   async $testLine() {
@@ -283,15 +278,15 @@ class Ident extends o.Strict {
     return (
       (await this.feat.identTestLines).get(name) ??
       // Documented features must be tested.
-      l.panic(Error(`unable to find test for ${this.addr}`))
+      a.panic(Error(`unable to find test for ${this.addr}`))
     )
   }
 
-  async $docHead() {return s.str(`### `, this.head, `\n\n`, await this.docLinks)}
+  async $docHead() {return a.str(`### `, this.head, `\n\n`, await this.docLinks)}
   async $hasDoc() {return !!(await this.docOutText)}
 
   async $docLinks() {
-    return s.san`Links: ${this.sourceHead}; ${await this.testHead}.`
+    return a.san`Links: ${this.sourceHead}; ${await this.testHead}.`
   }
 
   async $doc() {
@@ -301,42 +296,47 @@ class Ident extends o.Strict {
   async $docOutText() {return renderNamed(this.docSrcText, this, this.docPath)}
 
   async reqDoc() {
-    if (!(await this.hasDoc)) throw Error(s.san`missing doc for ${this.addr}`)
+    if (!(await this.hasDoc)) throw Error(a.san`missing doc for ${this.addr}`)
     return this.doc
   }
 
   featUrl(name) {return this.feat.featUrl(name)}
 }
 
-function toDocLinkBullet(val) {return s.str(INDENT, `* `, val.docLink)}
-function toUndocBullet(val) {return s.str(INDENT, `* `, val.undocHead)}
-function toHeadlineBullet(val) {return s.str(INDENT, `* `, val.headline)}
+class StrNatMap extends a.TypedMap {
+  key(key) {return a.reqStr(key)}
+  val(val) {return a.reqNat(val)}
+}
+
+function toDocLinkBullet(val) {return a.str(INDENT, `* `, val.docLink)}
+function toUndocBullet(val) {return a.str(INDENT, `* `, val.undocHead)}
+function toHeadlineBullet(val) {return a.str(INDENT, `* `, val.headline)}
 function identDoc(val) {return val.reqDoc()}
-async function identWithHasDoc(val) {return [val, l.reqBool(await val.hasDoc)]}
+async function identWithHasDoc(val) {return [val, a.reqBool(await val.hasDoc)]}
 function withNewline(val) {return withNewlines(val, 1)}
-function withNewlines(val, len) {return s.trim(val) + newlines(len)}
+function withNewlines(val, len) {return a.trim(val) + newlines(len)}
 function newlines(len) {return `\n`.repeat(len)}
-function mdLink(text, link) {return s.str(`[`, text, `](`, link, `)`)}
-function mdLinkInter(text) {return mdLink(s.str(`#`, text), mdHash(text))}
-function mdHash(val) {return `#` + s.words(val.toLowerCase()).lowerKebab()}
-function coded(...val) {return s.str('`', ...val, '`')}
+function mdLink(text, link) {return a.str(`[`, text, `](`, link, `)`)}
+function mdLinkInter(text) {return mdLink(a.str(`#`, text), mdHash(text))}
+function mdHash(val) {return `#` + a.words(val.toLowerCase()).lowerKebab()}
+function coded(...val) {return a.str('`', ...val, '`')}
 function allow(path) {return RE_WATCH.test(path)}
 function runTimed() {return cl.timed(run, `doc`)}
 function runTimedOpt() {return runTimed().catch(console.error)}
 
 function toDocName(val) {
-  l.reqStr(val)
+  a.reqStr(val)
   return /^[A-Z]/.test(val) ? `_` + val : val
 }
 
 async function renderNamed(src, ctx, msg) {
-  const pre = `unexpected rendering error in ${l.show(msg)}: `
+  const pre = `unexpected rendering error in ${a.show(msg)}: `
 
   try {
-    return await s.draftRenderAsync(await src, ctx)
+    return await a.draftRenderAsync(await src, ctx)
   }
   catch (err) {
-    l.reqInst(err, Error)
+    a.reqInst(err, Error)
     err.message = pre + err.message
 
     // Seems to be unnecessary, but not sure.
@@ -363,7 +363,7 @@ async function main() {
 
 async function run() {
   const pkg = new Pkg(FEATS)
-  await Promise.all([runFeat(pkg), ...i.map(pkg.feats, runFeat)])
+  await Promise.all([runFeat(pkg), ...a.map(pkg.feats, runFeat)])
 }
 
 async function runFeat(val) {

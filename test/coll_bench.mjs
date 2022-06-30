@@ -16,6 +16,8 @@ t.eq(numVec.toArray(), itc.numArr)
 i.map(numVec, l.inc)
 t.eq(numVec.toArray(), itc.numArr)
 
+const vecEmpty = new co.Vec()
+
 /* Bench */
 
 t.bench(function bench_set_new_Array_empty() {l.nop(Array.of())})
@@ -125,5 +127,7 @@ t.bench(function bench_vec_map_our_iter() {l.nop(i.map(numVec, l.inc))})
 
 t.bench(function bench_vec_filter_inner_native() {l.nop(numVec.$.filter(l.id))})
 t.bench(function bench_vec_filter_our_iter() {l.nop(i.filter(numVec, l.id))})
+
+t.bench(function bench_vec_clear_empty() {l.nop(vecEmpty.clear())})
 
 if (import.meta.main) t.deopt(), t.benches()

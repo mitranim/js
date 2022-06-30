@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as ds from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.33/dom_shim.mjs'
+import * as ds from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/dom_shim.mjs'
 ```
 
 ## API
