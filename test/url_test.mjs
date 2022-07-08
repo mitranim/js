@@ -288,7 +288,7 @@ function testSearchMutWith(fun) {
   testMut(u.query(),          fun(),                      ``)
   testMut(u.query(),          fun(``),                    ``)
   testMut(u.query(),          fun(`one=two`),             `one=two`)
-  testMut(u.query(`one=two`), fun(`one=three`),           `one=two&one=three`)
+  testMut(u.query(`one=two`), fun(`one=three`),           `one=three`)
   testMut(u.query(`one=two`), fun(`three=four`),          `one=two&three=four`)
   testMut(u.query(`one=two`), fun(`three=four&five=six`), `one=two&three=four&five=six`)
 }

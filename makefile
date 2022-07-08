@@ -59,14 +59,16 @@ tag:
 untag:
 	git tag -d $(VER)
 
+push:
+	git push origin $(VER) $$(git symbolic-ref --short HEAD)
+
 # Usage:
 #
 #   * Update the version in `package.json`.
 #   * `make doc`
 #   * Commit.
-#   * `make tag push`
-push:
-	git push origin $(VER) $$(git symbolic-ref --short HEAD)
+#   * `make release`
+release: tag push
 
 define HOOK_PRE_COMMIT
 #!/bin/sh

@@ -26,7 +26,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/coll.mjs'
+import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/coll.mjs'
 ```
 
 ## API
@@ -101,8 +101,8 @@ Links: [source](../coll.mjs#L81); [test/example](../test/coll_test.mjs#L186).
 Variant of [#`Bmap`](#class-bmap) with support for key and value checks. Subclasses must override methods `.key` and `.val`. These methods are automatically called by `.set`. Method `.key` must validate and return the given key, and method `.val` must validate and return the given value. Use type assertions provided by [`lang`](lang_readme.md).
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/lang.mjs'
-import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/coll.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/lang.mjs'
+import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/coll.mjs'
 
 class StrNatMap extends co.TypedMap {
   key(key) {return l.reqStr(key)}
@@ -181,9 +181,9 @@ Coll {
 
 ### `class ClsColl`
 
-Links: [source](../coll.mjs#L136); [test/example](../test/coll_test.mjs#L293).
+Links: [source](../coll.mjs#L137); [test/example](../test/coll_test.mjs#L293).
 
-Variant of [#`Coll`](#class-coll) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsColl`. Elements added with `.add` are idempotently instantiated.
+Variant of [#`Coll`](#class-coll) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing. Elements added with `.add` are idempotently instantiated.
 
 Also see [#`ClsVec`](#class-clsvec).
 
@@ -213,7 +213,7 @@ Persons {
 
 ### `class Vec`
 
-Links: [source](../coll.mjs#L144); [test/example](../test/coll_test.mjs#L302).
+Links: [source](../coll.mjs#L145); [test/example](../test/coll_test.mjs#L302).
 
 Short for "vector". Thin wrapper around a plain array. Features:
 
@@ -236,7 +236,7 @@ The overhead of the wrapper is insignificant.
 
 ### `class ClsVec`
 
-Links: [source](../coll.mjs#L173); [test/example](../test/coll_test.mjs#L427).
+Links: [source](../coll.mjs#L174); [test/example](../test/coll_test.mjs#L427).
 
 Variant of [#`Vec`](#class-vec) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsVec`. Elements added with `.add` are idempotently instantiated.
 
@@ -276,4 +276,4 @@ The following APIs are exported but undocumented. Check [coll.mjs](../coll.mjs).
   * [`class CompatMap`](../coll.mjs#L91)
   * [`class ClsMap`](../coll.mjs#L96)
   * [`function pkOf`](../coll.mjs#L108)
-  * [`class Que`](../coll.mjs#L180)
+  * [`class Que`](../coll.mjs#L181)

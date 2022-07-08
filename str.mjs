@@ -180,18 +180,30 @@ export class StrMap extends co.TypedMap {
   get(key) {return this.has(key) ? super.get(key)[0] : undefined}
   getAll(key) {return super.get(key)}
 
-  set(key, val) {return this.delete(key), this.append(key, val)}
-  setAll(key, val) {return this.delete(key), this.appendAll(key, val)}
-  setAny(key, val) {return l.isArr(val) ? this.setAll(key, val) : this.set(key, val)}
+  set(key, val) {
+    l.reqStr(key)
+    if (l.isNil(val)) return this.delete(key), this
+    return super.set(key, [l.render(val)])
+  }
+
+  setAll(key, val) {
+    l.reqStr(key)
+    val = l.laxArr(val)
+    if (val.length) return super.set(key, val.map(l.renderLax))
+    return this.delete(key), this
+  }
+
+  setAny(key, val) {
+    return l.isArr(val) ? this.setAll(key, val) : this.set(key, val)
+  }
 
   append(key, val) {
     l.reqStr(key)
     if (l.isNil(val)) return this
-    val = l.renderLax(val)
+    val = l.render(val)
 
-    if (super.has(key)) super.get(key).push(val)
-    else super.set(key, [val])
-    return this
+    if (super.has(key)) return super.get(key).push(val), this
+    return super.set(key, [val])
   }
 
   appendAll(key, val) {
@@ -216,13 +228,18 @@ export class StrMap extends co.TypedMap {
     return this
   }
 
+  // See `str_test.mjs` for explanation.
   mutFromIter(src) {
-    for (const [key, val] of l.reqIter(src)) this.appendAny(key, val)
+    const repeat = new Set()
+    for (const [key, val] of l.reqIter(src)) {
+      if (repeat.has(key)) this.appendAny(key, val)
+      else this.setAny(key, val), repeat.add(key)
+    }
     return this
   }
 
   mutFromStruct(val) {
-    for (const key of l.structKeys(val)) this.appendAny(key, val[key])
+    for (const key of l.structKeys(val)) this.setAny(key, val[key])
     return this
   }
 

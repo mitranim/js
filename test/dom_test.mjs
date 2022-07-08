@@ -5,7 +5,7 @@ import * as t from '../test.mjs'
 import * as p from '../prax.mjs'
 import * as d from '../dom.mjs'
 
-const ren = new p.Ren(document).patchProto(Element)
+const ren = p.Ren.native()
 const {E} = ren
 
 t.test(function test_DocHeadMut() {

@@ -677,24 +677,17 @@ t.test(function test_StrMap() {
       test(s.strMap())
     })
 
+    /*
+    For any key present in the input, the entire pre-existing entry should be
+    replaced. However, we must preserve ALL values present in the input, which
+    is tricky when the same key occurs multiple times with different values,
+    which we support for compatibility with `URLSearchParams` / `Query`.
+    */
     t.test(function test_full() {
-      /*
-      TODO consider changing the behavior from `.appendAny` to `.setAny`. For
-      any key present in the input, the entire pre-existing entry should be
-      removed. However, we must preserve ALL values present in the input, which
-      is tricky in cases where the same key occurs multiple times with
-      different values, which we support for compatibility with URL `Query`.
-      This is trivial to solve by "remembering" new keys in a temporary set;
-      the tricky part is doing this in a cleaner and more efficient way.
-
-      Once implemented, the output should be this:
-
-        [[`one`, [`six`]], [`three`, [`seven`]], [`eight`, [`nine`, `ten`]]]
-      */
       function test(inp) {
         testMap(
           s.strMap({one: `two`, three: [`four`, `five`]}).mut(inp),
-          [[`one`, [`two`, `six`]], [`three`, [`four`, `five`, `seven`]], [`eight`, [`nine`, `ten`]]],
+          [[`one`, [`six`]], [`three`, [`seven`]], [`eight`, [`nine`, `ten`]]],
         )
       }
 

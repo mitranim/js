@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/url.mjs'
 ```
 
 Example parsing:
@@ -308,7 +308,7 @@ new URLSearchParams(new u.Query(`one=two&one=three&four=five`))
 
 ### `class Url`
 
-Links: [source](../url.mjs#L76); [test/example](../test/url_test.mjs#L300).
+Links: [source](../url.mjs#L82); [test/example](../test/url_test.mjs#L300).
 
 Like [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) but much better. See [#Overview](#overview) for some differences.
 
@@ -443,20 +443,20 @@ The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
   * [`const RE_ORIGIN`](../url.mjs#L19)
   * [`const RE_PATHNAME`](../url.mjs#L20)
   * [`const RE_HASH`](../url.mjs#L21)
-  * [`function loc`](../url.mjs#L330)
-  * [`function toLoc`](../url.mjs#L331)
-  * [`class Loc`](../url.mjs#L341)
-  * [`const stateKey`](../url.mjs#L394)
-  * [`const titleKey`](../url.mjs#L395)
-  * [`const schemeKey`](../url.mjs#L397)
-  * [`const slashKey`](../url.mjs#L398)
-  * [`const usernameKey`](../url.mjs#L399)
-  * [`const passwordKey`](../url.mjs#L400)
-  * [`const hostnameKey`](../url.mjs#L401)
-  * [`const portKey`](../url.mjs#L402)
-  * [`const pathnameKey`](../url.mjs#L403)
-  * [`const queryKey`](../url.mjs#L404)
-  * [`const hashKey`](../url.mjs#L405)
-  * [`function urlParse`](../url.mjs#L407)
-  * [`function queryDec`](../url.mjs#L473)
-  * [`function queryEnc`](../url.mjs#L479)
+  * [`function loc`](../url.mjs#L336)
+  * [`function toLoc`](../url.mjs#L337)
+  * [`class Loc`](../url.mjs#L347)
+  * [`const stateKey`](../url.mjs#L400)
+  * [`const titleKey`](../url.mjs#L401)
+  * [`const schemeKey`](../url.mjs#L403)
+  * [`const slashKey`](../url.mjs#L404)
+  * [`const usernameKey`](../url.mjs#L405)
+  * [`const passwordKey`](../url.mjs#L406)
+  * [`const hostnameKey`](../url.mjs#L407)
+  * [`const portKey`](../url.mjs#L408)
+  * [`const pathnameKey`](../url.mjs#L409)
+  * [`const queryKey`](../url.mjs#L410)
+  * [`const hashKey`](../url.mjs#L411)
+  * [`function urlParse`](../url.mjs#L413)
+  * [`function queryDec`](../url.mjs#L479)
+  * [`function queryEnc`](../url.mjs#L485)

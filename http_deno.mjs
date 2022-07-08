@@ -11,7 +11,7 @@ import * as p from './path.mjs'
 export class ContentTypeMap extends o.MixMain(Map) {
   guess(val) {return this.get(p.posix.ext(val))}
 
-  static get default() {
+  static default() {
     return new this()
       .set(`.css`, `text/css`)
       .set(`.gif`, `image/gif`)

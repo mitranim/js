@@ -29,17 +29,6 @@ class Fat {
   set getterSetter(_) {unreachable()}
 }
 
-/*
-May revise and move to `test.mjs`.
-A lot of our class tests want something similar.
-*/
-function testStructure(ref, cls, exp) {
-  t.ok(ref instanceof cls)
-  t.is(ref.constructor, cls)
-  t.is(Object.getPrototypeOf(ref), cls.prototype)
-  t.own(ref, exp)
-}
-
 /* Test */
 
 t.test(function test_assign() {
@@ -196,49 +185,296 @@ t.test(function test_patch() {
   })
 })
 
-t.test(function test_Dict() {
-  t.throws(() => o.Dict(), TypeError, `cannot be invoked without 'new'`)
-  t.throws(() => new o.Dict(10), TypeError, `expected variant of isStruct, got 10`)
+t.test(function test_Struct() {
+  t.test(function test_untyped() {
+    class Cls extends o.Struct {}
 
-  t.test(function test_constructor() {
-    function test(src, exp) {
-      testStructure(new o.Dict(src), o.Dict, exp)
-    }
+    t.test(function test_no_shadowing() {
+      t.own(new Cls({one: 10, constructor: 20, mut: 30}), {one: 10})
+    })
 
-    test(undefined, {})
-
-    test({one: 10}, {one: 10})
-
-    test({one: 10, two: 20}, {one: 10, two: 20})
-
-    test(
-      {one: 10, two: 20, toString: 30},
-      {one: 10, two: 20, toString: 30},
-    )
-
-    test(
-      {[Symbol.for(`one`)]: 10, constructor: 20, mut: 30, [Symbol.toStringTag]: 40},
-      {[Symbol.for(`one`)]: 10},
-    )
+    t.test(function test_unknown() {
+      t.own(new Cls(), {})
+      t.own(new Cls({id: 10}), {id: 10})
+      t.own(new Cls({name: `Mira`}), {name: `Mira`})
+      t.own(new Cls({id: 10, name: `Mira`}), {id: 10, name: `Mira`})
+    })
   })
 
-  t.test(function test_mut() {
-    t.throws(() => new o.Dict().mut(10), TypeError, `expected variant of isStruct, got 10`)
+  t.test(function test_typed() {
+    class Person extends o.Struct {
+      static strict = true
 
-    function test(src, inp, exp) {
-      const tar = new o.Dict(src)
-      t.is(tar.mut(inp), tar)
-      testStructure(tar, o.Dict, exp)
+      static fields = {
+        ...super.fields,
+        id: l.reqFin,
+        name: l.reqStr,
+      }
     }
 
-    test(undefined, undefined, {})
-    test(undefined, {one: 10}, {one: 10})
-    test({one: 10}, undefined, {one: 10})
-    test({one: 10}, {two: 20}, {one: 10, two: 20})
-    test({one: 10}, {one: 30, two: 20}, {one: 30, two: 20})
+    // TODO test error causes, which is currently not supported by `test.mjs`.
+    t.test(function test_missing_or_invalid() {
+      t.throws(() => new Person(), TypeError, `invalid field "id"`)
+      t.throws(() => new Person({id: `one`, name: `two`}), TypeError, `invalid field "id"`)
+      t.throws(() => new Person({id: 10, name: 20}), TypeError, `invalid field "name"`)
+    })
 
-    test(undefined, {mut: 10}, {})
-    test({one: 10}, {mut: 20}, {one: 10})
+    t.test(function test_valid() {
+      t.own(new Person({id: 10, name: `Mira`}), {id: 10, name: `Mira`})
+      t.own(new Person({id: 10, name: `Mira`, one: `two`}), {id: 10, name: `Mira`, one: `two`})
+    })
+
+    t.test(function test_no_shadowing() {
+      t.own(new Person({id: 10, name: `Mira`, constructor: 10, mut: 20}), {id: 10, name: `Mira`})
+    })
+
+    t.test(function test_mut() {
+      const tar = new Person({id: 10, name: `Mira`})
+      t.own(tar, {id: 10, name: `Mira`})
+
+      t.throws(() => tar.mut({id: `str`}), TypeError, `invalid field "id"`)
+      t.own(tar, {id: 10, name: `Mira`})
+
+      t.throws(() => tar.mut({name: 20}), TypeError, `invalid field "name"`)
+      t.own(tar, {id: 10, name: `Mira`})
+
+      tar.mut()
+      t.own(tar, {id: 10, name: `Mira`})
+
+      tar.mut({})
+      t.own(tar, {id: 10, name: `Mira`})
+
+      tar.mut({id: 20})
+      t.own(tar, {id: 20, name: `Mira`})
+
+      tar.mut({name: `Kara`})
+      t.own(tar, {id: 20, name: `Kara`})
+    })
+  })
+
+  t.test(function test_inheritance() {
+    t.test(function test_define_then_instantiate() {
+      class One extends o.Struct {
+        static fields = {...super.fields, one: l.reqFin}
+      }
+
+      class Two extends One {
+        static fields = {...super.fields, two: l.reqStr}
+      }
+
+      t.throws(() => new One({one: `10`}), TypeError, `invalid field "one"`)
+      t.own(new One({one: 10, two: 20}), {one: 10, two: 20})
+
+      t.throws(() => new Two({one: 10, two: 20}), TypeError, `invalid field "two"`)
+      t.own(new Two({one: 10, two: `20`}), {one: 10, two: `20`})
+
+      t.eq(One.type, new o.StructType(One, One.fields))
+      t.eq(Two.type, new o.StructType(Two, Two.fields))
+    })
+
+    t.test(function test_instantiate_then_define() {
+      class One extends o.Struct {
+        static fields = {...super.fields, one: l.reqFin}
+      }
+
+      t.throws(() => new One({one: `10`}), TypeError, `invalid field "one"`)
+      t.own(new One({one: 10, two: 20}), {one: 10, two: 20})
+
+      class Two extends One {
+        static fields = {...super.fields, two: l.reqStr}
+      }
+
+      t.throws(() => new Two({one: 10, two: 20}), TypeError, `invalid field "two"`)
+      t.own(new Two({one: 10, two: `20`}), {one: 10, two: `20`})
+
+      t.eq(One.type, new o.StructType(One, One.fields))
+      t.eq(Two.type, new o.StructType(Two, Two.fields))
+    })
+  })
+
+  t.test(function test_recursive_mut() {
+    t.test(function test_untyped() {
+      class Inner extends o.Struct {}
+      class Middle extends o.Struct {}
+      class Outer extends o.Struct {}
+
+      const inner = new Inner({one: 10})
+      const middle = new Middle({two: 20, inner})
+      const outer = new Outer({three: 30, middle})
+
+      t.is(outer.middle, middle)
+      t.is(middle.inner, inner)
+      t.eq(inner, new Inner({one: 10}))
+      t.eq(middle, new Middle({two: 20, inner}))
+      t.eq(outer, new Outer({three: 30, middle}))
+
+      outer.mut({
+        three: 40,
+        middle: {two: 50, inner: {one: 60, four: 70}},
+        five: {six: 80},
+      })
+
+      t.is(outer.middle, middle)
+      t.is(middle.inner, inner)
+      t.eq(inner, new Inner({one: 60, four: 70}))
+      t.eq(middle, new Middle({two: 50, inner: new Inner({one: 60, four: 70})}))
+
+      t.eq(outer, new Outer({
+        three: 40,
+        middle: new Middle({two: 50, inner: new Inner({one: 60, four: 70})}),
+        five: {six: 80},
+      }))
+    })
+
+    t.test(function test_typed() {
+      class Inner extends o.Struct {
+        static fields = {
+          ...super.fields,
+          one: l.reqFin,
+        }
+      }
+
+      class Middle extends o.Struct {
+        static fields = {
+          ...super.fields,
+          two: l.reqFin,
+          inner(val) {return l.toInstOpt(val, Inner)},
+        }
+      }
+
+      class Outer extends o.Struct {
+        static fields = {
+          ...super.fields,
+          three: l.reqFin,
+          middle(val) {return l.toInstOpt(val, Middle)},
+        }
+      }
+
+      const outer = new Outer({three: 30, middle: {two: 20, inner: {one: 10}}})
+      const middle = outer.middle
+      const inner = middle.inner
+
+      t.eq(inner, new Inner({one: 10}))
+      t.eq(middle, new Middle({two: 20, inner}))
+      t.eq(outer, new Outer({three: 30, middle}))
+
+      outer.mut({
+        three: 40,
+        middle: {two: 50, inner: {one: 60, four: 70}},
+        five: {six: 80},
+      })
+
+      t.is(outer.middle, middle)
+      t.is(middle.inner, inner)
+      t.eq(inner, new Inner({one: 60, four: 70}))
+      t.eq(middle, new Middle({two: 50, inner: new Inner({one: 60, four: 70})}))
+
+      t.eq(outer, new Outer({
+        three: 40,
+        middle: new Middle({two: 50, inner: new Inner({one: 60, four: 70})}),
+        five: {six: 80},
+      }))
+    })
+  })
+
+  t.test(function test_with_mem_getter() {
+    class Inner extends o.Struct {}
+
+    class Outer extends o.Struct {
+      static {o.memGet(this)}
+      get inner() {return new Inner()}
+    }
+
+    function testWithMemGetter(make) {
+      const outer = make()
+      const inner = outer.inner
+
+      t.inst(inner, Inner)
+      t.eq({...inner}, {two: 20})
+
+      t.inst(outer, Outer)
+      t.eq({...outer}, {one: 10, inner})
+
+      outer.mut({inner: {two: 30}})
+
+      t.is(outer.inner, inner)
+      t.eq(inner, new Inner({two: 30}))
+    }
+
+    t.test(function test_constructor() {
+      testWithMemGetter(function make() {
+        return new Outer({one: 10, inner: {two: 20}})
+      })
+    })
+
+    t.test(function test_mut() {
+      testWithMemGetter(function make() {
+        return new Outer().mut({one: 10, inner: {two: 20}})
+      })
+    })
+  })
+
+  // Incomplete: tests only constructor without `.mut`. TODO test `.mut`.
+  t.test(function test_getter_override() {
+    function testDefault(cls) {
+      t.eq({...new cls({one: 10})}, {one: 10})
+      t.is(new cls({one: 10}).inner, `inner`)
+    }
+
+    function testNoOverride(cls) {
+      t.eq(
+        {...new cls({one: 10, inner: 20})},
+        {one: 10},
+      )
+    }
+
+    t.test(function test_untyped_only_getter() {
+      class Cls extends o.Struct {
+        get inner() {return `inner`}
+      }
+
+      testDefault(Cls)
+      testNoOverride(Cls)
+    })
+
+    t.test(function test_untyped_getter_setter() {
+      class Cls extends o.Struct {
+        get inner() {return `inner`}
+        set inner(_) {throw l.errImpl()}
+      }
+
+      testDefault(Cls)
+      testNoOverride(Cls)
+    })
+
+    t.test(function test_typed_only_getter() {
+      class Cls extends o.Struct {
+        static fields = {...super.fields, inner: l.laxFin}
+        get inner() {return `inner`}
+      }
+
+      testDefault(Cls)
+
+      t.eq(
+        {...new Cls({one: 10, inner: 20})},
+        {one: 10, inner: 20},
+      )
+    })
+
+    t.test(function test_typed_getter_setter() {
+      class Cls extends o.Struct {
+        static fields = {...super.fields, inner: l.laxFin}
+        get inner() {return `inner`}
+        set inner(val) {o.pub(this, `inner`, val * 2)}
+      }
+
+      testDefault(Cls)
+
+      t.eq(
+        {...new Cls({one: 10, inner: 20})},
+        {one: 10, inner: 40},
+      )
+    })
   })
 })
 
@@ -370,49 +606,6 @@ t.test(function test_MixMain() {
   t.inst(Sub.main, Sub)
   t.is(Sub.main, Sub.main)
   t.isnt(Sub.main, Super.main)
-})
-
-t.test(function test_ClsFunPh() {
-  class Cls {constructor(...val) {this.val = val}}
-
-  t.throws(() => Cls(), TypeError, `Class constructor Cls cannot be invoked without 'new'`)
-
-  const cls = o.ClsFunPh.of(Cls)
-
-  function test(ref) {
-    t.inst(ref, Cls)
-    t.own(ref, {val: [10, 20, 30]})
-  }
-
-  test(new Cls(10, 20, 30))
-  test(new cls(10, 20, 30))
-  test(cls(10, 20, 30))
-})
-
-t.test(function test_ClsInstPh() {
-  class Cls {
-    constructor(val) {this.val = val}
-    set(val) {return this.val = val, this}
-  }
-
-  t.throws(() => Cls(), TypeError, `Class constructor Cls cannot be invoked without 'new'`)
-  t.throws(() => Cls.set(), TypeError, `Cls.set is not a function`)
-
-  const cls = o.ClsInstPh.of(Cls)
-
-  function test(ref) {
-    t.inst(ref, Cls)
-    t.own(ref, {val: 20})
-  }
-
-  test(new Cls(20))
-  test(new Cls(10).set(20))
-  test(new cls(20))
-  test(new cls(10).set(20))
-  test(cls(20))
-  test(cls(10).set(20))
-  test(cls.set(20))
-  test(cls.set(10).set(20))
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

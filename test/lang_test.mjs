@@ -424,6 +424,27 @@ t.test(function test_isKey() {
   t.ok(l.isKey(-10n))
 })
 
+t.test(function test_isPk() {
+  t.no(l.isPk(null))
+  t.no(l.isPk(undefined))
+  t.no(l.isPk(true))
+  t.no(l.isPk(NaN))
+  t.no(l.isPk(Infinity))
+  t.no(l.isPk(-Infinity))
+  t.no(l.isPk(``))
+  t.no(l.isPk(0))
+  t.no(l.isPk(-10))
+  t.no(l.isPk(10.20))
+  t.no(l.isPk(10n))
+  t.no(l.isPk(-10n))
+  t.no(l.isPk(Symbol(`blah`)))
+  t.no(l.isPk({}))
+  t.no(l.isPk([]))
+
+  t.ok(l.isPk(10))
+  t.ok(l.isPk(`str`))
+})
+
 t.test(function test_isJunk() {
   t.no(l.isJunk(0))
   t.no(l.isJunk(false))

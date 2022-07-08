@@ -333,10 +333,8 @@ export function optOneOf(val, funs) {
 }
 
 export function reqInst(val, cls) {
-  if (!isInst(val, cls)) {
-    throw TypeError(`expected instance of ${showFunName(cls)}, got ${instDesc(getCon(val))}${show(val)}`)
-  }
-  return val
+  if (isInst(val, cls)) return val
+  throw TypeError(`expected instance of ${showFunName(cls)}, got ${instDesc(getCon(val))}${show(val)}`)
 }
 
 export function optInst(val, cls) {
@@ -422,9 +420,7 @@ export function npo() {return Object.create(null)}
 function empty() {}
 empty.prototype = null
 
-export class Emp extends empty {
-  get [Symbol.toStringTag]() {return this.constructor.name}
-}
+export class Emp extends empty {}
 
 /* Op */
 
@@ -467,6 +463,19 @@ export function msgType(val, msg) {return `expected variant of ${msg}, got ${sho
 export function errIn(val, key) {return TypeError(`unable to find ${show(key)} in ${show(val)}`)}
 export function errImpl() {return TypeError(`not implemented`)}
 
+/*
+Assumes `cls` is `Error` or a subclass. Otherwise this has undefined behavior.
+Note: `err.cause` is theoretically much better, but engine support is too
+limited at the time of writing.
+*/
+export function errWrap(err, cls, msg) {
+  err = toInst(err, cls)
+  const pre = renderLax(msg)
+  const suf = renderLax(err.message)
+  err.message = pre && suf ? pre + `: ` + suf : pre || suf
+  return err
+}
+
 function errOneOf(val, funs) {return TypeError(msgType(val, `[` + showFuns(funs) + `]`))}
 
 export function convType(val, src, msg) {
@@ -498,10 +507,14 @@ function showObj(val) {
 Like `val?.[key]` but with sanity checks: works only on composite values and
 avoids accessing the property unless it satisfies the `in` check.
 */
-export function get(val, key) {return isComp(val) && key in val ? val[key] : undefined}
+export function get(val, key) {return hasIn(val, key) ? val[key] : undefined}
+
 export function getOwn(val, key) {return hasOwn(val, key) ? val[key] : undefined}
-export function reqIn(ref, key) {if (!hasIn(ref, key)) throw errIn(ref, key)}
-export function reqGet(ref, key) {return reqIn(ref, key), ref[key]}
+
+export function reqGet(val, key) {
+  if (!hasIn(val, key)) throw errIn(val, key)
+  return val[key]
+}
 
 function getName(val) {return get(val, `name`)}
 function getLength(val) {return get(val, `length`)}
@@ -517,3 +530,11 @@ function renderDate(val) {
 export function structKeys(val) {
   return isNil(val) ? [] : Object.keys(reqStruct(val))
 }
+
+/*
+Shortcut for making symbol keys via property access.
+Kinda slow, avoid in hotspots.
+*/
+export const sym = new Proxy(npo(), new class SymPh extends Emp {
+  get(_, key) {return Symbol.for(key)}
+}())

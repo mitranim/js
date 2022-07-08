@@ -239,11 +239,7 @@ export function some(val, fun) {
   return false
 }
 
-export function flat(src) {
-  src = arr(src)
-  for (const val of src) if (l.isArr(val)) return src.flat(Infinity)
-  return src
-}
+export function flat(src) {return values(src).flat(Infinity)}
 
 export function head(val) {
   if (!l.isObj(val)) return undefined

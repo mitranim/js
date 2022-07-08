@@ -128,6 +128,7 @@ export class Coll extends Bmap {
   }
 
   getKey(val) {return pkOpt(val)}
+
   toArray() {return [...this.values()]}
   toJSON() {return this.toArray()}
   [Symbol.iterator]() {return this.values()}

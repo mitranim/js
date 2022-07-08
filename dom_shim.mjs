@@ -203,8 +203,11 @@ export class Node extends l.Emp {
   NodeList() {return []}
 
   siblingAt(shift) {
+    l.reqInt(shift)
+
     const nodes = this.parentNode?.childNodes
     if (!nodes) return null
+
     const ind = indexOf(nodes, this)
     return ind >= 0 ? norm(nodes[ind + shift]) : null
   }
@@ -1036,7 +1039,7 @@ export class GlobPh extends o.MakerPh {
   }
 }
 
-export const glob = GlobPh.new()
+export const glob = new Proxy(l.npo(), new GlobPh())
 export const document = new DOMImplementation().createHTMLDocument()
 export const customElements = document.customElements
 

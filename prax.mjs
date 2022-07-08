@@ -41,7 +41,7 @@ export class Ren extends l.Emp {
   with the same tag "X". The elements are created in the HTML namespace, with
   the exception of the `svg` tag which is created in the SVG namespace.
   */
-  get E() {return o.priv(this, `E`, new Proxy(this, new RenHtmlPh()))}
+  get E() {return o.priv(this, `E`, new Proxy(this, RenHtmlPh))}
 
   /*
   Short for "SVG element". This lazily-initialized property is a "namespace"
@@ -49,7 +49,7 @@ export class Ren extends l.Emp {
   `ren.elemSvg` with the same tag "X". The elements are created in the SVG
   namespace.
   */
-  get S() {return o.priv(this, `S`, new Proxy(this, new RenSvgPh()))}
+  get S() {return o.priv(this, `S`, new Proxy(this, RenSvgPh))}
 
   elemHtml(tag, props, ...chi) {
     if (tag === `svg`) {
@@ -348,16 +348,16 @@ export class Raw extends l.Emp {
   constructor(val) {super().outerHTML = l.renderLax(val)}
 }
 
-export class RenPh extends o.BlankPh {
-  get(ren, key) {return ren.make(key)}
+export class RenPh extends o.BlankStaticPh {
+  static get(ren, key) {return ren.make(key)}
 }
 
-export class RenHtmlPh extends o.BlankPh {
-  get(ren, key) {return ren.makeHtml(key)}
+export class RenHtmlPh extends o.BlankStaticPh {
+  static get(ren, key) {return ren.makeHtml(key)}
 }
 
-export class RenSvgPh extends o.BlankPh {
-  get(ren, key) {return ren.makeSvg(key)}
+export class RenSvgPh extends o.BlankStaticPh {
+  static get(ren, key) {return ren.makeSvg(key)}
 }
 
 export class MixRenCache extends o.WeakCache {
@@ -556,7 +556,7 @@ export class PropBui extends o.MixMain(l.Emp) {
     return new this(val)
   }
 
-  static get default() {return new this().frozen()}
+  static default() {return new this().frozen()}
 }
 
 const refKey = Symbol.for(`$`)

@@ -11,7 +11,7 @@ names to class names. The native DOM API doesn't expose such a registry, so we
 have to implement it ourselves.
 */
 export class TagToCls extends o.MixMain(StrMap) {
-  static get default() {
+  static default() {
     return new this()
       .set(`a`, `HTMLAnchorElement`)
       .set(`area`, `HTMLAreaElement`)
@@ -127,7 +127,7 @@ export class ClsToTag extends o.MixMain(StrMap) {
 
   get re() {return /^(?:HTML|SVG)(\w*)Element$/}
 
-  static get default() {return new this().invert(TagToCls.main)}
+  static default() {return new this().invert(TagToCls.main)}
 }
 
 // Shim/polyfill for the built-in `CustomElementRegistry`.

@@ -34,12 +34,18 @@ export class Query extends s.StrMap {
     return super.mut(val)
   }
 
-  mutFromStr(val) {
-    val = unSearch(val, this.constructor.name)
-    for (val of s.split(val, `&`)) {
-      const ind = val.indexOf(`=`)
-      this.append(this.dec(val.slice(0, ind)), this.dec(val.slice(ind + 1)))
+  mutFromStr(src) {
+    const found = new Set()
+
+    for (const pair of s.split(unSearch(src, this.constructor.name), `&`)) {
+      const ind = pair.indexOf(`=`)
+      const key = this.dec(pair.slice(0, ind))
+      const val = this.dec(pair.slice(ind + 1))
+
+      if (found.has(key)) this.append(key, val)
+      else this.set(key, val), found.add(key)
     }
+
     return this
   }
 

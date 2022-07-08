@@ -17,85 +17,225 @@ export function patch(tar, src) {
   return tar
 }
 
-export function patchInstances(tar, src, cls) {
-  l.reqStruct(tar)
-  for (const key of l.structKeys(src)) {
-    if (!l.hasInherited(tar, key)) tar[key] = l.toInst(src[key], cls)
+export function isMut(val) {return l.isObj(val) && `mut` in val && l.isFun(val.mut)}
+export function reqMut(val) {return isMut(val) ? val : l.convFun(val, isMut)}
+
+export class Struct extends l.Emp {
+  constructor(src) {
+    super()
+    this.mut(src)
+    if (this.constructor.strict) this.constructor.type.validate(this)
   }
-  return tar
+
+  mut(src) {
+    this.constructor.type.mutate(this, src)
+    return this
+  }
+
+  static get type() {
+    if (!l.hasOwn(this, `structType`)) {
+      this.structType = new this.StructType(this, this.fields)
+    }
+    return this.structType
+  }
+
+  static get StructType() {return StructType}
 }
 
-// TODO: patching should support `.mut` on fields that implement this interface.
-export class Dict extends l.Emp {
-  constructor(val) {super().mut(val)}
-  mut(val) {return this.mutFromStruct(val), this.reinit(), this}
-  mutFromStruct(val) {return patch(this, val)}
-  reinit() {}
+// Internal tool for `Struct` type checking.
+export class StructType extends l.Emp {
+  constructor(cls, fields) {
+    super()
+    priv(this, `cls`, l.reqCls(cls))
+    this.dict = l.npo()
+    this.list = []
+    this.addFields(fields)
+  }
+
+  addFields(src) {
+    for (const key of l.structKeys(src)) this.addField(key, src[key])
+    return this
+  }
+
+  addField(key, val) {
+    const {dict} = this
+    if (key in dict) throw Error(`redundant field ${l.show(key)}`)
+    this.list.push(dict[key] = new this.StructField(this, key, val))
+  }
+
+  validate(tar) {for (const field of this.list) field.validate(tar)}
+
+  mutate(tar, src) {
+    for (const key of l.structKeys(src)) this.set(tar, key, src[key])
+  }
+
+  set(tar, key, val) {
+    const {dict} = this
+    if (key in dict) dict[key].set(tar, val)
+    else this.setAny(tar, key, val)
+  }
+
+  setAny(tar, key, val) {
+    if (l.hasOwn(tar, key)) {
+      this.mutOrAssignAny(tar, key, val)
+      return
+    }
+
+    if (!(key in tar)) {
+      this.assignAny(tar, key, val)
+      return
+    }
+
+    // May execute a mem getter.
+    l.nop(tar[key])
+    if (!l.hasOwn(tar, key)) return
+
+    this.mutOrAssignAny(tar, key, val)
+  }
+
+  mutOrAssignAny(tar, key, val) {
+    const prev = tar[key]
+    if (isMut(prev)) prev.mut(val)
+    else this.assignAny(tar, key, val)
+  }
+
+  assignAny(tar, key, val) {tar[key] = this.any(val, key)}
+
+  any(val, key) {
+    const {cls} = this
+    if (`any` in cls) return cls.any(val, key)
+    return val
+  }
+
+  get StructField() {return StructField}
 }
 
-export class ClsDict extends Dict {
-  get cls() {return Object}
-  mutFromStruct(val) {return patchInstances(this, val, this.cls)}
+// Field definition used by `StructType`.
+export class StructField extends l.Emp {
+  constructor(typ, key, fun) {
+    super()
+    priv(this, `typ`, l.reqInst(typ, StructType))
+    this.key = l.reqStr(key)
+    this.fun = l.reqFun(fun)
+    this.desc = descIn(typ.cls.prototype, key)
+  }
+
+  set(tar, val) {
+    const {key, desc} = this
+
+    if (l.hasOwn(tar, key)) {
+      this.mutOrAssign(tar, val)
+      return
+    }
+
+    if (!desc) {
+      this.assign(tar, val)
+      return
+    }
+
+    if (!desc.get) return
+
+    if (desc.set) {
+      this.assign(tar, val)
+      return
+    }
+
+    // May execute a mem getter.
+    l.nop(tar[key])
+
+    if (l.hasOwn(tar, key)) {
+      this.mutOrAssign(tar, val)
+      return
+    }
+
+    pub(tar, key, this.val(tar, val))
+  }
+
+  mutOrAssign(tar, val) {
+    const prev = tar[this.key]
+    if (isMut(prev)) prev.mut(val)
+    else this.assign(tar, val)
+  }
+
+  assign(tar, val) {tar[this.key] = this.val(tar, val)}
+
+  val(tar, val) {
+    const {key, fun} = this
+    try {
+      return fun.call(tar, val)
+    }
+    catch (err) {
+      throw l.errWrap(err, TypeError, `invalid field ${l.show(key)} for ${l.show(tar)}`)
+    }
+  }
+
+  validate(tar) {
+    l.reqObj(tar)
+
+    const {key, fun} = this
+    const prev = key in tar ? tar[key] : undefined
+
+    let next
+    try {
+      next = fun.call(tar, prev)
+    }
+    catch (err) {
+      throw l.errWrap(err, TypeError, `invalid field ${l.show(key)} on ${l.show(tar)}`)
+    }
+
+    if (!l.is(prev, next)) tar[key] = next
+  }
 }
 
 /*
 Tool for classes that define a default singleton.
 By default, instantiates the class with no arguments.
-Subclasses may override `static get default` to customize.
+Subclasses may override `static default()` to customize.
 */
 export function MixMain(cls) {
   return class MixMainCls extends cls {
     static get main() {
       const key = Symbol.for(`main`)
-      return l.hasOwn(this, key) ? this[key] : this[key] = this.default
+      return l.hasOwn(this, key) ? this[key] : this[key] = this.default()
     }
 
-    static get default() {return new this()}
+    static default() {return new this()}
   }
 }
 
 export class Strict extends l.Emp {
   constructor() {
     super()
-    return this.StrictPh.of(this)
+    return new Proxy(this, this.Ph)
   }
 
-  get StrictPh() {return StrictPh}
+  get Ph() {return StrictStaticPh}
 }
 
 /*
-Proxy handler that hides and/or forbids everything by default.
+Static proxy handler that hides and/or forbids everything by default.
 To allow a specific operation, override the corresponding method.
 */
-export class BlankPh extends l.Emp {
-  apply() {throw l.errImpl()}
-  construct() {throw l.errImpl()}
-  defineProperty() {return false}
-  deleteProperty() {return false}
-  get() {}
-  getOwnPropertyDescriptor() {}
-  getPrototypeOf() {return null}
-  has() {return false}
-  isExtensible() {return false}
-  ownKeys() {return []}
-  preventExtensions() {return false}
-  set() {return false}
-  setPrototypeOf() {return false}
+export class BlankStaticPh extends l.Emp {
+  static apply() {throw l.errImpl()}
+  static construct() {throw l.errImpl()}
+  static defineProperty() {return false}
+  static deleteProperty() {return false}
+  static get() {}
+  static getOwnPropertyDescriptor() {}
+  static getPrototypeOf() {return null}
+  static has() {return false}
+  static isExtensible() {return false}
+  static ownKeys() {return []}
+  static preventExtensions() {return false}
+  static set() {return false}
+  static setPrototypeOf() {return false}
 }
 
 /*
-Short for "proxy handler". Simple shortcut for stateless proxy handler classes.
-Static method `.of` idempotently creates and reuses one "main" instance.
-Might export later.
-*/
-class Ph extends MixMain(l.Emp) {
-  static of(val) {return new Proxy(val, this.main)}
-}
-
-/*
-Short for "strict proxy handler". This handler traps "get" operations, causing
-exceptions when accessing properties/methods not present in the target object.
-This behavior is similar to Python classes.
+Short for "strict static proxy handler". This handler traps "get" operations,
+causing exceptions when accessing properties/methods not present in the target
+object. This behavior is similar to Python classes.
 
 The "get" trap is similar to `l.reqGet(tar, key)`, with a key difference: it
 invokes inherited getters on the proxy rather than on the target object. This
@@ -110,8 +250,8 @@ manually, as opposed to letting the engine do it.
 
 Needs tests. Needs more profiling and tuning.
 */
-export class StrictPh extends Ph {
-  get(tar, key, pro) {
+export class StrictStaticPh extends l.Emp {
+  static get(tar, key, pro) {
     if (l.hasOwn(tar, key)) return tar[key]
 
     /*
@@ -143,45 +283,6 @@ export class MemTag extends MixMain(WeakTag) {
   make(cls) {return memPatch(cls)}
 }
 
-export class CallPh extends Ph {
-  apply(tar, self, args) {return tar.call.apply(self, args)}
-}
-
-/*
-When used to proxy a class, this allows to call that class as a function,
-omitting `new`.
-*/
-export class ClsFunPh extends Ph {
-  apply(tar, _, args) {return new tar(...args)}
-
-  static of(val) {return super.of(l.reqCls(val))}
-}
-
-/*
-This is the blackest of magicks.
-
-  * This is a proxy to a class.
-
-  * Unlike normal classes, this can be called as a function.
-
-  * Calling an INSTANCE method on the CLASS automatically makes a new instance
-    and calls the instance method on it.
-*/
-export class ClsInstPh extends ClsFunPh {
-  get(tar, key) {
-    if (key in tar.prototype && !(key in tar)) {
-      const ref = new tar()
-      return ref[key].bind(ref)
-    }
-    return tar[key]
-  }
-
-  apply(tar, _self, args) {
-    if (l.isInst(args[0], tar)) return args[0]
-    return new tar(...args)
-  }
-}
-
 export class Cache extends MixMain(Map) {
   goc(key) {
     if (!this.has(key)) this.set(key, this.make(key))
@@ -198,11 +299,10 @@ export class WeakCache extends MixMain(WeakMap) {
   make() {}
 }
 
-// Should be used with null-prototype targets. Create via static `.new`.
+// Note: proxy target should be `l.npo()`.
 export class MakerPh extends l.Emp {
   get(tar, key) {return key in tar ? tar[key] : (tar[key] = this.make(key, tar))}
   make() {}
-  static new(...val) {return new Proxy(l.npo(), new this(...val))}
 }
 
 /*

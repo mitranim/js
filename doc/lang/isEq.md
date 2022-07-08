@@ -1,0 +1,1 @@
+True for objects that implement method `.eq` which must take another object and compare for equality. This is a made-up interface implemented by some types in this library, such as {{link time DateTime}} and {{link url Url}}.

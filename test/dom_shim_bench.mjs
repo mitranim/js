@@ -3,6 +3,7 @@ import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as ds from '../dom_shim.mjs'
 
+const nodeEmpty = new ds.Node()
 const text = new ds.Text(`str`)
 const comment = new ds.Comment(`str`)
 
@@ -37,7 +38,8 @@ t.bench(function bench_document_baseClassByTag() {
   l.nop(ds.document.baseClassByTag(`span`))
 })
 
-t.bench(function bench_new_Node() {l.nop(new ds.Node())})
+t.bench(function bench_node_new_Node() {l.nop(new ds.Node())})
+t.bench(function bench_node_hasChildNodes_empty() {l.nop(nodeEmpty.hasChildNodes())})
 
 t.bench(function bench_new_Text() {l.nop(new ds.Text(`str`))})
 t.bench(function bench_document_createTextNode() {l.nop(ds.document.createTextNode(`str`))})

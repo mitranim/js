@@ -748,6 +748,26 @@ t.test(function test_some() {
   )
 })
 
+t.test(function test_flat() {
+  testFunEmptyList(i.flat)
+
+  function test(src, exp) {t.eq(i.flat(src), exp)}
+
+  test(undefined, [])
+
+  testSeqs([], function testColl(make) {
+    test(make(), [])
+  })
+
+  testSeqs([10, 20, 30], function testColl(make) {
+    test(make(), [10, 20, 30])
+  })
+
+  testSeqs([10, [20, [30, 40]]], function testColl(make) {
+    test(make(), [10, 20, 30, 40])
+  })
+})
+
 t.test(function test_head() {
   testFunEmpty(i.head)
 

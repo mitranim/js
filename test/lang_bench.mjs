@@ -48,6 +48,21 @@ const someEqNever1 = new EqNever()
 const someNonEq0 = Object.create(null)
 const someNonEq1 = Object.create(null)
 
+const prepared = Symbol.for(`prepared`)
+
+class Symboled extends l.Emp {
+  normal(val) {this[Symbol.for(`normal`)](val)}
+  [Symbol.for(`normal`)]() {}
+
+  proxied(val) {this[l.sym.proxied](val)}
+  [l.sym.proxied]() {}
+
+  prepared(val) {this[prepared](val)}
+  [prepared]() {}
+}
+
+const symboled = new Symboled()
+
 /* Util */
 
 function* gen(iter) {if (iter) for (const val of iter) yield val}
@@ -90,6 +105,8 @@ t.bench(function bench_isInst_unchecked_hit() {l.nop(isInstUnchecked(someProm, P
 t.bench(function bench_isInst_nil() {l.nop(l.isInst(undefined, Promise))})
 t.bench(function bench_isInst_miss() {l.nop(l.isInst(someProm, Array))})
 t.bench(function bench_isInst_hit() {l.nop(l.isInst(someProm, Promise))})
+
+t.bench(function bench_reqInst_hit() {l.nop(l.reqInst(someProm, Promise))})
 
 t.bench(function bench_isStr_nil() {l.nop(l.isStr())})
 t.bench(function bench_isStr_miss() {l.nop(l.isStr(someArr))})
@@ -228,5 +245,12 @@ t.bench(function bench_eq_hit_obj_same_no_eq() {l.nop(l.eq(someNonEq0, someNonEq
 t.bench(function bench_eq_hit_obj_same_has_eq() {l.nop(l.eq(someEqAlways0, someEqAlways0))})
 t.bench(function bench_eq_hit_obj_diff_eq_true() {l.nop(l.eq(someEqAlways0, someEqAlways1))})
 t.bench(function bench_eq_hit_obj_diff_eq_false() {l.nop(l.eq(someEqNever0, someEqNever1))})
+
+t.bench(function bench_symbol_for_normal() {l.nop(Symbol.for(`hardcoded`))})
+t.bench(function bench_symbol_for_proxied() {l.nop(l.sym.proxied)})
+
+t.bench(function bench_symbol_method_normal() {l.nop(symboled.normal())})
+t.bench(function bench_symbol_method_proxied() {l.nop(symboled.proxied())})
+t.bench(function bench_symbol_method_prepared() {l.nop(symboled.prepared())})
 
 if (import.meta.main) t.deopt(), t.benches()

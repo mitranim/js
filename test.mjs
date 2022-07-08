@@ -598,6 +598,8 @@ export function optInst(val, cls) {
 /*
 Asserts that the given function throws an instance of the given error class,
 with a given non-empty error message.
+
+TODO consider supporting `err.cause`. API?
 */
 export function throws(fun, cls, msg) {
   if (!l.isFun(fun)) {

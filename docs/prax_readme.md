@@ -1,8 +1,8 @@
 ## Overview
 
-[prax.mjs](../prax.mjs) provides a very simple and performant system for rendering DOM elements. Syntax is React-inspired but semantics are much simpler and more universally useful. JSX-compatible syntax is available.
+[prax.mjs](../prax.mjs) provides a very simple and performant system for rendering DOM/XML/HTML. It was originally React-inspired, but semantics are much simpler and more universally useful.
 
-Isomorphic server-side rendering is supported via lightweight and performant [`dom_shim`](dom_shim_readme.md). Pairing these modules together, and using custom DOM elements, provides a good foundation for hybrid SSR/SPA.
+Isomorphic SSR is supported via lightweight and performant [`dom_shim`](dom_shim_readme.md). Pairing these modules together, and using custom DOM elements, provides a good foundation for hybrid SSR/SPA.
 
 Short overview of features:
 
@@ -35,14 +35,15 @@ Complemented by:
 
 ## Usage
 
-Rendering is done by `Ren`. You must create an instance, which should be a singleton. You can also subclass `Ren` and override individual methods to customize its behavior.
+Rendering is done via `Ren`. You must create an instance, which should be a singleton. You can also subclass `Ren` and override individual methods to customize its behavior.
 
 Browser example:
 
 ```js
-import {Ren, A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/prax.mjs'
+import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/prax.mjs'
 
-const ren = new Ren(document).patchProto(Element)
+const ren = p.Ren.native()
 const {E} = ren
 
 document.body.append(
@@ -66,9 +67,10 @@ The following elements (not strings) have been appended:
 For string rendering, use `.outerHTML`:
 
 ```js
-import {Ren, A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/prax.mjs'
+import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/prax.mjs'
 
-const ren = new Ren(document).patchProto(Element)
+const ren = p.Ren.native()
 const {E} = ren
 
 // Note the `.outerHTML` call at the end.
@@ -91,10 +93,11 @@ console.log(
 Usage with custom elements. The methods `.props` and `.chi` are provided by patching the prototype of the given base element class, which is entirely opt-in.
 
 ```js
-import {Ren, A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/prax.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/dom_reg.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/prax.mjs'
+import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/prax.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/dom_reg.mjs'
 
-const ren = new Ren(document).patchProto(Element)
+const ren = p.Ren.native()
 
 class SomeLink extends dr.MixReg(HTMLAnchorElement) {
   init(href, text) {
@@ -114,11 +117,11 @@ document.body.append(
 For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right "dom globals" for the right environment, and pass those globals to the `Ren` you're instantiating. The rest will just work.
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/prax.mjs'
 
 // Choose the right one.
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/dom_glob_shim.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/dom_glob_native.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/dom_glob_shim.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/dom_glob_native.mjs'
 
 const ren = p.Ren.from(dg.glob)
 ```
@@ -126,8 +129,8 @@ const ren = p.Ren.from(dg.glob)
 Rendering a complete document with doctype:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/dom_glob_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/dom_glob_shim.mjs'
 
 const ren = p.Ren.from(dg.glob)
 const {E} = ren

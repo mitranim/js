@@ -330,20 +330,11 @@ function toDocName(val) {
 }
 
 async function renderNamed(src, ctx, msg) {
-  const pre = `unexpected rendering error in ${a.show(msg)}: `
-
   try {
     return await a.draftRenderAsync(await src, ctx)
   }
   catch (err) {
-    a.reqInst(err, Error)
-    err.message = pre + err.message
-
-    // Seems to be unnecessary, but not sure.
-    // May depend on whether you rethrow the error, which we do.
-    // err.stack = pre + err.stack
-
-    throw err
+    throw Error(`unexpected rendering error in ${a.show(msg)}`, {cause: err})
   }
 }
 

@@ -32,7 +32,7 @@ class Shallow {
 }
 
 const shallowLax = new Shallow()
-const shallowStrict = o.StrictPh.of(new Shallow())
+const shallowStrict = new Proxy(new Shallow(), o.StrictStaticPh)
 
 class NonEnumDefprop {
   constructor(val) {
@@ -66,6 +66,14 @@ class NonEnumPriv {
 const nonEnumDefprop = new NonEnumDefprop(10).set(20).set(30)
 const nonEnumSym = new NonEnumSym(10).set(20).set(30)
 const nonEnumPriv = new NonEnumPriv(10).set(20).set(30)
+
+const structSrc = {id: 10, name: `Mira`}
+
+class StructUntyped extends o.Struct {}
+t.eq({...new StructUntyped(structSrc)}, structSrc)
+
+class StructTyped extends o.Struct {static fields = {id: l.reqFin, name: l.reqStr}}
+t.eq({...new StructTyped(structSrc)}, structSrc)
 
 /* Bench */
 
@@ -142,5 +150,8 @@ t.bench(function bench_non_enum_construct_get_priv() {l.nop(new NonEnumPriv(10).
 t.bench(function bench_non_enum_construct_set_get_defprop() {l.nop(new NonEnumDefprop(10).set(20).get())})
 t.bench(function bench_non_enum_construct_set_get_sym() {l.nop(new NonEnumSym(10).set(20).get())})
 t.bench(function bench_non_enum_construct_set_get_priv() {l.nop(new NonEnumPriv(10).set(20).get())})
+
+t.bench(function bench_struct_new_untyped() {l.nop(new StructUntyped(structSrc))})
+t.bench(function bench_struct_new_typed() {l.nop(new StructTyped(structSrc))})
 
 if (import.meta.main) t.deopt(), t.benches()

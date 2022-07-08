@@ -1,1 +1,1 @@
-Opposite of {{link iter filter}}. Equivalent to `f.filter(val, f.not(fun))`.
+Opposite of {{link iter filter}}. Equivalent to `i.filter(val, l.not(fun))`.

@@ -6,20 +6,21 @@
 
   * [#`function assign`](#function-assign)
   * [#`function patch`](#function-patch)
-  * [#`class Dict`](#class-dict)
+  * [#`class Struct`](#class-struct)
+  * [#`function memGet`](#function-memget)
   * [#Undocumented](#undocumented)
 
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.34/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/obj.mjs'
 ```
 
 ## API
 
 ### `function assign`
 
-Links: [source](../obj.mjs#L6); [test/example](../test/obj_test.mjs#L45).
+Links: [source](../obj.mjs#L6); [test/example](../test/obj_test.mjs#L34).
 
 Signature: `(tar, src) => tar`.
 
@@ -36,7 +37,7 @@ Similar to [#`patch`](#function-patch) but doesn't check for inherited and non-e
 
 ### `function patch`
 
-Links: [source](../obj.mjs#L12); [test/example](../test/obj_test.mjs#L154).
+Links: [source](../obj.mjs#L12); [test/example](../test/obj_test.mjs#L143).
 
 Signature: `(tar, src) => tar`.
 
@@ -53,81 +54,75 @@ Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaSc
 
 When overriding inherited and non-enumerable properties is desirable, use [#`assign`](#function-assign).
 
-### `class Dict`
+### `class Struct`
 
-Links: [source](../obj.mjs#L29); [test/example](../test/obj_test.mjs#L199).
+Links: [source](../obj.mjs#L23); [test/example](../test/obj_test.mjs#L188).
 
-Short for "dictionary". Tiny superclass for "model"/"data"/"record" classes. Makes it "safe" to assign arbitrary properties from JSON or other unknown inputs, avoiding conflicts with predefined getters and methods.
+Superclass for "model"/"data"/"record" classes. Features:
 
-Consider the following naive implementation:
-
-```js
-class Model {
-  constructor(src) {this.mut(src)}
-  mut(src) {return Object.assign(this, src)}
-  someMethod() {}
-}
-```
-
-`Object.assign` will overwrite your own methods and getters with properties from the input. A "bad" input breaks your code, possibly late in production:
-
-```js
-const ref = new Model({id: `<id>`, someMethod: `str`})
-/*
-Model { id: "<id>", someMethod: "str" }
-*/
-
-ref.someMethod()
-// Uncaught TypeError: ref.someMethod is not a function
-```
-
-`Object.assign` will try to convert _anything_ to a bag of properties. Even a string. Under no contrived circumstance is this useful. This should be a `TypeError` exception, plain and simple:
+  * Can be instantiated from any [struct](lang_readme.md#function-isstruct).
+    * Behaves similar to [#`patch`](#function-patch), rather than `Object.assign`.
+    * Avoids conflicts with inherited methods and getters.
+  * Can be deeply mutated by calling `.mut`, which calls `.mut` on fields that implement [#this](#function-ismut), and reassigns other fields.
+  * Optional type checking, with declarative type definition.
+    * Type checking is performed:
+      * When creating instances via `new`, which automatically calls `.mut`.
+      * When calling `.mut`.
+    * Type checking is _not_ performed when assigning fields via `=`.
+    * Individual type assertions such as `l.reqStr`, when hardcoded, are very performant. However, this machinery has overheads that far eclipse the cost of actual type-checking. Avoid in hotspots.
+    * You don't pay for what you don't use.
 
 ```js
-new Model(`str`)
-/*
-Model { "0": "s", "1": "t", "2": "r" }
-*/
-```
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/obj.mjs'
 
-`Dict` avoids all of those issues by using [#`patch`](#function-patch) instead of `Object.assign`.
-
-```js
-/*
-Let's say this was fetched from a server.
-Has collisions with inherited properties and methods of our JS classes.
-*/
-const input = JSON.parse(`{
-  "one": 10,
-  "two": 20,
-  "constructor": 30,
-  "toString": 40,
-  "someMethod": 50
-}`)
-
-class Model extends o.Dict {
-  someMethod() {return `someVal`}
+class Person extends o.Struct {
+  static fields = {
+    ...super.fields,
+    id: l.reqFin,
+    name: l.reqStr,
+  }
 }
 
-const ref = new Model(input)
+// Satisfies the type checks.
+new Person({id: 10, name: `Mira`})
+/* Person { id: 10, name: "Mira" } */
 
-/*
-Non-conflicting properties were assigned.
-Conflicting properties were ignored.
+// Fails the type checks and causes an exception.
+new Person({id: `Mira`, name: 10})
+/* Uncaught TypeError */
 
-Model {
-  one: 10,
-  two: 20,
-  toString: 40,
-}
-*/
+// By design, unknown fields are assigned as-is, without checks.
+new Person({id: 20, name: `Kara`, title: `director`})
+/* Person { id: 20, name: `Kara`, title: `director` } */
 ```
 
-In addition, it type-checks the inputs:
+### `function memGet`
+
+Links: [source](../obj.mjs#L280); [test/example](../test/obj_test.mjs#L481).
+
+Takes a class and hacks its prototype, converting all non-inherited getters to lazy/memoizing versions of themselves that only execute _once_. The resulting value replaces the getter. Inherited getters are unaffected.
 
 ```js
-new Model(`str`)
-// Uncaught TypeError: expected variant of isStruct, got "str"
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/obj.mjs'
+
+class Bucket {
+  static {o.memGet(this)}
+  get one() {return new o.Struct()}
+  get two() {return new o.Struct()}
+}
+
+const ref = new Bucket()
+// Bucket {}
+
+ref.one
+ref
+// Bucket { one: Struct {} }
+
+ref.one.three = 30
+ref.two.four = 40
+ref
+// Bucket { one: Struct { three: 30 }, two: Struct { four: 40 } }
 ```
 
 ### Undocumented
@@ -136,29 +131,27 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
 
   * [`function isObjKey`](../obj.mjs#L3)
   * [`function reqObjKey`](../obj.mjs#L4)
-  * [`function patchInstances`](../obj.mjs#L20)
-  * [`class ClsDict`](../obj.mjs#L36)
-  * [`function MixMain`](../obj.mjs#L46)
-  * [`class Strict`](../obj.mjs#L57)
-  * [`class BlankPh`](../obj.mjs#L70)
-  * [`class StrictPh`](../obj.mjs#L113)
-  * [`class WeakTag`](../obj.mjs#L131)
-  * [`function memGet`](../obj.mjs#L140)
-  * [`class MemTag`](../obj.mjs#L142)
-  * [`class CallPh`](../obj.mjs#L146)
-  * [`class ClsFunPh`](../obj.mjs#L154)
-  * [`class ClsInstPh`](../obj.mjs#L170)
-  * [`class Cache`](../obj.mjs#L185)
-  * [`class WeakCache`](../obj.mjs#L193)
-  * [`class MakerPh`](../obj.mjs#L202)
-  * [`class Dyn`](../obj.mjs#L212)
-  * [`const parentNodeKey`](../obj.mjs#L221)
-  * [`function MixChild`](../obj.mjs#L223)
-  * [`class MixChildCache`](../obj.mjs#L225)
-  * [`function mixin`](../obj.mjs#L239)
-  * [`function pub`](../obj.mjs#L252)
-  * [`function priv`](../obj.mjs#L262)
-  * [`function final`](../obj.mjs#L272)
-  * [`function getter`](../obj.mjs#L282)
-  * [`function setter`](../obj.mjs#L284)
-  * [`function getSet`](../obj.mjs#L286)
+  * [`function isMut`](../obj.mjs#L20)
+  * [`function reqMut`](../obj.mjs#L21)
+  * [`class StructType`](../obj.mjs#L46)
+  * [`class StructField`](../obj.mjs#L114)
+  * [`function MixMain`](../obj.mjs#L195)
+  * [`class Strict`](../obj.mjs#L206)
+  * [`class BlankStaticPh`](../obj.mjs#L219)
+  * [`class StrictStaticPh`](../obj.mjs#L253)
+  * [`class WeakTag`](../obj.mjs#L271)
+  * [`class MemTag`](../obj.mjs#L282)
+  * [`class Cache`](../obj.mjs#L286)
+  * [`class WeakCache`](../obj.mjs#L294)
+  * [`class MakerPh`](../obj.mjs#L303)
+  * [`class Dyn`](../obj.mjs#L312)
+  * [`const parentNodeKey`](../obj.mjs#L321)
+  * [`function MixChild`](../obj.mjs#L323)
+  * [`class MixChildCache`](../obj.mjs#L325)
+  * [`function mixin`](../obj.mjs#L339)
+  * [`function pub`](../obj.mjs#L352)
+  * [`function priv`](../obj.mjs#L362)
+  * [`function final`](../obj.mjs#L372)
+  * [`function getter`](../obj.mjs#L382)
+  * [`function setter`](../obj.mjs#L384)
+  * [`function getSet`](../obj.mjs#L386)
