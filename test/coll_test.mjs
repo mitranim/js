@@ -18,7 +18,6 @@ function toMap(val) {return new Map(val.entries())}
 
 function testMap(val, exp) {t.eq(toMap(val), exp)}
 
-
 /* Test */
 
 t.test(function test_bset() {

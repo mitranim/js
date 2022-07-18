@@ -10,6 +10,7 @@ without a bundler or using `deno bundle` are still affected.
 import * as l from './lang.mjs'
 import * as s from './str.mjs'
 import * as u from './url.mjs'
+import * as c from './coll.mjs'
 
 export const GET = `GET`
 export const HEAD = `HEAD`
@@ -473,13 +474,13 @@ export class Ctx extends AbortController {
   }
 }
 
-// Also see `Cookie.fromPairs`.
+// Used internally by `Cookies`.
 export function cookieSplitPairs(val) {
   val = l.laxStr(val)
   return s.split(s.trim(val), /\s*;\s*/g).filter(l.id)
 }
 
-// Also see `Cookie.fromPairs`.
+// Used internally by `Cookies` and `Cookie`.
 export function cookieSplitPair(src) {
   src = l.reqStr(src).trim()
   if (!src) throw TypeError(`unexpected empty cookie pair`)
@@ -526,8 +527,11 @@ export class Cookie extends l.Emp {
     return this.setDomain(s.optPre(val, `.`))
   }
 
+  pk() {return this.name}
+  isValid() {return !!this.name && l.isSome(this.value)}
   lax() {return this.setSameSite(`lax`)}
-  expired() {return this.setValue(this.value || ``).setMaxAge(0)}
+  root() {return this.setPath(`/`)}
+  expired() {return this.setValue(this.value || ``).setExpires().setMaxAge(0)}
   durable() {return this.setMaxAge(60 * 60 * 24 * 365 * 17)}
   install() {return document.cookie = this, this}
 
@@ -559,60 +563,69 @@ export class Cookie extends l.Emp {
     return l.reqStr(name) + `=` + l.reqStr(value)
   }
 
-  join(buf, key, val) {
-    l.reqStr(buf)
-    if (l.isNil(val)) return buf
-    return (buf && buf + `; `) + l.reqStr(key) + `=` + l.render(val)
+  // Implemented as a method to allow overrides.
+  join(out, key, val) {
+    l.reqStr(out)
+    if (l.isNil(val)) return out
+    return (out && out + `; `) + l.reqStr(key) + `=` + l.render(val)
   }
 
   toString() {
-    let buf = this.nameValue()
-    if (!buf) return ``
+    let out = this.nameValue()
+    if (!out) return ``
 
-    buf = this.join(buf, `path`, this.path)
-    buf = this.join(buf, `domain`, this.domain)
-    buf = this.join(buf, `expires`, this.expires && this.expires.toUTCString())
-    buf = this.join(buf, `max-age`, this.maxAge)
-    buf = this.join(buf, `secure`, this.secure)
-    buf = this.join(buf, `http-only`, this.httpOnly)
-    buf = this.join(buf, `same-site`, this.sameSite)
-    return buf
+    out = this.join(out, `path`, this.path)
+    out = this.join(out, `domain`, this.domain)
+    out = this.join(out, `expires`, this.expires && this.expires.toUTCString())
+    out = this.join(out, `max-age`, this.maxAge)
+    out = this.join(out, `secure`, this.secure)
+    out = this.join(out, `http-only`, this.httpOnly)
+    out = this.join(out, `same-site`, this.sameSite)
+    return out
   }
 
-  static domPairs() {return this.fromPairs(document.cookie)}
-  static domMap() {return this.toMap(document.cookie)}
-
-  static fromPair(src) {
-    const pair = cookieSplitPair(src)
-    return new this().setName(pair[0]).setValue(pair[1])
+  setPair(src) {
+    src = cookieSplitPair(src)
+    return this.setName(src[0]).setValue(src[1])
   }
 
-  static fromPairs(src) {
-    return cookieSplitPairs(src).map(this.fromPair, this)
-  }
+  static make(key, val) {return new this().setName(key).setValue(val)}
 
-  static toMap(src) {
-    const buf = new Map()
-    for (const val of this.fromPairs(src)) buf.set(val.name, val)
-    return buf
-  }
+  static expired(key) {return this.make(key).expired()}
 
-  static make(key, val) {
-    return new this().setName(key).setValue(val).setPath(`/`)
-  }
+  // TODO browser test.
+  static delete(key) {
+    const domain = window.location?.hostname
 
-  static set(key, val) {return this.make(key, val).install()}
-
-  static del(key) {
-    reqCookieName(key)
-    const domain = window.location.hostname
-
-    return new this()
-      .setName(key).expired().install()
-      .setPath(`/`).install()
+    return this.expired(key)
+      .install()
+      .root().install()
       .setDomain(domain).install()
       .setDomainSub(domain).install()
   }
+}
+
+export class Cookies extends c.ClsColl {
+  get cls() {return Cookie}
+
+  getVal(key) {return this.get(key)?.value}
+
+  setVal(key, val) {return this.addOpt(this.cls.make(key, val))}
+
+  mut(src) {
+    if (l.isStr(src)) return this.mutFromStr(src)
+    return super.mut(src)
+  }
+
+  mutFromStr(src) {
+    for (src of cookieSplitPairs(src)) {
+      src = cookieSplitPair(src)
+      this.setVal(src[0], src[1])
+    }
+    return this
+  }
+
+  static native() {return new this(window.document?.cookie)}
 }
 
 /* Internal */
@@ -637,7 +650,7 @@ function isFormData(val) {return typeof FormData === `function` && l.isInst(val,
 
 function isCookieName(val) {return l.isStr(val) && !/[;=]/.test(val)}
 function optCookieName(val) {return l.opt(val, isCookieName)}
-function reqCookieName(val) {return l.req(val, isCookieName)}
+// function reqCookieName(val) {return l.req(val, isCookieName)}
 
 function isCookieValue(val) {return l.isStr(val) && !/[;]/.test(val)}
 function optCookieValue(val) {return l.opt(val, isCookieValue)}

@@ -235,13 +235,13 @@ t.test(function test_Words() {
   t.is(src().lowerSnake(), `one_two_three`)
   t.is(src().upperSnake(), `ONE_TWO_THREE`)
   t.is(src().titleSnake(), `One_Two_Three`)
-  t.is(src().senteSnake(), `One_two_three`)
+  t.is(src().sentenceSnake(), `One_two_three`)
   t.is(src().camelSnake(), `one_Two_Three`)
 
   t.is(src().lowerKebab(), `one-two-three`)
   t.is(src().upperKebab(), `ONE-TWO-THREE`)
   t.is(src().titleKebab(), `One-Two-Three`)
-  t.is(src().senteKebab(), `One-two-three`)
+  t.is(src().sentenceKebab(), `One-two-three`)
   t.is(src().camelKebab(), `one-Two-Three`)
 
   t.is(src().lowerCamel(), `oneTwoThree`)

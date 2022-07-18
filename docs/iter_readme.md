@@ -85,7 +85,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/iter.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/iter.mjs'
 ```
 
 ## Perf
@@ -290,7 +290,7 @@ Similar to [`Array.prototype.map`](https://developer.mozilla.org/en-US/docs/Web/
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
   * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
-  * Doesn't support `this` or additional arguments.
+  * Doesn't support `this`, and doesn't pass additional arguments. When you want support for additional arguments, use [#`values`](#function-values) to convert an arbitrary iterable to an array, then use native `.map`.
 
 ### `function mapMut`
 
@@ -312,8 +312,8 @@ Signature: `(Iter<A>, {new(A): B}) => B[]`.
 Similar to [#`map`](#function-map), but instead of taking an arbitrary function, takes a class and calls it with `new` for each element.
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/iter.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/obj.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/iter.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/obj.mjs'
 
 class Model extends o.Dict {pk() {return this.id}}
 class Person extends Model {}
@@ -591,7 +591,7 @@ Links: [source](../iter.mjs#L343); [test/example](../test/iter_test.mjs#L1036).
 Syntactic shortcut for creating a `Set` via variadic call.
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/iter.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/iter.mjs'
 
 i.setOf(10, 20, 30)
 // Set{10, 20, 30}
@@ -664,8 +664,8 @@ Similar to [#`map`](#function-map) but for dicts.
 * The mapping function receives only one argument: each value.
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/iter.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/lang.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/iter.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/lang.mjs'
 
 i.mapDict({one: 10, two: 20}, l.inc)
 // {one: 11, two: 21}
@@ -686,8 +686,8 @@ Similar to [#`filter`](#function-filter) but for dicts.
 * The mapping function receives each value.
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/iter.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/lang.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/iter.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/lang.mjs'
 
 i.pick({one: -20, two: -10, three: 10, four: 20}, l.isFinPos)
 // {three: 10, four: 20}
@@ -708,8 +708,8 @@ Similar to [#`reject`](#function-reject) but for dicts.
 * The mapping function receives each value.
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/iter.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/lang.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/iter.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/lang.mjs'
 
 i.omit({one: -20, two: -10, three: 10, four: 20}, l.isFinPos)
 // {one: -20, two: -10}

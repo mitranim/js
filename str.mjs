@@ -106,13 +106,13 @@ export class Words extends co.Vec {
   lowerSnake() {return this.lower().snake()}
   upperSnake() {return this.upper().snake()}
   titleSnake() {return this.title().snake()}
-  senteSnake() {return this.sentence().snake()}
+  sentenceSnake() {return this.sentence().snake()}
   camelSnake() {return this.camel().snake()}
 
   lowerKebab() {return this.lower().kebab()}
   upperKebab() {return this.upper().kebab()}
   titleKebab() {return this.title().kebab()}
-  senteKebab() {return this.sentence().kebab()}
+  sentenceKebab() {return this.sentence().kebab()}
   camelKebab() {return this.camel().kebab()}
 
   lowerCamel() {return this.camel().solid()}

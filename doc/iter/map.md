@@ -4,4 +4,4 @@ Similar to [`Array.prototype.map`](https://developer.mozilla.org/en-US/docs/Web/
 
   * Takes an arbitrary iterable compatible with {{link iter values}}.
   * Iterable may be {{link lang isNil nil}}, equivalent to `[]`.
-  * Doesn't support `this` or additional arguments.
+  * Doesn't support `this`, and doesn't pass additional arguments. When you want support for additional arguments, use {{link iter values}} to convert an arbitrary iterable to an array, then use native `.map`.

@@ -13,7 +13,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/obj.mjs'
 ```
 
 ## API
@@ -73,8 +73,8 @@ Superclass for "model"/"data"/"record" classes. Features:
     * You don't pay for what you don't use.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/obj.mjs'
 
 class Person extends o.Struct {
   static fields = {
@@ -104,7 +104,7 @@ Links: [source](../obj.mjs#L280); [test/example](../test/obj_test.mjs#L481).
 Takes a class and hacks its prototype, converting all non-inherited getters to lazy/memoizing versions of themselves that only execute _once_. The resulting value replaces the getter. Inherited getters are unaffected.
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.35/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/obj.mjs'
 
 class Bucket {
   static {o.memGet(this)}

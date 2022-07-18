@@ -940,51 +940,55 @@ t.test(function test_Cookie() {
 
   // Uses `cookieSplitPair` which is tested separately.
   // This is a sanity check.
-  t.test(function test_fromPair() {
-    t.throws(() => h.Cookie.fromPair(10), TypeError, `expected variant of isStr, got 10`)
-    t.throws(() => h.Cookie.fromPair(``), TypeError, `unexpected empty cookie pair`)
-    t.throws(() => h.Cookie.fromPair(`;`), TypeError, `invalid cookie pair ";"`)
+  t.test(function test_setPair() {
+    t.throws(() => h.cook().setPair(10), TypeError, `expected variant of isStr, got 10`)
+    t.throws(() => h.cook().setPair(``), TypeError, `unexpected empty cookie pair`)
+    t.throws(() => h.cook().setPair(`;`), TypeError, `invalid cookie pair ";"`)
 
     t.eq(
-      h.Cookie.fromPair(`one two=three four`),
+      h.cook().setPair(`one two=three four`),
       h.cook().setName(`one two`).setValue(`three four`),
     )
   })
 
-  // Uses `cookieSplitPairs` and `.fromPair` which are tested separately.
-  // This is a sanity check.
-  t.test(function test_fromPairs() {
-    t.eq(h.Cookie.fromPairs(``), [])
-    t.eq(h.Cookie.fromPairs(`    `), [])
-
-    t.eq(
-      h.Cookie.fromPairs(`one=two`),
-      [h.cook().setName(`one`).setValue(`two`)],
-    )
-
-    t.eq(
-      h.Cookie.fromPairs(`one=two; three=four`),
-      [
-        h.cook().setName(`one`).setValue(`two`),
-        h.cook().setName(`three`).setValue(`four`),
-      ],
-    )
-  })
-
   t.test(function test_make() {
-    t.eq(
-      h.Cookie.make(),
-      new h.Cookie().setPath(`/`),
-    )
+    t.eq(h.Cookie.make(), new h.Cookie())
+
+    t.eq(h.Cookie.make().root(), new h.Cookie().root())
+
+    t.eq(h.Cookie.make(`one`), new h.Cookie().setName(`one`))
 
     t.eq(
-      h.Cookie.make(`one`),
-      new h.Cookie().setName(`one`).setPath(`/`),
+      h.Cookie.make(`one`).root(),
+      new h.Cookie().setName(`one`).root(),
     )
 
     t.eq(
       h.Cookie.make(`one`, `two`),
-      new h.Cookie().setName(`one`).setValue(`two`).setPath(`/`),
+      new h.Cookie().setName(`one`).setValue(`two`),
+    )
+  })
+})
+
+// TODO more comprehensive test.
+t.test(function test_Cookies() {
+  function test(tar, exp) {t.eq([...tar], exp)}
+
+  t.test(function test_from_string() {
+    test(new h.Cookies(``), [])
+    test(new h.Cookies(`    `), [])
+
+    test(
+      new h.Cookies(`one=two`),
+      [h.cook().setName(`one`).setValue(`two`)],
+    )
+
+    test(
+      new h.Cookies(`one=two; three=four`),
+      [
+        h.cook().setName(`one`).setValue(`two`),
+        h.cook().setName(`three`).setValue(`four`),
+      ],
     )
   })
 })

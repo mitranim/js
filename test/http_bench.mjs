@@ -24,6 +24,8 @@ const reqBuiNoHead = freeze(h.reqBui())
 const reqBuiEmptyHead = freeze(h.reqBui().headSet(`one`, ``).headDelete(`one`))
 const reqBuiLongHead = freeze(h.reqBui().headMut(structLong))
 
+const cookMut = new h.Cookie()
+
 /* Bench */
 
 t.bench(function bench_headers_empty() {l.nop(new Headers())})
@@ -150,12 +152,12 @@ t.bench(function bench_Cookie_build_toString() {
   l.nop(h.cook().setName(`one`).setValue(`two`).lax().durable().toString())
 })
 
-t.bench(function bench_Cookie_fromPair() {
-  l.nop(h.Cookie.fromPair(`one two=three four`))
+t.bench(function bench_Cookie_setPair() {
+  l.nop(cookMut.setPair(`one two=three four`))
 })
 
-t.bench(function bench_Cookie_fromPairs() {
-  l.nop(h.Cookie.fromPairs(`one=two; three=four; five=six`))
+t.bench(function bench_Cookies_from_string() {
+  l.nop(new h.Cookies(`one=two; three=four; five=six`))
 })
 
 if (import.meta.main) t.deopt(), t.benches()
