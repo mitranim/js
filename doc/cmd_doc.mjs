@@ -304,8 +304,8 @@ class Ident extends a.Strict {
 }
 
 class StrNatMap extends a.TypedMap {
-  key(key) {return a.reqStr(key)}
-  val(val) {return a.reqNat(val)}
+  reqKey(key) {return a.reqStr(key)}
+  reqVal(val) {return a.reqNat(val)}
 }
 
 function toDocLinkBullet(val) {return a.str(INDENT, `* `, val.docLink)}

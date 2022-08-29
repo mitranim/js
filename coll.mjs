@@ -17,13 +17,24 @@ export class Bset extends Set {
     return this
   }
 
-  reset(src) {return this.clear(), this.mut(src)}
+  addOpt(val) {
+    if (l.isSome(val)) this.add(val)
+    return this
+  }
 
+  reset(src) {return this.clear(), this.mut(src)}
+  clear() {return (super.size && super.clear()), this}
   clone() {return new this.constructor(this)}
   toArray() {return [...this.values()]}
   toJSON() {return this.toArray()}
 
   static of(...val) {return new this(val)}
+}
+
+// TODO doc.
+export class TypedSet extends Bset {
+  reqVal() {throw l.errImpl()}
+  add(val) {return super.add(this.reqVal(val))}
 }
 
 export class ClsSet extends Bset {
@@ -55,6 +66,11 @@ export class Bmap extends Map {
     return this
   }
 
+  setOpt(key, val) {
+    if (l.isSome(key) && l.isSome(val)) this.set(key, val)
+    return this
+  }
+
   reset(src) {return this.clear(), this.mut(src)}
   clear() {return (super.size && super.clear()), this}
   clone() {return new this.constructor(this)}
@@ -79,56 +95,47 @@ export class Bmap extends Map {
 }
 
 export class TypedMap extends Bmap {
-  key() {throw l.errImpl()}
-  val() {throw l.errImpl()}
-  set(key, val) {return super.set(this.key(key), this.val(val))}
+  reqKey() {throw l.errImpl()}
+  reqVal() {throw l.errImpl()}
+  set(key, val) {return super.set(this.reqKey(key), this.reqVal(val))}
 }
 
 /*
-TODO better name. Restricts keys to strings for compatibility with dicts,
-without restricting values.
+TODO better name. Restricts key type to strings, for compatibility with plain
+dicts, without restricting value types.
 */
 export class CompatMap extends TypedMap {
-  key(key) {return l.reqStr(key)}
-  val(val) {return val}
+  reqKey(key) {return l.reqStr(key)}
+  reqVal(val) {return val}
 }
 
-export class ClsMap extends Bmap {
+export class ClsMap extends TypedMap {
   get cls() {return Object}
-  set(key, val) {super.set(key, this.make(val))}
-  make(val) {return l.toInst(val, this.cls)}
+  reqVal(val) {return l.toInst(val, this.cls)}
 }
 
 // Short for "primary key optional".
+// TODO move to `lang.mjs`.
 export function pkOpt(val) {return l.hasMeth(val, `pk`) ? val.pk() : undefined}
 
 // Short for "primary key".
-export function pk(val) {return pkOf(pkOpt(val), val)}
-
-export function pkOf(key, src) {
+// TODO move to `lang.mjs`.
+export function pk(val) {
+  const key = pkOpt(val)
   if (l.isPk(key)) return key
-  throw TypeError(`expected primary key of ${l.show(src)}, got ${l.show(key)}`)
+  throw TypeError(`expected primary key of ${l.show(val)}, got ${l.show(key)}`)
 }
 
-export class Coll extends Bmap {
+export class Coll extends TypedMap {
   mut(val) {
     if (l.isSome(val)) for (val of l.reqIter(val)) this.add(val)
     return this
   }
 
-  add(val) {
-    this.set(pkOf(this.getKey(val), val), val)
-    return this
-  }
-
-  addOpt(val) {
-    const key = this.getKey(val)
-    if (l.isPk(key)) this.set(key, val)
-    return this
-  }
-
-  getKey(val) {return pkOpt(val)}
-
+  reqKey(key) {return l.reqPk(key)}
+  reqVal(val) {return val}
+  add(val) {return this.set(pk(val), val)}
+  addOpt(val) {return this.setOpt(pkOpt(val), val)}
   toArray() {return [...this.values()]}
   toJSON() {return this.toArray()}
   [Symbol.iterator]() {return this.values()}
@@ -136,9 +143,9 @@ export class Coll extends Bmap {
 
 export class ClsColl extends Coll {
   get cls() {return Object}
-  set(key, val) {return super.set(key, l.reqInst(val, this.cls))}
+  reqVal(val) {return l.reqInst(val, this.cls)}
   add(val) {return super.add(this.make(val))}
-  addOpt(val) {return super.addOpt(this.make(val))}
+  addOpt(val) {return l.isSome(val) ? super.addOpt(this.make(val)) : this}
   make(val) {return l.toInst(val, this.cls)}
 }
 
@@ -170,10 +177,17 @@ export class Vec extends l.Emp {
   static of(...val) {return new this(Array.of(...val))}
 }
 
+// TODO test, doc.
+export class TypedVec extends Vec {
+  reqVal() {throw l.errImpl()}
+  add(val) {return super.add(this.reqVal(val))}
+}
+
 // Short for "class vector".
-export class ClsVec extends Vec {
+export class ClsVec extends TypedVec {
   get cls() {return Object}
   constructor(src) {super().mut(src)}
+  reqVal(val) {return l.reqInst(val, this.cls)}
   add(val) {return super.add(this.make(val))}
   make(val) {return l.toInst(val, this.cls)}
 }

@@ -11,11 +11,18 @@ const coll = new co.Coll()
   .add(new Person({name: `Kara`}))
 
 console.log(coll)
-
 /*
 Coll {
   "Mira" => Person { name: "Mira" },
   "Kara" => Person { name: "Kara" },
 }
+*/
+
+console.log([...coll])
+/*
+[
+  Person { name: "Mira" },
+  Person { name: "Kara" },
+]
 */
 ```

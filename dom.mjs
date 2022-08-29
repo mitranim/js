@@ -244,10 +244,10 @@ export function prevSibling(tar, cls) {return findPrevSibling(tar, clsTest(cls))
 Takes a DOM node class and returns a subclass with various shortcuts for DOM
 inspection and manipulation.
 */
-export function MixNode(val) {return MixNodeCache.main.goc(val)}
+export function MixNode(val) {return MixNodeCache.goc(val)}
 
-export class MixNodeCache extends o.WeakCache {
-  make(cls) {
+export class MixNodeCache extends o.StaticWeakCache {
+  static make(cls) {
     return class MixNodeCls extends cls {
       anc(cls) {return ancestor(this, cls)}
       findAnc(fun) {return findAncestor(this, fun)}

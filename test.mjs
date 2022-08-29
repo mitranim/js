@@ -347,24 +347,10 @@ export const conf = new class Conf extends l.Emp {
   get verb() {return this.#verb}
   set verb(val) {this.#verb = l.reqBool(val)}
 
-  testAllow(run) {
-    return this.testFilter.test(run.nameFull())
-  }
-
-  benchAllow(name) {
-    return this.benchFilter.test(l.reqStr(name))
-  }
-
-  testFilterFrom(val) {
-    this.testFilter = toReg(val)
-    return this
-  }
-
-  benchFilterFrom(val) {
-    this.benchFilter = toReg(val)
-    return this
-  }
-
+  testAllow(run) {return this.testFilter.test(run.nameFull())}
+  benchAllow(name) {return this.benchFilter.test(l.reqStr(name))}
+  setTestFilter(val) {return this.testFilter = toReg(val), this}
+  setBenchFilter(val) {return this.benchFilter = toReg(val), this}
   isTop() {return !this.run}
   verbLog(...val) {if (this.verb) console.log(...val)}
   verbErr(...val) {if (this.verb) console.error(...val)}

@@ -326,19 +326,28 @@ export class Ren extends l.Emp {
   }
 
   /*
-  Patches the given class, connecting it to the current renderer and adding
-  methods from the mixin class `.MixRenCache`. Subclasses may override the
-  mixin class.
+  Takes a class and returns a subclass with methods and properties from the
+  mixin `.MixRenCache`, connected to the current renderer. Subclasses may
+  override the mixin. Also see `.mixMut` which patches the given class instead
+  of subclassing.
   */
-  patchProto(cls) {
-    o.mixin(cls, this.MixRenCache.main.goc(l.Emp))
+  mix(cls) {return this.MixRenCache.goc(cls)}
+
+  /*
+  Patches the given class, connecting it to the current renderer and adding
+  methods and properties from the mixin `.MixRenCache`. Subclasses may override
+  the mixin. Also see `.mix` which creates a subclass instead of patching the
+  given class.
+  */
+  mixMut(cls) {
+    o.mixMut(cls, this.MixRenCache.goc(l.Emp))
     cls.ren = this
     return this
   }
 
   get MixRenCache() {return MixRenCache}
 
-  static from(glob) {return new this(glob.document).patchProto(glob.Element)}
+  static from(glob) {return new this(glob.document).mixMut(glob.Element)}
 
   static native() {return this.from(globalThis)}
 }
@@ -360,8 +369,8 @@ export class RenSvgPh extends o.BlankStaticPh {
   static get(ren, key) {return ren.makeSvg(key)}
 }
 
-export class MixRenCache extends o.WeakCache {
-  make(cls) {
+export class MixRenCache extends o.StaticWeakCache {
+  static make(cls) {
     return class MixRenCls extends cls {
       get ren() {return this.constructor.ren}
       props(val) {return this.ren.mutProps(this, val)}
@@ -370,13 +379,9 @@ export class MixRenCache extends o.WeakCache {
   }
 }
 
-// Must match `dom_shim.mjs`.
-const parentNodeKey = Symbol.for(`parentNode`)
-
 /*
-Very similar to `o.MixChild`, but specialized for DOM elements. Takes a DOM
-element class and modifies the constructor signature, allowing early access to
-the parent node.
+Modified version of `o.MixChild` for DOM element classes. Modifies the
+constructor signature, allowing early access to the parent node.
 
 Normally, node constructors are nullary. With this mixin, the constructor takes
 an optional reference to a parent node. When given, the child-to-parent
@@ -386,30 +391,16 @@ elements and initializes children before attaching them. This allows children
 to immediately traverse the ancestor chain to access "contextual" data
 available on ancestors. Note that this doesn't establish parent-to-child
 relations early.
-
-When used with the native DOM, the `.parentNode` getter and setter affect only
-JS code, without affecting native operations. Native DOM implementations
-completely bypass both.
-
-Implementation note. This doesn't reuse `o.MixChild` because we need
-`super.parentNode` to use the native DOM accessor, not the accessor
-defined by `o.MixChild`.
 */
-export function MixChild(val) {return MixChildCache.main.goc(val)}
+export function MixChild(val) {return MixChildCache.goc(val)}
 
-export class MixChildCache extends o.WeakCache {
-  make(cls) {
-    return class MixChildCls extends cls {
+export class MixChildCache extends o.MixChildCache {
+  static make(cls) {
+    return class MixChildCls extends super.make(cls) {
       constructor(val) {
         super()
         if (l.optObj(val)) this.parentNode = val
       }
-
-      get parentNode() {return super.parentNode || norm(this[parentNodeKey])}
-      set parentNode(val) {this[parentNodeKey] = val}
-
-      getParent() {return this.parentNode}
-      setParent(val) {return this.parentNode = val, this}
     }
   }
 }

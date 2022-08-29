@@ -408,20 +408,23 @@ t.bench(function bench_last_map_with_our_last() {l.nop(i.last(itc.numMap))})
 t.bench(function bench_flat_arr_nil_ours() {l.nop(i.flat())})
 
 t.bench(function bench_flat_arr_empty_native() {l.nop(itc.arrEmpty.flat(Infinity))})
+t.bench(function bench_flat_arr_empty_lodash() {l.nop(lo.flatten(itc.arrEmpty))})
 t.bench(function bench_flat_arr_empty_ours() {l.nop(i.flat(itc.arrEmpty))})
 
 t.bench(function bench_flat_arr_short_flat_native() {l.nop(itc.arrShort.flat(Infinity))})
+t.bench(function bench_flat_arr_short_flat_lodash() {l.nop(lo.flatten(itc.arrShort))})
 t.bench(function bench_flat_arr_short_flat_ours() {l.nop(i.flat(itc.arrShort))})
 
 t.bench(function bench_flat_arr_short_nested_native() {l.nop(itc.arrShortNested.flat(Infinity))})
+t.bench(function bench_flat_arr_short_nested_lodash() {l.nop(lo.flatten(itc.arrShortNested))})
 t.bench(function bench_flat_arr_short_nested_ours() {l.nop(i.flat(itc.arrShortNested))})
 
 t.bench(function bench_flat_arr_long_flat_native() {l.nop(itc.numArr.flat(Infinity))})
-t.bench(function bench_flat_arr_long_flat_ours_copied() {l.nop(i.flat(itc.numArr).concat())})
+t.bench(function bench_flat_arr_long_flat_lodash() {l.nop(lo.flatten(itc.numArr))})
 t.bench(function bench_flat_arr_long_flat_ours() {l.nop(i.flat(itc.numArr))})
 
 t.bench(function bench_flat_arr_long_nested_native() {l.nop(itc.numArrNested.flat(Infinity))})
-t.bench(function bench_flat_arr_long_nested_ours_copied() {l.nop(i.flat(itc.numArrNested).concat())})
+t.bench(function bench_flat_arr_long_nested_lodash() {l.nop(lo.flatten(itc.numArrNested))})
 t.bench(function bench_flat_arr_long_nested_ours() {l.nop(i.flat(itc.numArrNested))})
 
 itc.deoptDictHof(lo.mapValues)

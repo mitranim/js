@@ -194,6 +194,7 @@ Subclasses may override `static default()` to customize.
 */
 export function MixMain(cls) {
   return class MixMainCls extends cls {
+    // TODO convert from getter to method.
     static get main() {
       const key = Symbol.for(`main`)
       return l.hasOwn(this, key) ? this[key] : this[key] = this.default()
@@ -268,37 +269,6 @@ export class StrictStaticPh extends l.Emp {
   }
 }
 
-export class WeakTag extends WeakSet {
-  goc(val) {
-    if (!this.has(val)) this.make(val), this.add(val)
-    return val
-  }
-
-  make() {}
-}
-
-export function memGet(cls) {return MemTag.main.goc(cls)}
-
-export class MemTag extends MixMain(WeakTag) {
-  make(cls) {return memPatch(cls)}
-}
-
-export class Cache extends MixMain(Map) {
-  goc(key) {
-    if (!this.has(key)) this.set(key, this.make(key))
-    return this.get(key)
-  }
-  make() {}
-}
-
-export class WeakCache extends MixMain(WeakMap) {
-  goc(key) {
-    if (!this.has(key)) this.set(key, this.make(key))
-    return this.get(key)
-  }
-  make() {}
-}
-
 // Note: proxy target should be `l.npo()`.
 export class MakerPh extends l.Emp {
   get(tar, key) {return key in tar ? tar[key] : (tar[key] = this.make(key, tar))}
@@ -310,24 +280,92 @@ Short for "dynamic". Represents a dynamically scoped variable, as opposed to
 regular lexically scoped variables.
 */
 export class Dyn extends l.Emp {
-  constructor($) {super().$ = $}
-  has() {return l.isSome(this.$)}
+  constructor(val) {super().set(val)}
   get() {return this.$}
-  set($) {this.$ = $}
-  swap($) {try {return this.$} finally {this.$ = $}}
+  set(val) {this.$ = val}
+  has() {return l.isSome(this.get())}
+  swap(val) {try {return this.get()} finally {this.set(val)}}
+}
+
+export class TypedDyn extends Dyn {
+  reqVal() {throw l.errImpl()}
+  set(val) {return super.set(this.reqVal(val))}
+}
+
+export class WeakTag extends WeakSet {
+  goc(val) {
+    if (!this.has(val)) {
+      this.add(val)
+      this.tag(val)
+    }
+    return val
+  }
+
+  // TODO better name.
+  // Some subclasses may want a more general term.
+  tag() {}
+}
+
+export function memGet(cls) {return MemTag.goc(cls)}
+
+export class MemTag extends MixMain(WeakTag) {
+  tag(cls) {memPatch(cls)}
+  static goc(key) {return this.main.goc(key)}
+}
+
+export class Cache extends MixMain(Map) {
+  goc(key) {return goc(this, this, key)}
+  make() {}
+  static goc(val) {return this.main.goc(val)}
+}
+
+export class WeakCache extends MixMain(WeakMap) {
+  goc(key) {return goc(this, this, key)}
+  make() {}
+  static goc(val) {return this.main.goc(val)}
+}
+
+export class StaticCache extends l.Emp {
+  static get Map() {return Map}
+
+  static cache() {
+    if (!l.hasOwn(this, `map`)) this.map = new this.Map()
+    return this.map
+  }
+
+  static goc(key) {return goc(this, this.cache(), key)}
+
+  // Override in subclass.
+  static make() {throw l.errImpl()}
+}
+
+export class StaticWeakCache extends StaticCache {
+  static get Map() {return WeakMap}
 }
 
 // Must match `dom_shim.mjs`.
 export const parentNodeKey = Symbol.for(`parentNode`)
 
-export function MixChild(val) {return MixChildCache.main.goc(val)}
+export function MixChild(val) {return MixChildCache.goc(val)}
 
-export class MixChildCache extends WeakCache {
-  make(cls) {
+export class MixChildCache extends StaticWeakCache {
+  static make(cls) {
     return class MixChildCls extends cls {
-      // Would prefer the name ".parent", but it seems preferable to match
-      // the DOM API. We're using the exact same concept, after all.
-      get parentNode() {return this[parentNodeKey]}
+      /*
+      Would prefer the name ".parent", but matching the DOM API seems more
+      important.
+
+      We support `super.parentNode` for compatibility with native DOM classes,
+      prioritizing a native getter (if available) over custom storage. We must
+      support it here instead of leaving it to subclasses, because subclasses
+      have no way to access `super.parentNode` relative to this class, only
+      relative to subclass.
+
+      When used with DOM element classes, the `.parentNode` getter and setter
+      affect only JS code, without affecting native operations. Native DOM
+      implementations completely bypass both.
+      */
+      get parentNode() {return super.parentNode || this[parentNodeKey]}
       set parentNode(val) {this[parentNodeKey] = val}
 
       getParent() {return this.parentNode}
@@ -336,13 +374,35 @@ export class MixChildCache extends WeakCache {
   }
 }
 
-export function mixin(tar, src) {
-  const pro = l.reqCls(tar).prototype
-  src = l.reqCls(src).prototype
+/*
+Monkeypatching tool. Mutates the target class and its prototype, adding
+descriptors from the source classes and their prototypes.
+
+EXTREMELY dirty. AVOID at many costs. Prototype patching makes it much harder to
+track down method definitions and has broken semantics. For example, it breaks
+access to "super" methods. Additionally, the current implementation skips
+pre-existing descriptors, which may lead to quiet conflicts and bugs.
+
+Prefer `StaticWeakCache` whenever possible.
+*/
+export function mixMut(tar, ...src) {
+  l.reqCls(tar)
+  for (src of src) {
+    l.reqCls(src)
+    mixMutDescriptors(tar, src)
+    mixMutDescriptors(tar.prototype, src.prototype)
+  }
+  return tar
+}
+
+// TODO better name.
+export function mixMutDescriptors(tar, src) {
+  l.reqComp(tar)
+  l.reqComp(src)
 
   while (src) {
     for (const [key, val] of descriptors(src)) {
-      if (!(key in pro)) Object.defineProperty(pro, key, val)
+      if (!(key in tar)) Object.defineProperty(tar, key, val)
     }
     src = Object.getPrototypeOf(src)
   }
@@ -423,4 +483,11 @@ function descIn(tar, key) {
     tar = Object.getPrototypeOf(tar)
   }
   return undefined
+}
+
+function goc(maker, cache, key) {
+  if (cache.has(key)) return cache.get(key)
+  const val = maker.make(key)
+  cache.set(key, val)
+  return val
 }

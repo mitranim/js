@@ -92,8 +92,8 @@ import * as t from '{{featUrl test}}'
 const cli = t.Args.os()
 
 // Optional filtering.
-t.conf.testFilterFrom(cli.get(`test`))
-t.conf.benchFilterFrom(cli.get(`bench`))
+t.conf.setTestFilter(cli.get(`test`))
+t.conf.setBenchFilter(cli.get(`bench`))
 
 // Optional bench adjustment. Can be overridden per-function.
 t.conf.benchRunner = new t.TimeRunner(1024)

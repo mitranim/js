@@ -12,8 +12,8 @@ export const more = cli.boolOpt(`more`)
 export const prec = cli.boolOpt(`prec`)
 export const once = cli.boolOpt(`once`)
 
-t.conf.testFilterFrom(run)
-t.conf.benchFilterFrom(run)
+t.conf.setTestFilter(run)
+t.conf.setBenchFilter(run)
 
 if (verb) t.conf.testRep = t.conf.benchRep
 

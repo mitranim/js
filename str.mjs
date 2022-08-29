@@ -173,8 +173,8 @@ Features:
   * Parsing of bool and numeric values.
 */
 export class StrMap extends co.TypedMap {
-  key(key) {return l.reqStr(key)}
-  val(val) {return l.reqTrueArr(val)}
+  reqKey(key) {return l.reqStr(key)}
+  reqVal(val) {return l.reqTrueArr(val)}
 
   has(key) {return super.has(key)}
   get(key) {return this.has(key) ? super.get(key)[0] : undefined}
@@ -459,7 +459,7 @@ export function uuid() {return arrHex(uuidArr())}
 
 // https://en.wikipedia.org/wiki/Universally_unique_identifier
 export function uuidArr() {
-  // Standard web API, available in browsers and Deno, but not in Node 16.
+  // Standard web API, available in browsers, Deno, Node 18+.
   const val = crypto.getRandomValues(new Uint8Array(16))
 
   // Version 4.

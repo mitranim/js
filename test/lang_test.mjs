@@ -395,6 +395,17 @@ t.test(function test_isStr() {
   t.no(l.isStr(new String(``)))
 
   t.ok(l.isStr(``))
+  t.ok(l.isStr(` `))
+  t.ok(l.isStr(`str`))
+})
+
+t.test(function test_isValidStr() {
+  t.no(l.isValidStr())
+  t.no(l.isValidStr(new String(``)))
+
+  t.no(l.isValidStr(``))
+  t.ok(l.isValidStr(` `))
+  t.ok(l.isValidStr(`str`))
 })
 
 t.test(function test_isSym() {

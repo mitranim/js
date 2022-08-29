@@ -15,8 +15,8 @@ class PersonColl extends co.ClsColl {
 }
 
 function toMap(val) {return new Map(val.entries())}
-
 function testMap(val, exp) {t.eq(toMap(val), exp)}
+function testSeq(val, exp) {t.eq([...val], exp)}
 
 /* Test */
 
@@ -31,39 +31,72 @@ t.test(function test_bsetOf() {
   t.eq(co.bsetOf(10, 20), co.bset().add(10).add(20))
 })
 
-t.test(function test_Bset() {
+t.test(function test_Bset() {testBset(co.Bset)})
+
+t.test(function test_TypedSet() {
+  t.test(function test_not_implemented() {
+    const tar = new co.TypedSet()
+    t.throws(() => tar.reqVal(), TypeError, `not implemented`)
+  })
+
+  t.test(function test_any() {
+    testBset(class AnySet extends co.TypedSet {reqVal(val) {return val}})
+  })
+
+  t.test(function test_specific() {
+    class NatSet extends co.TypedSet {
+      reqVal(val) {return l.reqNat(val)}
+    }
+
+    t.throws(() => NatSet.of(-10), TypeError, `expected variant of isNat, got -10`)
+    t.throws(() => new NatSet().add(-10), TypeError, `expected variant of isNat, got -10`)
+
+    testSeq(new NatSet([10, 20]), [10, 20])
+    testSeq(NatSet.of(10, 20), [10, 20])
+    testSeq(new NatSet().add(10).add(20), [10, 20])
+  })
+})
+
+function testBset(cls) {
   // Delegates to `.mut` which is tested separately. This is a sanity check.
   t.test(function test_constructor() {
-    t.throws(() => co.bset(10), TypeError, `unable to convert 10 to Bset`)
-    t.throws(() => co.bset({}), TypeError, `unable to convert {} to Bset`)
+    t.throws(() => new cls(10), TypeError, `unable to convert 10 to ${cls.name}`)
+    t.throws(() => new cls({}), TypeError, `unable to convert {} to ${cls.name}`)
 
-    t.eq(co.bset(), co.bset())
-    t.eq(co.bset([10, 20]), co.bset().add(10).add(20))
-    t.eq(co.bset([`one`, `two`]), co.bset().add(`one`).add(`two`))
+    testSeq(new cls([10, 20]), [10, 20])
+    testSeq(new cls([10, 20, 20, 10]), [10, 20])
+    testSeq(new cls([`one`, `two`]), [`one`, `two`])
+    testSeq(new cls([`one`, `two`, `two`, `one`]), [`one`, `two`])
+  })
+
+  t.test(function test_add() {
+    testSeq(new cls().add(10), [10])
+    testSeq(new cls().add(10).add(20), [10, 20])
+    testSeq(new cls().add(10).add(20).add(10), [10, 20])
   })
 
   t.test(function test_mut() {
     t.test(function test_mut_from_nil() {
-      t.eq(co.bset().mut(), co.bset())
-      t.eq(co.bsetOf(10, 20).mut(), co.bsetOf(10, 20))
+      t.eq(new cls().mut(), new cls())
+      t.eq(new cls([10, 20]).mut(), new cls().add(10).add(20))
     })
 
     t.test(function test_mut_from_arr() {
-      t.eq(co.bset().mut([10]), co.bsetOf(10))
-      t.eq(co.bset().mut([10, 20]), co.bsetOf(10, 20))
-      t.eq(co.bsetOf(10).mut([20]), co.bsetOf(10, 20))
+      t.eq(new cls().mut([10]), new cls().add(10))
+      t.eq(new cls().mut([10, 20]), new cls().add(10).add(20))
+      t.eq(new cls().add(10).mut([20]), new cls().add(10).add(20))
     })
 
     t.test(function test_mut_from_set() {
-      t.eq(co.bset().mut(co.bsetOf(10)), co.bsetOf(10))
-      t.eq(co.bset().mut(co.bsetOf(10, 20)), co.bsetOf(10, 20))
-      t.eq(co.bsetOf(10).mut(co.bsetOf(20)), co.bsetOf(10, 20))
+      t.eq(new cls().mut(new cls().add(10)), new cls().add(10))
+      t.eq(new cls().mut(new cls().add(10).add(20)), new cls().add(10).add(20))
+      t.eq(new cls().add(10).mut(new cls().add(20)), new cls().add(10).add(20))
     })
   })
 
   t.test(function test_toArray() {
     function test(src, exp) {
-      t.eq(co.bset(src).toArray(), exp)
+      t.eq(new cls(src).toArray(), exp)
     }
 
     test(undefined, [])
@@ -74,7 +107,7 @@ t.test(function test_Bset() {
 
   t.test(function test_toJSON() {
     function test(src, exp) {
-      t.is(JSON.stringify(co.bset(src)), JSON.stringify(exp))
+      t.is(JSON.stringify(new cls(src)), JSON.stringify(exp))
     }
 
     test(undefined, [])
@@ -82,7 +115,7 @@ t.test(function test_Bset() {
     test([10, 20], [10, 20])
     test([10, 20, 10, 20, 30], [10, 20, 30])
   })
-})
+}
 
 t.test(function test_bmap() {
   t.eq(co.bmap(), new co.Bmap())
@@ -185,21 +218,21 @@ t.test(function test_Bmap() {testBmap(co.Bmap)})
 t.test(function test_TypedMap() {
   t.test(function test_not_implemented() {
     const tar = new co.TypedMap()
-    t.throws(() => tar.key(), TypeError, `not implemented`)
-    t.throws(() => tar.val(), TypeError, `not implemented`)
+    t.throws(() => tar.reqKey(), TypeError, `not implemented`)
+    t.throws(() => tar.reqVal(), TypeError, `not implemented`)
   })
 
   t.test(function test_any() {
     testBmap(class AnyMap extends co.TypedMap {
-      key(key) {return key}
-      val(val) {return val}
+      reqKey(key) {return key}
+      reqVal(val) {return val}
     })
   })
 
   t.test(function test_specific() {
     class StrNatMap extends co.TypedMap {
-      key(key) {return l.reqStr(key)}
-      val(val) {return l.reqNat(val)}
+      reqKey(key) {return l.reqStr(key)}
+      reqVal(val) {return l.reqNat(val)}
     }
 
     t.throws(() => StrNatMap.of(10, 20), TypeError, `expected variant of isStr, got 10`)

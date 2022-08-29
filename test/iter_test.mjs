@@ -21,6 +21,7 @@ function testSeqs(src, fun) {
   fun(function make() {return new Set(src)})
   fun(function make() {return args(...src)})
   fun(function make() {return copygen(src)})
+  fun(function make() {return new Seq(src)})
 }
 
 function testMaps(src, fun) {
@@ -38,6 +39,17 @@ function testDictFunBasics(fun) {
   t.throws(() => fun([], l.nop), TypeError, `expected variant of isStruct, got []`)
   t.throws(() => fun(`str`, l.nop), TypeError, `expected variant of isStruct, got "str"`)
   t.is(Object.getPrototypeOf(fun(undefined, l.nop)), null)
+}
+
+/*
+Similar to `Vec` but more limited, lacking `.values`. Should still be considered
+a sequence.
+*/
+class Seq extends l.Emp {
+  constructor(src) {super().$ = l.laxTrueArr(src)}
+  get size() {return this.src.length}
+  [Symbol.iterator]() {return this.$[Symbol.iterator]()}
+  toArray() {return this.$}
 }
 
 /* Test */
@@ -229,7 +241,12 @@ function testValues(fun, backref) {
 
   function values() {return [10, 20]}
 
+  // When the method `.values` is present but the object does not implement
+  // `isIter`, we treat the object as a struct rather than an iterable.
   test({values}, [values])
+
+  // When the method `.values` is present and the object implements `isIter`,
+  // we use the method `.values`, prioritizing values over key-value pairs.
   test({values, [Symbol.iterator]: l.nop}, [10, 20])
 }
 
@@ -763,7 +780,11 @@ t.test(function test_flat() {
     test(make(), [10, 20, 30])
   })
 
-  testSeqs([10, [20, [30, 40]]], function testColl(make) {
+  testSeqs([10, [null, [undefined]], 20, [], 30], function testColl(make) {
+    test(make(), [10, 20, 30])
+  })
+
+  testSeqs([10, [20, new Set([30, 40])]], function testColl(make) {
     test(make(), [10, 20, 30, 40])
   })
 })

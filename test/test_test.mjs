@@ -50,21 +50,21 @@ t.test(function test_test() {
 
   track.inc().req(1)
   t.test(function test_filtering() {
-    t.conf.testFilterFrom(`---`)
+    t.conf.setTestFilter(`---`)
     t.test(function test_failing() {throw new ErrUnreachable(`unreachable`)})
-    t.conf.testFilterFrom()
+    t.conf.setTestFilter()
 
-    t.conf.testFilterFrom(`test_test/test_filtering`)
+    t.conf.setTestFilter(`test_test/test_filtering`)
     track.inc().req(2)
     t.test(function test_normal() {track.dec().req(1)})
     track.req(1)
-    t.conf.testFilterFrom()
+    t.conf.setTestFilter()
 
-    t.conf.testFilterFrom(`test_test/test_filtering/test_normal`)
+    t.conf.setTestFilter(`test_test/test_filtering/test_normal`)
     track.inc().req(2)
     t.test(function test_normal() {track.dec().req(1)})
     track.req(1)
-    t.conf.testFilterFrom()
+    t.conf.setTestFilter()
 
     track.dec().req(0)
   })

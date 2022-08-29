@@ -76,12 +76,18 @@ export function optBigInt(val) {return isNil(val) ? val : reqBigInt(val)}
 export function onlyBigInt(val) {return isBigInt(val) ? val : undefined}
 export function laxBigInt(val) {return isNil(val) ? BigInt(0) : reqBigInt(val)}
 
-// TODO also provide "is non-empty string". Needs a short name.
 export function isStr(val) {return typeof val === `string`}
 export function reqStr(val) {return isStr(val) ? val : convFun(val, isStr)}
 export function optStr(val) {return isNil(val) ? val : reqStr(val)}
 export function onlyStr(val) {return isStr(val) ? val : undefined}
 export function laxStr(val) {return isNil(val) ? `` : reqStr(val)}
+
+// TODO shorter name.
+export function isValidStr(val) {return isStr(val) && !!val}
+export function reqValidStr(val) {return isValidStr(val) ? val : convFun(val, isValidStr)}
+export function optValidStr(val) {return isNil(val) ? val : reqValidStr(val)}
+export function onlyValidStr(val) {return isValidStr(val) ? val : undefined}
+export function laxValidStr(val) {return isNil(val) ? `` : reqValidStr(val)}
 
 export function isSym(val) {return typeof val === `symbol`}
 export function reqSym(val) {return isSym(val) ? val : convFun(val, isSym)}
@@ -94,7 +100,7 @@ export function reqKey(val) {return isKey(val) ? val : convFun(val, isKey)}
 export function optKey(val) {return isNil(val) ? val : reqKey(val)}
 export function onlyKey(val) {return isKey(val) ? val : undefined}
 
-export function isPk(val) {return !!val && (isStr(val) || isIntPos(val))}
+export function isPk(val) {return isValidStr(val) || isIntPos(val)}
 export function reqPk(val) {return isPk(val) ? val : convFun(val, isPk)}
 export function optPk(val) {return isNil(val) ? val : reqPk(val)}
 export function onlyPk(val) {return isPk(val) ? val : undefined}
@@ -302,6 +308,8 @@ export function reqArrOf(val, fun) {
 
 export function optArrOf(val, fun) {return isNil(val) ? val : reqArrOf(val, fun)}
 
+// TODO consolidate with `hasLen`.
+// The two functions must be exactly inverse.
 export function isEmpty(val) {
   if (!isObj(val)) return true
   if (isList(val)) return val.length === 0

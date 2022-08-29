@@ -18,8 +18,7 @@ Important features:
 
   * Environment-independent. Runs in browsers, Deno, Node.
     * Approximate browser compatibility: evergreen, Safari 11+.
-    * Some features require environment-specific APIs.
-    * Requires a `fetch` polyfill in Node.
+    * Node compatibility: 18+.
   * Compact and performant.
   * Relatively few source files.
   * Relatively clear source code.
@@ -46,14 +45,14 @@ Alternatives that suck:
 Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import many core modules at once:
 
 ```js
-import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/all.mjs'
+import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.37/all.mjs'
 ```
 
 Otherwise, import specific modules you need. See the list below. Example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/lang.mjs'
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.36/str.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.37/lang.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.37/str.mjs'
 ```
 
 Also available on NPM:

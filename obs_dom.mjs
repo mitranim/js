@@ -145,14 +145,14 @@ function nodeDepth(val) {
 }
 
 // Dup from `dom.mjs` to avoid import.
-function isNode(val) {return typeof Node === `function` && l.isInst(val, Node)}
+function isNode(val) {return l.isObj(val) && `parentNode` in val && `childNodes` in val}
 function reqNode(val) {return l.req(val, isNode)}
 
-// Dup from `dom.mjs` to avoid import.
-function isText(val) {return typeof Text === `function` && l.isInst(val, Text)}
+// See `dom_shim.mjs`.
+function isText(val) {return isNode(val) && val.nodeType === 3}
 
-// Dup from `dom.mjs` to avoid import.
-function isElement(val) {return typeof Element === `function` && l.isInst(val, Element)}
+// See `dom_shim.mjs`.
+function isElement(val) {return isNode(val) && val.nodeType === 1}
 
 function isRunnerNode(val) {return isNode(val) && sc.isRunner(val)}
 function reqRunnerNode(val) {return l.req(val, isRunnerNode)}

@@ -18,8 +18,7 @@ Important features:
 
   * Environment-independent. Runs in browsers, Deno, Node.
     * Approximate browser compatibility: evergreen, Safari 11+.
-    * Some features require environment-specific APIs.
-    * Requires a `fetch` polyfill in Node.
+    * Node compatibility: 18+.
   * Compact and performant.
   * Relatively few source files.
   * Relatively clear source code.

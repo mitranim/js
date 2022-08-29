@@ -239,7 +239,15 @@ export function some(val, fun) {
   return false
 }
 
-export function flat(src) {return values(src).flat(Infinity)}
+export function flat(src) {return flatAdd([], src)}
+
+function flatAdd(tar, src) {
+  for (src of values(src)) {
+    if (l.isIter(src)) flatAdd(tar, src)
+    else if (l.isSome(src)) tar.push(src)
+  }
+  return tar
+}
 
 export function head(val) {
   if (!l.isObj(val)) return undefined
