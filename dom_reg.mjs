@@ -158,7 +158,7 @@ export class CustomElementRegistry extends o.MixMain(l.Emp) {
 
 export function MixReg(val) {return MixRegCache.goc(val)}
 
-export class MixRegCache extends o.StaticWeakCache {
+export class MixRegCache extends o.DedupMixinCache {
   static make(cls) {
     return class MixRegCls extends cls {
       constructor(...val) {

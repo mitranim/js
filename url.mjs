@@ -265,7 +265,7 @@ export class Url extends l.Emp {
     if (isURL(val)) return this.resetFromURL(val)
     if (isUrl(val)) return this.resetFromUrl(val)
     if (isUrlLike(val)) return this.resetFromStr(val.href)
-    throw l.errInst(val, this)
+    throw l.errConvInst(val, this)
   }
 
   resetFromStr(val) {

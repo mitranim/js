@@ -68,7 +68,7 @@ export class Dur extends l.Emp {
     if (l.isNil(val)) return this.clear()
     if (l.isStr(val)) return this.resetFromStr(val)
     if (l.isStruct(val)) return this.resetFromStruct(val)
-    throw l.errInst(val, this)
+    throw l.errConvInst(val, this)
   }
 
   resetFromStr(val) {

@@ -1,7 +1,7 @@
 import * as l from './lang.mjs'
 
 export function isObjKey(val) {return l.isStr(val) || l.isSym(val)}
-export function reqObjKey(val) {return isObjKey(val) ? val : l.convFun(val, isObjKey)}
+export function reqObjKey(val) {return isObjKey(val) ? val : l.throwErrFun(val, isObjKey)}
 
 export function assign(tar, src) {
   l.reqStruct(tar)
@@ -18,7 +18,7 @@ export function patch(tar, src) {
 }
 
 export function isMut(val) {return l.isObj(val) && `mut` in val && l.isFun(val.mut)}
-export function reqMut(val) {return isMut(val) ? val : l.convFun(val, isMut)}
+export function reqMut(val) {return isMut(val) ? val : l.throwErrFun(val, isMut)}
 
 export class Struct extends l.Emp {
   constructor(src) {
@@ -272,7 +272,7 @@ export class StrictStaticPh extends l.Emp {
 // Note: proxy target should be `l.npo()`.
 export class MakerPh extends l.Emp {
   get(tar, key) {return key in tar ? tar[key] : (tar[key] = this.make(key, tar))}
-  make() {}
+  make(val) {return val}
 }
 
 /*
@@ -315,27 +315,21 @@ export class MemTag extends MixMain(WeakTag) {
 
 export class Cache extends MixMain(Map) {
   goc(key) {return goc(this, this, key)}
-  make() {}
+  make(val) {return val}
   static goc(val) {return this.main.goc(val)}
 }
 
 export class WeakCache extends MixMain(WeakMap) {
   goc(key) {return goc(this, this, key)}
-  make() {}
+  make(val) {return val}
   static goc(val) {return this.main.goc(val)}
 }
 
 export class StaticCache extends l.Emp {
   static get Map() {return Map}
-
-  static cache() {
-    if (!l.hasOwn(this, `map`)) this.map = new this.Map()
-    return this.map
-  }
-
-  static goc(key) {return goc(this, this.cache(), key)}
-
-  // Override in subclass.
+  static ownCache() {return this.optCache() || (this.cache = new this.Map())}
+  static optCache() {return l.getOwn(this, `cache`)}
+  static goc(key) {return goc(this, this.ownCache(), key)}
   static make() {throw l.errImpl()}
 }
 
@@ -343,12 +337,36 @@ export class StaticWeakCache extends StaticCache {
   static get Map() {return WeakMap}
 }
 
+export class MixinCache extends StaticWeakCache {
+  static goc(cls) {return l.reqCls(super.goc(l.reqCls(cls)))}
+}
+
+// TODO tests.
+export class DedupMixinCache extends MixinCache {
+  static get Set() {return Set}
+  static ownTags() {return this.optTags() || (this.tags = new this.Set())}
+  static optTags() {return l.getOwn(this, `tags`)}
+  static tag(cls) {return this.ownTags().add(l.reqCls(cls)), cls}
+  static goc(cls) {return this.isTagged(cls) ? cls : this.tag(super.goc(cls))}
+
+  static isTagged(val) {
+    const tags = this.optTags()
+    if (!tags) return false
+
+    while (l.isComp(val)) {
+      if (tags.has(val)) return true
+      val = Object.getPrototypeOf(val)
+    }
+    return false
+  }
+}
+
 // Must match `dom_shim.mjs`.
 export const parentNodeKey = Symbol.for(`parentNode`)
 
 export function MixChild(val) {return MixChildCache.goc(val)}
 
-export class MixChildCache extends StaticWeakCache {
+export class MixChildCache extends DedupMixinCache {
   static make(cls) {
     return class MixChildCls extends cls {
       /*
@@ -383,7 +401,7 @@ track down method definitions and has broken semantics. For example, it breaks
 access to "super" methods. Additionally, the current implementation skips
 pre-existing descriptors, which may lead to quiet conflicts and bugs.
 
-Prefer `StaticWeakCache` whenever possible.
+Prefer `DedupMixinCache` whenever possible.
 */
 export function mixMut(tar, ...src) {
   l.reqCls(tar)

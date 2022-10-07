@@ -6,7 +6,7 @@ class Person {
   pk() {return this.name}
 }
 
-const coll = new co.Coll()
+const coll = new c.Coll()
   .add(new Person({name: `Mira`}))
   .add(new Person({name: `Kara`}))
 

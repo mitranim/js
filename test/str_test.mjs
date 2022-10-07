@@ -1029,7 +1029,7 @@ t.test(function test_Embed() {
     t.throws(() => new s.Embed(`one`).render(10), TypeError, `unable to find "one" in 10`)
     t.throws(() => new s.Embed(`one`).render({}), TypeError, `unable to find "one" in {}`)
     t.throws(() => new s.Embed(`one two`).render({one: `two`}), SyntaxError, `property "one" doesn't expect args ["two"]`)
-    t.throws(() => new s.Embed(`one two three`).render({one: `two`}), SyntaxError, `property "one" doesn't expect args ["two","three"]`)
+    t.throws(() => new s.Embed(`one two three`).render({one: `two`}), SyntaxError, `property "one" doesn't expect args ["two", "three"]`)
 
     function toJson(...val) {return JSON.stringify(val)}
 

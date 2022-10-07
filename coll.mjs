@@ -9,7 +9,7 @@ export class Bset extends Set {
   mut(val) {
     if (l.isNil(val)) return this
     if (l.isIter(val)) return this.mutFromIter(val)
-    throw l.errInst(val, this)
+    throw l.errConvInst(val, this)
   }
 
   mutFromIter(src) {
@@ -22,6 +22,8 @@ export class Bset extends Set {
     return this
   }
 
+  added(val) {return this.add(val), val}
+  addedOpt(val) {return this.addOpt(val), val}
   reset(src) {return this.clear(), this.mut(src)}
   clear() {return (super.size && super.clear()), this}
   clone() {return new this.constructor(this)}
@@ -53,7 +55,7 @@ export class Bmap extends Map {
     if (l.isNil(val)) return this
     if (l.isIter(val)) return this.mutFromIter(val)
     if (l.isStruct(val)) return this.mutFromStruct(val)
-    throw l.errInst(val, this)
+    throw l.errConvInst(val, this)
   }
 
   mutFromIter(src) {
@@ -71,6 +73,7 @@ export class Bmap extends Map {
     return this
   }
 
+  setVal(key, val) {return this.set(key, val), this.get(key)}
   reset(src) {return this.clear(), this.mut(src)}
   clear() {return (super.size && super.clear()), this}
   clone() {return new this.constructor(this)}
@@ -136,6 +139,7 @@ export class Coll extends TypedMap {
   reqVal(val) {return val}
   add(val) {return this.set(pk(val), val)}
   addOpt(val) {return this.setOpt(pkOpt(val), val)}
+  added(val) {return this.add(val), val}
   toArray() {return [...this.values()]}
   toJSON() {return this.toArray()}
   [Symbol.iterator]() {return this.values()}
@@ -146,6 +150,7 @@ export class ClsColl extends Coll {
   reqVal(val) {return l.reqInst(val, this.cls)}
   add(val) {return super.add(this.make(val))}
   addOpt(val) {return l.isSome(val) ? super.addOpt(this.make(val)) : this}
+  added(val) {return this.add((val = this.make(val))), val}
   make(val) {return l.toInst(val, this.cls)}
 }
 
@@ -154,6 +159,7 @@ export class Vec extends l.Emp {
   mut(val) {return this.clear(), this.addFrom(val)}
   add(val) {return this.$.push(val), this}
 
+  // TODO rename to `.addVals`?
   addFrom(val) {
     if (l.optIter(val)) for (val of val) this.add(val)
     return this
@@ -164,6 +170,7 @@ export class Vec extends l.Emp {
     return this
   }
 
+  at(ind) {return this.$[l.reqInt(ind)]}
   clone() {return new this.constructor(this.$.slice())}
   toArray() {return this.$} // Used by `iter.mjs`.
   toJSON() {return this.toArray()}
@@ -174,13 +181,31 @@ export class Vec extends l.Emp {
 
   static make(len) {return new this(Array(l.reqNat(len)))}
   static from(val) {return new this(l.toTrueArr(val))}
-  static of(...val) {return new this(Array.of(...val))}
+  static of(...val) {return new this(val)}
 }
 
 // TODO test, doc.
 export class TypedVec extends Vec {
-  reqVal() {throw l.errImpl()}
+  constructor(...val) {
+    super(...val)
+    this.validate()
+  }
+
   add(val) {return super.add(this.reqVal(val))}
+  reqVal() {throw l.errImpl()}
+  validate() {mapMut(this.$, this.reqVal, this)}
+}
+
+function mapMut(arr, fun, ctx) {
+  l.reqTrueArr(arr)
+  l.reqFun(fun)
+
+  let ind = -1
+  while (++ind < arr.length) {
+    const prev = arr[ind]
+    const next = fun.call(ctx, prev)
+    if (!l.is(prev, next)) arr[ind] = next
+  }
 }
 
 // Short for "class vector".
@@ -206,7 +231,6 @@ export class Que extends Set {
   }
 
   open() {return this.flushing = true, this.run()}
-
   close() {return this.flushing = false, this}
 
   run() {

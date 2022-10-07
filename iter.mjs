@@ -42,6 +42,7 @@ export function keys(val) {
   if (!l.isObj(val)) return []
   if (l.isList(val)) return span(val.length)
   if (l.isIter(val) && l.hasMeth(val, `keys`)) return arrFromIter(val.keys())
+  if (l.isArrble(val)) return span(l.onlyNat(getSize(val)) ?? val.toArray().length)
   if (isStructSync(val)) return Object.keys(val)
   throw l.errConv(val, `keys`)
 }
@@ -79,6 +80,7 @@ export function entries(val) {
   if (!l.isObj(val)) return []
   if (l.isList(val)) return entriesFromList(val)
   if (l.isIter(val) && l.hasMeth(val, `entries`)) return arrFromIter(val.entries())
+  if (l.isArrble(val)) return entriesFromList(val.toArray())
   if (l.isIterator(val)) return arrFromIter(val)
   if (isStructSync(val)) return structEntries(val)
   throw l.errConv(val, `entries`)
@@ -107,7 +109,9 @@ function hasIter(val) {return l.isList(val) ? some(val, hasIter) : l.isIterator(
 
 export function indexOf(src, val) {
   if (l.isNil(src)) return -1
-  const len = l.reqList(src).length
+  src = l.reqList(src)
+
+  const len = src.length
   let ind = -1
   while (++ind < len) if (l.is(src[ind], val)) return ind
   return -1
@@ -239,13 +243,17 @@ export function some(val, fun) {
   return false
 }
 
-export function flat(src) {return flatAdd([], src)}
+export function flat(src) {return flatAdd([], values(src))}
 
 function flatAdd(tar, src) {
-  for (src of values(src)) {
-    if (l.isIter(src)) flatAdd(tar, src)
-    else if (l.isSome(src)) tar.push(src)
+  if (l.isNil(src)) return tar
+
+  if (l.isTrueArr(src)) {
+    for (src of src) flatAdd(tar, src)
+    return tar
   }
+
+  tar.push(src)
   return tar
 }
 

@@ -175,7 +175,7 @@ t.test(function test_Ren_serialization() {
       t.throws(E, TypeError, `expected variant of isStr, got undefined`)
       t.throws(() => E(E), TypeError, `expected variant of isStr, got [function E]`)
       t.throws(() => E({}), TypeError, `expected variant of isStr, got {}`)
-      t.throws(() => E({toString() {return `div`}}), TypeError, `expected variant of isStr, got {}`)
+      t.throws(() => E({toString() {return `div`}}), TypeError, `expected variant of isStr, got {"toString": [function toString]}`)
     })
 
     t.test(function test_invalid_props() {

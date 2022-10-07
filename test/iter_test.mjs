@@ -14,6 +14,14 @@ function* copygen(val) {for (val of val) yield val}
 function fail() {unreachable()}
 class Arr extends Array {}
 
+// Adapted from `coll.mjs` to avoid dependency.
+class Vec {
+  constructor(val) {this.$ = l.reqTrueArr(val)}
+  toArray() {return this.$}
+  get size() {return this.$.length}
+  [Symbol.iterator]() {return this.$.values()}
+}
+
 function testSeqs(src, fun) {
   t.ok(Array.isArray(src))
   fun(function make() {return src.slice()})
@@ -188,6 +196,7 @@ t.test(function test_keys() {
 
   test([10, 20],                      [0, 1])
   test(args(10, 20),                  [0, 1])
+  test(new Vec([10, 20]),             [0, 1])
   test(new Set([10, 20]),             [10, 20])
   test({one: 10, two: 20},            [`one`, `two`])
   test(new Map([[10, 20], [30, 40]]), [10, 30])
@@ -262,6 +271,7 @@ t.test(function test_entries() {
 
   test([10, 20],                      [[0, 10], [1, 20]])
   test(args(10, 20),                  [[0, 10], [1, 20]])
+  test(new Vec([10, 20]),             [[0, 10], [1, 20]])
   test(copygen([10, 20]),             [10, 20])
   test(new Set([10, 20]),             [[10, 10], [20, 20]])
   test({one: 10, two: 20},            [[`one`, 10], [`two`, 20]])
@@ -784,8 +794,9 @@ t.test(function test_flat() {
     test(make(), [10, 20, 30])
   })
 
+  // Our `flat` should flatten plain arrays, but not arbitrary iterables.
   testSeqs([10, [20, new Set([30, 40])]], function testColl(make) {
-    test(make(), [10, 20, 30, 40])
+    test(make(), [10, 20, new Set([30, 40])])
   })
 })
 

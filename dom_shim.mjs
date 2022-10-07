@@ -610,7 +610,13 @@ class ToggleElement extends HTMLElement {
 export class HTMLButtonElement extends ToggleElement {}
 
 class TextInputElement extends ToggleElement {
-  get value() {return this.getAttribute(`value`)}
+  get name() {return l.laxStr(this.getAttribute(`name`))}
+  set name(val) {this.setAttribute(`name`, val)}
+
+  get type() {return l.laxStr(this.getAttribute(`type`))}
+  set type(val) {this.setAttribute(`type`, val)}
+
+  get value() {return l.laxStr(this.getAttribute(`value`))}
   set value(val) {this.setAttribute(`value`, val)}
 
   get required() {return this.hasAttribute(`required`)}

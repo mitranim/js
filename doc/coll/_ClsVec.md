@@ -8,7 +8,7 @@ class Person {
   pk() {return this.name}
 }
 
-class Persons extends co.ClsVec {
+class Persons extends c.ClsVec {
   get cls() {return Person}
 }
 

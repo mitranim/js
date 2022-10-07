@@ -74,6 +74,8 @@ export async function touch(path) {
   if (!info.isFile()) throw Error(`${l.show(path)} is not a file`)
 }
 
+export function cwd() {return Deno.cwd()}
+
 export function watchCwd() {return watchRel(Deno.cwd())}
 
 /*

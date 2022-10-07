@@ -1,6 +1,6 @@
 import * as l from './lang.mjs'
 import * as s from './str.mjs'
-import * as co from './coll.mjs'
+import * as c from './coll.mjs'
 
 // Returns OS args in Deno and Node. Returns `[]` in other environemnts.
 export function args() {
@@ -138,7 +138,7 @@ supports comments with `#` but not `!`, doesn't support backslash escapes, and
 doesn't allow whitespace around `=`. Doesn't perform any IO; see `io_deno.mjs`
 → `EnvMap` which is a subclass.
 */
-export class EnvMap extends co.Bmap {
+export class EnvMap extends c.Bmap {
   set(key, val) {return super.set(l.reqStr(key), l.render(val))}
 
   mut(val) {

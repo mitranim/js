@@ -7,11 +7,19 @@ import * as l from '../lang.mjs'
 
 /* Global */
 
-const someArr = []
-const someProm = Promise.resolve()
-const someDate = new Date(1024)
-const dictEmpty = Object.freeze(Object.create(null))
+const someInt = 123
+const someFrac = 123.456
 const someStr = `hello world`
+const someDate = new Date(1024)
+const someProm = Promise.resolve()
+
+const emptyStr = ``
+const emptyArr = []
+const emptyPlainDict = {}
+const emptyNpo = Object.create(null)
+const emptyEmpNotFrozen = new l.Emp()
+const emptyEmpFrozen = Object.freeze(new l.Emp())
+const emptyGen = gen()
 
 class DateSub extends Date {
   constructor(...val) {
@@ -63,6 +71,8 @@ class Symboled extends l.Emp {
 
 const symboled = new Symboled()
 
+const isSafeInteger = Number.isSafeInteger
+
 /* Util */
 
 function* gen(iter) {if (iter) for (const val of iter) yield val}
@@ -82,7 +92,7 @@ function isPromiseAsm(val) {
   )
 }
 
-function reqStrDirect(val) {return l.isStr(val) ? val : l.convFun(val, l.isStr)}
+function reqStrDirect(val) {return l.isStr(val) ? val : l.throwErrFun(val, l.isStr)}
 function reqStrIndirect(val) {return l.req(val, l.isStr)}
 
 function keysDumb(val) {return Object.keys(l.laxStruct(val))}
@@ -108,8 +118,23 @@ t.bench(function bench_isInst_hit() {l.nop(l.isInst(someProm, Promise))})
 
 t.bench(function bench_reqInst_hit() {l.nop(l.reqInst(someProm, Promise))})
 
+t.bench(function bench_isInt_nil() {l.nop(l.isInt())})
+t.bench(function bench_isInt_miss_str() {l.nop(l.isInt(someStr))})
+t.bench(function bench_isInt_miss_frac() {l.nop(l.isInt(someFrac))})
+t.bench(function bench_isInt_hit() {l.nop(l.isInt(someInt))})
+
+t.bench(function bench_Number_isSafeInteger_nil() {l.nop(Number.isSafeInteger())})
+t.bench(function bench_Number_isSafeInteger_miss_str() {l.nop(Number.isSafeInteger(someStr))})
+t.bench(function bench_Number_isSafeInteger_miss_frac() {l.nop(Number.isSafeInteger(someFrac))})
+t.bench(function bench_Number_isSafeInteger_hit() {l.nop(Number.isSafeInteger(someInt))})
+
+t.bench(function bench_isSafeInteger_nil() {l.nop(isSafeInteger())})
+t.bench(function bench_isSafeInteger_miss_str() {l.nop(isSafeInteger(someStr))})
+t.bench(function bench_isSafeInteger_miss_frac() {l.nop(isSafeInteger(someFrac))})
+t.bench(function bench_isSafeInteger_hit() {l.nop(isSafeInteger(someInt))})
+
 t.bench(function bench_isStr_nil() {l.nop(l.isStr())})
-t.bench(function bench_isStr_miss() {l.nop(l.isStr(someArr))})
+t.bench(function bench_isStr_miss() {l.nop(l.isStr(emptyArr))})
 t.bench(function bench_isStr_hit() {l.nop(l.isStr(someStr))})
 
 /*
@@ -122,34 +147,51 @@ t.bench(function bench_reqStrIndirect() {l.nop(reqStrIndirect(someStr))})
 t.bench(function bench_reqStrDirect() {l.nop(reqStrDirect(someStr))})
 t.bench(function bench_reqStr() {l.nop(l.reqStr(someStr))})
 
+t.bench(function bench_isValidStr_nil() {l.nop(l.isValidStr())})
+t.bench(function bench_isValidStr_miss_non_str() {l.nop(l.isValidStr(emptyArr))})
+t.bench(function bench_isValidStr_miss_empty_str() {l.nop(l.isValidStr(emptyStr))})
+t.bench(function bench_isValidStr_hit() {l.nop(l.isValidStr(someStr))})
+
+t.bench(function bench_reqValidStr() {l.nop(l.isValidStr(someStr))})
+
+t.bench(function bench_isFun_nil() {l.nop(l.isFun())})
+t.bench(function bench_isFun_miss() {l.nop(l.isFun(someProm))})
+t.bench(function bench_isFun_hit() {l.nop(l.isFun(l.isFun))})
+t.bench(function bench_reqFun_nil() {l.nop(l.reqFun(l.reqFun))})
+
+t.bench(function bench_isCls_nil() {l.nop(l.isCls())})
+t.bench(function bench_isCls_miss() {l.nop(l.isCls(someProm))})
+t.bench(function bench_isCls_hit() {l.nop(l.isCls(l.isCls))})
+t.bench(function bench_reqCls_nil() {l.nop(l.reqCls(l.Emp))})
+
 t.bench(function bench_isArr_native_nil() {l.nop(Array.isArray())})
 t.bench(function bench_isArr_native_miss() {l.nop(Array.isArray(someProm))})
-t.bench(function bench_isArr_native_hit() {l.nop(Array.isArray(someArr))})
+t.bench(function bench_isArr_native_hit() {l.nop(Array.isArray(emptyArr))})
 
 // Note: this is incorrect and our tests verify that we don't do this.
 t.bench(function bench_isArr_inst_nil() {l.nop(undefined instanceof Array)})
 t.bench(function bench_isArr_inst_miss() {l.nop(someProm instanceof Array)})
-t.bench(function bench_isArr_inst_hit() {l.nop(someArr instanceof Array)})
+t.bench(function bench_isArr_inst_hit() {l.nop(emptyArr instanceof Array)})
 
 t.bench(function bench_isArr_nil() {l.nop(l.isArr())})
 t.bench(function bench_isArr_miss() {l.nop(l.isArr(someProm))})
-t.bench(function bench_isArr_hit() {l.nop(l.isArr(someArr))})
+t.bench(function bench_isArr_hit() {l.nop(l.isArr(emptyArr))})
 
 t.bench(function bench_isList_nil() {l.nop(l.isList())})
 t.bench(function bench_isList_miss() {l.nop(l.isList(someProm))})
-t.bench(function bench_isList_hit() {l.nop(l.isList(someArr))})
+t.bench(function bench_isList_hit() {l.nop(l.isList(emptyArr))})
 
 t.bench(function bench_isStruct_nil() {l.nop(l.isStruct())})
-t.bench(function bench_isStruct_miss() {l.nop(l.isStruct(someArr))})
+t.bench(function bench_isStruct_miss() {l.nop(l.isStruct(emptyArr))})
 t.bench(function bench_isStruct_hit() {l.nop(l.isStruct(someDate))})
 
 t.bench(function bench_isPromise_asm_nil() {l.nop(isPromiseAsm())})
-t.bench(function bench_isPromise_asm_miss() {l.nop(isPromiseAsm(someArr))})
+t.bench(function bench_isPromise_asm_miss() {l.nop(isPromiseAsm(emptyArr))})
 t.bench(function bench_isPromise_asm_hit() {l.nop(isPromiseAsm(someProm))})
 
 t.bench(function bench_isPromise_nil() {l.nop(l.isPromise())})
 t.bench(function bench_isPromise_miss_prim() {l.nop(l.isPromise(someStr))})
-t.bench(function bench_isPromise_miss_obj() {l.nop(l.isPromise(someArr))})
+t.bench(function bench_isPromise_miss_obj() {l.nop(l.isPromise(emptyArr))})
 t.bench(function bench_isPromise_hit() {l.nop(l.isPromise(someProm))})
 
 t.bench(function bench_isEq_nil() {l.nop(l.isEq())})
@@ -160,7 +202,7 @@ t.bench(function bench_isEq_hit() {l.nop(l.isEq(someEqAlways0))})
 t.bench(function bench_hasMeth_nil() {l.nop(l.hasMeth(undefined, `toISOString`))})
 t.bench(function bench_hasMeth_miss_prim() {l.nop(l.hasMeth(someStr, `toISOString`))})
 t.bench(function bench_hasMeth_miss_fun() {l.nop(l.hasMeth(l.nop, `toISOString`))})
-t.bench(function bench_hasMeth_miss_obj() {l.nop(l.hasMeth(someArr, `toISOString`))})
+t.bench(function bench_hasMeth_miss_obj() {l.nop(l.hasMeth(emptyArr, `toISOString`))})
 t.bench(function bench_hasMeth_hit_inherit() {l.nop(l.hasMeth(someDate, `toISOString`))})
 t.bench(function bench_hasMeth_hit_own() {l.nop(l.hasMeth(someDateSub, `toISOString`))})
 t.bench(function bench_hasMeth_hit_own_shallow() {l.nop(l.hasMeth(shallow, `toISOString`))})
@@ -168,7 +210,7 @@ t.bench(function bench_hasMeth_hit_own_shallow() {l.nop(l.hasMeth(shallow, `toIS
 t.bench(function bench_hasIn_nil() {l.nop(l.hasIn(undefined, `toISOString`))})
 t.bench(function bench_hasIn_miss_prim() {l.nop(l.hasIn(someStr, `toISOString`))})
 t.bench(function bench_hasIn_miss_fun() {l.nop(l.hasIn(l.nop, `toISOString`))})
-t.bench(function bench_hasIn_miss_obj() {l.nop(l.hasIn(someArr, `toISOString`))})
+t.bench(function bench_hasIn_miss_obj() {l.nop(l.hasIn(emptyArr, `toISOString`))})
 t.bench(function bench_hasIn_hit_inherit() {l.nop(l.hasIn(someDate, `toISOString`))})
 t.bench(function bench_hasIn_hit_own() {l.nop(l.hasIn(someDateSub, `toISOString`))})
 t.bench(function bench_hasIn_hit_own_shallow() {l.nop(l.hasIn(shallow, `toISOString`))})
@@ -176,14 +218,14 @@ t.bench(function bench_hasIn_hit_own_shallow() {l.nop(l.hasIn(shallow, `toISOStr
 t.bench(function bench_hasOwn_nil() {l.nop(l.hasOwn(undefined, `toISOString`))})
 t.bench(function bench_hasOwn_miss_prim() {l.nop(l.hasOwn(someStr, `toISOString`))})
 t.bench(function bench_hasOwn_miss_fun() {l.nop(l.hasOwn(l.nop, `toISOString`))})
-t.bench(function bench_hasOwn_miss_obj() {l.nop(l.hasOwn(someArr, `toISOString`))})
+t.bench(function bench_hasOwn_miss_obj() {l.nop(l.hasOwn(emptyArr, `toISOString`))})
 t.bench(function bench_hasOwn_miss_inherit() {l.nop(l.hasOwn(someDate, `toISOString`))})
 t.bench(function bench_hasOwn_hit() {l.nop(l.hasOwn(someDateSub, `toISOString`))})
 
 t.bench(function bench_hasOwnEnum_nil() {l.nop(l.hasOwnEnum(undefined, `toISOString`))})
 t.bench(function bench_hasOwnEnum_miss_prim() {l.nop(l.hasOwnEnum(someStr, `toISOString`))})
 t.bench(function bench_hasOwnEnum_miss_fun() {l.nop(l.hasOwnEnum(l.nop, `toISOString`))})
-t.bench(function bench_hasOwnEnum_miss_obj() {l.nop(l.hasOwnEnum(someArr, `toISOString`))})
+t.bench(function bench_hasOwnEnum_miss_obj() {l.nop(l.hasOwnEnum(emptyArr, `toISOString`))})
 t.bench(function bench_hasOwnEnum_miss_inherit() {l.nop(l.hasOwnEnum(someDate, `toISOString`))})
 t.bench(function bench_hasOwnEnum_hit() {l.nop(l.hasOwnEnum(someDateSub, `toISOString`))})
 
@@ -194,10 +236,7 @@ t.bench(function bench_reqGet_hit_own_shallow() {l.nop(l.reqGet(shallow, `toISOS
 const funs = [l.isNum, l.isStr, l.isFun, l.isBool]
 t.bench(function bench_reqOneOf() {l.nop(l.reqOneOf(false, funs))})
 
-const emptyDict = {}
-const emptyArr = []
-const emptyGen = gen()
-t.bench(function bench_show_dict() {l.nop(l.show(emptyDict))})
+t.bench(function bench_show_dict() {l.nop(l.show(emptyPlainDict))})
 t.bench(function bench_show_arr() {l.nop(l.show(emptyArr))})
 t.bench(function bench_show_gen() {l.nop(l.show(emptyGen))})
 t.bench(function bench_show_prom() {l.nop(l.show(someProm))})
@@ -212,20 +251,17 @@ t.bench(function bench_render_date() {l.nop(l.render(someDate))})
 t.bench(function bench_keys_nil_dumb() {l.nop(keysDumb())})
 t.bench(function bench_keys_nil_tricky() {l.nop(keysTricky())})
 
-t.bench(function bench_keys_empty_dumb() {l.nop(keysDumb(dictEmpty))})
-t.bench(function bench_keys_empty_tricky() {l.nop(keysTricky(dictEmpty))})
+t.bench(function bench_keys_empty_dumb() {l.nop(keysDumb(emptyPlainDict))})
+t.bench(function bench_keys_empty_tricky() {l.nop(keysTricky(emptyPlainDict))})
 
-const empty = Object.create(null)
 t.bench(function bench_empty_Object_create_null() {l.nop(Object.create(null))})
-t.bench(function bench_empty_Object_create_Object_create_null() {l.nop(Object.create(empty))})
+t.bench(function bench_empty_Object_create_Object_create_null() {l.nop(Object.create(emptyNpo))})
 t.bench(function bench_empty_npo() {l.nop(l.npo())})
 t.bench(function bench_empty_Emp_new() {l.nop(new l.Emp())})
 t.bench(function bench_empty_Emp_sub_new() {l.nop(new EmpSub())})
 
-const emptyNotFrozen = new l.Emp()
-const emptyFrozen = Object.freeze(new l.Emp())
-t.bench(function bench_Object_isFrozen_miss() {l.nop(Object.isFrozen(emptyNotFrozen))})
-t.bench(function bench_Object_isFrozen_hit() {l.nop(Object.isFrozen(emptyFrozen))})
+t.bench(function bench_Object_isFrozen_miss() {l.nop(Object.isFrozen(emptyEmpNotFrozen))})
+t.bench(function bench_Object_isFrozen_hit() {l.nop(Object.isFrozen(emptyEmpFrozen))})
 
 t.bench(function bench_eq_miss_prim_nil() {l.nop(l.eq(undefined, null))})
 t.bench(function bench_eq_hit_prim_nil() {l.nop(l.eq())})

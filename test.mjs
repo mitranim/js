@@ -1,5 +1,5 @@
 import * as l from './lang.mjs'
-import * as c from './cli.mjs'
+import * as cli from './cli.mjs'
 
 /*
 Base error class used by this module. Allows to differentiate errors generated
@@ -251,7 +251,7 @@ Has utility methods for console printing, but its `isReporter` methods are
 still nops.
 */
 export class ConsoleReporter extends StringReporter {
-  cols() {return c.consoleCols()}
+  cols() {return cli.consoleCols()}
   report(pref, suff) {this.log(this.str(pref, suff))}
   log() {console.log(...arguments)}
   err() {console.error(...arguments)}
@@ -631,7 +631,7 @@ got error:
 ${throwsFunMsg(fun)}
 ${throwsErrMsg(cls, msg)}
 got error:
-  ${l.show(err)}
+  ${l.isInst(err, Error) ? err.stack : a.show(err)}
 `)
   }
 }

@@ -246,7 +246,7 @@ inspection and manipulation.
 */
 export function MixNode(val) {return MixNodeCache.goc(val)}
 
-export class MixNodeCache extends o.StaticWeakCache {
+export class MixNodeCache extends o.DedupMixinCache {
   static make(cls) {
     return class MixNodeCls extends cls {
       anc(cls) {return ancestor(this, cls)}

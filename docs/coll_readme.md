@@ -26,7 +26,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.37/coll.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.38/coll.mjs'
 ```
 
 ## API
@@ -44,10 +44,10 @@ Links: [source](../coll.mjs#L4); [test/example](../test/coll_test.mjs#L28).
 Same as [#`Bset`](#class-bset) `.of` but syntactically shorter and a function. The following is equivalent:
 
 ```js
-co.bsetOf(10, 20, 30)
-co.Bset.of(10, 20, 30)
-new co.Bset([10, 20, 30])
-new co.Bset().add(10).add(20).add(30)
+c.bsetOf(10, 20, 30)
+c.Bset.of(10, 20, 30)
+new c.Bset([10, 20, 30])
+new c.Bset().add(10).add(20).add(30)
 ```
 
 ### `class Bset`
@@ -62,26 +62,26 @@ Short for "better set". Variant of built-in `Set` with additional common-sense b
 
 ### `function bmap`
 
-Links: [source](../coll.mjs#L46); [test/example](../test/coll_test.mjs#L120).
+Links: [source](../coll.mjs#L48); [test/example](../test/coll_test.mjs#L120).
 
 Same as `new` [#`Bmap`](#class-bmap) but syntactically shorter and a function.
 
 ### `function bmapOf`
 
-Links: [source](../coll.mjs#L47); [test/example](../test/coll_test.mjs#L125).
+Links: [source](../coll.mjs#L49); [test/example](../test/coll_test.mjs#L125).
 
 Same as [#`Bmap`](#class-bmap) `.of` but syntactically shorter and a function. The following is equivalent:
 
 ```js
-co.bmapOf(10, 20, 30, 40)
-co.Bmap.of(10, 20, 30, 40)
-new co.Bmap([[10, 20], [30, 40]])
-new co.Bmap().set(10, 20).set(30, 40)
+c.bmapOf(10, 20, 30, 40)
+c.Bmap.of(10, 20, 30, 40)
+new c.Bmap([[10, 20], [30, 40]])
+new c.Bmap().set(10, 20).set(30, 40)
 ```
 
 ### `class Bmap`
 
-Links: [source](../coll.mjs#L49); [test/example](../test/coll_test.mjs#L216).
+Links: [source](../coll.mjs#L51); [test/example](../test/coll_test.mjs#L216).
 
 Short for "better map". Variant of built-in `Map` with additional common-sense behaviors:
 
@@ -96,15 +96,15 @@ Short for "better map". Variant of built-in `Map` with additional common-sense b
 
 ### `class TypedMap`
 
-Links: [source](../coll.mjs#L97); [test/example](../test/coll_test.mjs#L218).
+Links: [source](../coll.mjs#L100); [test/example](../test/coll_test.mjs#L218).
 
 Variant of [#`Bmap`](#class-bmap) with support for key and value checks. Subclasses must override methods `.reqKey` and `.reqVal`. These methods are automatically called by `.set`. Method `.reqKey` must validate and return the given key, and method `.reqVal` must validate and return the given value. Use type assertions provided by [`lang`](lang_readme.md).
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.37/lang.mjs'
-import * as co from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.37/coll.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.38/lang.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.38/coll.mjs'
 
-class StrNatMap extends co.TypedMap {
+class StrNatMap extends c.TypedMap {
   reqKey(key) {return l.reqStr(key)}
   reqVal(val) {return l.reqNat(val)}
 }
@@ -112,7 +112,7 @@ class StrNatMap extends co.TypedMap {
 
 ### `function pkOpt`
 
-Links: [source](../coll.mjs#L119); [test/example](../test/coll_test.mjs#L256).
+Links: [source](../coll.mjs#L122); [test/example](../test/coll_test.mjs#L256).
 
 Short for "primary key optional". Takes an arbitrary value and returns its "primary key". This is used internally by [#`Coll`](#class-coll) and [#`ClsColl`](#class-clscoll).
 
@@ -130,18 +130,18 @@ class Person {
   pk() {return this.name}
 }
 
-console.log(co.pkOpt(new Person({name: `Kara`})))
+console.log(c.pkOpt(new Person({name: `Kara`})))
 // 'Kara'
 ```
 
 ### `function pk`
 
-Links: [source](../coll.mjs#L123); [test/example](../test/coll_test.mjs#L273).
+Links: [source](../coll.mjs#L126); [test/example](../test/coll_test.mjs#L273).
 
 Short for "primary key". Similar to [#`pkOpt`](#function-pkopt), but the input _must_ produce a non-nil primary key, otherwise this panics. This is used internally by [#`Coll`](#class-coll) and [#`ClsColl`](#class-clscoll).
 
 ```js
-co.pk({})
+c.pk({})
 // Uncaught TypeError: unable to get primary key of {}
 
 class Person {
@@ -149,13 +149,13 @@ class Person {
   pk() {return this.name}
 }
 
-co.pk(new Person({name: `Mira`}))
+c.pk(new Person({name: `Mira`}))
 // 'Mira'
 ```
 
 ### `class Coll`
 
-Links: [source](../coll.mjs#L129); [test/example](../test/coll_test.mjs#L285).
+Links: [source](../coll.mjs#L132); [test/example](../test/coll_test.mjs#L285).
 
 Short for "collection". Ordered map where values are indexed on their "primary key" determined by the function [#`pk`](#function-pk) which is also exported by this module. Unlike a normal JS map, this is considered a sequence of values, not a sequence of key-value pairs. Order is preserved, iterating the values is decently fast, and the index allows fast access by key without additional iteration.
 
@@ -165,7 +165,7 @@ class Person {
   pk() {return this.name}
 }
 
-const coll = new co.Coll()
+const coll = new c.Coll()
   .add(new Person({name: `Mira`}))
   .add(new Person({name: `Kara`}))
 
@@ -188,7 +188,7 @@ console.log([...coll])
 
 ### `class ClsColl`
 
-Links: [source](../coll.mjs#L144); [test/example](../test/coll_test.mjs#L325).
+Links: [source](../coll.mjs#L148); [test/example](../test/coll_test.mjs#L325).
 
 Variant of [#`Coll`](#class-coll) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing. Elements added with `.add` are idempotently instantiated.
 
@@ -200,7 +200,7 @@ class Person {
   pk() {return this.name}
 }
 
-class Persons extends co.ClsColl {
+class Persons extends c.ClsColl {
   get cls() {return Person}
 }
 
@@ -220,7 +220,7 @@ Persons {
 
 ### `class Vec`
 
-Links: [source](../coll.mjs#L152); [test/example](../test/coll_test.mjs#L334).
+Links: [source](../coll.mjs#L157); [test/example](../test/coll_test.mjs#L334).
 
 Short for "vector". Thin wrapper around a plain array. Features:
 
@@ -242,7 +242,7 @@ Differences and advantages over `Array`:
 The overhead of the wrapper is insignificant.
 
 ```js
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.37/coll.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.38/coll.mjs'
 
 console.log(new c.Vec())
 // Vec{$: []}
@@ -262,7 +262,7 @@ for (const val of c.Vec.of(10, 20, 30)) console.log(val)
 
 ### `class ClsVec`
 
-Links: [source](../coll.mjs#L187); [test/example](../test/coll_test.mjs#L459).
+Links: [source](../coll.mjs#L212); [test/example](../test/coll_test.mjs#L475).
 
 Variant of [#`Vec`](#class-vec) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsVec`. Elements added with `.add` are idempotently instantiated.
 
@@ -274,7 +274,7 @@ class Person {
   pk() {return this.name}
 }
 
-class Persons extends co.ClsVec {
+class Persons extends c.ClsVec {
   get cls() {return Person}
 }
 
@@ -298,9 +298,9 @@ Persons {
 
 The following APIs are exported but undocumented. Check [coll.mjs](../coll.mjs).
 
-  * [`class TypedSet`](../coll.mjs#L35)
-  * [`class ClsSet`](../coll.mjs#L40)
-  * [`class CompatMap`](../coll.mjs#L107)
-  * [`class ClsMap`](../coll.mjs#L112)
-  * [`class TypedVec`](../coll.mjs#L181)
-  * [`class Que`](../coll.mjs#L195)
+  * [`class TypedSet`](../coll.mjs#L37)
+  * [`class ClsSet`](../coll.mjs#L42)
+  * [`class CompatMap`](../coll.mjs#L110)
+  * [`class ClsMap`](../coll.mjs#L115)
+  * [`class TypedVec`](../coll.mjs#L188)
+  * [`class Que`](../coll.mjs#L220)

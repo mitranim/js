@@ -101,7 +101,7 @@ export class HttpBui extends l.Emp {
   mut(val) {
     if (l.isNil(val)) return this
     if (l.isStruct(val)) return this.mutFromStruct(val)
-    throw l.errInst(val, this)
+    throw l.errConvInst(val, this)
   }
 
   mutFromStruct(val) {
@@ -538,7 +538,7 @@ export class Cookie extends l.Emp {
   reset(val) {
     if (l.isNil(val)) return this
     if (l.isStruct(val)) return this.resetFromStruct(val)
-    throw l.errInst(val, this)
+    throw l.errConvInst(val, this)
   }
 
   resetFromStruct(val) {
@@ -634,11 +634,11 @@ const sigKey = Symbol.for(`sig`)
 
 // Semi-placeholder. May tighten up.
 function isHeadKey(val) {return l.isStr(val) && val !== ``}
-function reqHeadKey(val) {return isHeadKey(val) ? val : l.convFun(val, isHeadKey)}
+function reqHeadKey(val) {return isHeadKey(val) ? val : l.throwErrFun(val, isHeadKey)}
 
 // Semi-placeholder. May tighten up.
 function isMethod(val) {return l.isStr(val)}
-function reqMethod(val) {return isMethod(val) ? val : l.convFun(val, isMethod)}
+function reqMethod(val) {return isMethod(val) ? val : l.throwErrFun(val, isMethod)}
 
 export function reqBody(val) {return l.reqOneOf(val, bodyFuns)}
 export function optBody(val) {return l.optOneOf(val, bodyFuns)}

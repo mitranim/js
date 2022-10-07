@@ -1,169 +1,170 @@
 /* Type */
 
 export function isNil(val) {return val == null}
-export function reqNil(val) {return isNil(val) ? val : convFun(val, isNil)}
+export function reqNil(val) {return isNil(val) ? val : throwErrFun(val, isNil)}
 export function optNil(val) {return isNil(val) ? val : reqNil(val)}
 export function onlyNil(val) {return isNil(val) ? val : undefined}
 
 export function isSome(val) {return val != null}
-export function reqSome(val) {return isSome(val) ? val : convFun(val, isSome)}
+export function reqSome(val) {return isSome(val) ? val : throwErrFun(val, isSome)}
 export function optSome(val) {return isNil(val) ? val : reqSome(val)}
 export function onlySome(val) {return isSome(val) ? val : undefined}
 
 export function isBool(val) {return typeof val === `boolean`}
-export function reqBool(val) {return isBool(val) ? val : convFun(val, isBool)}
+export function reqBool(val) {return isBool(val) ? val : throwErrFun(val, isBool)}
 export function optBool(val) {return isNil(val) ? val : reqBool(val)}
 export function onlyBool(val) {return isBool(val) ? val : undefined}
 export function laxBool(val) {return isNil(val) ? false : reqBool(val)}
 
 export function isNum(val) {return typeof val === `number`}
-export function reqNum(val) {return isNum(val) ? val : convFun(val, isNum)}
+export function reqNum(val) {return isNum(val) ? val : throwErrFun(val, isNum)}
 export function optNum(val) {return isNil(val) ? val : reqNum(val)}
 export function onlyNum(val) {return isNum(val) ? val : undefined}
 export function laxNum(val) {return isNil(val) ? 0 : reqNum(val)}
 
 export function isFin(val) {return isNum(val) && !isNaN(val) && !isInf(val)}
-export function reqFin(val) {return isFin(val) ? val : convFun(val, isFin)}
+export function reqFin(val) {return isFin(val) ? val : throwErrFun(val, isFin)}
 export function optFin(val) {return isNil(val) ? val : reqFin(val)}
 export function onlyFin(val) {return isFin(val) ? val : undefined}
 export function laxFin(val) {return isNil(val) ? 0 : reqFin(val)}
 
 export function isFinNeg(val) {return isNum(val) && val < 0 && val > -Infinity}
-export function reqFinNeg(val) {return isFinNeg(val) ? val : convFun(val, isFinNeg)}
+export function reqFinNeg(val) {return isFinNeg(val) ? val : throwErrFun(val, isFinNeg)}
 export function optFinNeg(val) {return isNil(val) ? val : reqFinNeg(val)}
 export function onlyFinNeg(val) {return isFinNeg(val) ? val : undefined}
 
 export function isFinPos(val) {return isNum(val) && val > 0 && val < Infinity}
-export function reqFinPos(val) {return isFinPos(val) ? val : convFun(val, isFinPos)}
+export function reqFinPos(val) {return isFinPos(val) ? val : throwErrFun(val, isFinPos)}
 export function optFinPos(val) {return isNil(val) ? val : reqFinPos(val)}
 export function onlyFinPos(val) {return isFinPos(val) ? val : undefined}
 
+// TODO: must be equivalent to `Number.isSafeInteger`. Requires a test.
 export function isInt(val) {return isNum(val) && ((val % 1) === 0)}
-export function reqInt(val) {return isInt(val) ? val : convFun(val, isInt)}
+export function reqInt(val) {return isInt(val) ? val : throwErrFun(val, isInt)}
 export function optInt(val) {return isNil(val) ? val : reqInt(val)}
 export function onlyInt(val) {return isInt(val) ? val : undefined}
 export function laxInt(val) {return isNil(val) ? 0 : reqInt(val)}
 
 export function isNat(val) {return isInt(val) && val >= 0}
-export function reqNat(val) {return isNat(val) ? val : convFun(val, isNat)}
+export function reqNat(val) {return isNat(val) ? val : throwErrFun(val, isNat)}
 export function optNat(val) {return isNil(val) ? val : reqNat(val)}
 export function onlyNat(val) {return isNat(val) ? val : undefined}
 export function laxNat(val) {return isNil(val) ? 0 : reqNat(val)}
 
 export function isIntNeg(val) {return isInt(val) && val < 0}
-export function reqIntNeg(val) {return isIntNeg(val) ? val : convFun(val, isIntNeg)}
+export function reqIntNeg(val) {return isIntNeg(val) ? val : throwErrFun(val, isIntNeg)}
 export function optIntNeg(val) {return isNil(val) ? val : reqIntNeg(val)}
 export function onlyIntNeg(val) {return isIntNeg(val) ? val : undefined}
 
 export function isIntPos(val) {return isInt(val) && val > 0}
-export function reqIntPos(val) {return isIntPos(val) ? val : convFun(val, isIntPos)}
+export function reqIntPos(val) {return isIntPos(val) ? val : throwErrFun(val, isIntPos)}
 export function optIntPos(val) {return isNil(val) ? val : reqIntPos(val)}
 export function onlyIntPos(val) {return isIntPos(val) ? val : undefined}
 
 export function isNaN(val) {return val !== val}
-export function reqNaN(val) {return isNaN(val) ? val : convFun(val, isNaN)}
+export function reqNaN(val) {return isNaN(val) ? val : throwErrFun(val, isNaN)}
 export function optNaN(val) {return isNil(val) ? val : reqNaN(val)}
 export function onlyNaN(val) {return isNaN(val) ? val : undefined}
 
 export function isInf(val) {return val === Infinity || val === -Infinity}
-export function reqInf(val) {return isInf(val) ? val : convFun(val, isInf)}
+export function reqInf(val) {return isInf(val) ? val : throwErrFun(val, isInf)}
 export function optInf(val) {return isNil(val) ? val : reqInf(val)}
 export function onlyInf(val) {return isInf(val) ? val : undefined}
 
 export function isBigInt(val) {return typeof val === `bigint`}
-export function reqBigInt(val) {return isBigInt(val) ? val : convFun(val, isBigInt)}
+export function reqBigInt(val) {return isBigInt(val) ? val : throwErrFun(val, isBigInt)}
 export function optBigInt(val) {return isNil(val) ? val : reqBigInt(val)}
 export function onlyBigInt(val) {return isBigInt(val) ? val : undefined}
 export function laxBigInt(val) {return isNil(val) ? BigInt(0) : reqBigInt(val)}
 
 export function isStr(val) {return typeof val === `string`}
-export function reqStr(val) {return isStr(val) ? val : convFun(val, isStr)}
+export function reqStr(val) {return isStr(val) ? val : throwErrFun(val, isStr)}
 export function optStr(val) {return isNil(val) ? val : reqStr(val)}
 export function onlyStr(val) {return isStr(val) ? val : undefined}
 export function laxStr(val) {return isNil(val) ? `` : reqStr(val)}
 
 // TODO shorter name.
 export function isValidStr(val) {return isStr(val) && !!val}
-export function reqValidStr(val) {return isValidStr(val) ? val : convFun(val, isValidStr)}
+export function reqValidStr(val) {return isValidStr(val) ? val : throwErrFun(val, isValidStr)}
 export function optValidStr(val) {return isNil(val) ? val : reqValidStr(val)}
 export function onlyValidStr(val) {return isValidStr(val) ? val : undefined}
 export function laxValidStr(val) {return isNil(val) ? `` : reqValidStr(val)}
 
 export function isSym(val) {return typeof val === `symbol`}
-export function reqSym(val) {return isSym(val) ? val : convFun(val, isSym)}
+export function reqSym(val) {return isSym(val) ? val : throwErrFun(val, isSym)}
 export function optSym(val) {return isNil(val) ? val : reqSym(val)}
 export function onlySym(val) {return isSym(val) ? val : undefined}
 
 // TODO tune perf.
 export function isKey(val) {return isPrim(val) && !isJunk(val)}
-export function reqKey(val) {return isKey(val) ? val : convFun(val, isKey)}
+export function reqKey(val) {return isKey(val) ? val : throwErrFun(val, isKey)}
 export function optKey(val) {return isNil(val) ? val : reqKey(val)}
 export function onlyKey(val) {return isKey(val) ? val : undefined}
 
 export function isPk(val) {return isValidStr(val) || isIntPos(val)}
-export function reqPk(val) {return isPk(val) ? val : convFun(val, isPk)}
+export function reqPk(val) {return isPk(val) ? val : throwErrFun(val, isPk)}
 export function optPk(val) {return isNil(val) ? val : reqPk(val)}
 export function onlyPk(val) {return isPk(val) ? val : undefined}
 
 export function isJunk(val) {return isNil(val) || isNaN(val) || isInf(val)}
-export function reqJunk(val) {return isJunk(val) ? val : convFun(val, isJunk)}
+export function reqJunk(val) {return isJunk(val) ? val : throwErrFun(val, isJunk)}
 export function optJunk(val) {return isNil(val) ? val : reqJunk(val)}
 export function onlyJunk(val) {return isJunk(val) ? val : undefined}
 
 export function isComp(val) {return isObj(val) || isFun(val)}
-export function reqComp(val) {return isComp(val) ? val : convFun(val, isComp)}
+export function reqComp(val) {return isComp(val) ? val : throwErrFun(val, isComp)}
 export function optComp(val) {return isNil(val) ? val : reqComp(val)}
 export function onlyComp(val) {return isComp(val) ? val : undefined}
 
 export function isPrim(val) {return !isComp(val)}
-export function reqPrim(val) {return isPrim(val) ? val : convFun(val, isPrim)}
+export function reqPrim(val) {return isPrim(val) ? val : throwErrFun(val, isPrim)}
 export function optPrim(val) {return isNil(val) ? val : reqPrim(val)}
 export function onlyPrim(val) {return isPrim(val) ? val : undefined}
 
 export function isFun(val) {return typeof val === `function`}
-export function reqFun(val) {return isFun(val) ? val : convFun(val, isFun)}
+export function reqFun(val) {return isFun(val) ? val : throwErrFun(val, isFun)}
 export function optFun(val) {return isNil(val) ? val : reqFun(val)}
 export function onlyFun(val) {return isFun(val) ? val : undefined}
 
 export function isFunSync(val) {return isFunType(val, `Function`)}
-export function reqFunSync(val) {return isFunSync(val) ? val : convFun(val, isFunSync)}
+export function reqFunSync(val) {return isFunSync(val) ? val : throwErrFun(val, isFunSync)}
 export function optFunSync(val) {return isNil(val) ? val : reqFunSync(val)}
 export function onlyFunSync(val) {return isFunSync(val) ? val : undefined}
 
 export function isFunGen(val) {return isFunType(val, `GeneratorFunction`)}
-export function reqFunGen(val) {return isFunGen(val) ? val : convFun(val, isFunGen)}
+export function reqFunGen(val) {return isFunGen(val) ? val : throwErrFun(val, isFunGen)}
 export function optFunGen(val) {return isNil(val) ? val : reqFunGen(val)}
 export function onlyFunGen(val) {return isFunGen(val) ? val : undefined}
 
 export function isFunAsync(val) {return isFunType(val, `AsyncFunction`)}
-export function reqFunAsync(val) {return isFunAsync(val) ? val : convFun(val, isFunAsync)}
+export function reqFunAsync(val) {return isFunAsync(val) ? val : throwErrFun(val, isFunAsync)}
 export function optFunAsync(val) {return isNil(val) ? val : reqFunAsync(val)}
 export function onlyFunAsync(val) {return isFunAsync(val) ? val : undefined}
 
 export function isFunAsyncGen(val) {return isFunType(val, `AsyncGeneratorFunction`)}
-export function reqFunAsyncGen(val) {return isFunAsyncGen(val) ? val : convFun(val, isFunAsyncGen)}
+export function reqFunAsyncGen(val) {return isFunAsyncGen(val) ? val : throwErrFun(val, isFunAsyncGen)}
 export function optFunAsyncGen(val) {return isNil(val) ? val : reqFunAsyncGen(val)}
 export function onlyFunAsyncGen(val) {return isFunAsyncGen(val) ? val : undefined}
 
 export function isObj(val) {return isSome(val) && typeof val === `object`}
-export function reqObj(val) {return isObj(val) ? val : convFun(val, isObj)}
+export function reqObj(val) {return isObj(val) ? val : throwErrFun(val, isObj)}
 export function optObj(val) {return isNil(val) ? val : reqObj(val)}
 export function onlyObj(val) {return isObj(val) ? val : undefined}
 
 export function isDict(val) {return isObj(val) && isDictProto(Object.getPrototypeOf(val))}
-export function reqDict(val) {return isDict(val) ? val : convFun(val, isDict)}
+export function reqDict(val) {return isDict(val) ? val : throwErrFun(val, isDict)}
 export function optDict(val) {return isNil(val) ? val : reqDict(val)}
 export function onlyDict(val) {return isDict(val) ? val : undefined}
 export function laxDict(val) {return isNil(val) ? npo() : reqDict(val)}
 
 export function isStruct(val) {return isObj(val) && !(Symbol.iterator in val)}
-export function reqStruct(val) {return isStruct(val) ? val : convFun(val, isStruct)}
+export function reqStruct(val) {return isStruct(val) ? val : throwErrFun(val, isStruct)}
 export function optStruct(val) {return isNil(val) ? val : reqStruct(val)}
 export function onlyStruct(val) {return isStruct(val) ? val : undefined}
 export function laxStruct(val) {return isNil(val) ? npo() : reqStruct(val)}
 
 export function isArr(val) {return Array.isArray(val)}
-export function reqArr(val) {return isArr(val) ? val : convFun(val, isArr)}
+export function reqArr(val) {return isArr(val) ? val : throwErrFun(val, isArr)}
 export function optArr(val) {return isNil(val) ? val : reqArr(val)}
 export function onlyArr(val) {return isArr(val) ? val : undefined}
 export function laxArr(val) {return isNil(val) ? [] : reqArr(val)}
@@ -173,98 +174,98 @@ At the time of writing, in V8, array subclasses perform MUCH worse than true
 arrays. In some hotspots we enforce true arrays for consistent performance.
 */
 export function isTrueArr(val) {return isArr(val) && val.constructor === Array}
-export function reqTrueArr(val) {return isTrueArr(val) ? val : convFun(val, isTrueArr)}
+export function reqTrueArr(val) {return isTrueArr(val) ? val : throwErrFun(val, isTrueArr)}
 export function optTrueArr(val) {return isNil(val) ? val : reqTrueArr(val)}
 export function onlyTrueArr(val) {return isTrueArr(val) ? val : undefined}
 export function laxTrueArr(val) {return isNil(val) ? [] : reqTrueArr(val)}
 
 export function isReg(val) {return isInst(val, RegExp)}
-export function reqReg(val) {return isReg(val) ? val : convFun(val, isReg)}
+export function reqReg(val) {return isReg(val) ? val : throwErrFun(val, isReg)}
 export function optReg(val) {return isNil(val) ? val : reqReg(val)}
 export function onlyReg(val) {return isReg(val) ? val : undefined}
 
 export function isDate(val) {return isInst(val, Date)}
-export function reqDate(val) {return isDate(val) ? val : convFun(val, isDate)}
+export function reqDate(val) {return isDate(val) ? val : throwErrFun(val, isDate)}
 export function optDate(val) {return isNil(val) ? val : reqDate(val)}
 export function onlyDate(val) {return isDate(val) ? val : undefined}
 
 export function isValidDate(val) {return isDate(val) && isFin(val.valueOf())}
-export function reqValidDate(val) {return isValidDate(val) ? val : convFun(val, isValidDate)}
+export function reqValidDate(val) {return isValidDate(val) ? val : throwErrFun(val, isValidDate)}
 export function optValidDate(val) {return isNil(val) ? val : reqValidDate(val)}
 export function onlyValidDate(val) {return isValidDate(val) ? val : undefined}
 
 export function isInvalidDate(val) {return isDate(val) && !isValidDate(val)}
-export function reqInvalidDate(val) {return isInvalidDate(val) ? val : convFun(val, isInvalidDate)}
+export function reqInvalidDate(val) {return isInvalidDate(val) ? val : throwErrFun(val, isInvalidDate)}
 export function optInvalidDate(val) {return isNil(val) ? val : reqInvalidDate(val)}
 export function onlyInvalidDate(val) {return isInvalidDate(val) ? val : undefined}
 
 export function isSet(val) {return isInst(val, Set)}
-export function reqSet(val) {return isSet(val) ? val : convFun(val, isSet)}
+export function reqSet(val) {return isSet(val) ? val : throwErrFun(val, isSet)}
 export function optSet(val) {return isNil(val) ? val : reqSet(val)}
 export function onlySet(val) {return isSet(val) ? val : undefined}
 export function laxSet(val) {return isNil(val) ? new Set() : reqSet(val)}
 
 export function isMap(val) {return isInst(val, Map)}
-export function reqMap(val) {return isMap(val) ? val : convFun(val, isMap)}
+export function reqMap(val) {return isMap(val) ? val : throwErrFun(val, isMap)}
 export function optMap(val) {return isNil(val) ? val : reqMap(val)}
 export function onlyMap(val) {return isMap(val) ? val : undefined}
 export function laxMap(val) {return isNil(val) ? new Map() : reqMap(val)}
 
 export function isPromise(val) {return isObj(val) && `then` in val && isFun(val.then)}
-export function reqPromise(val) {return isPromise(val) ? val : convFun(val, isPromise)}
+export function reqPromise(val) {return isPromise(val) ? val : throwErrFun(val, isPromise)}
 export function optPromise(val) {return isNil(val) ? val : reqPromise(val)}
 export function onlyPromise(val) {return isPromise(val) ? val : undefined}
 
 export function isIter(val) {return isObj(val) && Symbol.iterator in val && isFun(val[Symbol.iterator])}
-export function reqIter(val) {return isIter(val) ? val : convFun(val, isIter)}
+export function reqIter(val) {return isIter(val) ? val : throwErrFun(val, isIter)}
 export function optIter(val) {return isNil(val) ? val : reqIter(val)}
 export function onlyIter(val) {return isIter(val) ? val : undefined}
 
 export function isIterAsync(val) {return isObj(val) && Symbol.asyncIterator in val && isFun(val[Symbol.asyncIterator])}
-export function reqIterAsync(val) {return isIterAsync(val) ? val : convFun(val, isIterAsync)}
+export function reqIterAsync(val) {return isIterAsync(val) ? val : throwErrFun(val, isIterAsync)}
 export function optIterAsync(val) {return isNil(val) ? val : reqIterAsync(val)}
 export function onlyIterAsync(val) {return isIterAsync(val) ? val : undefined}
 
 export function isIterator(val) {return isIter(val) && hasNext(val)}
-export function reqIterator(val) {return isIterator(val) ? val : convFun(val, isIterator)}
+export function reqIterator(val) {return isIterator(val) ? val : throwErrFun(val, isIterator)}
 export function optIterator(val) {return isNil(val) ? val : reqIterator(val)}
 export function onlyIterator(val) {return isIterator(val) ? val : undefined}
 
 export function isIteratorAsync(val) {return isIterAsync(val) && hasNext(val)}
-export function reqIteratorAsync(val) {return isIteratorAsync(val) ? val : convFun(val, isIteratorAsync)}
+export function reqIteratorAsync(val) {return isIteratorAsync(val) ? val : throwErrFun(val, isIteratorAsync)}
 export function optIteratorAsync(val) {return isNil(val) ? val : reqIteratorAsync(val)}
 export function onlyIteratorAsync(val) {return isIteratorAsync(val) ? val : undefined}
 
 export function isGen(val) {return isIterator(val) && hasMeth(val, `return`) && hasMeth(val, `throw`)}
-export function reqGen(val) {return isGen(val) ? val : convFun(val, isGen)}
+export function reqGen(val) {return isGen(val) ? val : throwErrFun(val, isGen)}
 export function optGen(val) {return isNil(val) ? val : reqGen(val)}
 export function onlyGen(val) {return isGen(val) ? val : undefined}
 
 // TODO add `isErrCls`.
-export function isCls(val) {return isFun(val) && isObj(val.prototype)}
-export function reqCls(val) {return isCls(val) ? val : convFun(val, isCls)}
+export function isCls(val) {return isFun(val) && !!val.prototype}
+export function reqCls(val) {return isCls(val) ? val : throwErrFun(val, isCls)}
 export function optCls(val) {return isNil(val) ? val : reqCls(val)}
 export function onlyCls(val) {return isCls(val) ? val : undefined}
 
 // TODO tests.
 export function isSubCls(sub, sup) {return isCls(sub) && (sub === sup || isInst(sub.prototype, sup))}
-export function reqSubCls(val) {return isSubCls(val) ? val : convFun(val, isSubCls)}
+export function reqSubCls(val) {return isSubCls(val) ? val : throwErrFun(val, isSubCls)}
 export function optSubCls(val) {return isNil(val) ? val : reqSubCls(val)}
 export function onlySubCls(val) {return isSubCls(val) ? val : undefined}
 
 export function isList(val) {return isSome(val) && (isArr(val) || (isIter(val) && isNat(getLength(val))))}
-export function reqList(val) {return isList(val) ? val : convFun(val, isList)}
+export function reqList(val) {return isList(val) ? val : throwErrFun(val, isList)}
 export function optList(val) {return isNil(val) ? val : reqList(val)}
 export function onlyList(val) {return isList(val) ? val : undefined}
 export function laxList(val) {return isNil(val) ? [] : reqList(val)}
 
 export function isSeq(val) {return isList(val) || isSet(val) || isArrble(val) || isIterator(val)}
-export function reqSeq(val) {return isSeq(val) ? val : convFun(val, isSeq)}
+export function reqSeq(val) {return isSeq(val) ? val : throwErrFun(val, isSeq)}
 export function optSeq(val) {return isNil(val) ? val : reqSeq(val)}
 export function onlySeq(val) {return isSeq(val) ? val : undefined}
 
 export function isVac(val) {return !val || (isArr(val) && val.every(isVac))}
-export function reqVac(val) {return isVac(val) ? val : convFun(val, isVac)}
+export function reqVac(val) {return isVac(val) ? val : throwErrFun(val, isVac)}
 export function optVac(val) {return isNil(val) ? val : reqVac(val)}
 export function onlyVac(val) {return isVac(val) ? val : undefined}
 
@@ -275,23 +276,23 @@ export function isScalar(val) {
   }
   return !(isNil(val) || isSym(val) || isFun(val))
 }
-export function reqScalar(val) {return isScalar(val) ? val : convFun(val, isScalar)}
+export function reqScalar(val) {return isScalar(val) ? val : throwErrFun(val, isScalar)}
 export function optScalar(val) {return isNil(val) ? val : reqScalar(val)}
 export function onlyScalar(val) {return isScalar(val) ? val : undefined}
 
 export function isScalarOpt(val) {return isNil(val) || isScalar(val)}
-export function reqScalarOpt(val) {return isScalarOpt(val) ? val : convFun(val, isScalarOpt)}
+export function reqScalarOpt(val) {return isScalarOpt(val) ? val : throwErrFun(val, isScalarOpt)}
 export function optScalarOpt(val) {return isNil(val) ? val : reqScalarOpt(val)}
 export function onlyScalarOpt(val) {return isScalarOpt(val) ? val : undefined}
 
 // Custom interface for iterables that wrap arrays.
 export function isArrble(val) {return isIter(val) && `toArray` in val && isFun(val.toArray)}
-export function reqArrble(val) {return isArrble(val) ? val : convFun(val, isArrble)}
+export function reqArrble(val) {return isArrble(val) ? val : throwErrFun(val, isArrble)}
 export function optArrble(val) {return isNil(val) ? val : reqArrble(val)}
 export function onlyArrble(val) {return isArrble(val) ? val : undefined}
 
 export function isEq(val) {return isObj(val) && `eq` in val && isFun(val.eq)}
-export function reqEq(val) {return isEq(val) ? val : convFun(val, isEq)}
+export function reqEq(val) {return isEq(val) ? val : throwErrFun(val, isEq)}
 export function optEq(val) {return isNil(val) ? val : reqEq(val)}
 export function onlyEq(val) {return isEq(val) ? val : undefined}
 
@@ -322,7 +323,7 @@ export function isInst(val, cls) {return isObj(val) && val instanceof cls}
 /* Assert */
 
 export function req(val, fun) {
-  if (reqValid(fun)(val)) return val
+  if (reqValidator(fun)(val)) return val
   throw errFun(val, fun)
 }
 
@@ -332,7 +333,7 @@ export function reqOneOf(val, funs) {
 }
 
 export function opt(val, fun) {
-  reqValid(fun)
+  reqValidator(fun)
   return isNil(val) ? val : req(val, fun)
 }
 
@@ -342,7 +343,7 @@ export function optOneOf(val, funs) {
 
 export function reqInst(val, cls) {
   if (isInst(val, cls)) return val
-  throw TypeError(`expected instance of ${showFunName(cls)}, got ${instDesc(getCon(val))}${show(val)}`)
+  throw errInst(val, cls)
 }
 
 export function optInst(val, cls) {
@@ -350,7 +351,7 @@ export function optInst(val, cls) {
   return isNil(val) ? val : reqInst(val, cls)
 }
 
-export function only(val, fun) {return reqValid(fun)(val) ? val : undefined}
+export function only(val, fun) {return reqValidator(fun)(val) ? val : undefined}
 
 export function onlyInst(val, cls) {return isInst(val, cls) ? val : undefined}
 
@@ -453,23 +454,35 @@ function isFunType(val, name) {return isFun(val) && val.constructor.name === nam
 function instDesc(val) {return isFun(val) ? `instance of ${showFunName(val)} ` : ``}
 function hasNext(val) {return `next` in val && isFun(val.next)}
 
-function reqValid(fun) {
+function reqValidator(fun) {
   if (!isFun(fun)) {
     throw TypeError(`expected validator function, got ${show(fun)}`)
   }
   return fun
 }
 
-export function convFun(val, fun) {throw errFun(val, fun)}
-export function errFun(val, fun) {return errType(val, showFunName(fun))}
-export function errType(val, msg) {return TypeError(`expected variant of ${msg}, got ${show(val)}`)}
+export function errType(val, msg) {return TypeError(msgType(val, msg))}
+export function msgType(val, msg) {return `expected variant of ${msg}, got ${show(val)}`}
+
+export function errFun(val, fun) {return TypeError(msgFun(val, fun))}
+export function msgFun(val, fun) {return msgType(val, showFunName(fun))}
+export function throwErrFun(val, fun) {throw errFun(val, fun)}
+
 export function errConv(val, msg) {return TypeError(msgConv(val, msg))}
 export function errSynt(val, msg) {return SyntaxError(msgConv(val, msg))}
-export function errInst(val, inst) {return errConv(val, inst.constructor.name)}
 export function msgConv(val, msg) {return `unable to convert ${show(val)} to ${msg}`}
-export function msgType(val, msg) {return `expected variant of ${msg}, got ${show(val)}`}
-export function errIn(val, key) {return TypeError(`unable to find ${show(key)} in ${show(val)}`)}
-export function errImpl() {return TypeError(`not implemented`)}
+
+export function errConvInst(val, inst) {return TypeError(msgConvInst(val, inst))}
+export function msgConvInst(val, inst) {return msgConv(val, inst.constructor.name)}
+
+export function errInst(val, cls) {return TypeError(msgInst(val, cls))}
+export function msgInst(val, cls) {return `expected instance of ${showFunName(cls)}, got ${instDesc(getCon(val))}${show(val)}`}
+
+export function errIn(val, key) {return TypeError(msgIn(val, key))}
+export function msgIn(val, key) {return `unable to find ${show(key)} in ${show(val)}`}
+
+export function errImpl() {return TypeError(msgImpl())}
+export function msgImpl() {return `not implemented`}
 
 /*
 Assumes `cls` is `Error` or a subclass. Otherwise this has undefined behavior.
@@ -502,13 +515,27 @@ export function showFunName(fun) {return fun.name || showFun(fun)}
 
 function showObj(val) {
   if (isInst(val, Error)) return String(val)
-  if (isArr(val)) return JSON.stringify(val)
+  if (isArr(val)) return showArr(val)
 
   const con = getCon(val)
-  if (!con || con === Object) return JSON.stringify(val)
+  if (!con || con === Object) return showDict(val)
 
   const name = getName(con)
   return name ? `[object ${name}]` : String(val)
+}
+
+function showArr(src) {return `[` + src.map(show).join(`, `) + `]`}
+
+function showDict(src) {
+  let out = `{`
+  let first = true
+  for (const key of structKeys(src)) {
+    if (first) first = false
+    else out += `, `
+    out += show(key) + `: ` + show(src[key])
+  }
+  out += `}`
+  return out
 }
 
 /*
@@ -544,5 +571,5 @@ Shortcut for making symbol keys via property access.
 Kinda slow, avoid in hotspots.
 */
 export const sym = new Proxy(npo(), new class SymPh extends Emp {
-  get(_, key) {return Symbol.for(key)}
+  get(_, key) {return isSym(key) ? key : Symbol.for(key)}
 }())

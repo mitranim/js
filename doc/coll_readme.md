@@ -13,7 +13,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as co from '{{featUrl coll}}'
+import * as c from '{{featUrl coll}}'
 ```
 
 ## API

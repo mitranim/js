@@ -1,5 +1,5 @@
 import * as l from './lang.mjs'
-import * as co from './coll.mjs'
+import * as c from './coll.mjs'
 
 /*
 TODO try the following regex. May require a different split algo.
@@ -85,7 +85,7 @@ Thin wrapping seems significantly cheaper than copying.
 
 TODO: support initials.
 */
-export class Words extends co.Vec {
+export class Words extends c.Vec {
   spaced() {return this.join(` `)}
   snake() {return this.join(`_`)}
   kebab() {return this.join(`-`)}
@@ -172,7 +172,7 @@ Features:
   * Support for arbitrary iterators.
   * Parsing of bool and numeric values.
 */
-export class StrMap extends co.TypedMap {
+export class StrMap extends c.TypedMap {
   reqKey(key) {return l.reqStr(key)}
   reqVal(val) {return l.reqTrueArr(val)}
 
@@ -485,7 +485,7 @@ analysis tools such as type checkers and linters. String-based templating
 should be used only when already committed to a dedicated markup language such
 as Markdown.
 */
-export class Draft extends co.Vec {
+export class Draft extends c.Vec {
   // TODO consider merging with `renderAsync`, automatically switching to
   // promises when the first promise is detected. Might be tricky.
   render(ctx) {

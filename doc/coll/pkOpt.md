@@ -14,6 +14,6 @@ class Person {
   pk() {return this.name}
 }
 
-console.log(co.pkOpt(new Person({name: `Kara`})))
+console.log(c.pkOpt(new Person({name: `Kara`})))
 // 'Kara'
 ```

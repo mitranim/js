@@ -168,6 +168,20 @@ t.bench(function bench_find_array_lodash() {l.reqInt(lo.find(itc.numArr, val => 
 t.bench(function bench_find_array_for_of_naive() {l.reqInt(findForOfNaive(itc.numArr, val => val === 501))})
 t.bench(function bench_find_array_our_find() {l.reqInt(i.find(itc.numArr, val => val === 501))})
 
+itc.deoptCollHof(i.procure)
+t.bench(function bench_procure_nil() {l.nop(i.procure(undefined, l.False))})
+t.bench(function bench_procure_empty() {l.nop(i.procure(itc.arrEmpty, l.False))})
+t.bench(function bench_procure_arr_miss() {l.nop(i.procure(itc.numArr, l.False))})
+t.bench(function bench_procure_arr_hit() {l.nop(i.procure(itc.numArr, l.True))})
+
+t.bench(function bench_procure_arr_hit_inline() {
+  for (const src of itc.numArr) {
+    const val = l.True(src)
+    if (val) return val
+  }
+  return undefined
+})
+
 itc.deoptNativeListHof(itc.numArr.map)
 itc.deoptSeqHof(lo.map)
 itc.deoptListHof(mapDumb)

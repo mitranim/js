@@ -2,9 +2,9 @@ Variant of {{link coll Bmap}} with support for key and value checks. Subclasses 
 
 ```js
 import * as l from '{{featUrl lang}}'
-import * as co from '{{featUrl coll}}'
+import * as c from '{{featUrl coll}}'
 
-class StrNatMap extends co.TypedMap {
+class StrNatMap extends c.TypedMap {
   reqKey(key) {return l.reqStr(key)}
   reqVal(val) {return l.reqNat(val)}
 }

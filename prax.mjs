@@ -369,7 +369,7 @@ export class RenSvgPh extends o.BlankStaticPh {
   static get(ren, key) {return ren.makeSvg(key)}
 }
 
-export class MixRenCache extends o.StaticWeakCache {
+export class MixRenCache extends o.DedupMixinCache {
   static make(cls) {
     return class MixRenCls extends cls {
       get ren() {return this.constructor.ren}

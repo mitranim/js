@@ -1,7 +1,7 @@
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
-import * as co from '../coll.mjs'
+import * as c from '../coll.mjs'
 
 /* Util */
 
@@ -10,7 +10,7 @@ class Person {
   pk() {return this.name}
 }
 
-class PersonColl extends co.ClsColl {
+class PersonColl extends c.ClsColl {
   get cls() {return Person}
 }
 
@@ -21,30 +21,30 @@ function testSeq(val, exp) {t.eq([...val], exp)}
 /* Test */
 
 t.test(function test_bset() {
-  t.eq(co.bset(), new co.Bset())
-  t.eq(co.bset([10, 20]), new co.Bset().add(10).add(20))
+  t.eq(c.bset(), new c.Bset())
+  t.eq(c.bset([10, 20]), new c.Bset().add(10).add(20))
 })
 
 t.test(function test_bsetOf() {
-  t.eq(co.bsetOf(), co.bset())
-  t.eq(co.bsetOf(10), co.bset().add(10))
-  t.eq(co.bsetOf(10, 20), co.bset().add(10).add(20))
+  t.eq(c.bsetOf(), c.bset())
+  t.eq(c.bsetOf(10), c.bset().add(10))
+  t.eq(c.bsetOf(10, 20), c.bset().add(10).add(20))
 })
 
-t.test(function test_Bset() {testBset(co.Bset)})
+t.test(function test_Bset() {testBset(c.Bset)})
 
 t.test(function test_TypedSet() {
   t.test(function test_not_implemented() {
-    const tar = new co.TypedSet()
+    const tar = new c.TypedSet()
     t.throws(() => tar.reqVal(), TypeError, `not implemented`)
   })
 
   t.test(function test_any() {
-    testBset(class AnySet extends co.TypedSet {reqVal(val) {return val}})
+    testBset(class AnySet extends c.TypedSet {reqVal(val) {return val}})
   })
 
   t.test(function test_specific() {
-    class NatSet extends co.TypedSet {
+    class NatSet extends c.TypedSet {
       reqVal(val) {return l.reqNat(val)}
     }
 
@@ -118,20 +118,20 @@ function testBset(cls) {
 }
 
 t.test(function test_bmap() {
-  t.eq(co.bmap(), new co.Bmap())
-  t.eq(co.bmap([[10, 20], [30, 40]]), new co.Bmap().set(10, 20).set(30, 40))
+  t.eq(c.bmap(), new c.Bmap())
+  t.eq(c.bmap([[10, 20], [30, 40]]), new c.Bmap().set(10, 20).set(30, 40))
 })
 
 t.test(function test_bmapOf() {
-  t.eq(co.bmapOf(), co.bmap())
+  t.eq(c.bmapOf(), c.bmap())
 
   t.eq(
-    co.bmapOf(10, 20, 30, 40),
-    co.bmap().set(10, 20).set(30, 40),
+    c.bmapOf(10, 20, 30, 40),
+    c.bmap().set(10, 20).set(30, 40),
   )
 
   t.eq(
-    [...co.bmapOf(10, 20, 30, 40)],
+    [...c.bmapOf(10, 20, 30, 40)],
     [[10, 20], [30, 40]],
   )
 })
@@ -213,24 +213,24 @@ function testBmap(Cls) {
   })
 }
 
-t.test(function test_Bmap() {testBmap(co.Bmap)})
+t.test(function test_Bmap() {testBmap(c.Bmap)})
 
 t.test(function test_TypedMap() {
   t.test(function test_not_implemented() {
-    const tar = new co.TypedMap()
+    const tar = new c.TypedMap()
     t.throws(() => tar.reqKey(), TypeError, `not implemented`)
     t.throws(() => tar.reqVal(), TypeError, `not implemented`)
   })
 
   t.test(function test_any() {
-    testBmap(class AnyMap extends co.TypedMap {
+    testBmap(class AnyMap extends c.TypedMap {
       reqKey(key) {return key}
       reqVal(val) {return val}
     })
   })
 
   t.test(function test_specific() {
-    class StrNatMap extends co.TypedMap {
+    class StrNatMap extends c.TypedMap {
       reqKey(key) {return l.reqStr(key)}
       reqVal(val) {return l.reqNat(val)}
     }
@@ -254,7 +254,7 @@ t.test(function test_TypedMap() {
 })
 
 t.test(function test_pkOpt() {
-  function test(val, exp) {t.is(co.pkOpt(val), exp)}
+  function test(val, exp) {t.is(c.pkOpt(val), exp)}
   function none(val) {test(val, undefined)}
 
   none(undefined)
@@ -271,13 +271,13 @@ t.test(function test_pkOpt() {
 })
 
 t.test(function test_pk() {
-  t.throws(() => co.pk(), TypeError, `expected primary key of undefined, got undefined`)
-  t.throws(() => co.pk(10), TypeError, `expected primary key of 10, got undefined`)
-  t.throws(() => co.pk({}), TypeError, `expected primary key of {}, got undefined`)
-  t.throws(() => co.pk({pk: 10}), TypeError, `expected primary key of {"pk":10}, got undefined`)
-  t.throws(() => co.pk({pk() {return null}}), TypeError, `expected primary key of {}, got null`)
+  t.throws(() => c.pk(), TypeError, `expected primary key of undefined, got undefined`)
+  t.throws(() => c.pk(10), TypeError, `expected primary key of 10, got undefined`)
+  t.throws(() => c.pk({}), TypeError, `expected primary key of {}, got undefined`)
+  t.throws(() => c.pk({pk: 10}), TypeError, `expected primary key of {"pk": 10}, got undefined`)
+  t.throws(() => c.pk({pk() {return null}}), TypeError, `expected primary key of {"pk": [function pk]}, got null`)
 
-  function test(val, exp) {t.is(co.pk(val), exp)}
+  function test(val, exp) {t.is(c.pk(val), exp)}
   test({pk() {return 10}}, 10)
   test({pk() {return `str`}}, `str`)
 })
@@ -285,8 +285,8 @@ t.test(function test_pk() {
 t.test(function test_Coll() {
   t.test(function test_addOpt() {
     function test(val) {
-      t.throws(() => new co.Coll().add(val), TypeError, `expected primary key of ${l.show(val)}, got undefined`)
-      testMap(new co.Coll().addOpt(val), new Map())
+      t.throws(() => new c.Coll().add(val), TypeError, `expected primary key of ${l.show(val)}, got undefined`)
+      testMap(new c.Coll().addOpt(val), new Map())
     }
 
     test(undefined)
@@ -304,7 +304,7 @@ t.test(function test_Coll() {
     const two = new Person({name: `Kara`})
 
     testMap(
-      new co.Coll().add(one).add(two),
+      new c.Coll().add(one).add(two),
       new Map().set(`Mira`, one).set(`Kara`, two),
     )
   })
@@ -312,7 +312,7 @@ t.test(function test_Coll() {
   t.test(function test_toJSON() {
     t.is(
       JSON.stringify(
-        new co.Coll([
+        new c.Coll([
           new Person({name: `Mira`}),
           new Person({name: `Kara`}),
         ]),
@@ -333,25 +333,25 @@ t.test(function test_ClsColl() {
 
 t.test(function test_Vec() {
   t.test(function test_constructor() {
-    t.throws(() => new co.Vec(`str`), TypeError, `expected variant of isTrueArr, got "str"`)
+    t.throws(() => new c.Vec(`str`), TypeError, `expected variant of isTrueArr, got "str"`)
 
     t.test(function test_reuse() {
-      function test(src) {t.is(new co.Vec(src).$, src)}
+      function test(src) {t.is(new c.Vec(src).$, src)}
 
       test([])
       test([10, 20, 30])
     })
 
-    t.eq(new co.Vec().$, [])
-    t.isnt(new co.Vec().$, new co.Vec().$)
+    t.eq(new c.Vec().$, [])
+    t.isnt(new c.Vec().$, new c.Vec().$)
   })
 
   t.test(function test_size() {
-    t.is(new co.Vec().size, 0)
-    t.is(new co.Vec([10, 20, 30]).size, 3)
+    t.is(new c.Vec().size, 0)
+    t.is(new c.Vec([10, 20, 30]).size, 3)
 
     const arr = [10, 20, 30]
-    const vec = new co.Vec(arr)
+    const vec = new c.Vec(arr)
     t.is(vec.size, 3)
 
     arr.length = 2
@@ -362,12 +362,12 @@ t.test(function test_Vec() {
   })
 
   t.test(function test_iterator() {
-    t.eq([...new co.Vec()], [])
-    t.eq([...new co.Vec([10, 20, 30])], [10, 20, 30])
+    t.eq([...new c.Vec()], [])
+    t.eq([...new c.Vec([10, 20, 30])], [10, 20, 30])
   })
 
   t.test(function test_add() {
-    const vec = new co.Vec()
+    const vec = new c.Vec()
     t.eq(vec.$, [])
 
     t.is(vec.add(10), vec)
@@ -378,16 +378,32 @@ t.test(function test_Vec() {
   })
 
   t.test(function test_clear() {
-    const vec = new co.Vec([10, 20, 30])
+    const vec = new c.Vec([10, 20, 30])
     t.eq(vec.$, [10, 20, 30])
 
     t.is(vec.clear(), vec)
     t.eq(vec.$, [])
   })
 
+  t.test(function test_at() {
+    const vec = new c.Vec([10, 20, 30])
+
+    t.throws(() => vec.at(), TypeError, `expected variant of isInt, got undefined`)
+    t.throws(() => vec.at(`0`), TypeError, `expected variant of isInt, got "0"`)
+    t.throws(() => vec.at(`-1`), TypeError, `expected variant of isInt, got "-1"`)
+    t.throws(() => vec.at(`1`), TypeError, `expected variant of isInt, got "1"`)
+    t.throws(() => vec.at(1.1), TypeError, `expected variant of isInt, got 1.1`)
+
+    t.is(vec.at(-1), undefined)
+    t.is(vec.at(0), 10)
+    t.is(vec.at(1), 20)
+    t.is(vec.at(2), 30)
+    t.is(vec.at(3), undefined)
+  })
+
   t.test(function test_clone() {
     const arr = [10, 20, 30]
-    const vec = new co.Vec(arr)
+    const vec = new c.Vec(arr)
     t.is(vec.$, arr)
 
     const out = vec.clone()
@@ -399,13 +415,13 @@ t.test(function test_Vec() {
 
   t.test(function test_toArray() {
     const arr = [10, 20, 30]
-    t.is(new co.Vec(arr).toArray(), arr)
+    t.is(new c.Vec(arr).toArray(), arr)
   })
 
   t.test(function test_toJSON() {
     function test(arr) {
-      t.is(new co.Vec(arr).toJSON(), arr)
-      t.is(JSON.stringify(new co.Vec(arr)), JSON.stringify(arr))
+      t.is(new c.Vec(arr).toJSON(), arr)
+      t.is(JSON.stringify(new c.Vec(arr)), JSON.stringify(arr))
     }
 
     test([])
@@ -415,22 +431,22 @@ t.test(function test_Vec() {
   })
 
   t.test(function test_of() {
-    t.eq(co.Vec.of().$, [])
-    t.eq(co.Vec.of(10).$, [10])
-    t.eq(co.Vec.of(10, 20).$, [10, 20])
-    t.eq(co.Vec.of(10, 20, [30]).$, [10, 20, [30]])
+    t.eq(c.Vec.of().$, [])
+    t.eq(c.Vec.of(10).$, [10])
+    t.eq(c.Vec.of(10, 20).$, [10, 20])
+    t.eq(c.Vec.of(10, 20, [30]).$, [10, 20, [30]])
   })
 
   t.test(function test_from() {
-    t.throws(() => co.Vec.from(`str`), TypeError, `expected variant of isIter, got "str"`)
+    t.throws(() => c.Vec.from(`str`), TypeError, `expected variant of isIter, got "str"`)
 
-    t.eq(co.Vec.from().$, [])
-    t.eq(co.Vec.from([10, 20, 30]).$, [10, 20, 30])
-    t.eq(co.Vec.from([10, 20, 30]).$, [10, 20, 30])
+    t.eq(c.Vec.from().$, [])
+    t.eq(c.Vec.from([10, 20, 30]).$, [10, 20, 30])
+    t.eq(c.Vec.from([10, 20, 30]).$, [10, 20, 30])
   })
 
   t.test(function test_make() {
-    function test(len) {t.eq(co.Vec.make(len).$, Array(len))}
+    function test(len) {t.eq(c.Vec.make(len).$, Array(len))}
 
     test(0)
     test(1)
@@ -440,7 +456,7 @@ t.test(function test_Vec() {
 
   t.test(function test_mut() {
     function test(src, inp, exp) {
-      const tar = new co.Vec(src)
+      const tar = new c.Vec(src)
       t.is(tar.mut(inp), tar)
       t.eq(tar.$, exp)
     }
@@ -457,7 +473,7 @@ t.test(function test_Vec() {
 })
 
 t.test(function test_ClsVec() {
-  class PersonVec extends co.ClsVec {get cls() {return Person}}
+  class PersonVec extends c.ClsVec {get cls() {return Person}}
 
   const vecs = [
     new PersonVec([{name: `Mira`}, {name: `Kara`}]),
@@ -488,15 +504,15 @@ t.test(function test_Que() {
   function effect1() {count++}
 
   t.test(function test_reject_invalid_inputs() {
-    t.throws(() => new co.Que().add(),      TypeError, `expected variant of isFun, got undefined`)
-    t.throws(() => new co.Que().add(null),  TypeError, `expected variant of isFun, got null`)
-    t.throws(() => new co.Que().add(`one`), TypeError, `expected variant of isFun, got "one"`)
-    t.throws(() => new co.Que().add(10),    TypeError, `expected variant of isFun, got 10`)
-    t.throws(() => new co.Que().add([]),    TypeError, `expected variant of isFun, got []`)
-    t.throws(() => new co.Que().add({}),    TypeError, `expected variant of isFun, got {}`)
+    t.throws(() => new c.Que().add(),      TypeError, `expected variant of isFun, got undefined`)
+    t.throws(() => new c.Que().add(null),  TypeError, `expected variant of isFun, got null`)
+    t.throws(() => new c.Que().add(`one`), TypeError, `expected variant of isFun, got "one"`)
+    t.throws(() => new c.Que().add(10),    TypeError, `expected variant of isFun, got 10`)
+    t.throws(() => new c.Que().add([]),    TypeError, `expected variant of isFun, got []`)
+    t.throws(() => new c.Que().add({}),    TypeError, `expected variant of isFun, got {}`)
   })
 
-  const que = new co.Que()
+  const que = new c.Que()
   que.add(effect0)
   que.add(effect0)
   que.add(effect0)
