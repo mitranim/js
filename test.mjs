@@ -631,7 +631,7 @@ got error:
 ${throwsFunMsg(fun)}
 ${throwsErrMsg(cls, msg)}
 got error:
-  ${l.isInst(err, Error) ? err.stack : a.show(err)}
+  ${l.isInst(err, Error) ? err.stack : l.show(err)}
 `)
   }
 }

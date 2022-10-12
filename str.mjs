@@ -452,10 +452,15 @@ export function arrHex(val) {
 }
 
 /*
-Would be simpler and faster to use `crypto.randomUUID().replaceAll('-', '')`,
-but requires Safari 15++.
+Using `crypto.randomUUID` is faster but requires Safari 15++.
+When unavailable, we fall back on `crypto.getRandomValues`.
 */
-export function uuid() {return arrHex(uuidArr())}
+export function uuid() {
+  return (
+    crypto?.randomUUID?.().replaceAll(`-`, ``) ??
+    arrHex(uuidArr())
+  )
+}
 
 // https://en.wikipedia.org/wiki/Universally_unique_identifier
 export function uuidArr() {

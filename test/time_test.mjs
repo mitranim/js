@@ -126,6 +126,25 @@ t.test(function test_Dur() {
     test(`P1Y2M3DT4H5M6S`, `P1Y2M3DT4H5M6S`)
     test(`P1Y2M3DT4H5M6S`, `P1Y2M3DT4H5M6S`)
   })
+
+  t.test(function test_eq() {
+    const zero = ti.dur()
+    const full = ti.dur(`P1YT1H`)
+
+    t.ok(zero.eq(zero))
+    t.ok(full.eq(full))
+
+    t.no(zero.eq(full))
+    t.no(full.eq(zero))
+
+    t.no(zero.eq())
+    t.no(zero.eq(``))
+    t.ok(zero.eq(`PT0S`))
+
+    t.no(full.eq())
+    t.no(full.eq(``))
+    t.ok(full.eq(`P1YT1H`))
+  })
 })
 
 function testDurReset(fun) {

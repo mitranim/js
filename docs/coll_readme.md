@@ -26,7 +26,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.38/coll.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.39/coll.mjs'
 ```
 
 ## API
@@ -101,8 +101,8 @@ Links: [source](../coll.mjs#L100); [test/example](../test/coll_test.mjs#L218).
 Variant of [#`Bmap`](#class-bmap) with support for key and value checks. Subclasses must override methods `.reqKey` and `.reqVal`. These methods are automatically called by `.set`. Method `.reqKey` must validate and return the given key, and method `.reqVal` must validate and return the given value. Use type assertions provided by [`lang`](lang_readme.md).
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.38/lang.mjs'
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.38/coll.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.39/lang.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.39/coll.mjs'
 
 class StrNatMap extends c.TypedMap {
   reqKey(key) {return l.reqStr(key)}
@@ -242,7 +242,7 @@ Differences and advantages over `Array`:
 The overhead of the wrapper is insignificant.
 
 ```js
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.38/coll.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.39/coll.mjs'
 
 console.log(new c.Vec())
 // Vec{$: []}
@@ -262,7 +262,7 @@ for (const val of c.Vec.of(10, 20, 30)) console.log(val)
 
 ### `class ClsVec`
 
-Links: [source](../coll.mjs#L212); [test/example](../test/coll_test.mjs#L475).
+Links: [source](../coll.mjs#L211); [test/example](../test/coll_test.mjs#L475).
 
 Variant of [#`Vec`](#class-vec) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing `ClsVec`. Elements added with `.add` are idempotently instantiated.
 
@@ -302,5 +302,5 @@ The following APIs are exported but undocumented. Check [coll.mjs](../coll.mjs).
   * [`class ClsSet`](../coll.mjs#L42)
   * [`class CompatMap`](../coll.mjs#L110)
   * [`class ClsMap`](../coll.mjs#L115)
-  * [`class TypedVec`](../coll.mjs#L188)
-  * [`class Que`](../coll.mjs#L220)
+  * [`class TypedVec`](../coll.mjs#L187)
+  * [`class Que`](../coll.mjs#L219)

@@ -20,6 +20,7 @@ const emptyNpo = Object.create(null)
 const emptyEmpNotFrozen = new l.Emp()
 const emptyEmpFrozen = Object.freeze(new l.Emp())
 const emptyGen = gen()
+const emptyArgs = function args() {return arguments}()
 
 class DateSub extends Date {
   constructor(...val) {
@@ -164,6 +165,12 @@ t.bench(function bench_isCls_miss() {l.nop(l.isCls(someProm))})
 t.bench(function bench_isCls_hit() {l.nop(l.isCls(l.isCls))})
 t.bench(function bench_reqCls_nil() {l.nop(l.reqCls(l.Emp))})
 
+t.bench(function bench_isObj_nil() {l.nop(l.isObj())})
+t.bench(function bench_isObj_miss_prim() {l.nop(l.isObj(`str`))})
+t.bench(function bench_isObj_miss_fun() {l.nop(l.isObj(l.isObj))})
+t.bench(function bench_isObj_hit_dict() {l.nop(l.isObj(emptyPlainDict))})
+t.bench(function bench_isObj_hit_arr() {l.nop(l.isObj(emptyArr))})
+
 t.bench(function bench_isArr_native_nil() {l.nop(Array.isArray())})
 t.bench(function bench_isArr_native_miss() {l.nop(Array.isArray(someProm))})
 t.bench(function bench_isArr_native_hit() {l.nop(Array.isArray(emptyArr))})
@@ -178,8 +185,16 @@ t.bench(function bench_isArr_miss() {l.nop(l.isArr(someProm))})
 t.bench(function bench_isArr_hit() {l.nop(l.isArr(emptyArr))})
 
 t.bench(function bench_isList_nil() {l.nop(l.isList())})
-t.bench(function bench_isList_miss() {l.nop(l.isList(someProm))})
-t.bench(function bench_isList_hit() {l.nop(l.isList(emptyArr))})
+t.bench(function bench_isList_miss_prim() {l.nop(l.isList(`str`))})
+t.bench(function bench_isList_miss_obj() {l.nop(l.isList(someProm))})
+t.bench(function bench_isList_hit_arr() {l.nop(l.isList(emptyArr))})
+t.bench(function bench_isList_hit_args() {l.nop(l.isList(emptyArgs))})
+
+t.bench(function bench_isIter_nil() {l.nop(l.isIter())})
+t.bench(function bench_isIter_miss_prim() {l.nop(l.isIter(`str`))})
+t.bench(function bench_isIter_miss_obj() {l.nop(l.isIter(someProm))})
+t.bench(function bench_isIter_hit_arr() {l.nop(l.isIter(emptyArr))})
+t.bench(function bench_isIter_hit_args() {l.nop(l.isIter(emptyArgs))})
 
 t.bench(function bench_isStruct_nil() {l.nop(l.isStruct())})
 t.bench(function bench_isStruct_miss() {l.nop(l.isStruct(emptyArr))})

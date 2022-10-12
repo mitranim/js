@@ -216,12 +216,16 @@ export function reqPromise(val) {return isPromise(val) ? val : throwErrFun(val, 
 export function optPromise(val) {return isNil(val) ? val : reqPromise(val)}
 export function onlyPromise(val) {return isPromise(val) ? val : undefined}
 
-export function isIter(val) {return isObj(val) && Symbol.iterator in val && isFun(val[Symbol.iterator])}
+// Skips the function check for performance reasons.
+// In well-behaved code, this property must always be a function.
+export function isIter(val) {return isObj(val) && Symbol.iterator in val}
 export function reqIter(val) {return isIter(val) ? val : throwErrFun(val, isIter)}
 export function optIter(val) {return isNil(val) ? val : reqIter(val)}
 export function onlyIter(val) {return isIter(val) ? val : undefined}
 
-export function isIterAsync(val) {return isObj(val) && Symbol.asyncIterator in val && isFun(val[Symbol.asyncIterator])}
+// Skips the function check for performance reasons.
+// In well-behaved code, this property must always be a function.
+export function isIterAsync(val) {return isObj(val) && Symbol.asyncIterator in val}
 export function reqIterAsync(val) {return isIterAsync(val) ? val : throwErrFun(val, isIterAsync)}
 export function optIterAsync(val) {return isNil(val) ? val : reqIterAsync(val)}
 export function onlyIterAsync(val) {return isIterAsync(val) ? val : undefined}
@@ -295,6 +299,11 @@ export function isEq(val) {return isObj(val) && `eq` in val && isFun(val.eq)}
 export function reqEq(val) {return isEq(val) ? val : throwErrFun(val, isEq)}
 export function optEq(val) {return isNil(val) ? val : reqEq(val)}
 export function onlyEq(val) {return isEq(val) ? val : undefined}
+
+export function isErr(val) {return isInst(val, Error)}
+export function reqErr(val) {return isErr(val) ? val : throwErrFun(val, isErr)}
+export function optErr(val) {return isNil(val) ? val : reqErr(val)}
+export function onlyErr(val) {return isErr(val) ? val : undefined}
 
 export function isArrOf(val, fun) {
   reqFun(fun)
@@ -495,6 +504,16 @@ export function errWrap(err, cls, msg) {
   const suf = renderLax(err.message)
   err.message = pre && suf ? pre + `: ` + suf : pre || suf
   return err
+}
+
+/*
+Note: at the time of writing, engine support for error causes is limited. Many
+engines, including Chrome, do not report causes unless explicitly asked for,
+and Safari <15 does not support causes at all.
+*/
+export function errCause(val) {
+  while (isErr(val)) val = val.cause
+  return val
 }
 
 function errOneOf(val, funs) {return TypeError(msgType(val, `[` + showFuns(funs) + `]`))}

@@ -104,6 +104,7 @@ export class Dur extends l.Emp {
     this.minutes = Math.trunc(val / MS_IN_MIN)
     val = val % MS_IN_MIN
 
+    // TODO consider not truncating. Preserve fraction.
     this.seconds = Math.trunc(val / MS_IN_SEC)
     return this
   }
@@ -115,6 +116,12 @@ export class Dur extends l.Emp {
       if (l.hasOwn(this, key)) this[key] = l.laxInt(val[key])
     }
     return this
+  }
+
+  // Suboptimal but short.
+  eq(val) {
+    if (l.isInst(val, Dur)) val = val.toISOString()
+    return l.renderLax(val) === this.toISOString()
   }
 
   clone() {return new this.constructor(this)}
@@ -324,11 +331,8 @@ export class Sec extends Finite {
 
   mod() {return 1}
   conv(mul) {return this.valueOf() * (l.reqNum(mul) / l.reqNum(this.mod()))}
-
   dur() {return this.Dur.fromMilli(this.milli())}
-
   toString() {return this.secStr()}
-
   get Dur() {return Dur}
 }
 

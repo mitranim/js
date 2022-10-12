@@ -49,6 +49,7 @@ export function keys(val) {
 
 export function values(val) {
   if (l.isTrueArr(val)) return val
+  if (l.isArrble(val)) return values(val.toArray())
   return valuesCopy(val)
 }
 

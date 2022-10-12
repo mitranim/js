@@ -463,9 +463,7 @@ export class Ctx extends AbortController {
   }
 
   handleEvent({type}) {if (type === `abort`) this.deinit()}
-
   sub() {return new this.constructor(this.signal)}
-
   abort() {this.deinit()}
 
   deinit() {

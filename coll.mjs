@@ -171,12 +171,11 @@ export class Vec extends l.Emp {
   }
 
   at(ind) {return this.$[l.reqInt(ind)]}
+  sort(fun) {return this.$.sort(fun), this}
   clone() {return new this.constructor(this.$.slice())}
   toArray() {return this.$} // Used by `iter.mjs`.
   toJSON() {return this.toArray()}
-
   get size() {return this.$.length}
-
   [Symbol.iterator]() {return this.$.values()}
 
   static make(len) {return new this(Array(l.reqNat(len)))}

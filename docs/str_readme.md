@@ -23,7 +23,7 @@ Written carefully and with benchmarks, but doesn't claim to be optimal at what i
 Example case conversion:
 
 ```js
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.38/str.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.39/str.mjs'
 
 s.words(`oneTwoThree`).title().snake() === `One_Two_Three`
 
@@ -102,18 +102,18 @@ The following APIs are exported but undocumented. Check [str.mjs](../str.mjs).
   * [`function rndHex`](../str.mjs#L440)
   * [`function arrHex`](../str.mjs#L446)
   * [`function uuid`](../str.mjs#L458)
-  * [`function uuidArr`](../str.mjs#L461)
-  * [`function draftParse`](../str.mjs#L475)
-  * [`function draftRender`](../str.mjs#L476)
-  * [`function draftRenderAsync`](../str.mjs#L477)
-  * [`class Draft`](../str.mjs#L488)
-  * [`function isRen`](../str.mjs#L518)
-  * [`class Embed`](../str.mjs#L521)
-  * [`function str`](../str.mjs#L544)
-  * [`function strLax`](../str.mjs#L550)
-  * [`function strConcat`](../str.mjs#L556)
-  * [`function strConcatLax`](../str.mjs#L560)
-  * [`function san`](../str.mjs#L568)
-  * [`function sanLax`](../str.mjs#L570)
-  * [`function interpolate`](../str.mjs#L573)
-  * [`class Str`](../str.mjs#L592)
+  * [`function uuidArr`](../str.mjs#L466)
+  * [`function draftParse`](../str.mjs#L480)
+  * [`function draftRender`](../str.mjs#L481)
+  * [`function draftRenderAsync`](../str.mjs#L482)
+  * [`class Draft`](../str.mjs#L493)
+  * [`function isRen`](../str.mjs#L523)
+  * [`class Embed`](../str.mjs#L526)
+  * [`function str`](../str.mjs#L549)
+  * [`function strLax`](../str.mjs#L555)
+  * [`function strConcat`](../str.mjs#L561)
+  * [`function strConcatLax`](../str.mjs#L565)
+  * [`function san`](../str.mjs#L573)
+  * [`function sanLax`](../str.mjs#L575)
+  * [`function interpolate`](../str.mjs#L578)
+  * [`class Str`](../str.mjs#L597)

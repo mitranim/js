@@ -55,7 +55,7 @@ a sequence.
 */
 class Seq extends l.Emp {
   constructor(src) {super().$ = l.laxTrueArr(src)}
-  get size() {return this.src.length}
+  get size() {return this.$.length}
   [Symbol.iterator]() {return this.$[Symbol.iterator]()}
   toArray() {return this.$}
 }

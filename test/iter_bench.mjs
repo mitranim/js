@@ -317,6 +317,7 @@ itc.deoptNativeListHof(itc.numArr.forEach)
 itc.deoptCollHof(lo.each)
 itc.deoptListHof(arrayEachDumb)
 itc.deoptCollHof(i.each)
+t.bench(function bench_each_array_inline() {for (const val of itc.numArr) l.nop(val)})
 t.bench(function bench_each_array_native_forEach() {itc.numArr.forEach(l.nop)})
 t.bench(function bench_each_array_lodash_each() {lo.each(itc.numArr, l.nop)})
 t.bench(function bench_each_array_dumb() {arrayEachDumb(itc.numArr, l.nop)})
@@ -331,6 +332,9 @@ t.bench(function bench_each_set_our_each() {i.each(itc.numSet, l.nop)})
 
 t.bench(function bench_each_map_inline() {for (const val of itc.numMap.values()) l.nop(val)})
 t.bench(function bench_each_map_our_each() {i.each(itc.numMap, l.nop)})
+
+t.bench(function bench_each_vec_inline() {for (const val of itc.numVec) l.nop(val)})
+t.bench(function bench_each_vec_our_each() {i.each(itc.numVec, l.nop)})
 
 itc.deoptSeqHof(lo.groupBy)
 itc.deoptCollHof(i.group)

@@ -1,5 +1,6 @@
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
+import * as c from '../coll.mjs'
 
 /*
 Implementation notes.
@@ -26,6 +27,7 @@ export const dictArr = makeDictArr(numArr)
 export const mapArr = makeMapArr(numArr)
 export const numDict = makeNumDict(size)
 export const numSet = new Set(numArr)
+export const numVec = c.Vec.from(numArr)
 export const numMap = makeNumMap(size)
 export const numArgs = function() {return arguments}(...numArr)
 export const knownKeys = Object.keys(numArr.slice(0, numArr.length/2))
