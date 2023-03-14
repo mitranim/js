@@ -108,10 +108,10 @@ export class Sched extends o.MixMain(Set) {
 
 /*
 Extremely simple implementation of an observable in a "traditional" sense.
-Maintains and triggers subscribers. All functionality is imperative, not
-automatic. Satisfies the `isObs` interface. Not to be confused with `Obs`,
-which is an "automatically" observable object wrapped into a proxy that
-secretly uses `ImpObs`.
+Name short for "imperative observable". Maintains and triggers subscribers.
+Satisfies the `isObs` interface. All functionality is imperative, not automatic.
+Not to be confused with `Obs`, which is an "automatically" observable object
+wrapped into a proxy that secretly uses `ImpObs`.
 
 Implicit observation and automatic triggers are provided by other classes using
 this as an inner component. See `Rec` and `ObsPh`.
@@ -154,13 +154,31 @@ export class Rec extends Set {
 
   onRun() {}
 
+  /*
+  Language observation. The `try` pyramid demonstrates that `try`/`finally` is
+  inferior to `defer` as seen in Go and Swift, which would simplify our code
+  to the following:
+
+      const subber = dyn.swap(this)
+      defer dyn.swap(subber)
+
+      this.act = true
+      defer this.act = false
+
+      this.new.clear()
+      defer this.delOld()
+
+      sch.pause()
+      defer sch.resume()
+
+      return this.onRun()
+  */
   run() {
     if (this.act) throw Error(`unexpected overlapping rec.run`)
 
     const sch = Sched.main
     const subber = dyn.swap(this)
 
-    // The try pyramid demonstrates the need for Swift-like `defer`.
     try {
       this.act = true
 

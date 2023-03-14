@@ -105,13 +105,13 @@ export class Paths extends l.Emp {
     val = this.toStr(val)
     if (this.isCwdRel(val)) return this.cwdEmp
     if (this.isAbs(val)) return val
-    return stripPreOnce(val, this.relPre())
+    return s.stripPre(val, this.relPre())
   }
 
   cleanSuf(val) {
     val = this.toStr(val)
     if (this.isRoot(val)) return val
-    return stripSufOnce(val, this.dirSep)
+    return s.stripSuf(val, this.dirSep)
   }
 
   // Missing feature: `..` flattening.
@@ -149,7 +149,7 @@ export class Paths extends l.Emp {
     }
 
     if (val === pre) return this.cwdEmp
-    return stripPreOnce(val, this.dirLike(pre))
+    return s.stripPre(val, this.dirLike(pre))
   }
 
   /*
@@ -190,7 +190,7 @@ export class Paths extends l.Emp {
   // Returns the part of `base` without an extension.
   name(val) {
     val = this.base(val)
-    return stripSufOnce(val, ext(val, this.extSep))
+    return s.stripSuf(val, ext(val, this.extSep))
   }
 
   replaceSep(val, sep) {
@@ -247,26 +247,4 @@ function ext(val, sep) {
   l.reqStr(val), l.reqStr(sep)
   const ind = val.lastIndexOf(sep)
   return ind > 0 ? val.slice(ind) : ``
-}
-
-/*
-Note: `s.stripPre` strips off multiple occurrences of the same suffix.
-TODO: `str.mjs` should provide both options.
-*/
-function stripPreOnce(val, pre) {
-  val = l.laxStr(val)
-  l.reqStr(pre)
-  if (pre && val.startsWith(pre)) val = val.slice(pre.length)
-  return val
-}
-
-/*
-Note: `s.stripSuf` strips off multiple occurrences of the same suffix.
-TODO: `str.mjs` should provide both options.
-*/
-function stripSufOnce(val, suf) {
-  val = l.laxStr(val)
-  l.reqStr(suf)
-  if (suf && val.endsWith(suf)) val = val.slice(0, -suf.length)
-  return val
 }

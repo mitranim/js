@@ -185,7 +185,7 @@ export function clearSoftArr() {return new TextEncoder().encode(clearSoft)}
 export function clearScrollArr() {return new TextEncoder().encode(clearScroll)}
 export function clearHardArr() {return new TextEncoder().encode(clearHard)}
 
-export async function timed(fun, tag) {
+export async function timed(tag, fun) {
   const pre = tag ? s.san`[${tag}] ` : ``
   const start = performance.now()
 
@@ -201,4 +201,4 @@ export async function timed(fun, tag) {
 /* Internal */
 
 function isFlag(str) {return str.startsWith(`-`)}
-function unFlag(str) {return s.stripPre(str, `-`)}
+function unFlag(str) {return s.stripPreAll(str, `-`)}

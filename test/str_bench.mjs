@@ -130,11 +130,16 @@ t.bench(function bench_join_lines_opt_current() {l.nop(s.joinLinesOpt(multi))})
 t.bench(function bench_join_spaced_dumb() {l.nop(spacedDumb(...multi))})
 t.bench(function bench_join_spaced_current() {l.nop(s.spaced(...multi))})
 
-t.bench(function bench_rndHex() {l.nop(s.rndHex(16))})
-t.bench(function bench_uuidArr() {l.nop(s.uuidArr())})
-t.bench(function bench_uuid() {l.nop(s.uuid())})
-t.bench(function bench_uuid_crypto_long() {l.nop(crypto.randomUUID())})
-t.bench(function bench_uuid_crypto_short() {l.nop(uuidCryptoShort())})
+// `Math.random` is unsuitable for cryptography but very fast. It makes a decent
+// baseline benchmark for other "random" functions.
+t.bench(function bench_rnd_Math_random() {l.nop(Math.random())})
+t.bench(function bench_rnd_uuidArr() {l.nop(s.uuidArr())})
+
+t.bench(function bench_rnd_str_Math_random() {l.nop(Math.random().toString())})
+t.bench(function bench_rnd_str_rndHex() {l.nop(s.rndHex(16))})
+t.bench(function bench_rnd_str_uuid() {l.nop(s.uuid())})
+t.bench(function bench_rnd_str_uuid_crypto_long() {l.nop(crypto.randomUUID())})
+t.bench(function bench_rnd_str_uuid_crypto_short() {l.nop(uuidCryptoShort())})
 
 const mapMut = new Map().set(`one`, `two`).set(`three`, `four`)
 const strMapMut = s.strMap().set(`one`, `two`).set(`three`, `four`)

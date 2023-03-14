@@ -3,8 +3,8 @@ import * as t from '../test.mjs'
 import * as a from '../arr.mjs'
 
 /*
-The test is incomplete because `arr.mjs` is unused, undocumented, and probably
-not recommended.
+The test is incomplete because `arr.mjs` is unused, undocumented,
+and probably not recommended.
 */
 
 t.test(function test_Arr_reverse() {

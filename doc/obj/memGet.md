@@ -5,18 +5,17 @@ import * as o from '{{featUrl obj}}'
 
 class Bucket {
   static {o.memGet(this)}
-  get one() {return new o.Struct()}
-  get two() {return new o.Struct()}
+  get one() {return new o.StructLax()}
+  get two() {return new o.StructLax()}
 }
 
 const ref = new Bucket()
 // Bucket {}
 
-ref.one
-ref
-// Bucket { one: Struct {} }
-
 ref.one.three = 30
+ref
+// Bucket { one: Struct { three: 30 } }
+
 ref.two.four = 40
 ref
 // Bucket { one: Struct { three: 30 }, two: Struct { four: 40 } }

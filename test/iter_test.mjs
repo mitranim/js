@@ -42,11 +42,15 @@ function testColls(list, dict, fun) {
   testMaps(dict, fun)
 }
 
-function testDictFunBasics(fun) {
+function testDictHofBasics(fun) {
   t.throws(() => fun({}), TypeError, `expected variant of isFun, got undefined`)
-  t.throws(() => fun([], l.nop), TypeError, `expected variant of isStruct, got []`)
-  t.throws(() => fun(`str`, l.nop), TypeError, `expected variant of isStruct, got "str"`)
-  t.is(Object.getPrototypeOf(fun(undefined, l.nop)), null)
+  testDictFunBasics(function dictHof(val) {return fun(val, l.nop)})
+}
+
+function testDictFunBasics(fun) {
+  t.throws(() => fun([]), TypeError, `expected variant of isStruct, got []`)
+  t.throws(() => fun(`str`), TypeError, `expected variant of isStruct, got "str"`)
+  t.is(Object.getPrototypeOf(fun()), null)
 }
 
 /*
@@ -401,6 +405,7 @@ t.test(function test_prepend() {
   )
 })
 
+// TODO: verify that the output is always newly allocated.
 t.test(function test_concat() {
   testFunEmptyList(i.concat)
 
@@ -1179,7 +1184,7 @@ t.test(function test_repeat() {
 })
 
 t.test(function test_mapDict() {
-  testDictFunBasics(i.mapDict)
+  testDictHofBasics(i.mapDict)
 
   t.eq(i.mapDict(undefined, l.id), {})
   t.eq(i.mapDict({}, l.id), {})
@@ -1187,7 +1192,7 @@ t.test(function test_mapDict() {
 })
 
 t.test(function test_pick() {
-  testDictFunBasics(i.pick)
+  testDictHofBasics(i.pick)
 
   t.eq(i.pick(undefined,            l.True), {})
   t.eq(i.pick({},                   l.True), {})
@@ -1197,7 +1202,7 @@ t.test(function test_pick() {
 })
 
 t.test(function test_omit() {
-  testDictFunBasics(i.omit)
+  testDictHofBasics(i.omit)
 
   t.eq(i.omit(undefined,            l.True), {})
   t.eq(i.omit({},                   l.True), {})
@@ -1240,6 +1245,45 @@ t.test(function test_omitKeys() {
   t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`two`]), {one: 10, three: 30})
   t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`three`]), {one: 10, two: 20})
   t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`one`, `two`]), {three: 30})
+})
+
+t.test(function test_compactDict() {
+  t.throws(() => i.omitKeys([]),    TypeError, `expected variant of isStruct, got []`)
+  t.throws(() => i.omitKeys(`str`), TypeError, `expected variant of isStruct, got "str"`)
+
+  t.is(Object.getPrototypeOf(i.omitKeys()), null)
+
+  t.eq(i.omitKeys(), {})
+  t.eq(i.omitKeys(undefined, []), {})
+  t.eq(i.omitKeys({}, undefined), {})
+  t.eq(i.omitKeys({}, []), {})
+
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, []), {one: 10, two: 20, three: 30})
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`one`]), {two: 20, three: 30})
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`two`]), {one: 10, three: 30})
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`three`]), {one: 10, two: 20})
+  t.eq(i.omitKeys({one: 10, two: 20, three: 30}, [`one`, `two`]), {three: 30})
+})
+
+t.test(function test_pick() {
+  testDictFunBasics(i.compactDict)
+
+  t.eq(i.compactDict(undefined), {})
+  t.eq(i.compactDict({}),{})
+
+  t.eq(
+    i.compactDict({
+      one: 10,
+      two: 0,
+      three: NaN,
+      four: undefined,
+      five: null,
+      six: ``,
+      seven: -20,
+      eight: `str`
+    }),
+    {one: 10, seven: -20, eight: `str`},
+  )
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

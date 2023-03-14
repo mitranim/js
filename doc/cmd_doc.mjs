@@ -321,7 +321,7 @@ function mdLinkInter(text) {return mdLink(a.str(`#`, text), mdHash(text))}
 function mdHash(val) {return `#` + a.words(val.toLowerCase()).lowerKebab()}
 function coded(...val) {return a.str('`', ...val, '`')}
 function allow(path) {return RE_WATCH.test(path)}
-function runTimed() {return cl.timed(run, `doc`)}
+function runTimed() {return cl.timed(`doc`, run)}
 function runTimedOpt() {return runTimed().catch(console.error)}
 
 function toDocName(val) {
@@ -334,7 +334,7 @@ async function renderNamed(src, ctx, msg) {
     return await a.draftRenderAsync(await src, ctx)
   }
   catch (err) {
-    throw Error(`unexpected rendering error in ${a.show(msg)}`, {cause: err})
+    throw a.errWrap(err, Error, `unexpected rendering error in ${a.show(msg)}`)
   }
 }
 

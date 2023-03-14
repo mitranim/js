@@ -630,6 +630,13 @@ class TextInputElement extends ToggleElement {
 }
 
 export class HTMLInputElement extends TextInputElement {
+  // Match bizarre standard behavior.
+  get value() {
+    if (this.type === `checkbox` && !this.hasAttribute(`value`)) return `on`
+    return super.value
+  }
+  set value(val) {this.setAttribute(`value`, val)}
+
   get multiple() {return this.hasAttribute(`multiple`)}
   set multiple(val) {this.toggleAttribute(`multiple`, l.laxBool(val))}
 }

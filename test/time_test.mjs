@@ -239,21 +239,6 @@ t.test(function test_DateTime() {
       t.is(new ti.DateTime(src).dateStr(), exp)
     })
   })
-
-  t.test(function test_mut() {
-    const src = Date.UTC(1234, 5, 6, 7, 8, 9, 10)
-    t.is(new Date(src).toISOString(), `1234-06-06T07:08:09.010Z`)
-
-    const tar = new ti.DateTime()
-    tar.mut(src)
-
-    t.is(tar.valueOf(), src)
-    t.is(tar.toISOString(), `1234-06-06T07:08:09.010Z`)
-
-    tar.mut(0)
-    t.is(tar.valueOf(), 0)
-    t.is(tar.toISOString(), `1970-01-01T00:00:00.000Z`)
-  })
 })
 
 t.test(function test_DateShort() {
@@ -402,6 +387,57 @@ t.test(function test_Sec() {
       new ti.Dur().setHours(-342935525).setMinutes(-2).setSeconds(-3),
     )
   })
+})
+
+t.test(function test_DateValid() {
+  t.throws(() => new ti.DateValid(`blah`), TypeError, `unable to convert "blah" to valid date`)
+  l.reqValidDate(new ti.DateValid())
+})
+
+t.test(function test_Finite_format_inheritance() {
+  class FiniteGerman extends ti.Finite {
+    static makeFmt() {
+      return new Intl.NumberFormat(`de-DE`, {
+        useGrouping: true,
+        maximumFractionDigits: 20,
+      })
+    }
+  }
+
+  t.is(ti.Finite.format(1234.5678), `1234.5678`)
+  t.is(FiniteGerman.format(1234.5678), `1.234,5678`)
+})
+
+// Tentative. May move to public API later.
+class DateTimeHuman extends ti.DateTime {
+  toString() {return this.constructor.getFmt().format(this)}
+
+  static getFmt() {return l.getOwn(this, `fmt`) || (this.fmt = this.makeFmt())}
+
+  // By luck, the Swedish locale mostly adheres to ISO 8601.
+  static makeFmt() {
+    return new Intl.DateTimeFormat(`sv-SE`, {
+      hour12: false,
+      timeZone: `UTC`,
+      timeZoneName: `short`,
+      year: `numeric`,
+      month: `2-digit`,
+      day: `2-digit`,
+      hour: `2-digit`,
+      minute: `2-digit`,
+    })
+  }
+}
+
+t.test(function test_DateTimeHuman_inheritance() {
+  class DateTimeInhuman extends DateTimeHuman {
+    static makeFmt() {
+      return new Intl.DateTimeFormat(`en-US`)
+    }
+  }
+
+  t.is(new DateTimeHuman(`1234-12-23T12:34Z`).toString(), `1234-12-23 12:34 UTC`)
+  t.is(new DateTimeInhuman(`1234-12-23T12:34Z`).toString(), `12/23/1234`)
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

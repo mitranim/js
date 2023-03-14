@@ -1,5 +1,4 @@
 import * as l from './lang.mjs'
-import * as o from './obj.mjs'
 
 export const PICO_IN_SEC = 1_000_000_000_000
 export const NANO_IN_SEC = 1_000_000_000
@@ -158,13 +157,13 @@ export function ts(val) {
 export function tsOpt(val) {return l.onlyFin(tsNum(val))}
 
 /*
-Short for "timestamp number". Converts one of a few supported types to a numeric
-timestamp. Output may be `NaN`. See `ts` and `tsOpt`. Doesn't allow `Number`
-subclasses because we ourselves use several of them for different units,
+Short for "timestamp number". Converts any of several supported types to a
+numeric timestamp. Output may be `NaN`. See `ts` and `tsOpt`. Doesn't accept
+`Number` subclasses because we use such subclasses for different units,
 therefore can't assume a specific unit. Primitive numeric timestamps are
 usually in milliseconds, so it's RELATIVELY safe to assume ms. Sometimes
-timestamps are stored and transmitted in seconds. That's out of our hands. The
-caller should convert seconds in advance.
+timestamps are stored and transmitted in seconds. That's out of our hands.
+The caller should convert seconds in advance.
 */
 export function tsNum(val) {
   if (l.isNum(val)) return val
@@ -220,20 +219,6 @@ export class DateTime extends Date {
   monthStr() {return zeroed(this.getMonth() + 1, 2)}
   dayStr() {return zeroed(this.getDate(), 2)}
 
-  // Workaround for the atrocious `Date` API that lacks the ability to simply
-  // replace the Unix timestamp. Inefficient, avoid in hotspots.
-  mut(src) {
-    src = date(src)
-    this.setUTCFullYear(src.getUTCFullYear())
-    this.setUTCMonth(src.getUTCMonth())
-    this.setUTCDate(src.getUTCDate())
-    this.setUTCHours(src.getUTCHours())
-    this.setUTCMinutes(src.getUTCMinutes())
-    this.setUTCSeconds(src.getUTCSeconds())
-    this.setUTCMilliseconds(src.getUTCMilliseconds())
-    return this
-  }
-
   static date(...val) {return new this(this.dateTs(...val))}
 
   static dateTs(year, month, day) {
@@ -244,7 +229,7 @@ export class DateTime extends Date {
 export class DateValid extends DateTime {
   constructor(...val) {
     super(...val)
-    l.reqValidDate(this)
+    if (!l.isValidDate(this)) throw l.errConv(val[0], `valid date`)
   }
 }
 
@@ -287,17 +272,26 @@ export class Finite extends Number {
   Performance observed in V8:
 
     * `Number.prototype.toString` is WAY faster than `NumberFormat`,
-      at least for integers.
-    * `Number.prototype.toLocaleString` is WAY slower than `NumberFormat`.
+      at least for integers, and should be preferred whenever its output
+      is equivalent to the output of `NumberFormat`.
 
-  We resort to `NumberFormat` when `.toString` would have used the exponent
-  notation, which we aim to avoid.
+    * `Number.prototype.toLocaleString` is WAY slower than `NumberFormat`
+      and must be avoided.
+
+  We use `NumberFormat` to avoid the exponent notation, which is used by
+  default by `.toString`.
+
+  Known issue: `Number.prototype.toString` avoids thousand separators,
+  which is consistent with our default formatter config, but may be
+  inconsistent with custom formatters specified in subclasses.
   */
   static format(val) {
     l.reqFin(val)
     if (Number.isSafeInteger(val)) return val.toString()
-    return this.fmt.format(val)
+    return this.getFmt().format(val)
   }
+
+  static getFmt() {return l.getOwn(this, `fmt`) || (this.fmt = this.makeFmt())}
 
   /*
   Reference:
@@ -306,11 +300,11 @@ export class Finite extends Number {
 
   Magic "20" seems to be the maximum allowed value. `Infinity` is not accepted.
   */
-  static get fmt() {
-    return o.pub(this, `fmt`, new Intl.NumberFormat(`en-US`, {
+  static makeFmt() {
+    return new Intl.NumberFormat(`en-US`, {
       useGrouping: false,
       maximumFractionDigits: 20,
-    }))
+    })
   }
 }
 

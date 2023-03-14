@@ -3,7 +3,7 @@ Signature: `(tar, src) => tar`.
 Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign). Differences:
 
   * Much faster.
-  * Takes only two args.
+  * Exactly two parameters, not variadic.
   * Sanity-checked:
     * Target must be a {{link lang isStruct struct}}.
     * Source must be nil or a {{link lang isStruct struct}}.

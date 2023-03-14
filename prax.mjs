@@ -380,32 +380,6 @@ export class MixRenCache extends o.DedupMixinCache {
 }
 
 /*
-Modified version of `o.MixChild` for DOM element classes. Modifies the
-constructor signature, allowing early access to the parent node.
-
-Normally, node constructors are nullary. With this mixin, the constructor takes
-an optional reference to a parent node. When given, the child-to-parent
-relationship is established before the child is actually attached to the
-parent. This can be convenient for application code that revolves around custom
-elements and initializes children before attaching them. This allows children
-to immediately traverse the ancestor chain to access "contextual" data
-available on ancestors. Note that this doesn't establish parent-to-child
-relations early.
-*/
-export function MixChild(val) {return MixChildCache.goc(val)}
-
-export class MixChildCache extends o.MixChildCache {
-  static make(cls) {
-    return class MixChildCls extends super.make(cls) {
-      constructor(val) {
-        super()
-        if (l.optObj(val)) this.parentNode = val
-      }
-    }
-  }
-}
-
-/*
 Short for "props builder". Provides various shortcuts for building and merging
 HTML/DOM props. Can be instantiated with a plain dict; see `.with` and
 `.snapshot`.
@@ -469,6 +443,7 @@ export class PropBui extends o.MixMain(l.Emp) {
   The names of the following methods match 1-1 with known properties
   or attributes. For "custom" shortcuts, see below.
   */
+
   as(val) {return this.set(`as`, val)}
   charset(val) {return this.set(`charset`, val)}
   checked(val) {return this.set(`checked`, !!val)}
@@ -512,10 +487,27 @@ export class PropBui extends o.MixMain(l.Emp) {
   The following shortcuts are "custom". Their names should avoid collision with
   known properties or attributes.
   */
+
   cls(val) {return val ? this.set(`class`, spaced(this.get(`class`), val)) : this}
   button() {return this.type(`button`)}
   submit() {return this.type(`submit`)}
   tarblan() {return this.target(`_blank`).rel(`noopener noreferrer`)}
+
+  bg(val) {
+    val = l.renderLax(val)
+    return val ? this.style(`background-image: url(${val})`) : this
+  }
+
+  link(val) {
+    if (l.isNil(val)) return this.href()
+    val = l.render(val)
+    return hasScheme(val) ? this.href(val).tarblan() : this.href(val)
+  }
+
+  /*
+  The following are internal methods. Subclasses shouldn't need to use them
+  or to redefine them.
+  */
 
   mut(val) {
     val = deref(val)
@@ -552,6 +544,8 @@ export class PropBui extends o.MixMain(l.Emp) {
 
 const refKey = Symbol.for(`$`)
 const frozenKey = Symbol.for(`frozen`)
+
+function hasScheme(val) {return /^\w+:/.test(l.laxStr(val))}
 
 export function renderDocument(src) {
   const pre = `<!doctype html>`

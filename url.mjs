@@ -39,8 +39,8 @@ export class Query extends s.StrMap {
 
     for (const pair of s.split(unSearch(src, this.constructor.name), `&`)) {
       const ind = pair.indexOf(`=`)
-      const key = this.dec(pair.slice(0, ind))
-      const val = this.dec(pair.slice(ind + 1))
+      const key = ind >= 0 ? this.dec(pair.slice(0, ind)) : pair
+      const val = ind >= 0 ? this.dec(pair.slice(ind + 1)) : ``
 
       if (found.has(key)) this.append(key, val)
       else this.set(key, val), found.add(key)

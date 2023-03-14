@@ -38,7 +38,7 @@ export class TagToCls extends o.MixMain(StrMap) {
       .set(`hr`, `HTMLHRElement`)
       .set(`html`, `HTMLHtmlElement`)
       .set(`iframe`, `HTMLIFrameElement`)
-      .set(`image`, `HTMLImageElement`)
+      .set(`img`, `HTMLImageElement`)
       .set(`input`, `HTMLInputElement`)
       .set(`label`, `HTMLLabelElement`)
       .set(`legend`, `HTMLLegendElement`)

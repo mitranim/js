@@ -13,7 +13,6 @@ const sec = new ti.Sec(1024)
 const dateNow = new Date()
 const dateTimeNow = new ti.DateTime()
 const tsNow = Date.now()
-const dateTimeMut = new ti.DateTime()
 
 /* Bench */
 
@@ -26,8 +25,6 @@ t.bench(function bench_date_from_timestamp_DateTime() {l.nop(new ti.DateTime(tsN
 
 t.bench(function bench_date_to_timestamp_Date() {l.nop(dateNow.valueOf())})
 t.bench(function bench_date_to_timestamp_DateTime() {l.nop(dateTimeNow.valueOf())})
-
-t.bench(function bench_date_DateTime_mut() {l.nop(dateTimeMut.mut(dateTimeNow))})
 
 t.bench(function bench_date_DateShort_to_string() {l.nop(dateShort.toString())})
 

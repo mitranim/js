@@ -137,12 +137,7 @@ export function append(src, val) {return values(src).concat([val])}
 export function prepend(src, val) {return [val].concat(values(src))}
 
 export function concat(...val) {
-  switch (val.length) {
-    case 0: return []
-    case 1: return values(val[0])
-    case 2: return values(val[0]).concat(values(val[1]))
-    default: return [].concat(...mapMut(val, values))
-  }
+  return val.length ? Array.prototype.concat.call(...mapMut(val, values)) : []
 }
 
 export function len(val) {
@@ -423,6 +418,8 @@ export function omitKeys(val, keys) {
   for (const key of l.structKeys(val)) if (!keys.has(key)) out[key] = val[key]
   return out
 }
+
+export function compactDict(val) {return pick(val, l.id)}
 
 /* Internal */
 

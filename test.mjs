@@ -470,9 +470,13 @@ export function ok(val, ...info) {
 
   throw new AssertError(`
 expected:
+
   true
+
 got:
+
   ${l.show(val)}
+
 ${optInfo(...info)}
 `)
 }
@@ -494,9 +498,13 @@ export function no(val, ...info) {
 
   throw new AssertError(`
 expected:
+
   false
+
 got:
+
   ${l.show(val)}
+
 ${optInfo(...info)}
 `.trim())
 }
@@ -510,9 +518,13 @@ export function is(act, exp) {
 
   throw new AssertError(`
 actual:
+
   ${l.show(act)}
+
 expected:
+
   ${l.show(exp)}
+
 ${equal(act, exp) ? `
 note:
   equivalent structure, different reference
@@ -536,8 +548,11 @@ export function eq(act, exp) {
   if (equal(act, exp)) return
   throw new AssertError(`
 actual:
+
   ${l.show(act)}
+
 expected:
+
   ${l.show(exp)}
 `)
 }
@@ -551,12 +566,30 @@ export function notEq(act, exp) {
   throw new AssertError(`expected distinct values, but both inputs were ${l.show(act)}`)
 }
 
-// Tentative. May need to improve error messages.
+// Tentative. May need to improve the error message.
 export function own(act, exp) {
-  eq(
-    Object.getOwnPropertyDescriptors(act),
-    Object.getOwnPropertyDescriptors(exp),
-  )
+  const actDesc = Object.getOwnPropertyDescriptors(act)
+  const expDesc = Object.getOwnPropertyDescriptors(exp)
+
+  if (equal(actDesc, expDesc)) return
+
+  throw new AssertError(`
+actual descriptors:
+
+  ${l.show(actDesc)}
+
+expected descriptors:
+
+  ${l.show(expDesc)}
+
+actual own enumerable properties:
+
+  ${l.show({...act})}
+
+expected own enumerable properties:
+
+  ${l.show({...exp})}
+`)
 }
 
 /*
@@ -771,7 +804,7 @@ function toReg(val) {
   if (l.isNil(val)) return /(?:)/
   if (l.isStr(val)) return val ? new RegExp(val) : /(?:)/
   if (l.isReg(val)) return val
-  throw new TypeError(`unable to convert ${l.show(val)} to RegExp`)
+  throw l.errConv(val, `RegExp`)
 }
 
 /*

@@ -5,6 +5,27 @@ import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
 
+/*
+At the time of writing, this doesn't seem to perform any better than an
+implementation of `span` that creates an array.
+*/
+class SpanIter extends l.Emp {
+  constructor(len) {
+    super()
+    this.len = l.reqNat(len)
+    this.ind = -1
+    this.done = false
+  }
+
+  [Symbol.iterator]() {return this}
+
+  next() {
+    if (this.ind < this.len) this.ind++
+    else this.done = true
+    return this
+  }
+}
+
 t.bench(function bench_arr_spread_native() {l.reqArr([...itc.numArgs])})
 t.bench(function bench_arr_gen_spread_native() {l.reqArr([...itc.gen(itc.numArgs)])})
 
@@ -56,6 +77,10 @@ t.bench(function bench_values_map_native() {i.arr(itc.numMap.values())})
 t.bench(function bench_values_map_specialized() {l.reqArr(valuesFromMapSpecialized(itc.numMap))})
 t.bench(function bench_values_map_our_values() {l.reqArr(i.values(itc.numMap))})
 
+// Must avoid allocations/copying. The entire cost must be in type checks.
+t.bench(function bench_values_vec_toArray() {i.arr(itc.numVec.toArray())})
+t.bench(function bench_values_vec_our_values() {l.reqArr(i.values(itc.numVec))})
+
 t.bench(function bench_values_walk_array_as_is() {for (const val of itc.numArr) l.nop(val)})
 t.bench(function bench_values_walk_array_values_native() {for (const val of itc.numArr.values()) l.nop(val)})
 t.bench(function bench_values_walk_dict_by_for_in() {for (const key in itc.numDict) l.nop(itc.numDict[key])})
@@ -106,6 +131,15 @@ t.bench(function bench_includes_native() {l.reqBool(itc.numArr.includes(701))})
 t.bench(function bench_includes_lodash() {l.reqBool(lo.includes(itc.numArr, 701))})
 t.bench(function bench_includes_index_of() {l.reqBool(includesWithIndexOf(itc.numArr, 701))})
 t.bench(function bench_includes_our_includes() {l.reqBool(i.includes(itc.numArr, 701))})
+
+const includeValues = [0, 11, 101, 201, 301, 401, 501, 601, 701, 801, 901, 1001]
+t.bench(function bench_includes_mul_native() {for (const val of includeValues) l.reqBool(itc.numArr.includes(val))})
+t.bench(function bench_includes_mul_lodash() {for (const val of includeValues) l.reqBool(lo.includes(itc.numArr, val))})
+t.bench(function bench_includes_mul_index_of() {for (const val of includeValues) l.reqBool(includesWithIndexOf(itc.numArr, val))})
+t.bench(function bench_includes_mul_our_includes() {for (const val of includeValues) l.reqBool(i.includes(itc.numArr, val))})
+
+t.bench(function bench_concat_array_0_lodash() {l.reqArr(lo.concat())})
+t.bench(function bench_concat_array_0_ours() {l.reqArr(i.concat())})
 
 t.bench(function bench_concat_array_1_native() {l.reqArr(itc.numArr.concat())})
 t.bench(function bench_concat_array_1_lodash() {l.reqArr(lo.concat(itc.numArr))})
@@ -390,6 +424,7 @@ t.bench(function bench_count_loop_inline_desc() {
 
 t.bench(function bench_count_loop_span_gen() {for (const val of genSpan(itc.size)) l.nop(val)})
 t.bench(function bench_count_loop_span_dumb() {for (const val of spanDumb(itc.size)) l.nop(val)})
+t.bench(function bench_count_loop_span_iter() {for (const val of new SpanIter(itc.size)) l.nop(val)})
 t.bench(function bench_count_loop_span_our_span() {for (const val of i.span(itc.size)) l.nop(val)})
 
 t.bench(function bench_zip_with_native() {l.reqStruct(Object.fromEntries(itc.numEntries))})
@@ -613,10 +648,10 @@ function structEntriesDumb(src) {
 }
 
 function spanDumb(len) {
-  l.reqNat(len)
+  len = l.reqNat(len)
   const out = Array(len)
   let ind = -1
-  while (++ind < out.length) out[ind] = ind
+  while (++ind < len) out[ind] = ind
   return out
 }
 

@@ -67,26 +67,33 @@ t.test(function test_urlJoin() {
 t.test(function test_Query() {
   t.test(function test_decoding() {
     function test(src, exp) {t.eq(u.query(src), exp)}
-    function empty(src) {test(src, u.query())}
 
-    empty(undefined)
-    empty(null)
-    empty(``)
-    empty(`?`)
+    t.test(function test_decoding_general() {
+      function empty(src) {test(src, u.query())}
 
-    test(`one=two`, u.query({one: `two`}))
-    test(`?one=two`, u.query({one: [`two`]}))
+      empty(undefined)
+      empty(null)
+      empty(``)
+      empty(`?`)
 
-    test(
-      `one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven`,
-      u.query({
-        one: [`two`, `three`],
-        four: `five`,
-        five: [`six`],
-        seven: `eight`,
-        nine: [`ten`, `eleven`],
-      })
-    )
+      test(`one=two`, u.query({one: `two`}))
+      test(`?one=two`, u.query({one: [`two`]}))
+      test(`??`, u.query({'?': [``]}))
+      test(`??one`, u.query({'?one': [``]}))
+      test(`??one=two`, u.query({'?one': [`two`]}))
+      test(`???one=two`, u.query({'??one': [`two`]}))
+
+      test(
+        `one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven`,
+        u.query({
+          one: [`two`, `three`],
+          four: `five`,
+          five: [`six`],
+          seven: `eight`,
+          nine: [`ten`, `eleven`],
+        })
+      )
+    })
 
     t.test(function test_decoding_plus() {
       test(
@@ -104,18 +111,24 @@ t.test(function test_Query() {
   })
 
   t.test(function test_encoding() {
-    function test(src, exp) {testStr(u.query(src), exp)}
+    t.test(function test_encoding_general() {
+      function test(src, exp) {testStr(u.query(src), exp)}
+      function same(src) {test(src, src)}
 
-    function same(src) {test(src, src)}
+      same(``)
+      same(`one=two`)
+      same(`one=two&three=four`)
+      same(`one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven`)
 
-    same(``)
-    same(`one=two`)
-    same(`one=two&three=four`)
-    same(`one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven`)
+      test(`?`, ``)
+      test(`??`, `%3F=`)
+      test(`?one=two`, `one=two`)
+      test(`??one=two`, `%3Fone=two`)
 
-    test(`?`, ``)
-    test(`??`, ``)
-    test(`??one=two`, `one=two`)
+      // Must be reversible.
+      test(`%3Fone=two`, `%3Fone=two`)
+      test(`?%3Fone=two`, `%3Fone=two`)
+    })
 
     t.test(function test_encoding_date() {
       const val = new Date(1024)
@@ -727,18 +740,20 @@ t.test(function test_Url() {
 
     function test(src, val, exp) {testStr(u.url(src).setHash(val), exp)}
 
+    /*
+    Should behave identically to existing APIs such as `URL` and `Location`,
+    where getter `.hash` idempotently prepends `#` and setter `.hash`
+    automatically strips one level of leading `#`. Without this stripping, it
+    would be WAY too easy to accidentally stack up `###`. However, only one
+    level of leading `#` is stripped, preserving additional hashes if any,
+    allowing the getter and setter to be mostly reversible. We also provide
+    `.setHashExact` to bypass this mechanism.
+    */
     test(``, ``, ``)
     test(``, `hash`, `#hash`)
-
-    /*
-    Stripping of leading `#` is questionable. It's done for compatibility with
-    existing asinine APIs such as `URL` and `Location`, where non-empty `.hash`
-    begins with `#`. Without this stripping, it would be WAY too easy to
-    accidentally stack up `###`. We also provide `.setHashExact` to bypass it.
-    */
     test(``, `#hash`, `#hash`)
-    test(``, `##hash`, `#hash`)
-    test(``, `###hash`, `#hash`)
+    test(``, `##hash`, `##hash`)
+    test(``, `###hash`, `###hash`)
 
     test(`scheme:`, ``, `scheme:`)
     test(`scheme:`, `hash`, `scheme:#hash`)

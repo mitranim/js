@@ -475,6 +475,42 @@ t.test(function test_stripPre() {
   test(`///`, ``, `///`)
 
   test(`/`, `/`, ``)
+  test(`//`, `/`, `/`)
+  test(`///`, `/`, `//`)
+
+  test(`one/`, `/`, `one/`)
+  test(`/one/`, `/`, `one/`)
+  test(`//one/`, `/`, `/one/`)
+  test(`///one/`, `/`, `//one/`)
+
+  test(`one`, ``, `one`)
+  test(`/one`, ``, `/one`)
+  test(`//one`, ``, `//one`)
+  test(`///one`, ``, `///one`)
+
+  test(`one`, `/`, `one`)
+  test(`/one`, `/`, `one`)
+  test(`//one`, `/`, `/one`)
+  test(`///one`, `/`, `//one`)
+
+  test(`one`, `//`, `one`)
+  test(`/one`, `//`, `/one`)
+  test(`//one`, `//`, `one`)
+  test(`///one`, `//`, `/one`)
+})
+
+t.test(function test_stripPreAll() {
+  function test(src, pre, exp) {t.is(s.stripPreAll(src, pre), exp)}
+
+  test(undefined, ``, ``)
+  test(null, ``, ``)
+  test(``, ``, ``)
+
+  test(`/`, ``, `/`)
+  test(`//`, ``, `//`)
+  test(`///`, ``, `///`)
+
+  test(`/`, `/`, ``)
   test(`//`, `/`, ``)
   test(`///`, `/`, ``)
 
@@ -501,6 +537,42 @@ t.test(function test_stripPre() {
 
 t.test(function test_stripSuf() {
   function test(src, suf, exp) {t.is(s.stripSuf(src, suf), exp)}
+
+  test(undefined, ``, ``)
+  test(null, ``, ``)
+  test(``, ``, ``)
+
+  test(`/`, ``, `/`)
+  test(`//`, ``, `//`)
+  test(`///`, ``, `///`)
+
+  test(`/`, `/`, ``)
+  test(`//`, `/`, `/`)
+  test(`///`, `/`, `//`)
+
+  test(`/one`, `/`, `/one`)
+  test(`/one/`, `/`, `/one`)
+  test(`/one//`, `/`, `/one/`)
+  test(`/one///`, `/`, `/one//`)
+
+  test(`one`, ``, `one`)
+  test(`one/`, ``, `one/`)
+  test(`one//`, ``, `one//`)
+  test(`one///`, ``, `one///`)
+
+  test(`one`, `/`, `one`)
+  test(`one/`, `/`, `one`)
+  test(`one//`, `/`, `one/`)
+  test(`one///`, `/`, `one//`)
+
+  test(`one`, `//`, `one`)
+  test(`one/`, `//`, `one/`)
+  test(`one//`, `//`, `one`)
+  test(`one///`, `//`, `one/`)
+})
+
+t.test(function test_stripSufAll() {
+  function test(src, suf, exp) {t.is(s.stripSufAll(src, suf), exp)}
 
   test(undefined, ``, ``)
   test(null, ``, ``)

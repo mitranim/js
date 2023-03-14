@@ -67,13 +67,37 @@ const nonEnumDefprop = new NonEnumDefprop(10).set(20).set(30)
 const nonEnumSym = new NonEnumSym(10).set(20).set(30)
 const nonEnumPriv = new NonEnumPriv(10).set(20).set(30)
 
-const structSrc = {id: 10, name: `Mira`}
+const structSrc = {
+  one: 10,
+  two: `20`,
+  three: 30,
+  four: `40`,
+  five: 50,
+  six: `60`,
+}
 
-class StructUntyped extends o.Struct {}
-t.eq({...new StructUntyped(structSrc)}, structSrc)
+t.own(new o.StructLax(structSrc), structSrc)
 
-class StructTyped extends o.Struct {static fields = {id: l.reqFin, name: l.reqStr}}
-t.eq({...new StructTyped(structSrc)}, structSrc)
+class StructSpec extends o.StructSpec {
+  one   = l.reqNum
+  two   = l.reqStr
+  three = l.reqNum
+  four  = l.reqStr
+  five  = l.reqNum
+  six   = l.reqStr
+}
+
+class StructDeclaredLax extends o.StructLax {
+  static get Spec() {return StructSpec}
+}
+
+t.own(new StructDeclaredLax(structSrc), structSrc)
+
+class StructDeclared extends o.Struct {
+  static get Spec() {return StructSpec}
+}
+
+t.own(new StructDeclared(structSrc), structSrc)
 
 /* Bench */
 
@@ -115,9 +139,9 @@ t.bench(function bench_Object_getPrototypeOf() {
 })
 
 t.bench(function bench_assign_Object_assign() {l.reqStruct(Object.assign(l.npo(), itc.numDict))})
+t.bench(function bench_assign_lodash_assign() {l.reqStruct(lo.assign(l.npo(), itc.numDict))})
 t.bench(function bench_assign_our_assign() {l.reqStruct(o.assign(l.npo(), itc.numDict))})
 t.bench(function bench_assign_our_patch() {l.reqStruct(o.patch(l.npo(), itc.numDict))})
-t.bench(function bench_assign_lodash_assign() {l.reqStruct(lo.assign(l.npo(), itc.numDict))})
 
 const frozen = freeze({})
 t.bench(function bench_object_freeze_new() {l.nop(freeze({}))})
@@ -151,7 +175,14 @@ t.bench(function bench_non_enum_construct_set_get_defprop() {l.nop(new NonEnumDe
 t.bench(function bench_non_enum_construct_set_get_sym() {l.nop(new NonEnumSym(10).set(20).get())})
 t.bench(function bench_non_enum_construct_set_get_priv() {l.nop(new NonEnumPriv(10).set(20).get())})
 
-t.bench(function bench_struct_new_untyped() {l.nop(new StructUntyped(structSrc))})
-t.bench(function bench_struct_new_typed() {l.nop(new StructTyped(structSrc))})
+t.bench(function bench_struct_new_undeclared_lax() {l.nop(new o.StructLax(structSrc))})
+t.bench(function bench_struct_new_declared_lax() {l.nop(new StructDeclaredLax(structSrc))})
+t.bench(function bench_struct_new_declared() {l.nop(new StructDeclared(structSrc))})
+
+// For comparison with `Struct` instantiation.
+t.bench(function bench_struct_assign_Object_assign() {l.nop(Object.assign(l.npo(), structSrc))})
+t.bench(function bench_struct_assign_lodash_assign() {l.nop(lo.assign(l.npo(), structSrc))})
+t.bench(function bench_struct_assign_our_assign() {l.nop(o.assign(l.npo(), structSrc))})
+t.bench(function bench_struct_assign_our_patch() {l.nop(o.patch(l.npo(), structSrc))})
 
 if (import.meta.main) t.deopt(), t.benches()

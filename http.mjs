@@ -607,7 +607,6 @@ export class Cookies extends c.ClsColl {
   get cls() {return Cookie}
 
   getVal(key) {return this.get(key)?.value}
-
   setVal(key, val) {return this.addOpt(this.cls.make(key, val))}
 
   mut(src) {

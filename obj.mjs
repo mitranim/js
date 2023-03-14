@@ -12,7 +12,7 @@ export function assign(tar, src) {
 export function patch(tar, src) {
   l.reqStruct(tar)
   for (const key of l.structKeys(src)) {
-    if (!l.hasInherited(tar, key)) tar[key] = src[key]
+    if (canSet(tar, key)) tar[key] = src[key]
   }
   return tar
 }
@@ -23,167 +23,160 @@ export function reqMut(val) {return isMut(val) ? val : l.throwErrFun(val, isMut)
 export class Struct extends l.Emp {
   constructor(src) {
     super()
-    this.mut(src)
-    if (this.constructor.strict) this.constructor.type.validate(this)
+    this.constructor.getType().init(this, src)
   }
 
   mut(src) {
-    this.constructor.type.mutate(this, src)
+    this.constructor.getType().reinit(this, src)
     return this
   }
 
-  static get type() {
-    if (!l.hasOwn(this, `structType`)) {
-      this.structType = new this.StructType(this, this.fields)
-    }
-    return this.structType
+  static get Spec() {return StructSpec}
+
+  static getSpec() {
+    own(this, `spec`)
+    return this.spec ??= new this.Spec(this)
   }
 
-  static get StructType() {return StructType}
+  static get Type() {return StructType}
+
+  static getType() {
+    own(this, `type`)
+    return this.type ??= new this.Type(this)
+  }
 }
 
-// Internal tool for `Struct` type checking.
+export class StructLax extends Struct {
+  static get Type() {return StructTypeLax}
+}
+
+export class StructSpec extends l.Emp {
+  // Allows a spec to access its class. Note that we ignore symbolic properties
+  // and getters of a spec when initializing `StructType` from `StructSpec`.
+  // This is similar to `MixChild` and partially copied from it, but we're
+  // unable to directly use `MixChild` here, because it would add methods to
+  // the prototype of `StructSpec`, which is unacceptable here.
+  constructor(val) {super()[parentNodeKey] = val}
+  get parentNode() {return this[parentNodeKey]}
+
+  static validate() {}
+  static any(val) {return val}
+}
+
+// Internal tool for type checking in structs.
 export class StructType extends l.Emp {
-  constructor(cls, fields) {
+  constructor(cls) {
     super()
-    priv(this, `cls`, l.reqCls(cls))
-    this.dict = l.npo()
+    this[parentNodeKey] = l.reqCls(cls)
     this.list = []
-    this.addFields(fields)
+    this.dict = l.npo()
+    this.spec = l.reqInst(cls.getSpec(), StructSpec)
+    this.initFromSpec()
   }
 
-  addFields(src) {
-    for (const key of l.structKeys(src)) this.addField(key, src[key])
-    return this
+  get Spec() {return this.spec.constructor}
+
+  // Implemented this way for consistency with `StructSpec`.
+  get parentNode() {return this[parentNodeKey]}
+
+  // Called after `.init`/`.reinit`.
+  // Subclasses may override this.
+  // TODO test.
+  validate(tar) {this.Spec.validate(tar)}
+
+  // Used by `Struct..constructor`. Subclasses may override this.
+  init(tar, src) {
+    this.reset(tar, src)
+    this.validate(tar)
   }
 
-  addField(key, val) {
-    const {dict} = this
-    if (key in dict) throw Error(`redundant field ${l.show(key)}`)
-    this.list.push(dict[key] = new this.StructField(this, key, val))
+  // Used by `Struct..mut`. Subclasses may override this.
+  reinit(tar, src) {if (l.isSome(src)) this.init(tar, src)}
+
+  mut(tar, src) {
+    this.reset(tar, src)
+    this.patch(tar, src)
   }
 
-  validate(tar) {for (const field of this.list) field.validate(tar)}
+  mutOpt(tar, src) {if (l.isSome(src)) this.mut(tar, src)}
 
-  mutate(tar, src) {
+  reset(tar, src) {for (const field of this.list) field.reset(tar, src)}
+
+  resetOpt(tar, src) {if (l.isSome(src)) this.reset(tar, src)}
+
+  patch(tar, src) {
     for (const key of l.structKeys(src)) this.set(tar, key, src[key])
   }
 
+  // Must mimic the semantics of `obj.mjs`.`patch` (not `assign`), with
+  // additional support for calling `.mut` on properties that implement
+  // `isMut`, and using the spec's validate/transform method.
   set(tar, key, val) {
-    const {dict} = this
-    if (key in dict) dict[key].set(tar, val)
-    else this.setAny(tar, key, val)
+    if (this.isDeclared(key)) return false
+    touch(tar, key)
+    if (mutated(tar, key, val)) return true
+    if (!canSet(tar, key)) return false
+    tar[key] = this.Spec.any(val, key)
+    return true
   }
 
-  setAny(tar, key, val) {
-    if (l.hasOwn(tar, key)) {
-      this.mutOrAssignAny(tar, key, val)
-      return
+  isDeclared(key) {return l.reqStr(key) in this.dict}
+
+  initFromSpec() {
+    const {dict, list, spec} = this
+    const visited = new Set()
+    let src = spec
+
+    do {
+      for (const [key, desc] of descriptors(src)) {
+        if (key === `constructor` || visited.has(key)) continue
+
+        visited.add(key)
+
+        if (l.isFun(desc.value)) {
+          list.push(dict[key] = new this.Field(this, key))
+        }
+      }
     }
-
-    if (!(key in tar)) {
-      this.assignAny(tar, key, val)
-      return
-    }
-
-    // May execute a mem getter.
-    l.nop(tar[key])
-    if (!l.hasOwn(tar, key)) return
-
-    this.mutOrAssignAny(tar, key, val)
+    while ((src = Object.getPrototypeOf(src)))
   }
 
-  mutOrAssignAny(tar, key, val) {
-    const prev = tar[key]
-    if (isMut(prev)) prev.mut(val)
-    else this.assignAny(tar, key, val)
+  get Field() {return StructField}
+}
+
+export class StructTypeLax extends StructType {
+  init(tar, src) {
+    this.mut(tar, src)
+    this.validate(tar)
   }
-
-  assignAny(tar, key, val) {tar[key] = this.any(val, key)}
-
-  any(val, key) {
-    const {cls} = this
-    if (`any` in cls) return cls.any(val, key)
-    return val
-  }
-
-  get StructField() {return StructField}
 }
 
 // Field definition used by `StructType`.
 export class StructField extends l.Emp {
-  constructor(typ, key, fun) {
+  constructor(typ, key) {
     super()
     priv(this, `typ`, l.reqInst(typ, StructType))
     this.key = l.reqStr(key)
-    this.fun = l.reqFun(fun)
-    this.desc = descIn(typ.cls.prototype, key)
+    if (!l.isFun(typ.spec[key])) {
+      throw TypeError(`invalid property ${l.show(key)}: missing validator function in spec`)
+    }
   }
 
+  val(val) {
+    const key = l.reqStr(this.key)
+    try {return this.typ.spec[key](val)}
+    catch (err) {throw l.errTrans(err, TypeError, `invalid property ${l.show(key)}`)}
+  }
+
+  reset(tar, src) {this.set(tar, src?.[this.key])}
+
+  // Must mimic the semantics of `obj.mjs`.`assign` (not `patch`), with
+  // additional support for calling `.mut` on properties that implement
+  // `isMut`, and using the spec's validate/transform method.
   set(tar, val) {
-    const {key, desc} = this
-
-    if (l.hasOwn(tar, key)) {
-      this.mutOrAssign(tar, val)
-      return
-    }
-
-    if (!desc) {
-      this.assign(tar, val)
-      return
-    }
-
-    if (!desc.get) return
-
-    if (desc.set) {
-      this.assign(tar, val)
-      return
-    }
-
-    // May execute a mem getter.
-    l.nop(tar[key])
-
-    if (l.hasOwn(tar, key)) {
-      this.mutOrAssign(tar, val)
-      return
-    }
-
-    pub(tar, key, this.val(tar, val))
-  }
-
-  mutOrAssign(tar, val) {
-    const prev = tar[this.key]
-    if (isMut(prev)) prev.mut(val)
-    else this.assign(tar, val)
-  }
-
-  assign(tar, val) {tar[this.key] = this.val(tar, val)}
-
-  val(tar, val) {
-    const {key, fun} = this
-    try {
-      return fun.call(tar, val)
-    }
-    catch (err) {
-      throw l.errWrap(err, TypeError, `invalid field ${l.show(key)} for ${l.show(tar)}`)
-    }
-  }
-
-  validate(tar) {
-    l.reqObj(tar)
-
-    const {key, fun} = this
-    const prev = key in tar ? tar[key] : undefined
-
-    let next
-    try {
-      next = fun.call(tar, prev)
-    }
-    catch (err) {
-      throw l.errWrap(err, TypeError, `invalid field ${l.show(key)} on ${l.show(tar)}`)
-    }
-
-    if (!l.is(prev, next)) tar[key] = next
+    const key = l.reqStr(this.key)
+    if (l.isSome(val) && mutated(tar, key, val)) return
+    tar[key] = this.val(val)
   }
 }
 
@@ -361,33 +354,81 @@ export class DedupMixinCache extends MixinCache {
   }
 }
 
-// Must match `dom_shim.mjs`.
+// Should match `dom_shim.mjs`.
 export const parentNodeKey = Symbol.for(`parentNode`)
 
+/*
+Short for "mixin: child". Support for establishing child-to-parent relations.
+
+Implementation note. This uses the `get parentNode` and `set parentNode`
+properties for consistency and compatibility with native DOM classes and our
+own DOM shim. In addition to properties, we provide methods, because:
+
+  * Methods are easier to override. Subclasses typically override only
+    `.setParent` to add a type assertion. To correctly override
+    `set parentNode`, a subclass must also explicitly define `get parentNode`,
+    which takes more code and more error-prone.
+
+  * Methods may return `this`, which is convenient for chaining.
+*/
 export function MixChild(val) {return MixChildCache.goc(val)}
 
 export class MixChildCache extends DedupMixinCache {
   static make(cls) {
-    return class MixChildCls extends cls {
-      /*
-      Would prefer the name ".parent", but matching the DOM API seems more
-      important.
+    const desc = descIn(cls.prototype, `parentNode`)
 
-      We support `super.parentNode` for compatibility with native DOM classes,
-      prioritizing a native getter (if available) over custom storage. We must
-      support it here instead of leaving it to subclasses, because subclasses
-      have no way to access `super.parentNode` relative to this class, only
-      relative to subclass.
+    if (!desc || !desc.get) {
+      return class MixChildClsBase extends cls {
+        get parentNode() {return this[parentNodeKey]}
+        set parentNode(val) {this[parentNodeKey] = val}
 
-      When used with DOM element classes, the `.parentNode` getter and setter
-      affect only JS code, without affecting native operations. Native DOM
-      implementations completely bypass both.
-      */
-      get parentNode() {return super.parentNode || this[parentNodeKey]}
+        getParent() {return this.parentNode}
+        setParent(val) {return this.parentNode = val, this}
+      }
+    }
+
+    if (desc.set) {
+      return class MixChildClsOnlyMethods extends cls {
+        getParent() {return this.parentNode}
+        setParent(val) {return this.parentNode = val, this}
+      }
+    }
+
+    return class MixChildClsCompat extends cls {
+      get parentNode() {return parentNodeKey in this ? this[parentNodeKey] : super.parentNode}
       set parentNode(val) {this[parentNodeKey] = val}
 
       getParent() {return this.parentNode}
       setParent(val) {return this.parentNode = val, this}
+    }
+  }
+}
+
+/*
+Short for "mixin: child with constructor". Variant of `MixChild` that
+automatically calls `.setParent` in the constructor if at least one argument
+was provided. Convenient for code that heavily relies on child-to-parent
+relations, which are particularly important when working with custom DOM
+elements and using our `prax.mjs` and/or `dom_shim.mjs`.
+
+Important note. Normally, DOM nodes establish child-to-parent relations when
+children are attached to parents. With this mixin, the child-to-parent
+relationship is established before the child is attached to the parent.
+This allows children to immediately traverse the ancestor chain to
+access "contextual" data available on ancestors. Note that this establishes
+only child-to-parent relations, not parent-to-child. The latter become
+available only after attaching the newly initialized children to the parent,
+which is out of scope for this mixin.
+*/
+export function MixChildCon(val) {return MixChildConCache.goc(val)}
+
+export class MixChildConCache extends MixChildCache {
+  static make(cls) {
+    return class MixChildConCls extends super.make(cls) {
+      constructor(...val) {
+        super()
+        if (val.length) this.setParent(...val)
+      }
     }
   }
 }
@@ -509,3 +550,25 @@ function goc(maker, cache, key) {
   cache.set(key, val)
   return val
 }
+
+function own(tar, key, val) {
+  if (!l.hasOwn(tar, key)) pub(tar, key, val)
+  return val
+}
+
+/*
+May execute a getter with side effects. Our `memGet` tool defines getters
+that "replace" themselves by defining an own enumerable property under the
+same key on the receiving instance.
+*/
+function touch(tar, key) {
+  if (!l.hasOwnEnum(tar, key) && key in tar) l.nop(tar[key])
+}
+
+function mutated(tar, key, val) {
+  if (!l.hasOwnEnum(tar, key)) return false
+  const prev = tar[key]
+  return isMut(prev) && (prev.mut(val), true)
+}
+
+function canSet(val, key) {return l.hasOwnEnum(val, key) || !(key in val)}

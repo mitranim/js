@@ -394,7 +394,7 @@ export function toTrueArr(val) {
 
 /* Misc */
 
-export function is(a, b) {return a === b || (isNaN(a) && isNaN(b))}
+export function is(one, two) {return one === two || (isNaN(one) && isNaN(two))}
 export function truthy(val) {return !!val}
 export function falsy(val) {return !val}
 export function nop() {}
@@ -404,7 +404,6 @@ export function panic(val) {if (isSome(val)) throw val}
 export function True() {return true}
 export function False() {return false}
 export function vac(val) {return isVac(val) ? undefined : val}
-
 export function bind(fun, ...args) {return reqFun(fun).bind(this, ...args)}
 
 export function not(fun) {
@@ -415,7 +414,6 @@ export function not(fun) {
 export function hasIn(val, key) {return isComp(val) && key in val}
 export function hasOwn(val, key) {return isComp(val) && Object.prototype.hasOwnProperty.call(val, key)}
 export function hasOwnEnum(val, key) {return isComp(val) && Object.prototype.propertyIsEnumerable.call(val, key)}
-export function hasInherited(val, key) {return hasIn(val, key) && !hasOwnEnum(val, key)}
 export function hasMeth(val, key) {return hasIn(val, key) && isFun(val[key])}
 
 export function eq(one, two) {
@@ -493,12 +491,7 @@ export function msgIn(val, key) {return `unable to find ${show(key)} in ${show(v
 export function errImpl() {return TypeError(msgImpl())}
 export function msgImpl() {return `not implemented`}
 
-/*
-Assumes `cls` is `Error` or a subclass. Otherwise this has undefined behavior.
-Note: `err.cause` is theoretically much better, but engine support is too
-limited at the time of writing.
-*/
-export function errWrap(err, cls, msg) {
+export function errTrans(err, cls, msg) {
   err = toInst(err, cls)
   const pre = renderLax(msg)
   const suf = renderLax(err.message)
@@ -506,15 +499,26 @@ export function errWrap(err, cls, msg) {
   return err
 }
 
-/*
-Note: at the time of writing, engine support for error causes is limited. Many
-engines, including Chrome, do not report causes unless explicitly asked for,
-and Safari <15 does not support causes at all.
-*/
+export function errWrap(err, cls, msg) {
+  if (isErrorCauseSupported()) return new cls(msg, {cause: err})
+  return errTrans(err, cls, msg)
+}
+
 export function errCause(val) {
-  while (isErr(val)) val = val.cause
+  if (isErrorCauseSupported()) while (isErr(val)) val = val.cause
   return val
 }
+
+/*
+The feature is standard, but at the time of writing, has limited engine support.
+Many engines, including Chrome, do not report causes unless explicitly asked
+for, and Safari <15 does not support causes at all.
+*/
+function isErrorCauseSupported() {
+  return ERROR_CAUSE ??= `cause` in Error(``, {cause: undefined})
+}
+
+let ERROR_CAUSE
 
 function errOneOf(val, funs) {return TypeError(msgType(val, `[` + showFuns(funs) + `]`))}
 

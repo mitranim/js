@@ -7,13 +7,14 @@
   * [#`function assign`](#function-assign)
   * [#`function patch`](#function-patch)
   * [#`class Struct`](#class-struct)
+  * [#`class StructLax`](#class-structlax)
   * [#`function memGet`](#function-memget)
   * [#Undocumented](#undocumented)
 
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.39/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.40/obj.mjs'
 ```
 
 ## API
@@ -27,7 +28,7 @@ Signature: `(tar, src) => tar`.
 Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign). Differences:
 
   * Much faster.
-  * Takes only two args.
+  * Exactly two parameters, not variadic.
   * Sanity-checked:
     * Target must be a [struct](lang_readme.md#function-isstruct).
     * Source must be nil or a [struct](lang_readme.md#function-isstruct).
@@ -56,70 +57,124 @@ When overriding inherited and non-enumerable properties is desirable, use [#`ass
 
 ### `class Struct`
 
-Links: [source](../obj.mjs#L23); [test/example](../test/obj_test.mjs#L188).
+Links: [source](../obj.mjs#L23); [test/example](../test/obj_test.mjs#L348).
 
-Superclass for "model"/"data"/"record" classes. Features:
+Superclass for classes representing a "struct"/"model"/"record". Also see [#`StructLax`](#class-structlax). Features:
 
-  * Can be instantiated from any [struct](lang_readme.md#function-isstruct).
-    * Behaves similar to [#`patch`](#function-patch), rather than `Object.assign`.
-    * Avoids conflicts with inherited methods and getters.
-  * Can be deeply mutated by calling `.mut`, which calls `.mut` on fields that implement [#this](#function-ismut), and reassigns other fields.
-  * Optional type checking, with declarative type definition.
-    * Type checking is performed:
-      * When creating instances via `new`, which automatically calls `.mut`.
-      * When calling `.mut`.
-    * Type checking is _not_ performed when assigning fields via `=`.
-    * Individual type assertions such as `l.reqStr`, when hardcoded, are very performant. However, this machinery has overheads that far eclipse the cost of actual type-checking. Avoid in hotspots.
-    * You don't pay for what you don't use.
+  * Supports property declarations, with validation/transformation functions.
+
+  * Can be instantiated or mutated from any [struct](lang_readme.md#function-isstruct) (any dict-like object).
+
+  * Assigns and checks all declared properties when instantiating via `new`. Ignores undeclared properties.
+
+  * Assigns and checks all declared properties when mutating via `.mut` with a [non-nil](lang_readme.md#function-issome) argument. Ignores undeclared properties.
+
+  * When mutating an existing struct via `.mut`, supports calling method `.mut` on existing property values which implement [#the](#function-ismut). This allows deep/recursive mutation.
+
+  * Uses regular JS properties. Does not use getters/setters, proxies, private properties, non-enumerable properties, symbols, or anything else "strange". Declared properties are simply assigned via `=`.
+
+Performance characteristics:
+
+  * The cost of instantiating or mutating depends only on declared properties, not on provided properties.
+
+  * When the number of declared properties is similar to the number of provided properties, this tends to be slightly slower than `Object.assign` or [#`assign`](#function-assign).
+
+  * When the number of declared properties is significantly smaller than the number of provided properties, this tends to be faster than the aforementioned assignment functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.39/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.39/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.40/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.40/obj.mjs'
 
 class Person extends o.Struct {
-  static fields = {
-    ...super.fields,
-    id: l.reqFin,
-    name: l.reqStr,
+  static Spec = class extends super.Spec {
+    id = l.reqFin
+    name = l.reqStr
   }
 }
 
-// Satisfies the type checks.
+// Fails the type check.
+new Person({id: 10})
+/* Uncaught TypeError: invalid property "name" */
+
+// Fails the type check.
+new Person({name: `Mira`})
+/* Uncaught TypeError: invalid property "id" */
+
+// Satisfies the type check.
 new Person({id: 10, name: `Mira`})
 /* Person { id: 10, name: "Mira" } */
 
-// Fails the type checks and causes an exception.
-new Person({id: `Mira`, name: 10})
-/* Uncaught TypeError */
+// Ignores undeclared properties.
+new Person({id: 10, name: `Mira`, slug: `mira`, gender: `female`})
+/* Person { id: 10, name: "Mira" } */
+```
 
-// By design, unknown fields are assigned as-is, without checks.
-new Person({id: 20, name: `Kara`, title: `director`})
-/* Person { id: 20, name: `Kara`, title: `director` } */
+### `class StructLax`
+
+Links: [source](../obj.mjs#L49); [test/example](../test/obj_test.mjs#L394).
+
+Superclass for classes representing a "struct"/"model"/"record". Subclass of [#`Struct`](#class-struct) with added support for undeclared properties.
+
+Differences from [#`Struct`](#class-struct):
+
+  * When instantiating via `new` or mutating via `.mut`, in addition to assigning and checking all declared properties, this also copies any undeclared properties present in the source data.
+
+    * Behaves similarly to [#`patch`](#function-patch), and differently from `Object.assign` or [#`assign`](#function-assign). Avoids accidentally shadowing inherited or non-enumerable properties.
+
+    * Just like with declared properties, copying undeclared properties supports deep/recursive mutation by calling `.mut` on any existing property values that implement [#the](#function-ismut).
+
+  * Measurably worse performance.
+
+```js
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.40/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.40/obj.mjs'
+
+class Person extends o.StructLax {
+  static Spec = class extends super.Spec {
+    id = l.reqFin
+    name = l.reqStr
+  }
+}
+
+// Fails the type check.
+new Person({id: 10})
+/* Uncaught TypeError: invalid property "name" */
+
+// Fails the type check.
+new Person({name: `Mira`})
+/* Uncaught TypeError: invalid property "id" */
+
+// Satisfies the type check.
+new Person({id: 10, name: `Mira`})
+/* Person { id: 10, name: "Mira" } */
+
+// Assigns undeclared properties in addition to declared properties.
+new Person({id: 10, name: `Mira`, slug: `mira`, gender: `female`})
+/* Person { id: 10, name: "Mira", slug: "mira", gender: "female" } */
 ```
 
 ### `function memGet`
 
-Links: [source](../obj.mjs#L309); [test/example](../test/obj_test.mjs#L481).
+Links: [source](../obj.mjs#L302); [test/example](../test/obj_test.mjs#L756).
 
 Takes a class and hacks its prototype, converting all non-inherited getters to lazy/memoizing versions of themselves that only execute _once_. The resulting value replaces the getter. Inherited getters are unaffected.
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.39/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.40/obj.mjs'
 
 class Bucket {
   static {o.memGet(this)}
-  get one() {return new o.Struct()}
-  get two() {return new o.Struct()}
+  get one() {return new o.StructLax()}
+  get two() {return new o.StructLax()}
 }
 
 const ref = new Bucket()
 // Bucket {}
 
-ref.one
-ref
-// Bucket { one: Struct {} }
-
 ref.one.three = 30
+ref
+// Bucket { one: Struct { three: 30 } }
+
 ref.two.four = 40
 ref
 // Bucket { one: Struct { three: 30 }, two: Struct { four: 40 } }
@@ -133,31 +188,35 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
   * [`function reqObjKey`](../obj.mjs#L4)
   * [`function isMut`](../obj.mjs#L20)
   * [`function reqMut`](../obj.mjs#L21)
-  * [`class StructType`](../obj.mjs#L46)
-  * [`class StructField`](../obj.mjs#L114)
-  * [`function MixMain`](../obj.mjs#L195)
-  * [`class Strict`](../obj.mjs#L207)
-  * [`class BlankStaticPh`](../obj.mjs#L220)
-  * [`class StrictStaticPh`](../obj.mjs#L254)
-  * [`class MakerPh`](../obj.mjs#L273)
-  * [`class Dyn`](../obj.mjs#L282)
-  * [`class TypedDyn`](../obj.mjs#L290)
-  * [`class WeakTag`](../obj.mjs#L295)
-  * [`class MemTag`](../obj.mjs#L311)
-  * [`class Cache`](../obj.mjs#L316)
-  * [`class WeakCache`](../obj.mjs#L322)
-  * [`class StaticCache`](../obj.mjs#L328)
-  * [`class StaticWeakCache`](../obj.mjs#L336)
-  * [`class MixinCache`](../obj.mjs#L340)
-  * [`class DedupMixinCache`](../obj.mjs#L345)
-  * [`const parentNodeKey`](../obj.mjs#L365)
-  * [`function MixChild`](../obj.mjs#L367)
-  * [`class MixChildCache`](../obj.mjs#L369)
-  * [`function mixMut`](../obj.mjs#L406)
-  * [`function mixMutDescriptors`](../obj.mjs#L417)
-  * [`function pub`](../obj.mjs#L430)
-  * [`function priv`](../obj.mjs#L440)
-  * [`function final`](../obj.mjs#L450)
-  * [`function getter`](../obj.mjs#L460)
-  * [`function setter`](../obj.mjs#L462)
-  * [`function getSet`](../obj.mjs#L464)
+  * [`class StructSpec`](../obj.mjs#L53)
+  * [`class StructType`](../obj.mjs#L67)
+  * [`class StructTypeLax`](../obj.mjs#L147)
+  * [`class StructField`](../obj.mjs#L155)
+  * [`function MixMain`](../obj.mjs#L188)
+  * [`class Strict`](../obj.mjs#L200)
+  * [`class BlankStaticPh`](../obj.mjs#L213)
+  * [`class StrictStaticPh`](../obj.mjs#L247)
+  * [`class MakerPh`](../obj.mjs#L266)
+  * [`class Dyn`](../obj.mjs#L275)
+  * [`class TypedDyn`](../obj.mjs#L283)
+  * [`class WeakTag`](../obj.mjs#L288)
+  * [`class MemTag`](../obj.mjs#L304)
+  * [`class Cache`](../obj.mjs#L309)
+  * [`class WeakCache`](../obj.mjs#L315)
+  * [`class StaticCache`](../obj.mjs#L321)
+  * [`class StaticWeakCache`](../obj.mjs#L329)
+  * [`class MixinCache`](../obj.mjs#L333)
+  * [`class DedupMixinCache`](../obj.mjs#L338)
+  * [`const parentNodeKey`](../obj.mjs#L358)
+  * [`function MixChild`](../obj.mjs#L374)
+  * [`class MixChildCache`](../obj.mjs#L376)
+  * [`function MixChildCon`](../obj.mjs#L423)
+  * [`class MixChildConCache`](../obj.mjs#L425)
+  * [`function mixMut`](../obj.mjs#L447)
+  * [`function mixMutDescriptors`](../obj.mjs#L458)
+  * [`function pub`](../obj.mjs#L471)
+  * [`function priv`](../obj.mjs#L481)
+  * [`function final`](../obj.mjs#L491)
+  * [`function getter`](../obj.mjs#L501)
+  * [`function setter`](../obj.mjs#L503)
+  * [`function getSet`](../obj.mjs#L505)

@@ -171,6 +171,12 @@ t.bench(function bench_isObj_miss_fun() {l.nop(l.isObj(l.isObj))})
 t.bench(function bench_isObj_hit_dict() {l.nop(l.isObj(emptyPlainDict))})
 t.bench(function bench_isObj_hit_arr() {l.nop(l.isObj(emptyArr))})
 
+t.bench(function bench_isComp_nil() {l.nop(l.isComp())})
+t.bench(function bench_isComp_miss_prim() {l.nop(l.isComp(`str`))})
+t.bench(function bench_isComp_hit_dict() {l.nop(l.isComp(emptyPlainDict))})
+t.bench(function bench_isComp_hit_arr() {l.nop(l.isComp(emptyArr))})
+t.bench(function bench_isComp_hit_fun() {l.nop(l.isComp(l.isComp))})
+
 t.bench(function bench_isArr_native_nil() {l.nop(Array.isArray())})
 t.bench(function bench_isArr_native_miss() {l.nop(Array.isArray(someProm))})
 t.bench(function bench_isArr_native_hit() {l.nop(Array.isArray(emptyArr))})

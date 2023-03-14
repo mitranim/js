@@ -177,7 +177,7 @@ export class StrMap extends c.TypedMap {
   reqVal(val) {return l.reqTrueArr(val)}
 
   has(key) {return super.has(key)}
-  get(key) {return this.has(key) ? super.get(key)[0] : undefined}
+  get(key) {return super.get(key)?.[0]}
   getAll(key) {return super.get(key)}
 
   set(key, val) {
@@ -322,48 +322,56 @@ export function maybeInter(pre, sep, suf) {
   return pre + sep + suf
 }
 
-// TODO rename to `stripPreAll` and provide a "once" version.
-export function stripPre(val, pre) {
-  val = l.laxStr(val)
+export function stripPre(src, pre) {
+  src = l.laxStr(src)
   l.reqStr(pre)
-  while (pre && val.startsWith(pre)) val = val.slice(pre.length)
-  return val
+  if (pre && src.startsWith(pre)) src = src.slice(pre.length)
+  return src
 }
 
-// TODO rename to `stripSufAll` and provide a "once" version.
-export function stripSuf(val, suf) {
-  val = l.laxStr(val)
+export function stripPreAll(src, pre) {
+  while (src !== (src = stripPre(src, pre))) {}
+  return src
+}
+
+export function stripSuf(src, suf) {
+  src = l.laxStr(src)
   l.reqStr(suf)
-  while (suf && val.endsWith(suf)) val = val.slice(0, -suf.length)
-  return val
+  if (suf && src.endsWith(suf)) src = src.slice(0, -suf.length)
+  return src
 }
 
-export function optPre(val, pre) {
-  val = l.laxStr(val)
+export function stripSufAll(src, suf) {
+  while (src !== (src = stripSuf(src, suf))) {}
+  return src
+}
+
+export function optPre(src, pre) {
+  src = l.laxStr(src)
   l.reqStr(pre)
-  return (!val || val.startsWith(pre)) ? val : (pre + val)
+  return (!src || src.startsWith(pre)) ? src : (pre + src)
 }
 
-export function optSuf(val, suf) {
-  val = l.laxStr(val)
+export function optSuf(src, suf) {
+  src = l.laxStr(src)
   l.reqStr(suf)
-  return (!val || val.endsWith(suf)) ? val : (val + suf)
+  return (!src || src.endsWith(suf)) ? src : (src + suf)
 }
 
-export function maybePre(val, pre) {
-  val = l.laxStr(val)
+export function maybePre(src, pre) {
+  src = l.laxStr(src)
   l.reqStr(pre)
-  return val && (pre + val)
+  return src && (pre + src)
 }
 
-export function maybeSuf(val, suf) {
-  val = l.laxStr(val)
+export function maybeSuf(src, suf) {
+  src = l.laxStr(src)
   l.reqStr(suf)
-  return val && (val + suf)
+  return src && (src + suf)
 }
 
-export function split(val, sep) {
-  return val = l.laxStr(val) ? val.split(sep) : []
+export function split(src, sep) {
+  return src = l.laxStr(src) ? src.split(sep) : []
 }
 
 // Tested indirectly through `Draft`. Needs to be simplified. Needs its own tests.
