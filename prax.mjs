@@ -105,6 +105,7 @@ export class Ren extends l.Emp {
 
   mutProps(tar, val) {return this.loop(reqElement(tar), val, this.mutProp)}
 
+  // TODO consider supporting `innerHTML` prop.
   mutProp(tar, key, val) {
     if (key === `attributes`) return this.mutAttrs(tar, val)
     if (key === `class`) return this.mutCls(tar, val)

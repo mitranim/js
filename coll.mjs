@@ -124,10 +124,11 @@ export function pkOpt(val) {return l.hasMeth(val, `pk`) ? val.pk() : undefined}
 
 // Short for "primary key".
 // TODO move to `lang.mjs`.
-export function pk(val) {
-  const key = pkOpt(val)
+export function pk(val) {return reqPkOf(pkOpt(val), val)}
+
+function reqPkOf(key, val) {
   if (l.isPk(key)) return key
-  throw TypeError(`expected primary key of ${l.show(val)}, got ${l.show(key)}`)
+  throw TypeError(`expected ${l.show(val)} to provide key, got ${l.show(key)}`)
 }
 
 export class Coll extends TypedMap {
@@ -136,10 +137,12 @@ export class Coll extends TypedMap {
     return this
   }
 
+  getKey(val) {return reqPkOf(this.getKeyOpt(val), val)}
+  getKeyOpt(val) {return pkOpt(val)}
   reqKey(key) {return l.reqPk(key)}
   reqVal(val) {return val}
-  add(val) {return this.set(pk(val), val)}
-  addOpt(val) {return this.setOpt(pkOpt(val), val)}
+  add(val) {return this.set(this.getKey(val), val)}
+  addOpt(val) {return this.setOpt(this.getKeyOpt(val), val)}
   added(val) {return this.add(val), val}
   toArray() {return [...this.values()]}
   toJSON() {return this.toArray()}
@@ -214,6 +217,7 @@ export class ClsVec extends TypedVec {
   constructor(src) {super().mut(src)}
   reqVal(val) {return l.reqInst(val, this.cls)}
   add(val) {return super.add(this.make(val))}
+  added(val) {return this.add((val = this.make(val))), val}
   make(val) {return l.toInst(val, this.cls)}
 }
 

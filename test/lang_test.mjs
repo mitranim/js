@@ -992,14 +992,14 @@ t.test(function test_isInst() {
   t.ok(l.isInst({}, Object))
 })
 
-t.test(function test_isEq() {
-  t.no(l.isEq())
-  t.no(l.isEq({}))
-  t.no(l.isEq(EqAlways))
-  t.no(l.isEq(EqNever))
+t.test(function test_isEqable() {
+  t.no(l.isEqable())
+  t.no(l.isEqable({}))
+  t.no(l.isEqable(EqAlways))
+  t.no(l.isEqable(EqNever))
 
-  t.ok(l.isEq(new EqAlways()))
-  t.ok(l.isEq(new EqNever()))
+  t.ok(l.isEqable(new EqAlways()))
+  t.ok(l.isEqable(new EqNever()))
 })
 
 t.test(function test_isArrOf() {

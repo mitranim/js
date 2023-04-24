@@ -52,6 +52,10 @@ t.bench(function bench_keys_dict_lodash() {l.reqArr(lo.keys(itc.numDict))})
 t.bench(function bench_keys_dict_by_for_in() {l.reqArr(structKeysByForIn(itc.numDict))})
 t.bench(function bench_keys_dict_our_keys() {l.reqArr(i.keys(itc.numDict))})
 
+t.bench(function bench_keys_dict_empty_native() {l.reqArr(Object.keys({}))})
+t.bench(function bench_keys_dict_empty_lang_structKeys() {l.reqArr(l.structKeys({}))})
+t.bench(function bench_keys_dict_empty_iter_keys() {l.reqArr(i.keys({}))})
+
 t.bench(function bench_keys_set_native() {l.reqArr([...itc.numSet.keys()])})
 t.bench(function bench_keys_set_our_keys() {l.reqArr(i.keys(itc.numSet))})
 
@@ -444,6 +448,9 @@ t.bench(function bench_head_set_with_our_head() {l.nop(i.head(itc.numSet))})
 
 t.bench(function bench_head_map_from_values() {l.nop(headFromValues(itc.numMap))})
 t.bench(function bench_head_map_with_our_head() {l.nop(i.head(itc.numMap))})
+
+t.bench(function bench_head_vec_from_values() {l.nop(headFromValues(itc.numVec))})
+t.bench(function bench_head_vec_with_our_head() {l.nop(i.head(itc.numVec))})
 
 // Stupidly expensive on any non-list. May consider supporting ONLY lists.
 itc.deoptSeqFun(lo.last)

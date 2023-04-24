@@ -13,14 +13,18 @@ export function alloc(len) {return Array(l.reqNat(len))}
 
 export function arr(val) {return l.isTrueArr(val) ? val : arrCopy(val)}
 
+export function arrOpt(val) {return l.isNil(val) ? val : arr(val)}
+
 export function arrCopy(val) {
   if (l.isNil(val)) return []
   if (l.isTrueArr(val)) return val.slice()
-  if (l.isArrble(val)) return arrFromList(val.toArray())
+  if (l.isArrble(val)) return arrFromList(toArray(val))
   if (l.isList(val)) return arrFromList(val)
   if (l.isSeq(val)) return values(val)
   throw l.errConv(val, `array`)
 }
+
+function toArray(val) {return l.reqArr(val.toArray())}
 
 function arrFromList(val) {
   if (l.isTrueArr(val)) return val.slice()
@@ -42,20 +46,20 @@ export function keys(val) {
   if (!l.isObj(val)) return []
   if (l.isList(val)) return span(val.length)
   if (l.isIter(val) && l.hasMeth(val, `keys`)) return arrFromIter(val.keys())
-  if (l.isArrble(val)) return span(l.onlyNat(getSize(val)) ?? val.toArray().length)
+  if (l.isArrble(val)) return span(l.onlyNat(getSize(val)) ?? toArray(val).length)
   if (isStructSync(val)) return Object.keys(val)
   throw l.errConv(val, `keys`)
 }
 
 export function values(val) {
   if (l.isTrueArr(val)) return val
-  if (l.isArrble(val)) return values(val.toArray())
+  if (l.isArrble(val)) return values(toArray(val))
   return valuesCopy(val)
 }
 
 export function valuesCopy(val) {
   if (!l.isObj(val)) return []
-  if (l.isArrble(val)) return arrFromList(val.toArray())
+  if (l.isArrble(val)) return arrFromList(toArray(val))
   if (l.isList(val)) return arrFromList(val)
   if (l.isSet(val)) return withBuf(val, copySet)
   if (l.isMap(val)) return withBuf(val, copyMap)
@@ -81,7 +85,7 @@ export function entries(val) {
   if (!l.isObj(val)) return []
   if (l.isList(val)) return entriesFromList(val)
   if (l.isIter(val) && l.hasMeth(val, `entries`)) return arrFromIter(val.entries())
-  if (l.isArrble(val)) return entriesFromList(val.toArray())
+  if (l.isArrble(val)) return entriesFromList(toArray(val))
   if (l.isIterator(val)) return arrFromIter(val)
   if (isStructSync(val)) return structEntries(val)
   throw l.errConv(val, `entries`)
@@ -140,6 +144,7 @@ export function concat(...val) {
   return val.length ? Array.prototype.concat.call(...mapMut(val, values)) : []
 }
 
+// TODO move to `lang.mjs`.
 export function len(val) {
   if (!l.isObj(val)) return 0
 
@@ -150,6 +155,14 @@ export function len(val) {
     const size = getSize(val)
     if (l.isNat(size)) return size
 
+    // This is the only way to avoid lying. If we return 0 without iterating,
+    // the remaining length might be non-zero. If we iterate to count and
+    // return non-zero, the remaining length is zero.
+    if (l.isIterator(val)) {
+      iterConsume(val)
+      return 0
+    }
+
     return iterLen(iter(val))
   }
 
@@ -157,13 +170,25 @@ export function len(val) {
   throw TypeError(`unable to measure length of ${l.show(val)}`)
 }
 
+function iterConsume(val) {while (more(val)) {}}
+
 function iterLen(val) {
   let out = 0
   while (more(val)) out++
   return out
 }
 
+// TODO rename to `isNotEmpty`.
+// TODO move to `lang.mjs`.
 export function hasLen(val) {return len(val) > 0}
+
+// TODO test.
+export function clear(tar) {
+  if (l.isNil(tar)) return tar
+  if (l.isArr(tar)) return tar.length = 0, tar
+  if (l.isClearable(tar)) return tar.clear(), tar
+  throw TypeError(`unable to clear ${l.show(tar)}`)
+}
 
 export function each(val, fun) {
   l.reqFun(fun)
@@ -215,6 +240,17 @@ export function fold(val, acc, fun) {
   return acc
 }
 
+export function fold1(src, fun) {
+  src = values(src)
+  l.reqFun(fun)
+
+  const len = src.length
+  let acc = len ? src[0] : undefined
+  let ind = 0
+  while (++ind < len) acc = fun(acc, src[ind])
+  return acc
+}
+
 export function find(val, fun) {
   l.reqFun(fun)
   for (val of values(val)) if (fun(val)) return val
@@ -256,6 +292,7 @@ function flatAdd(tar, src) {
 export function head(val) {
   if (!l.isObj(val)) return undefined
   if (l.isList(val)) return val[0]
+  if (l.isArrble(val)) return head(toArray(val))
   if (l.isIter(val)) return iter(val).next().value
   return val[keys(val)[0]]
 }
@@ -271,6 +308,7 @@ Namely, it should be an array.
 export function last(val) {
   if (!l.isObj(val)) return undefined
   if (l.isList(val)) return val[val.length - 1]
+  if (l.isArrble(val)) return last(toArray(val))
   if (l.isIter(val)) return last(values(val))
   return val[last(keys(val))]
 }

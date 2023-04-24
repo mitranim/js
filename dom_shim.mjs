@@ -598,6 +598,9 @@ export class HTMLAnchorElement extends HTMLElement {
   get href() {return l.laxStr(this.getAttribute(`href`))}
   set href(val) {this.setAttribute(`href`, val)}
 
+  get target() {return l.laxStr(this.getAttribute(`target`))}
+  set target(val) {this.setAttribute(`target`, val)}
+
   get rel() {return l.laxStr(this.getAttribute(`rel`))}
   set rel(val) {this.setAttribute(`rel`, val)}
 }

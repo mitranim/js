@@ -271,11 +271,11 @@ t.test(function test_pkOpt() {
 })
 
 t.test(function test_pk() {
-  t.throws(() => c.pk(), TypeError, `expected primary key of undefined, got undefined`)
-  t.throws(() => c.pk(10), TypeError, `expected primary key of 10, got undefined`)
-  t.throws(() => c.pk({}), TypeError, `expected primary key of {}, got undefined`)
-  t.throws(() => c.pk({pk: 10}), TypeError, `expected primary key of {"pk": 10}, got undefined`)
-  t.throws(() => c.pk({pk() {return null}}), TypeError, `expected primary key of {"pk": [function pk]}, got null`)
+  t.throws(() => c.pk(), TypeError, `expected undefined to provide key, got undefined`)
+  t.throws(() => c.pk(10), TypeError, `expected 10 to provide key, got undefined`)
+  t.throws(() => c.pk({}), TypeError, `expected {} to provide key, got undefined`)
+  t.throws(() => c.pk({pk: 10}), TypeError, `expected {"pk": 10} to provide key, got undefined`)
+  t.throws(() => c.pk({pk() {return null}}), TypeError, `expected {"pk": [function pk]} to provide key, got null`)
 
   function test(val, exp) {t.is(c.pk(val), exp)}
   test({pk() {return 10}}, 10)
@@ -285,7 +285,7 @@ t.test(function test_pk() {
 t.test(function test_Coll() {
   t.test(function test_addOpt() {
     function test(val) {
-      t.throws(() => new c.Coll().add(val), TypeError, `expected primary key of ${l.show(val)}, got undefined`)
+      t.throws(() => new c.Coll().add(val), TypeError, `expected ${l.show(val)} to provide key, got undefined`)
       testMap(new c.Coll().addOpt(val), new Map())
     }
 

@@ -3,9 +3,9 @@ import * as c from './coll.mjs'
 
 /*
 TODO try the following regex. May require a different split algo.
-See `github.com/mitranim/gg/str.go`.
+See `github.com/mitranim/gg/text.go`.
 
-  `\p{Lu}\p{Ll}+\d*|\p{Lu}+\d*|\p{Ll}+\d*`
+  \p{Lu}+[\p{Ll}\d]*|[\p{Ll}\d]+
 */
 export const RE_WORD = /[\p{Lu}\d]+(?=\W|_|$)|[\p{Lu}\d]+(?=\p{Lu}\p{Ll}|\W|_|$)|\p{Lu}[\p{Ll}\d]*(?=\p{Lu}|\W|_|$)|[\p{Ll}\d]+(?=\p{Lu}|\W|_|$)|[\p{Lu}\d]+(?=\p{Ll}|\W|_|$)|[\p{L}\d]+(?=\W|_|$)/gu
 export const RE_EMBED = /{{([^{}]*)}}/g

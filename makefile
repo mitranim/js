@@ -1,5 +1,5 @@
 MAKEFLAGS := --silent --always-make
-PAR := $(MAKE) -j 128
+MAKE_PAR := $(MAKE) -j 128
 DENO := deno run -A --no-check --unstable --allow-hrtime
 RUN := $(if $(run),--run="$(run)",)
 FEAT := $(or $(feat),all_deno)
@@ -48,10 +48,10 @@ doc:
 	$(DENO) $(CMD_DOC)
 
 watch:
-	$(PAR) test_w lint_w doc_w
+	$(MAKE_PAR) test_w lint_w doc_w
 
 prep: test
-	$(PAR) lint doc
+	$(MAKE_PAR) lint doc
 
 tag:
 	git tag $(VER)

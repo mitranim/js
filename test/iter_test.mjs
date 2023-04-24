@@ -466,11 +466,16 @@ t.test(function test_len() {
   testLen(function test(val, len) {t.is(i.len(val), len)})
 })
 
-// TODO verify that when invoked on iterators, it doesn't iterate them fully.
 t.test(function test_hasLen() {
   testLen(function test(val, len) {t.is(i.hasLen(val), len > 0)})
 })
 
+/*
+TODO add tests:
+
+  * When `l.isIterator(val)` → consume iterator, return 0.
+  * When `l.isIter(val) && !l.isIterator(val)` → iterate to measure.
+*/
 function testLen(test) {
   test(undefined, 0)
   test(null, 0)
@@ -499,8 +504,8 @@ function testLen(test) {
   test(args(10), 1)
   test(args(10, 20), 2)
   test(copygen([]), 0)
-  test(copygen([10]), 1)
-  test(copygen([10, 20]), 2)
+  test(copygen([10]), 0)
+  test(copygen([10, 20]), 0)
 }
 
 t.test(function test_each() {
@@ -695,17 +700,48 @@ t.test(function test_remove() {
 })
 
 t.test(function test_fold() {
-  t.throws(() => i.fold([], 0, `str`), TypeError, `expected variant of isFun, got "str"`)
-  testFunEmpty(src => i.fold(src, `acc`, fail), `acc`)
+  const fun = i.fold
+
+  t.throws(() => fun([], 0, `str`), TypeError, `expected variant of isFun, got "str"`)
+  testFunEmpty(src => fun(src, `acc`, fail), `acc`)
 
   testColls(
     [10, 20, 30],
     {one: 10, two: 20, three: 30},
     function testColl(make) {
-      t.is(i.fold(make(), `acc`, l.id), `acc`)
-      t.is(i.fold(make(), `acc`, l.add), `acc102030`)
-      t.eq(i.fold(make(), 3,     arrgs), [[[3, 10], 20], 30])
-      t.is(i.fold(make(), 3,     l.add), (3 + 10 + 20 + 30))
+      t.is(fun(make(), `acc`, l.id), `acc`)
+      t.is(fun(make(), `acc`, l.add), `acc102030`)
+      t.eq(fun(make(), 3,     arrgs), [[[3, 10], 20], 30])
+      t.is(fun(make(), 3,     l.add), (3 + 10 + 20 + 30))
+    },
+  )
+})
+
+t.test(function test_fold1() {
+  const fun = i.fold1
+
+  t.throws(() => fun([], `str`), TypeError, `expected variant of isFun, got "str"`)
+  testFunEmpty(src => fun(src, fail), undefined)
+
+  testColls(
+    [10],
+    {one: 10},
+    function testColl(make) {
+      t.is(fun(make(), fail), 10)
+      t.is(fun(make(), fail), 10)
+      t.eq(fun(make(), fail), 10)
+      t.is(fun(make(), fail), 10)
+    },
+  )
+
+  testColls(
+    [10, 20, 30],
+    {one: 10, two: 20, three: 30},
+    function testColl(make) {
+      t.is(fun(make(), l.id), 10)
+      t.is(fun(make(), l.add), (10 + 20 + 30))
+      t.eq(fun(make(), arrgs), [[10, 20], 30])
+      t.is(fun(make(), l.add), (10 + 20 + 30))
     },
   )
 })

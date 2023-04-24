@@ -295,10 +295,15 @@ export function reqArrble(val) {return isArrble(val) ? val : throwErrFun(val, is
 export function optArrble(val) {return isNil(val) ? val : reqArrble(val)}
 export function onlyArrble(val) {return isArrble(val) ? val : undefined}
 
-export function isEq(val) {return isObj(val) && `eq` in val && isFun(val.eq)}
-export function reqEq(val) {return isEq(val) ? val : throwErrFun(val, isEq)}
-export function optEq(val) {return isNil(val) ? val : reqEq(val)}
-export function onlyEq(val) {return isEq(val) ? val : undefined}
+export function isEqable(val) {return isObj(val) && `eq` in val && isFun(val.eq)}
+export function reqEqable(val) {return isEqable(val) ? val : throwErrFun(val, isEqable)}
+export function optEqable(val) {return isNil(val) ? val : reqEqable(val)}
+export function onlyEqable(val) {return isEqable(val) ? val : undefined}
+
+export function isClearable(val) {return isObj(val) && `clear` in val && isFun(val.clear)}
+export function reqClearable(val) {return isClearable(val) ? val : throwErrFun(val, isClearable)}
+export function optClearable(val) {return isNil(val) ? val : reqClearable(val)}
+export function onlyClearable(val) {return isClearable(val) ? val : undefined}
 
 export function isErr(val) {return isInst(val, Error)}
 export function reqErr(val) {return isErr(val) ? val : throwErrFun(val, isErr)}
@@ -418,7 +423,7 @@ export function hasMeth(val, key) {return hasIn(val, key) && isFun(val[key])}
 
 export function eq(one, two) {
   if (is(one, two)) return true
-  if (!isEq(one)) return false
+  if (!isEqable(one)) return false
   const con = getCon(two)
   return !!con && (con === getCon(one)) && one.eq(two)
 }
