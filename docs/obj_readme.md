@@ -14,7 +14,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.41/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.42/obj.mjs'
 ```
 
 ## API
@@ -82,8 +82,8 @@ Performance characteristics:
   * When the number of declared properties is significantly smaller than the number of provided properties, this tends to be faster than the aforementioned assignment functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.41/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.41/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.42/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.42/obj.mjs'
 
 class Person extends o.Struct {
   static Spec = class extends super.Spec {
@@ -126,8 +126,8 @@ Differences from [#`Struct`](#class-struct):
   * Measurably worse performance.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.41/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.41/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.42/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.42/obj.mjs'
 
 class Person extends o.StructLax {
   static Spec = class extends super.Spec {
@@ -160,7 +160,7 @@ Links: [source](../obj.mjs#L302); [test/example](../test/obj_test.mjs#L756).
 Takes a class and hacks its prototype, converting all non-inherited getters to lazy/memoizing versions of themselves that only execute _once_. The resulting value replaces the getter. Inherited getters are unaffected.
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.41/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.42/obj.mjs'
 
 class Bucket {
   static {o.memGet(this)}
@@ -210,13 +210,13 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
   * [`const parentNodeKey`](../obj.mjs#L358)
   * [`function MixChild`](../obj.mjs#L374)
   * [`class MixChildCache`](../obj.mjs#L376)
-  * [`function MixChildCon`](../obj.mjs#L423)
-  * [`class MixChildConCache`](../obj.mjs#L425)
-  * [`function mixMut`](../obj.mjs#L447)
-  * [`function mixMutDescriptors`](../obj.mjs#L458)
-  * [`function pub`](../obj.mjs#L471)
-  * [`function priv`](../obj.mjs#L481)
-  * [`function final`](../obj.mjs#L491)
-  * [`function getter`](../obj.mjs#L501)
-  * [`function setter`](../obj.mjs#L503)
-  * [`function getSet`](../obj.mjs#L505)
+  * [`function MixChildCon`](../obj.mjs#L430)
+  * [`class MixChildConCache`](../obj.mjs#L432)
+  * [`function mixMut`](../obj.mjs#L454)
+  * [`function mixMutDescriptors`](../obj.mjs#L465)
+  * [`function pub`](../obj.mjs#L478)
+  * [`function priv`](../obj.mjs#L488)
+  * [`function final`](../obj.mjs#L498)
+  * [`function getter`](../obj.mjs#L508)
+  * [`function setter`](../obj.mjs#L510)
+  * [`function getSet`](../obj.mjs#L512)

@@ -394,8 +394,15 @@ export class MixChildCache extends DedupMixinCache {
       }
     }
 
+    /**
+    Native DOM classes operate in this mode. They define `.parentNode` getter
+    without setter. DOM tree operations set this property magically, bypassing
+    JS operations. We must prioritize the native getter over our property to
+    ensure that when the element is attached to the DOM, the native parent
+    takes priority over the grafted one.
+    */
     return class MixChildClsCompat extends cls {
-      get parentNode() {return parentNodeKey in this ? this[parentNodeKey] : super.parentNode}
+      get parentNode() {return super.parentNode ?? this[parentNodeKey]}
       set parentNode(val) {this[parentNodeKey] = val}
 
       getParent() {return this.parentNode}

@@ -65,9 +65,9 @@ push:
 # Usage:
 #
 #   * Update the version in `package.json`.
-#   * `make doc`
+#   * `make prep`.
 #   * Commit.
-#   * `make release`
+#   * `make release`.
 release: tag push
 
 define HOOK_PRE_COMMIT
