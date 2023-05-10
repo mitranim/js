@@ -335,11 +335,11 @@ export function tsPico(val) {return `${(l.reqFin(val) * 1_000_000_000).toFixed(0
 
 // Global config and global state.
 export const conf = new class Conf extends l.Emp {
-  #testFilter = /(?:)/
+  #testFilter = undefined
   get testFilter() {return this.#testFilter}
   set testFilter(val) {this.#testFilter = l.optArrOf(val, l.isReg)}
 
-  #benchFilter = /(?:)/
+  #benchFilter = undefined
   get benchFilter() {return this.#benchFilter}
   set benchFilter(val) {this.#benchFilter = l.optArrOf(val, l.isReg)}
 
