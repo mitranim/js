@@ -37,7 +37,7 @@ export function emptty(soft) {
 
   if (Deno?.isatty) {
     if (Deno.isatty()) {
-      Deno.stdout.writeSync(soft ? clearSoftArr() : clearHardArr())
+      Deno.stdout.writeSync(soft ? arrClearSoft() : arrClearHard())
       return true
     }
     return false
@@ -47,7 +47,7 @@ export function emptty(soft) {
 
   if (process?.stdout) {
     if (process.stdout.isTTY) {
-      process.stdout.write(soft ? clearSoftArr() : clearHardArr())
+      process.stdout.write(soft ? arrClearSoft() : arrClearHard())
       return true
     }
     return false
@@ -170,20 +170,44 @@ export class EnvMap extends c.Bmap {
   isLineNonEmpty(val) {return !this.isLineEmpty(val)}
 }
 
-// Copied from `https://github.com/mitranim/emptty`.
-export const esc = `\x1b`
-export const clearSoft = esc + `c`
-export const clearScroll = esc + `[3J`
-export const clearHard = clearSoft + clearScroll
+// Standard terminal escape sequence. Same as "\x1b" or "\033".
+// Reference: https://en.wikipedia.org/wiki/ANSI_escape_code.
+export const TERM_ESC = `\x1b`
 
-/*
-`TextEncoder..encode` is stupidly slow. `new` is not the bottleneck.
-We could encode the arrays "statically" but then it wastes CPU on module
-initialization even if unused.
-*/
-export function clearSoftArr() {return new TextEncoder().encode(clearSoft)}
-export function clearScrollArr() {return new TextEncoder().encode(clearScroll)}
-export function clearHardArr() {return new TextEncoder().encode(clearHard)}
+// Control Sequence Introducer. Used for other codes.
+export const TERM_ESC_CSI = TERM_ESC + `[`
+
+// Update cursor position to first row, first column.
+export const TERM_ESC_CUP = TERM_ESC_CSI + `1;1H`
+
+// Supposed to clear the screen without clearing the scrollback, aka soft clear.
+// Seems insufficient on its own, at least in some terminals.
+export const TERM_ESC_ERASE2 = TERM_ESC_CSI + `2J`
+
+// Supposed to clear the screen and the scrollback, aka hard clear.
+// Seems insufficient on its own, at least in some terminals.
+export const TERM_ESC_ERASE3 = TERM_ESC_CSI + `3J`
+
+// Supposed to reset the terminal to initial state, aka super hard clear.
+// Seems insufficient on its own, at least in some terminals.
+export const TERM_ESC_RESET = TERM_ESC + `c`
+
+// Clear screen without clearing scrollback. Note that the behavior of this
+// escape sequence is not consistent between languages and environments.
+export const TERM_ESC_CLEAR_SOFT = TERM_ESC_RESET
+
+// Clear screen AND scrollback.
+export const TERM_ESC_CLEAR_HARD = TERM_ESC_CUP + TERM_ESC_RESET + TERM_ESC_ERASE3
+
+let ARR_CLEAR_SOFT
+export function arrClearSoft() {
+  return ARR_CLEAR_SOFT ??= new TextEncoder().encode(TERM_ESC_CLEAR_SOFT)
+}
+
+let ARR_CLEAR_HARD
+export function arrClearHard() {
+  return ARR_CLEAR_HARD ??= new TextEncoder().encode(TERM_ESC_CLEAR_HARD)
+}
 
 export async function timed(tag, fun) {
   const pre = tag ? s.san`[${tag}] ` : ``

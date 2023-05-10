@@ -23,7 +23,7 @@ Written carefully and with benchmarks, but doesn't claim to be optimal at what i
 Example case conversion:
 
 ```js
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.42/str.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.43/str.mjs'
 
 s.words(`oneTwoThree`).title().snake() === `One_Two_Three`
 
@@ -108,14 +108,14 @@ The following APIs are exported but undocumented. Check [str.mjs](../str.mjs).
   * [`function draftParse`](../str.mjs#L488)
   * [`function draftRender`](../str.mjs#L489)
   * [`function draftRenderAsync`](../str.mjs#L490)
-  * [`class Draft`](../str.mjs#L501)
-  * [`function isRen`](../str.mjs#L531)
-  * [`class Embed`](../str.mjs#L534)
-  * [`function str`](../str.mjs#L557)
-  * [`function strLax`](../str.mjs#L563)
-  * [`function strConcat`](../str.mjs#L569)
-  * [`function strConcatLax`](../str.mjs#L573)
-  * [`function san`](../str.mjs#L581)
-  * [`function sanLax`](../str.mjs#L583)
-  * [`function interpolate`](../str.mjs#L586)
-  * [`class Str`](../str.mjs#L605)
+  * [`class Draft`](../str.mjs#L505)
+  * [`function isRen`](../str.mjs#L535)
+  * [`class Embed`](../str.mjs#L538)
+  * [`function str`](../str.mjs#L561)
+  * [`function strLax`](../str.mjs#L567)
+  * [`function strConcat`](../str.mjs#L573)
+  * [`function strConcatLax`](../str.mjs#L577)
+  * [`function san`](../str.mjs#L585)
+  * [`function sanLax`](../str.mjs#L587)
+  * [`function interpolate`](../str.mjs#L590)
+  * [`class Str`](../str.mjs#L609)

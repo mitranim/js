@@ -143,7 +143,7 @@ export class Words extends c.Vec {
     return super.from(val)
   }
 
-  static fromStr(val) {return new this(l.laxStr(val).match(RE_WORD) || [])}
+  static fromStr(val) {return new this(l.laxStr(val).match(RE_WORD))}
 }
 
 export function lower(val) {return l.laxStr(val).toLowerCase()}
@@ -490,6 +490,10 @@ export function draftRender(src, ctx) {return draftParse(src).render(ctx)}
 export function draftRenderAsync(src, ctx) {return draftParse(src).renderAsync(ctx)}
 
 /*
+Tool for string templating. By default, uses {{}} delimiters (configurable) for
+embedding, allowing to invoke arbitrary properties and methods on the context
+object provided when rendering.
+
 Word of warning. Most apps shouldn't use string templating. Whenever possible,
 structured markup should be authored as code, not as string templates, with
 something like our `prax.mjs`. Markup-as-code allows MUCH better performance,
@@ -510,8 +514,8 @@ export class Draft extends c.Vec {
   }
 
   renderAsync(ctx) {
-    const seg = val => isRen(val) ? val.render(ctx) : val
-    return Promise.all(this.$.map(seg)).then(strConcatLax)
+    const segment = val => isRen(val) ? val.render(ctx) : val
+    return Promise.all(this.$.map(segment)).then(strConcatLax)
   }
 
   parse(src, reg) {

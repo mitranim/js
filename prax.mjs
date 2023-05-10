@@ -445,6 +445,7 @@ export class PropBui extends o.MixMain(l.Emp) {
   or attributes. For "custom" shortcuts, see below.
   */
 
+  alt(val) {return this.set(`alt`, val)}
   as(val) {return this.set(`as`, val)}
   charset(val) {return this.set(`charset`, val)}
   checked(val) {return this.set(`checked`, !!val)}
@@ -480,6 +481,7 @@ export class PropBui extends o.MixMain(l.Emp) {
   style(val) {return this.set(`style`, val)}
   tabIndex(val) {return this.set(`tabIndex`, val)}
   target(val) {return this.set(`target`, val)}
+  title(val) {return this.set(`title`, val)}
   type(val) {return this.set(`type`, val)}
   value(val) {return this.set(`value`, val)}
   width(val) {return this.set(`width`, val)}

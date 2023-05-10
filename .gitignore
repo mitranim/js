@@ -15,3 +15,5 @@
 
 mock_*
 stash_*
+*_mock.*
+*_stash.*

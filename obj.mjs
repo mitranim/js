@@ -50,24 +50,23 @@ export class StructLax extends Struct {
   static get Type() {return StructTypeLax}
 }
 
+export const clsKey = Symbol.for(`cls`)
+
 export class StructSpec extends l.Emp {
   // Allows a spec to access its class. Note that we ignore symbolic properties
   // and getters of a spec when initializing `StructType` from `StructSpec`.
-  // This is similar to `MixChild` and partially copied from it, but we're
-  // unable to directly use `MixChild` here, because it would add methods to
-  // the prototype of `StructSpec`, which is unacceptable here.
-  constructor(val) {super()[parentNodeKey] = val}
-  get parentNode() {return this[parentNodeKey]}
+  constructor(val) {super()[clsKey] = l.reqCls(val)}
 
   static validate() {}
   static any(val) {return val}
+  static getCls(tar) {return l.reqInst(tar, this)[clsKey]}
 }
 
 // Internal tool for type checking in structs.
 export class StructType extends l.Emp {
   constructor(cls) {
     super()
-    this[parentNodeKey] = l.reqCls(cls)
+    this[clsKey] = l.reqCls(cls)
     this.list = []
     this.dict = l.npo()
     this.spec = l.reqInst(cls.getSpec(), StructSpec)
@@ -76,8 +75,7 @@ export class StructType extends l.Emp {
 
   get Spec() {return this.spec.constructor}
 
-  // Implemented this way for consistency with `StructSpec`.
-  get parentNode() {return this[parentNodeKey]}
+  getCls() {return this[clsKey]}
 
   // Called after `.init`/`.reinit`.
   // Subclasses may override this.
@@ -99,14 +97,9 @@ export class StructType extends l.Emp {
   }
 
   mutOpt(tar, src) {if (l.isSome(src)) this.mut(tar, src)}
-
   reset(tar, src) {for (const field of this.list) field.reset(tar, src)}
-
   resetOpt(tar, src) {if (l.isSome(src)) this.reset(tar, src)}
-
-  patch(tar, src) {
-    for (const key of l.structKeys(src)) this.set(tar, key, src[key])
-  }
+  patch(tar, src) {for (const key of l.structKeys(src)) this.set(tar, key, src[key])}
 
   // Must mimic the semantics of `obj.mjs`.`patch` (not `assign`), with
   // additional support for calling `.mut` on properties that implement
@@ -124,6 +117,7 @@ export class StructType extends l.Emp {
 
   initFromSpec() {
     const {dict, list, spec} = this
+    const proto = this.getCls().prototype
     const visited = new Set()
     let src = spec
 
@@ -132,6 +126,8 @@ export class StructType extends l.Emp {
         if (key === `constructor` || visited.has(key)) continue
 
         visited.add(key)
+
+        if (hasOnlyGetter(proto, key)) continue
 
         if (l.isFun(desc.value)) {
           list.push(dict[key] = new this.Field(this, key))
@@ -549,6 +545,11 @@ function descIn(tar, key) {
     tar = Object.getPrototypeOf(tar)
   }
   return undefined
+}
+
+function hasOnlyGetter(tar, key) {
+  const desc = descIn(tar, key)
+  return !!desc?.get && !desc?.set
 }
 
 function goc(maker, cache, key) {

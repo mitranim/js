@@ -45,6 +45,7 @@ export class Run extends l.Emp {
   get avg() {return this.#avg}
   set avg(val) {this.#avg = l.reqFin(val)}
 
+  root() {return this.parent?.root() ?? this}
   level() {return (this.parent?.level() + 1) | 0}
   time() {return this.end - this.start}
   elapsed() {return (l.onlyFin(this.end) ?? now()) - this.start}
@@ -75,9 +76,25 @@ export class Run extends l.Emp {
     }
   }
 
+  // Inverse of `toFilter`. TODO symmetric naming.
   nameFull() {
-    const {name, parent} = this
-    return parent ? `${parent.nameFull()}/${name}` : name
+    const name = l.reqStr(this.name)
+    const parent = this.parent
+    return parent ? (l.reqStr(parent.nameFull()) + `/` + name) : name
+  }
+
+  allow(filter) {
+    return (
+      this.constructor.allow(filter, this.name, this.level()) &&
+      (this.parent?.allow(filter) ?? true)
+    )
+  }
+
+  static allow(filter, name, level) {
+    l.optArr(filter)
+    l.reqStr(name)
+    level = l.laxNat(level)
+    return l.optReg(filter?.[level])?.test(name) ?? true
   }
 }
 
@@ -220,24 +237,24 @@ export class StringReporter extends l.Emp {
 
   cols() {return 0}
 
-  str(pref, suff) {
-    l.reqStr(pref)
-    l.reqStr(suff)
+  str(pre, suf) {
+    l.reqStr(pre)
+    l.reqStr(suf)
 
-    if (!suff) return pref
-    if (!pref) return suff
+    if (!suf) return pre
+    if (!pre) return suf
 
     const space = ` `
 
     // Semi-placeholder. See comments on `test_string_length`.
     const infix = this.pad.repeat(pos(
-      this.cols() - pref.length - (space.length * 2) - suff.length,
+      this.cols() - pre.length - (space.length * 2) - suf.length,
     ))
 
-    return pref + space + infix + (infix && space) + suff
+    return pre + space + infix + (infix && space) + suf
   }
 
-  runPref(run) {
+  runPrefix(run) {
     l.reqInst(run, Run)
     return this.pad.repeat(run.level() * 2) + `[${run.name}]`
   }
@@ -252,23 +269,26 @@ still nops.
 */
 export class ConsoleReporter extends StringReporter {
   cols() {return cli.consoleCols()}
-  report(pref, suff) {this.log(this.str(pref, suff))}
+  report(pre, suf) {this.log(this.str(pre, suf))}
   log() {console.log(...arguments)}
   err() {console.error(...arguments)}
 }
 
 /*
-Reports runs by printing name and success message.
+Reports runs by printing the name of each run before starting it.
 TODO implement an alternative DOM reporter that renders a table.
 */
-export class ConsoleOkReporter extends ConsoleReporter {
-  reportEnd(run) {
+export class ConsoleStartReporter extends ConsoleReporter {
+  reportStart(run) {
     l.reqInst(run, Run)
-    this.report(this.runPref(run), `ok`)
+    this.log(this.pad.repeat(run.level() * 2) + `[start] ` + l.reqStr(run.name))
+    // this.log(this.pad.repeat(run.level() * 2) + l.reqStr(run.name))
   }
 }
 
 // Reports runs by printing name and average time.
+// Usable only for benchmarks.
+// For tests, prefer `ConsoleStartReporter`.
 export class ConsoleAvgReporter extends ConsoleReporter {
   constructor(pad, fun) {
     super(pad)
@@ -278,7 +298,7 @@ export class ConsoleAvgReporter extends ConsoleReporter {
   reportEnd(run) {
     l.reqInst(run, Run)
     const {fun} = this
-    this.report(this.runPref(run), l.req(fun(run.avg), l.isStr))
+    this.report(this.runPrefix(run), l.req(fun(run.avg), l.isStr))
   }
 
   static default() {return this.with(tsNano)}
@@ -289,7 +309,7 @@ export class ConsoleAvgReporter extends ConsoleReporter {
 export class ConsoleRunsReporter extends ConsoleReporter {
   reportEnd(run) {
     l.reqInst(run, Run)
-    this.report(this.runPref(run), String(run.runs))
+    this.report(this.runPrefix(run), String(run.runs))
   }
 }
 
@@ -303,7 +323,7 @@ export class ConsoleBenchReporter extends ConsoleAvgReporter {
   reportEnd(run) {
     l.reqInst(run, Run)
     const {fun} = this
-    this.report(this.runPref(run), `x${run.runs} ${l.req(fun(run.avg), l.isStr)}`)
+    this.report(this.runPrefix(run), `x${run.runs} ${l.req(fun(run.avg), l.isStr)}`)
   }
 }
 
@@ -317,11 +337,11 @@ export function tsPico(val) {return `${(l.reqFin(val) * 1_000_000_000).toFixed(0
 export const conf = new class Conf extends l.Emp {
   #testFilter = /(?:)/
   get testFilter() {return this.#testFilter}
-  set testFilter(val) {this.#testFilter = l.reqReg(val)}
+  set testFilter(val) {this.#testFilter = l.optArrOf(val, l.isReg)}
 
   #benchFilter = /(?:)/
   get benchFilter() {return this.#benchFilter}
-  set benchFilter(val) {this.#benchFilter = l.reqReg(val)}
+  set benchFilter(val) {this.#benchFilter = l.optArrOf(val, l.isReg)}
 
   #benchRunner = TimeRunner.default()
   get benchRunner() {return this.#benchRunner}
@@ -347,10 +367,9 @@ export const conf = new class Conf extends l.Emp {
   get verb() {return this.#verb}
   set verb(val) {this.#verb = l.reqBool(val)}
 
-  testAllow(run) {return this.testFilter.test(run.nameFull())}
-  benchAllow(name) {return this.benchFilter.test(l.reqStr(name))}
-  setTestFilter(val) {return this.testFilter = toReg(val), this}
-  setBenchFilter(val) {return this.benchFilter = toReg(val), this}
+  setTestFilter(val) {return this.testFilter = toFilter(val), this}
+  setBenchFilter(val) {return this.benchFilter = toFilter(val), this}
+
   isTop() {return !this.run}
   verbLog(...val) {if (this.verb) console.log(...val)}
   verbErr(...val) {if (this.verb) console.error(...val)}
@@ -366,30 +385,33 @@ export function test(fun) {
   reqNamedFun(fun, `test`)
 
   const run = new Run(fun.name, conf.run)
-  if (!conf.testAllow(run)) return run
+  if (!run.allow(conf.testFilter)) return run
 
   conf.testRep?.reportStart(run)
   run.start = now()
 
   if (l.isFunAsync(fun)) return testAsync(run, fun)
 
+  let out
   conf.run = run
-  try {fun(run)}
+  try {out = fun(run)}
   finally {conf.run = run.parent}
-  return testDone(run)
+  testDone(run)
+  return out
 }
 
 async function testAsync(run, fun) {
+  let out
   conf.run = run
-  try {await fun(run)}
+  try {out = await fun(run)}
   finally {conf.run = run.parent}
-  return testDone(run)
+  testDone(run)
+  return out
 }
 
 function testDone(run) {
   run.done(now(), 1)
   conf.testRep?.reportEnd(run)
-  return run
 }
 
 /*
@@ -415,10 +437,10 @@ export class Bench extends l.Emp {
     this.runner = optRunner(runner)
   }
 
-  get name() {return this.fun.name}
+  getName() {return this.fun.name}
 
   run(runner = this.runner ?? conf.benchRunner) {
-    const run = new Run(this.name)
+    const run = new Run(this.getName())
     conf.benchRep?.reportStart(run)
 
     conf.run = run
@@ -429,6 +451,8 @@ export class Bench extends l.Emp {
     conf.benchRep?.reportEnd(run)
     return run
   }
+
+  allow(filter) {return Run.allow(filter, this.getName())}
 }
 
 /*
@@ -448,7 +472,7 @@ export function deopt() {
 // Runs registered benchmarks, filtering them via `conf.benchFilter`.
 export function benches() {
   for (const bench of conf.benches) {
-    if (conf.benchAllow(bench.name)) bench.run()
+    if (bench.allow(conf.benchFilter)) bench.run()
   }
 }
 
@@ -800,12 +824,15 @@ function maybeValueOf(val) {
 
 function pos(val) {return Math.max(0, l.laxInt(val))}
 
-function toReg(val) {
-  if (l.isNil(val)) return /(?:)/
-  if (l.isStr(val)) return val ? new RegExp(val) : /(?:)/
-  if (l.isReg(val)) return val
-  throw l.errConv(val, `RegExp`)
+function toFilter(src) {
+  if (l.isNil(src)) return undefined
+  if (l.isStr(src)) return src.split(`/`).map(toReg)
+  if (l.isReg(src)) return [src]
+  if (l.isArr(src)) return src.map(toReg)
+  throw l.errConv(src, `test or benchmark filter`)
 }
+
+function toReg(src) {return l.isReg(src) ? src : new RegExp(l.reqStr(src))}
 
 /*
 Used for all measurements. Semi-placeholder. In the future we may decide to

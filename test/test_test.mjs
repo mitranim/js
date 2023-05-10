@@ -37,16 +37,72 @@ t.test(function test_test() {
   track.req(0)
 
   track.inc().req(1)
-  t.test(function test_test_run() {
-    let run
-    t.test(function test() {run = arguments[0]})
-
-    l.reqInst(run, t.Run)
-    run.reqDone()
-
+  t.test(function test_test_return() {
+    t.is(t.test(function test() {}), undefined)
+    t.is(t.test(function test() {return 10}), 10)
     track.dec().req(0)
   })
   track.req(0)
+
+  track.inc().req(1)
+  t.test(function test_test_run() {
+    const run = t.test(function test() {return arguments[0]})
+    l.reqInst(run, t.Run)
+    run.reqDone()
+    track.dec().req(0)
+  })
+  track.req(0)
+
+  // Lower-level test for filtering features. See the higher-level test below.
+  t.test(function test_Run_allow() {
+    const run0 = new t.Run(`run0`)
+    const run1 = new t.Run(`run1`, run0)
+    const run2 = new t.Run(`run2`, run1)
+
+    t.ok(run0.allow())
+    t.ok(run1.allow())
+    t.ok(run2.allow())
+
+    t.ok(run0.allow([]))
+    t.ok(run1.allow([]))
+    t.ok(run2.allow([]))
+
+    t.ok(run0.allow([/run0/]))
+    t.ok(run1.allow([/run0/]))
+    t.ok(run2.allow([/run0/]))
+
+    t.no(run0.allow([/run_none/]))
+    t.no(run1.allow([/run_none/]))
+    t.no(run2.allow([/run_none/]))
+
+    t.ok(run0.allow([/run0/, /run1/]))
+    t.ok(run1.allow([/run0/, /run1/]))
+    t.ok(run2.allow([/run0/, /run1/]))
+
+    t.no(run0.allow([/run_none/, /run1/]))
+    t.no(run1.allow([/run_none/, /run1/]))
+    t.no(run2.allow([/run_none/, /run1/]))
+
+    t.ok(run0.allow([/run0/, /run2/]))
+    t.no(run1.allow([/run0/, /run2/]))
+    t.no(run2.allow([/run0/, /run2/]))
+
+    t.ok(run0.allow([/run0/, /run1/, /run2/]))
+    t.ok(run1.allow([/run0/, /run1/, /run2/]))
+    t.ok(run2.allow([/run0/, /run1/, /run2/]))
+
+    t.ok(run0.allow([/run0/, /run1/, /run2/]))
+    t.no(run1.allow([/run0/, /run_none/, /run2/]))
+    t.no(run2.allow([/run0/, /run_none/, /run2/]))
+
+    t.no(run0.allow([/run_none/, /run1/, /run2/]))
+    t.no(run1.allow([/run_none/, /run1/, /run2/]))
+    t.no(run2.allow([/run_none/, /run1/, /run2/]))
+
+    t.ok(run0.allow([/run0/, /run1/, /run2/, /run3/]))
+    t.ok(run1.allow([/run0/, /run1/, /run2/, /run3/]))
+    t.ok(run2.allow([/run0/, /run1/, /run2/, /run3/]))
+  })
 
   track.inc().req(1)
   t.test(function test_filtering() {
@@ -315,9 +371,9 @@ t.test(function test_StringReporter() {
     t.is(rep.str(``, `two`), `two`)
     t.is(rep.str(`one`, `two`), `one two`)
 
-    t.is(rep.runPref(new t.Run(`top`)), `[top]`)
-    t.is(rep.runPref(new t.Run(`mid`, new t.Run(`top`))), `··[mid]`)
-    t.is(rep.runPref(new t.Run(`low`, new t.Run(`mid`, new t.Run(`top`)))), `····[low]`)
+    t.is(rep.runPrefix(new t.Run(`top`)), `[top]`)
+    t.is(rep.runPrefix(new t.Run(`mid`, new t.Run(`top`))), `··[mid]`)
+    t.is(rep.runPrefix(new t.Run(`low`, new t.Run(`mid`, new t.Run(`top`)))), `····[low]`)
   })
 
   t.test(function test_with_cols() {

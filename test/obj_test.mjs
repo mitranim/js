@@ -695,6 +695,11 @@ t.test(function test_StructLax_getters_and_setters() {
     testNoOverride(Tar)
   })
 
+  /*
+  This behavior is an unintentional side effect of allowing subclasses to
+  declare getters for fields which are also declared in the spec of a
+  superclass. See the subclass test below.
+  */
   t.test(function test_declared_only_getter() {
     class Tar extends o.StructLax {
       static Spec = class extends super.Spec {
@@ -704,7 +709,32 @@ t.test(function test_StructLax_getters_and_setters() {
       get inner() {return `default`}
     }
 
-    t.throws(() => new Tar(), TypeError, `Cannot set property inner`)
+    testDefault(Tar)
+    testNoOverride(Tar)
+  })
+
+  /*
+  Intended behavior: struct subclasses are allowed to declare getters that
+  conflict with fields declared in a superclass spec, in which case subclass
+  getters take priority.
+  */
+  t.test(function test_declared_only_getter_in_subclass() {
+    class Super extends o.StructLax {
+      static Spec = class extends super.Spec {
+        inner = l.laxFin
+      }
+    }
+
+    t.throws(() => new Super({inner: `10`}), TypeError, `invalid property "inner"`)
+    t.own(new Super(), {inner: 0})
+    t.own(new Super({inner: 10}), {inner: 10})
+
+    class Tar extends Super {
+      get inner() {return `default`}
+    }
+
+    testDefault(Tar)
+    testNoOverride(Tar)
   })
 
   /*
