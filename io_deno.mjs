@@ -147,7 +147,7 @@ export class ReaderStreamSource extends l.Emp {
 
   // Called by `ReadableStream` when data is requested.
   async pull(ctr) {
-    const buf = new Uint8Array(this.size)
+    const buf = new Uint8Array(this.size())
 
     try {
       const len = await this.src.read(buf)
@@ -181,7 +181,7 @@ export class ReaderStreamSource extends l.Emp {
 
   static async open(path) {return new this(await Deno.open(path))}
 
-  get size() {return 4096}
+  size() {return 4096 * 16}
 }
 
 export class FileStream extends ReadableStream {

@@ -433,11 +433,18 @@ export class PropBui extends o.MixMain(l.Emp) {
   get $() {return this[refKey]}
 
   has(key) {return l.hasIn(this[refKey], key)}
+
   get(key) {return this[refKey] ? this[refKey][l.reqStr(key)] : undefined}
 
   set(key, val) {
     const self = this.mutable()
-    return self.$[l.reqStr(key)] = val, self
+    return self[refKey][l.reqStr(key)] = val, self
+  }
+
+  delete(key) {
+    const tar = this[refKey]
+    if (l.hasOwn(tar, key)) delete tar[key]
+    return this
   }
 
   /*

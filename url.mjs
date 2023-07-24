@@ -364,9 +364,20 @@ export class Loc extends Url {
   withTitle(val) {return this.clone().setTitle(val)}
   setTitle(val) {return this.title = val, this}
 
-  push() {this.history.pushState(this.state, this.title, this)}
-  replace() {this.history.replaceState(this.state, this.title, this)}
-  reload() {this.location.href = this}
+  push() {
+    this.history.pushState(this.state, this.title, this)
+    return this
+  }
+
+  replace() {
+    this.history.replaceState(this.state, this.title, this)
+    return this
+  }
+
+  reload() {
+    this.location.href = this
+    return this
+  }
 
   // Allows `new Loc(loc)` and `loc.clone()`.
   resetFromUrl(val) {

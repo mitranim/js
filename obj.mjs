@@ -150,9 +150,14 @@ export class StructTypeLax extends StructType {
 // Field definition used by `StructType`.
 export class StructField extends l.Emp {
   constructor(typ, key) {
+    l.reqInst(typ, StructType)
+    l.reqStr(key)
+
     super()
-    priv(this, `typ`, l.reqInst(typ, StructType))
-    this.key = l.reqStr(key)
+
+    priv(this, `typ`, typ)
+    this.key = key
+
     if (!l.isFun(typ.spec[key])) {
       throw TypeError(`invalid property ${l.show(key)}: missing validator function in spec`)
     }

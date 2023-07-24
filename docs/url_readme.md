@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.44/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.45/url.mjs'
 ```
 
 Example parsing:
@@ -446,17 +446,17 @@ The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
   * [`function loc`](../url.mjs#L336)
   * [`function toLoc`](../url.mjs#L337)
   * [`class Loc`](../url.mjs#L347)
-  * [`const stateKey`](../url.mjs#L400)
-  * [`const titleKey`](../url.mjs#L401)
-  * [`const schemeKey`](../url.mjs#L403)
-  * [`const slashKey`](../url.mjs#L404)
-  * [`const usernameKey`](../url.mjs#L405)
-  * [`const passwordKey`](../url.mjs#L406)
-  * [`const hostnameKey`](../url.mjs#L407)
-  * [`const portKey`](../url.mjs#L408)
-  * [`const pathnameKey`](../url.mjs#L409)
-  * [`const queryKey`](../url.mjs#L410)
-  * [`const hashKey`](../url.mjs#L411)
-  * [`function urlParse`](../url.mjs#L413)
-  * [`function queryDec`](../url.mjs#L479)
-  * [`function queryEnc`](../url.mjs#L485)
+  * [`const stateKey`](../url.mjs#L411)
+  * [`const titleKey`](../url.mjs#L412)
+  * [`const schemeKey`](../url.mjs#L414)
+  * [`const slashKey`](../url.mjs#L415)
+  * [`const usernameKey`](../url.mjs#L416)
+  * [`const passwordKey`](../url.mjs#L417)
+  * [`const hostnameKey`](../url.mjs#L418)
+  * [`const portKey`](../url.mjs#L419)
+  * [`const pathnameKey`](../url.mjs#L420)
+  * [`const queryKey`](../url.mjs#L421)
+  * [`const hashKey`](../url.mjs#L422)
+  * [`function urlParse`](../url.mjs#L424)
+  * [`function queryDec`](../url.mjs#L490)
+  * [`function queryEnc`](../url.mjs#L496)

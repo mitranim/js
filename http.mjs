@@ -64,6 +64,7 @@ export function isErrAbort(val) {
 }
 
 // TODO rename to `ErrHttp`.
+// TODO dedup `status` with `res`.
 export class HttpErr extends Error {
   constructor(msg, status, res) {
     l.reqStr(msg)

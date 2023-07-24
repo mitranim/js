@@ -593,11 +593,3 @@ function renderDate(val) {
 export function structKeys(val) {
   return isNil(val) ? [] : Object.keys(reqStruct(val))
 }
-
-/*
-Shortcut for making symbol keys via property access.
-Kinda slow, avoid in hotspots.
-*/
-export const sym = new Proxy(npo(), new class SymPh extends Emp {
-  get(_, key) {return isSym(key) ? key : Symbol.for(key)}
-}())

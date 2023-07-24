@@ -391,8 +391,9 @@ export class Element extends Textable {
     else if (was && dis && !this.isConnected) this.disconnectedCallback()
   }
 
-  get children() {return this[childNodesKey]?.filter(isElement) || []}
   get attributes() {return this[attributesKey] || (this[attributesKey] = this.Attributes())}
+  get children() {return this[childNodesKey]?.filter(isElement) ?? []}
+  get childElementCount() {return count(this[childNodesKey], isElement)}
 
   get id() {return l.laxStr(this.getAttribute(`id`))}
   set id(val) {this.setAttribute(`id`, val)}
@@ -645,6 +646,15 @@ export class HTMLInputElement extends TextInputElement {
 }
 
 export class HTMLTextAreaElement extends TextInputElement {}
+
+export class HTMLTableElement extends HTMLElement {
+  get caption() {return this.childNodes?.find(isCaption)}
+  get tHead() {return this.childNodes?.find(isTableHead)}
+  get tBodies() {return this.childNodes?.filter(isTableBody) ?? []}
+  get tFoot() {return this.childNodes?.find(isTableFoot)}
+  // Incomplete. Known defects: not live; only body rows.
+  get rows() {return this.childNodes?.find(isTableBody)?.childNodes?.filter(isTableRow) ?? []}
+}
 
 export class HTMLScriptElement extends HTMLElement {
   /*
@@ -1139,16 +1149,21 @@ export const outerHtmlDyn = new o.Dyn()
 function head(val) {return val?.[0]}
 function last(val) {return val?.[val.length - 1]}
 function hasNodeType(src, tar) {return l.get(src, `nodeType`) === tar}
-function hasLocalName(src, tar) {return l.get(src, `localName`) === tar}
+function hasLocalName(val, name) {return isElement(val) && val.localName ===  name}
 function errIllegal() {return TypeError(`illegal invocation`)}
 function norm(val) {return val ?? null}
 function notIncludes(val) {return !this.includes(val)}
 function split(val, sep) {return l.laxStr(val) ? val.split(l.reqSome(sep)) : []}
 function join(val) {return val.join(` `)}
 function lower(val) {return val.toLowerCase()}
-function isHead(val) {return isElement(val) && hasLocalName(val, `head`)}
-function isBody(val) {return isElement(val) && hasLocalName(val, `body`)}
-function isTitle(val) {return isElement(val) && hasLocalName(val, `title`)}
+function isHead(val) {return hasLocalName(val, `head`)}
+function isBody(val) {return hasLocalName(val, `body`)}
+function isTitle(val) {return hasLocalName(val, `title`)}
+function isCaption(val) {return hasLocalName(val, `caption`)}
+function isTableHead(val) {return hasLocalName(val, `thead`)}
+function isTableBody(val) {return hasLocalName(val, `tbody`)}
+function isTableFoot(val) {return hasLocalName(val, `tfoot`)}
+function isTableRow(val) {return hasLocalName(val, `tr`)}
 function isRemovable(val) {return l.hasIn(val, `remove`)}
 function remove(val) {if (isRemovable(val)) val.remove()}
 function fromCharCode(val) {return val ? String.fromCharCode(val) : ``}
@@ -1201,6 +1216,15 @@ function indexOf(src, val) {
   let ind = -1
   while (++ind < len) if (l.is(src[ind], val)) return ind
   return -1
+}
+
+// Duplicated from `iter.mjs` to avoid import.
+function count(src, fun) {
+  l.optArr(src)
+  l.reqFun(fun)
+  let out = 0
+  if (src) for (src of src) if (fun(src)) out++
+  return out
 }
 
 /*

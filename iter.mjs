@@ -155,22 +155,12 @@ export function len(val) {
     const size = getSize(val)
     if (l.isNat(size)) return size
 
-    // This is the only way to avoid lying. If we return 0 without iterating,
-    // the remaining length might be non-zero. If we iterate to count and
-    // return non-zero, the remaining length is zero.
-    if (l.isIterator(val)) {
-      iterConsume(val)
-      return 0
-    }
-
     return iterLen(iter(val))
   }
 
   if (isStructSync(val)) return Object.keys(val).length
   throw TypeError(`unable to measure length of ${l.show(val)}`)
 }
-
-function iterConsume(val) {while (more(val)) {}}
 
 function iterLen(val) {
   let out = 0

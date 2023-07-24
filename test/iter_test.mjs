@@ -504,8 +504,8 @@ function testLen(test) {
   test(args(10), 1)
   test(args(10, 20), 2)
   test(copygen([]), 0)
-  test(copygen([10]), 0)
-  test(copygen([10, 20]), 0)
+  test(copygen([10]), 1)
+  test(copygen([10, 20]), 2)
 }
 
 t.test(function test_each() {

@@ -272,6 +272,11 @@ export function regTest(val, reg) {
   return l.isSome(val) && reg.test(l.reqStr(val))
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+export function regEsc(src) {
+  return l.laxStr(src).replace(/[.*+?^${}()|[\]\\]/g, `\\$&`)
+}
+
 export function boolOpt(val) {
   l.optStr(val)
   if (val === `false`) return false

@@ -2,4 +2,4 @@ Renders a value for user display. Counterpart to {{link lang show}}, which rende
 
   * {{link lang isDate Date}} with default `.toString` → use `.toISOString`. This overrides the insane JS default stringification of dates, defaulting to the _reversible_ machine-decodable representation used for JSON.
   * Other {{link lang isSome non-nil}} {{link lang isScalar scalars}} → default JS stringification.
-  * All other inputs including nils → `TypeError` exception.
+  * All other inputs including {{link lang isNil nil}} → `TypeError` exception.

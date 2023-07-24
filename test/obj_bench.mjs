@@ -99,6 +99,40 @@ class StructDeclared extends o.Struct {
 
 t.own(new StructDeclared(structSrc), structSrc)
 
+const descriptorDict = {
+  one: {
+    value: 10,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  },
+  two: {
+    value: 10,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  },
+}
+
+const descriptorList = [
+  {
+    key: `one`,
+    value: 10,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  },
+  {
+    key: `two`,
+    value: 10,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  },
+]
+
+const empty = Object.freeze(l.npo())
+
 /* Bench */
 
 t.bench(function bench_cls_def() {
@@ -184,5 +218,18 @@ t.bench(function bench_struct_assign_Object_assign() {l.nop(Object.assign(l.npo(
 t.bench(function bench_struct_assign_lodash_assign() {l.nop(lo.assign(l.npo(), structSrc))})
 t.bench(function bench_struct_assign_our_assign() {l.nop(o.assign(l.npo(), structSrc))})
 t.bench(function bench_struct_assign_our_patch() {l.nop(o.patch(l.npo(), structSrc))})
+
+t.bench(function bench_define_properties_from_dict_empty() {
+  Object.defineProperties(l.npo(), empty)
+})
+
+t.bench(function bench_define_properties_from_dict() {
+  Object.defineProperties(l.npo(), descriptorDict)
+})
+
+t.bench(function bench_define_properties_from_list() {
+  const tar = l.npo()
+  for (const desc of descriptorList) Object.defineProperty(tar, desc.key, desc)
+})
 
 if (import.meta.main) t.deopt(), t.benches()

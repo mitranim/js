@@ -261,7 +261,7 @@ only lowercase Latin letters, digits, hyphens. Not equivalent to the algorithm
 for converting camel to kebab for dataset attrs.
 */
 function toWords(str) {
-  return (str && str.match(/[A-Za-z0-9]+?(?=[^a-z0-9]|$)/g)) || []
+  return (str && str.match(/[A-Za-z0-9]+?(?=[^a-z0-9]|$)/g)) ?? []
 }
 
 function kebab(words) {return words.join(`-`).toLowerCase()}

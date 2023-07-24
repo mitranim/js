@@ -8,6 +8,7 @@ import * as h from './http.mjs'
 import * as io from './io_deno.mjs'
 import * as p from './path.mjs'
 
+// TODO move to a non-Deno-specific file.
 export class ContentTypeMap extends o.MixMain(Map) {
   guess(val) {return this.get(p.posix.ext(val))}
 

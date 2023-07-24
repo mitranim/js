@@ -59,12 +59,20 @@ const someNonEq1 = Object.create(null)
 
 const prepared = Symbol.for(`prepared`)
 
+/*
+Shortcut for making symbol keys via property access.
+Kinda slow, avoid in hotspots.
+*/
+const sym = new Proxy(l.npo(), new class SymPh extends l.Emp {
+  get(_, key) {return l.isSym(key) ? key : Symbol.for(key)}
+}())
+
 class Symboled extends l.Emp {
   normal(val) {this[Symbol.for(`normal`)](val)}
   [Symbol.for(`normal`)]() {}
 
-  proxied(val) {this[l.sym.proxied](val)}
-  [l.sym.proxied]() {}
+  proxied(val) {this[sym.proxied](val)}
+  [sym.proxied]() {}
 
   prepared(val) {this[prepared](val)}
   [prepared]() {}
@@ -304,7 +312,7 @@ t.bench(function bench_eq_hit_obj_diff_eq_true() {l.nop(l.eq(someEqAlways0, some
 t.bench(function bench_eq_hit_obj_diff_eq_false() {l.nop(l.eq(someEqNever0, someEqNever1))})
 
 t.bench(function bench_symbol_for_normal() {l.nop(Symbol.for(`hardcoded`))})
-t.bench(function bench_symbol_for_proxied() {l.nop(l.sym.proxied)})
+t.bench(function bench_symbol_for_proxied() {l.nop(sym.proxied)})
 
 t.bench(function bench_symbol_method_normal() {l.nop(symboled.normal())})
 t.bench(function bench_symbol_method_proxied() {l.nop(symboled.proxied())})
