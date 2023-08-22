@@ -1255,4 +1255,50 @@ function testSan(fun) {
   t.is(fun`one ${`two`} three ${40} five ${false} six`, `one two three 40 five false six`)
 }
 
+t.test(function test_replaceAll() {
+  t.throws(() => s.replaceAll(), TypeError, `expected variant of isStr, got undefined`)
+  t.throws(() => s.replaceAll(``), TypeError, `expected variant of isStr, got undefined`)
+  t.throws(() => s.replaceAll(``, ``), TypeError, `expected variant of isStr, got undefined`)
+  t.throws(() => s.replaceAll(``, ``, 10), TypeError, `expected variant of isStr, got 10`)
+  t.throws(() => s.replaceAll(``, 10, ``), TypeError, `expected variant of isStr, got 10`)
+  t.throws(() => s.replaceAll(10, ``, ``), TypeError, `expected variant of isStr, got 10`)
+
+  t.is(s.replaceAll(undefined, ``, ``), ``)
+  t.is(s.replaceAll(undefined, `_`, ``), ``)
+  t.is(s.replaceAll(undefined, ``, `_`), ``)
+  t.is(s.replaceAll(undefined, `_`, `-`), ``)
+  t.is(s.replaceAll(``, ``, `_`), ``)
+  t.is(s.replaceAll(``, `_`, ``), ``)
+  t.is(s.replaceAll(``, `_`, `-`), ``)
+
+  t.is(s.replaceAll(`one`, `two`, `three`), `one`)
+  t.is(s.replaceAll(`one`, `two`, ``), `one`)
+  t.is(s.replaceAll(`one`, ``, `two`), `one`)
+  t.is(s.replaceAll(`one`, `one`, `two`), `two`)
+
+  t.is(s.replaceAll(`one_one`, `one`, ``), `_`)
+  t.is(s.replaceAll(`one_one`, `two`, ``), `one_one`)
+  t.is(s.replaceAll(`one_one`, `one`, `two`), `two_two`)
+
+  t.is(s.replaceAll(`one_two`, `one`, ``), `_two`)
+  t.is(s.replaceAll(`one_two`, `one`, `three`), `three_two`)
+  t.is(s.replaceAll(`one_two`, `two`, ``), `one_`)
+  t.is(s.replaceAll(`one_two`, `two`, `three`), `one_three`)
+
+  t.is(s.replaceAll(`one_two_one_two`, `one`, ``), `_two__two`)
+  t.is(s.replaceAll(`one_two_one_two`, `one`, `three`), `three_two_three_two`)
+  t.is(s.replaceAll(`one_two_one_two`, `two`, ``), `one__one_`)
+  t.is(s.replaceAll(`one_two_one_two`, `two`, `three`), `one_three_one_three`)
+
+  t.is(s.replaceAll(`three_one_two_one_two`, `one`, ``), `three__two__two`)
+  t.is(s.replaceAll(`three_one_two_one_two`, `one`, `three`), `three_three_two_three_two`)
+  t.is(s.replaceAll(`three_one_two_one_two`, `two`, ``), `three_one__one_`)
+  t.is(s.replaceAll(`three_one_two_one_two`, `two`, `three`), `three_one_three_one_three`)
+
+  t.is(s.replaceAll(`one_two_one_two_three`, `one`, ``), `_two__two_three`)
+  t.is(s.replaceAll(`one_two_one_two_three`, `one`, `three`), `three_two_three_two_three`)
+  t.is(s.replaceAll(`one_two_one_two_three`, `two`, ``), `one__one__three`)
+  t.is(s.replaceAll(`one_two_one_two_three`, `two`, `three`), `one_three_one_three_three`)
+})
+
 if (import.meta.main) console.log(`[test] ok!`)

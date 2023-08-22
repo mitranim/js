@@ -470,7 +470,7 @@ When unavailable, we fall back on `crypto.getRandomValues`.
 */
 export function uuid() {
   return (
-    crypto?.randomUUID?.().replaceAll(`-`, ``) ??
+    crypto?.randomUUID?.().replace(/-/g, ``) ??
     arrHex(uuidArr())
   )
 }
@@ -613,4 +613,30 @@ arbitrary non-stringable garbage.
 */
 export class Str extends String {
   constructor(src) {super(l.renderLax(src))}
+}
+
+/*
+Similar to `String..replaceAll` which is missing in some older browser versions
+still supported by this library. Supports ONLY strings, not regexps. Unlike
+`String..replaceAll`, this treats an empty pattern as a non-match, instead of
+treating it as a match around every character.
+*/
+export function replaceAll(src, pat, rep) {
+  src = l.laxStr(src)
+  l.reqStr(pat)
+  l.reqStr(rep)
+
+  if (!pat) return src
+
+  let out = ``
+
+  while (src) {
+    const ind = src.indexOf(pat)
+    if (!(ind >= 0)) break
+    out += src.slice(0, ind)
+    out += rep
+    src = src.slice(ind + pat.length)
+  }
+
+  return out + src
 }

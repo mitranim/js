@@ -194,7 +194,7 @@ export class Paths extends l.Emp {
   }
 
   replaceSep(val, sep) {
-    return this.toStr(val).replaceAll(this.dirSep, l.reqStr(sep))
+    return s.replaceAll(this.toStr(val), this.dirSep, sep)
   }
 
   /*

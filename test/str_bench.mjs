@@ -76,7 +76,7 @@ function spacedDumb(...val) {
 Measurably faster than our exported version, but not available in dominant
 Safari versions at the time of this writing.
 */
-function uuidCryptoShort() {return crypto.randomUUID().replaceAll(`-`, ``)}
+function uuidCryptoShort() {return crypto.randomUUID().replace(/-/g, ``)}
 
 /* Bench */
 

@@ -324,5 +324,5 @@ function toPathname(val) {
 function urlDec(val) {return decodeURIComponent(l.reqStr(val))}
 function slashPre(val) {return s.optPre(val, `/`)}
 function unslashPre(val) {return blank(val, /^(?:[/\\])*/g)}
-function blank(val, reg) {return l.reqStr(val).replaceAll(reg, ``)}
+function blank(val, reg) {return l.reqStr(val).replace(reg, ``)}
 function hasDotDot(val) {return l.reqStr(val).includes(`..`)}
