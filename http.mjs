@@ -120,7 +120,11 @@ export class HttpBui extends l.Emp {
   typeMulti() {return this.type(TYPE_MULTI)}
 
   /*
-  Not called ".head" to avoid accidental confusion with HEAD,  which could be a gotcha for `ReqBui`. It's better to avoid  a ".head" method or property.  */  heads() {return this.headers || (this.headers = l.npo())}
+  Not called ".head" to avoid accidental confusion with HEAD,
+  which could be a gotcha for `ReqBui`. It's better to avoid
+  a ".head" method or property.
+  */
+  heads() {return this.headers || (this.headers = l.npo())}
   headHas(key) {return l.hasOwn(this.headers, reqHeadKey(key))}
   headGet(key) {return this.headHas(key) ? this.headers[key] : ``}
 
@@ -242,7 +246,10 @@ export class ResBui extends HttpBui {
   redirPerm(val) {return this.code(308).headSet(`location`, val)}
 
   /*
-  For an actual implementation of an event stream, see the following:  `WritableReadableStream`, `Broad`, `LiveBroad`.  */  typeEventStream() {
+  For an actual implementation of an event stream, see the following:
+  `WritableReadableStream`, `Broad`, `LiveBroad`.
+  */
+  typeEventStream() {
     return this.type(`text/event-stream`).headSet(`transfer-encoding`, `utf-8`)
   }
 
@@ -252,7 +259,10 @@ export class ResBui extends HttpBui {
   corsOrigin(val) {return this.headSet(`access-control-allow-origin`, val)}
 
   /*
-  Note: `content-type` is whitelisted by default but not redundant here.  Default has restrictions on allowed values.  */  corsHeadersCommon() {
+  Note: `content-type` is whitelisted by default but not redundant here.
+  Default has restrictions on allowed values.  
+  */  
+  corsHeadersCommon() {
     return this.corsHeaders(HEAD_CONTENT_TYPE, HEAD_CACHE_CONTROL)
   }
 
