@@ -64,7 +64,6 @@ export function isErrAbort(val) {
 }
 
 // TODO rename to `ErrHttp`.
-// TODO dedup `status` with `res`.
 export class HttpErr extends Error {
   constructor(msg, status, res) {
     l.reqStr(msg)
@@ -121,11 +120,7 @@ export class HttpBui extends l.Emp {
   typeMulti() {return this.type(TYPE_MULTI)}
 
   /*
-  Not called ".head" to avoid accidental confusion with HEAD,
-  which could be a gotcha for `ReqBui`. It's better to avoid
-  a ".head" method or property.
-  */
-  heads() {return this.headers || (this.headers = l.npo())}
+  Not called ".head" to avoid accidental confusion with HEAD,  which could be a gotcha for `ReqBui`. It's better to avoid  a ".head" method or property.  */  heads() {return this.headers || (this.headers = l.npo())}
   headHas(key) {return l.hasOwn(this.headers, reqHeadKey(key))}
   headGet(key) {return this.headHas(key) ? this.headers[key] : ``}
 
@@ -247,10 +242,7 @@ export class ResBui extends HttpBui {
   redirPerm(val) {return this.code(308).headSet(`location`, val)}
 
   /*
-  For an actual implementation of an event stream, see the following:
-  `WritableReadableStream`, `Broad`, `LiveBroad`.
-  */
-  typeEventStream() {
+  For an actual implementation of an event stream, see the following:  `WritableReadableStream`, `Broad`, `LiveBroad`.  */  typeEventStream() {
     return this.type(`text/event-stream`).headSet(`transfer-encoding`, `utf-8`)
   }
 
@@ -260,10 +252,7 @@ export class ResBui extends HttpBui {
   corsOrigin(val) {return this.headSet(`access-control-allow-origin`, val)}
 
   /*
-  Note: `content-type` is whitelisted by default but not redundant here.
-  Default has restrictions on allowed values.
-  */
-  corsHeadersCommon() {
+  Note: `content-type` is whitelisted by default but not redundant here.  Default has restrictions on allowed values.  */  corsHeadersCommon() {
     return this.corsHeaders(HEAD_CONTENT_TYPE, HEAD_CACHE_CONTROL)
   }
 
@@ -335,6 +324,8 @@ export class Rou extends l.Emp {
   }
 
   get pathname() {return l.reqStr(this.url.pathname)}
+  
+  get  hostedPathname() {return l.reqStr(u.urlJoin(this.url.host, this.url.pathname).toString())}
 
   clear() {this.groups = undefined}
 
@@ -349,19 +340,21 @@ export class Rou extends l.Emp {
   // Short for "exact".
   exa(val) {
     this.clear()
-    return l.reqStr(val) === this.pathname
+    return l.reqStr(val) === this.pathname || l.reqStr(val) === this.hostedPathname
   }
 
   // Short for "regular expression".
   reg(val) {
     this.clear()
-    const mat = this.pathname.match(l.reqReg(val))
+    console.log(this.hostedPathname);
+    let mat = this.pathname.match(l.reqReg(val))
+    if (!mat) mat = this.hostedPathname.match(l.reqReg(val))
     this.groups = (mat && mat.groups) || undefined
     return !!mat
   }
 
   // Short for "prefix".
-  pre(val) {return s.isSubpath(val, this.pathname)}
+  pre(val) {return s.isSubpath(val, this.pathname) || s.isSubpath(val, this.hostedPathname) }
 
   reqGroups() {
     const val = this.groups
@@ -387,10 +380,7 @@ export class ReqRou extends Rou {
 
   /*
   Example (depends on app semantics):
-
-    if (rou.preflight()) return h.resBui().corsAll().res()
-  */
-  preflight() {return this.someMeth(HEAD, OPTIONS)}
+    if (rou.preflight()) return h.resBui().corsAll().res()  */  preflight() {return this.someMeth(HEAD, OPTIONS)}
 
   match(met, pat) {return this.meth(met) && this.pat(pat)}
   found(fun) {return this.either(fun, this.notFound)}
@@ -508,8 +498,7 @@ export class Cookie extends l.Emp {
     this.secure = undefined
     this.httpOnly = undefined
     this.sameSite = undefined
-    return this
-  }
+    return this  }
 
   setName(val) {return this.name = optCookieName(val), this}
   setValue(val) {return this.value = optCookieValue(val), this}
