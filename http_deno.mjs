@@ -215,14 +215,20 @@ export class HttpFileStream extends io.FileStream {
 }
 
 // TODO ability to store multiple listeners.
+// TODO convert to `Deno.serve` API.
 export class Srv extends l.Emp {
   lis = undefined
 
   listen(opt) {
     this.deinit()
-    this.lis = Deno.listen(opt)
+    this.lis = this.listener(opt)
     this.onListen(opt)
     return this.serve(this.lis)
+  }
+
+  listener(opt) {
+    if (opt?.certFile || opt?.keyFile) return Deno.listenTls(opt)
+    return Deno.listen(opt)
   }
 
   async serve(lis) {

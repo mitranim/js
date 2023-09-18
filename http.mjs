@@ -356,7 +356,7 @@ export class Rou extends l.Emp {
   reg(val) {
     this.clear()
     const mat = this.pathname.match(l.reqReg(val))
-    this.groups = (mat && mat.groups) || undefined
+    this.groups = mat?.groups
     return !!mat
   }
 

@@ -124,7 +124,17 @@ export class Url extends l.Emp {
   set pathname(val) {this[pathnameKey] = toPathname(val)}
 
   get search() {return this[queryKey].toString()}
-  set search(val) {this[queryKey] = queryEncIdemp(unSearch(l.laxStr(val), this.Query.name))}
+
+  /*
+  This doesn't simply take and set a string, because we must normalize the input
+  for URL compatibility, by encoding any characters that aren't allowed to
+  occur in a query in a valid URL. This allows users to provide "invalid" query
+  strings which are converted to valid strings for URL encoding. This is
+  implemented for consistency and compatibility with the standard URL API,
+  which supports this feature. Unfortunately, the standard APIs do not expose
+  the algorithm. We approximate this, by always decoding the input.
+  */
+  set search(val) {this.query = l.laxStr(val)}
 
   get query() {
     let val = this[queryKey]
@@ -134,7 +144,7 @@ export class Url extends l.Emp {
   }
 
   set query(val) {
-    if (l.isNil(val) || l.isStr(val)) this.search = val
+    if (l.isNil(val) || l.isStr(val) && !val) this[queryKey] = ``
     else this.query.reset(val)
   }
 
@@ -479,12 +489,6 @@ function isEmpty(val) {return l.isNil(val) || val === ``}
 function isURL(val) {return l.isInst(val, URL)}
 function isUrl(val) {return l.isInst(val, Url)}
 function isUrlLike(val) {return l.isStruct(val) && `href` in val}
-
-/*
-Needs additional benchmarks. Our current benchmarks did not detect a regression
-when this was added.
-*/
-function queryEncIdemp(val) {return encodeURI(decodeURIComponent(val))}
 
 // Needs optimization. This is currently our bottleneck.
 export function queryDec(val) {

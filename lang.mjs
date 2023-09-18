@@ -253,9 +253,12 @@ export function onlyCls(val) {return isCls(val) ? val : undefined}
 
 // TODO tests.
 export function isSubCls(sub, sup) {return isCls(sub) && (sub === sup || isInst(sub.prototype, sup))}
-export function reqSubCls(val) {return isSubCls(val) ? val : throwErrFun(val, isSubCls)}
-export function optSubCls(val) {return isNil(val) ? val : reqSubCls(val)}
-export function onlySubCls(val) {return isSubCls(val) ? val : undefined}
+
+// TODO tests.
+export function reqSubCls(sub, sup) {
+  if (isSubCls(sub, sup)) return sub
+  throw TypeError(`expected subclass of ${show(sup)}, found ${show(sub)}`)
+}
 
 export function isList(val) {return isSome(val) && (isArr(val) || (isIter(val) && isNat(getLength(val))))}
 export function reqList(val) {return isList(val) ? val : throwErrFun(val, isList)}

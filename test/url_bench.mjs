@@ -57,10 +57,14 @@ if (iit.more) {
   t.bench(function bench_decodeURIComponent_hit() {l.nop(decodeURIComponent(uriEscapedLong))})
 }
 
-t.bench(function bench_new_Params() {l.nop(new URLSearchParams())})
-t.bench(function bench_new_Query() {l.nop(u.query())})
-t.bench(function bench_new_URL() {l.nop(new URL(`a:`))}) // Unfair but blame the dumb API.
-t.bench(function bench_new_Url() {l.nop(u.url())})
+t.bench(function bench_new_query_empty_Params() {l.nop(new URLSearchParams())})
+t.bench(function bench_new_query_empty_Query() {l.nop(u.query())})
+
+t.bench(function bench_new_query_long_Params() {l.nop(new URLSearchParams(searchLong))})
+t.bench(function bench_new_query_long_Query() {l.nop(new u.Query(searchLong))})
+
+t.bench(function bench_new_empty_URL() {l.nop(new URL(`a:`))}) // Unfair but blame the dumb API.
+t.bench(function bench_new_empty_Url() {l.nop(u.url())})
 
 t.bench(function bench_Query_reset_str() {l.nop(mutQuery.reset(searchLong))})
 t.bench(function bench_Query_reset_Params() {l.nop(mutQuery.reset(decParamsLong))})

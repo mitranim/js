@@ -667,7 +667,7 @@ t.test(function test_Url() {
   })
 
   t.test(function test_setSearchParams() {
-    t.throws(() => u.url().setSearch(10), TypeError, `expected variant of isStr, got 10`)
+    t.throws(() => u.url().setSearchParams(10), TypeError, `unable to convert 10 to Query`)
 
     function test(src, val, exp) {testStr(u.url(src).setSearchParams(val), exp)}
     testUrlSearchSet(test)
@@ -1361,6 +1361,16 @@ t.test(function test_Url() {
     tar.resetFromUrl(src)
     t.is(src.href, `https://user:pass@host:123/path?key=val#hash`)
     t.is(tar.href, `https://user:pass@host:123/path?key=val#hash`)
+  })
+
+  t.test(function test_clone() {
+    const src = `scheme://host/path?key=one%2Btwo@three`
+
+    const url0 = u.url(src)
+    t.is(url0.href, src)
+
+    const url1 = url0.clone()
+    t.is(url1.href, `scheme://host/path?key=one%2Btwo%40three`)
   })
 })
 

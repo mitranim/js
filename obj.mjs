@@ -109,6 +109,7 @@ export class StructType extends l.Emp {
     touch(tar, key)
     if (mutated(tar, key, val)) return true
     if (!canSet(tar, key)) return false
+    // TODO report name of invalid property if it fails.
     tar[key] = this.Spec.any(val, key)
     return true
   }
