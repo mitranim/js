@@ -227,6 +227,19 @@ export class Loop extends Rec {
 
 // Short for "proxy handler". Base for other handlers.
 export class Ph extends l.Emp {
+  /*
+  Hack/workaround for Chrome. At the time of writing, in recent versions of
+  Chrome, the engine invokes only "own" methods of proxy handlers, ignoring
+  methods on the prototype. TODO remove if they fix this.
+  */
+  constructor() {
+    super()
+    this.has = this.has
+    this.get = this.get
+    this.set = this.set
+    this.deleteProperty = this.deleteProperty
+  }
+
   /* Standard traps */
 
   has(tar, key) {
@@ -241,7 +254,7 @@ export class Ph extends l.Emp {
   get(tar, key) {
     if (key === keyPh) return this
     if (key === keySelf) return tar
-    if (key === `deinit`) return this.proDeinit
+    if (key === `deinit`) return this.proxyDeinit
     return this.getIn(tar, key)
   }
 
@@ -290,13 +303,13 @@ export class Ph extends l.Emp {
   prototype to make it possible to override in subclasses. The base
   implementation simply tries to invoke the same method on the target.
   */
-  proDeinit() {deinit(self(this))}
+  proxyDeinit() {deinit(self(this))}
 }
 
 export class DeinitPh extends o.MixMain(Ph) {
   drop(val) {deinit(val)}
 
-  proDeinit() {
+  proxyDeinit() {
     const val = self(this)
     deinitAll(val)
     deinit(val)
@@ -322,11 +335,11 @@ export class ObsPh extends Ph {
   }
 
   /*
-  See comments on `Ph.prototype.proDeinit`. "this" is the proxy.
+  See comments on `Ph.prototype.proxyDeinit`. "this" is the proxy.
   `ph(this)` gets the `ObsPh` instance to deinit the observable.
   `self(this)` gets the target to deinit it, if appropriate.
   */
-  proDeinit() {
+  proxyDeinit() {
     ph(this).deinit()
     deinit(self(this))
   }
@@ -339,9 +352,9 @@ export class ObsPh extends Ph {
 export class DeObsPh extends ObsPh {
   drop(val) {DeinitPh.prototype.drop.call(this, val)}
 
-  proDeinit() {
+  proxyDeinit() {
     ph(this).deinit()
-    DeinitPh.prototype.proDeinit.call(this)
+    DeinitPh.prototype.proxyDeinit.call(this)
   }
 }
 

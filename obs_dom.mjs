@@ -12,7 +12,7 @@ export function MixReac(cls) {
   return class MixReac extends cls {
     connectedCallback() {
       super.connectedCallback?.()
-      const reac = this[reacKey] || (this[reacKey] = new ElementReac(this))
+      const reac = this[reacKey] ||= new ElementReac(this)
       reac.exec()
     }
 

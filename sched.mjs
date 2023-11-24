@@ -106,7 +106,7 @@ export class Sched extends o.MixMain(l.Emp) {
 
   que(depth) {
     l.reqNat(depth)
-    return this.ques[depth] || (this.ques[depth] = new this.Que())
+    return this.ques[depth] ||= new this.Que()
   }
 
   schedule() {return this.timer.schedule(), this}

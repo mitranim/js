@@ -76,20 +76,55 @@ t.test(function test_show() {
 
 t.test(function test_render() {
   t.throws(() => l.render(), TypeError, `unable to convert undefined to string`)
+  t.throws(() => l.render(undefined), TypeError, `unable to convert undefined to string`)
   t.throws(() => l.render(null), TypeError, `unable to convert null to string`)
-  t.throws(() => l.render(Symbol(`str`)), TypeError, `unable to convert Symbol(str) to string`)
 
   testRender(l.render)
 })
 
+t.test(function test_renderOpt() {
+  function empty(val) {t.is(l.renderOpt(val), undefined)}
+
+  empty()
+  empty(undefined)
+  empty(null)
+
+  // SYNC[testRenderInvalid]
+  empty({})
+  empty(inherit(null))
+  empty(inherit(inherit(null)))
+  empty({one: `two`, three: `four`})
+  empty([])
+  empty([10, `str`])
+  empty(args)
+  empty(gen())
+  empty(agen())
+  empty(class Cls {})
+  empty(new class {})
+  empty(new class Cls {})
+  empty(new class Cls extends Array {})
+
+  testRenderValid(l.renderOpt)
+})
+
 t.test(function test_renderLax() {
-  t.is(l.renderLax(), ``)
-  t.is(l.renderLax(null), ``)
+  function empty(val) {t.is(l.renderLax(val), ``)}
+
+  empty()
+  empty(undefined)
+  empty(null)
 
   testRender(l.renderLax)
 })
 
 function testRender(fun) {
+  testRenderInvalid(fun)
+  testRenderValid(fun)
+}
+
+// SYNC[testRenderInvalid]
+function testRenderInvalid(fun) {
+  t.throws(() => fun(Symbol(`str`)), TypeError, `unable to convert Symbol(str) to string`)
   t.throws(() => fun({}), TypeError, `unable to convert {} to string`)
   t.throws(() => fun(inherit(null)), TypeError, `unable to convert {} to string`)
   t.throws(() => fun(inherit(inherit(null))), TypeError, `unable to convert {} to string`)
@@ -103,7 +138,9 @@ function testRender(fun) {
   t.throws(() => fun(new class {}), TypeError, `unable to convert [object Object] to string`)
   t.throws(() => fun(new class Cls {}), TypeError, `unable to convert [object Cls] to string`)
   t.throws(() => fun(new class Cls extends Array {}), TypeError, `unable to convert [] to string`)
+}
 
+function testRenderValid(fun) {
   t.is(fun(0), `0`)
   t.is(fun(NaN), `NaN`)
   t.is(fun(Infinity), `Infinity`)

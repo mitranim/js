@@ -276,6 +276,9 @@ t.test(function test_upper() {
 
 t.test(function test_title() {
   t.is(s.title(``), ``)
+  t.is(s.title(`o`), `O`)
+  t.is(s.title(`on`), `On`)
+  t.is(s.title(`one`), `One`)
   t.is(s.title(`one two three`), `One two three`)
   t.is(s.title(`ONE TWO THREE`), `One two three`)
   t.is(s.title(`ενα δυο τρια`), `Ενα δυο τρια`)

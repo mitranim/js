@@ -136,66 +136,8 @@ export class Dur extends l.Emp {
   valueOf() {return this.toString()}
 
   static isValid(val) {return l.isSome(val) && l.toInst(val, this).isValid()}
-
   static fromMilli(val) {return new this().resetFromMilli(val)}
 }
-
-/*
-Our regex ensures that captured groups are ±integers, which means we can skip
-checks for invalid inputs.
-*/
-function toInt(val) {return l.isNil(val) ? 0 : Number.parseInt(val)}
-
-function suff(val, suf) {return val ? (val + suf) : ``}
-
-// Short for "timestamp".
-export function ts(val) {
-  return l.convType(tsOpt(val), val, `timestamp`)
-}
-
-// Short for "timestamp optional".
-export function tsOpt(val) {return l.onlyFin(tsNum(val))}
-
-/*
-Short for "timestamp number". Converts any of several supported types to a
-numeric timestamp. Output may be `NaN`. See `ts` and `tsOpt`. Doesn't accept
-`Number` subclasses because we use such subclasses for different units,
-therefore can't assume a specific unit. Primitive numeric timestamps are
-usually in milliseconds, so it's RELATIVELY safe to assume ms. Sometimes
-timestamps are stored and transmitted in seconds. That's out of our hands.
-The caller should convert seconds in advance.
-*/
-export function tsNum(val) {
-  if (l.isNum(val)) return val
-  if (l.isStr(val)) return Date.parse(val)
-  if (l.isDate(val)) return val.valueOf()
-  return NaN
-}
-
-export function date(val) {
-  return l.convType(dateOpt(val), val, `date`)
-}
-
-export function dateOpt(val) {
-  if (l.isNil(val)) return undefined
-  return l.toInst(val, DateTime).onlyValid()
-}
-
-export function msToSec(val) {return l.laxFin(val) / MS_IN_SEC}
-export function msToMin(val) {return l.laxFin(val) / MS_IN_MIN}
-export function msToHour(val) {return l.laxFin(val) / MS_IN_HOUR}
-
-export function secToMs(val) {return l.laxFin(val) * MS_IN_SEC}
-export function secToMin(val) {return l.laxFin(val) / SEC_IN_MIN}
-export function secToHour(val) {return l.laxFin(val) / SEC_IN_HOUR}
-
-export function minToMs(val) {return l.laxFin(val) * MS_IN_MIN}
-export function minToSec(val) {return l.laxFin(val) * SEC_IN_MIN}
-export function minToHour(val) {return l.laxFin(val) / MIN_IN_HOUR}
-
-export function hourToMs(val) {return l.laxFin(val) * MS_IN_HOUR}
-export function hourToSec(val) {return l.laxFin(val) * SEC_IN_HOUR}
-export function hourToMin(val) {return l.laxFin(val) * MIN_IN_HOUR}
 
 // Variant of `Date` with added convenience methods.
 export class DateTime extends Date {
@@ -226,6 +168,7 @@ export class DateTime extends Date {
   }
 }
 
+// TODO rename to `DateTimeValid`.
 export class DateValid extends DateTime {
   constructor(...val) {
     super(...val)
@@ -241,6 +184,7 @@ export class DateTs extends DateTime {
   toJSON() {return this.valueOf()}
 }
 
+// TODO rename to `DateTimeIso`.
 export class DateIso extends DateTime {
   toString() {
     if (!this.isValid()) return ``
@@ -251,11 +195,14 @@ export class DateIso extends DateTime {
 /*
 Compatible with `<input type=date>`. Doesn't automatically shorten for JSON,
 to minimize information loss. Use `DateShortJson` for that.
+
+TODO rename to `DateTimeShort`.
 */
 export class DateShort extends DateTime {
   toString() {return this.dateStr()}
 }
 
+// TODO rename to `DateTimeShortJson`.
 export class DateShortJson extends DateShort {
   toJSON() {return this.isValid() ? this.toString() : null}
 }
@@ -353,6 +300,63 @@ export class Milli extends Sec {
   mod() {return MS_IN_SEC}
   toString() {return this.milliStr()}
 }
+
+/*
+Our regex ensures that captured groups are ±integers, which means we can skip
+checks for invalid inputs.
+*/
+function toInt(val) {return l.isNil(val) ? 0 : Number.parseInt(val)}
+
+function suff(val, suf) {return val ? (val + suf) : ``}
+
+// Short for "timestamp".
+export function ts(val) {
+  return l.convType(tsOpt(val), val, `timestamp`)
+}
+
+// Short for "timestamp optional".
+export function tsOpt(val) {return l.onlyFin(tsNum(val))}
+
+/*
+Short for "timestamp number". Converts any of several supported types to a
+numeric timestamp. Output may be `NaN`. See `ts` and `tsOpt`. Doesn't accept
+`Number` subclasses because we use such subclasses for different units,
+therefore can't assume a specific unit. Primitive numeric timestamps are
+usually in milliseconds, so it's RELATIVELY safe to assume ms. Sometimes
+timestamps are stored and transmitted in seconds. That's out of our hands.
+The caller should convert seconds in advance.
+*/
+export function tsNum(val) {
+  if (l.isNum(val)) return val
+  if (l.isStr(val)) return Date.parse(val)
+  if (l.isDate(val)) return val.valueOf()
+  return NaN
+}
+
+export function date(val) {
+  return l.convType(dateOpt(val), val, `date`)
+}
+
+export function dateOpt(val) {
+  if (l.isNil(val)) return undefined
+  return l.toInst(val, DateTime).onlyValid()
+}
+
+export function msToSec(val) {return l.laxFin(val) / MS_IN_SEC}
+export function msToMin(val) {return l.laxFin(val) / MS_IN_MIN}
+export function msToHour(val) {return l.laxFin(val) / MS_IN_HOUR}
+
+export function secToMs(val) {return l.laxFin(val) * MS_IN_SEC}
+export function secToMin(val) {return l.laxFin(val) / SEC_IN_MIN}
+export function secToHour(val) {return l.laxFin(val) / SEC_IN_HOUR}
+
+export function minToMs(val) {return l.laxFin(val) * MS_IN_MIN}
+export function minToSec(val) {return l.laxFin(val) * SEC_IN_MIN}
+export function minToHour(val) {return l.laxFin(val) / MIN_IN_HOUR}
+
+export function hourToMs(val) {return l.laxFin(val) * MS_IN_HOUR}
+export function hourToSec(val) {return l.laxFin(val) * SEC_IN_HOUR}
+export function hourToMin(val) {return l.laxFin(val) * MIN_IN_HOUR}
 
 export function after(ms, sig) {
   l.reqFin(ms)

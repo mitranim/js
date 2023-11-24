@@ -28,6 +28,7 @@ DOM API and `dom_shim.mjs`.
 export class Ren extends l.Emp {
   constructor(doc) {
     super()
+    this.lax = false
     this.doc = reqDocument(doc)
     this.elemHtml = this.elemHtml.bind(this)
     this.elemSvg = this.elemSvg.bind(this)
@@ -52,12 +53,8 @@ export class Ren extends l.Emp {
   get S() {return o.priv(this, `S`, new Proxy(this, RenSvgPh))}
 
   elemHtml(tag, props, ...chi) {
-    if (tag === `svg`) {
-      return this.alignNs(this.elemSvg(tag, props, ...chi))
-    }
-    if (this.isVoid(tag) && chi.length) {
-      this.throwVoidChi(tag, chi)
-    }
+    if (tag === `svg`) return this.elemHtmlSvg(tag, props, ...chi)
+    if (this.isVoid(tag)) return this.elemVoid(tag, props, ...chi)
     return this.elem(tag, props, ...chi)
   }
 
@@ -73,6 +70,12 @@ export class Ren extends l.Emp {
     const tar = this.doc.createDocumentFragment()
     this.appendList(tar, val)
     return tar
+  }
+
+  node(...val) {
+    if (val.length === 0) return null
+    if (val.length === 1 && isNode(val[0])) return val[0]
+    return this.frag(...val)
   }
 
   makeHtml(tag, props) {
@@ -108,8 +111,8 @@ export class Ren extends l.Emp {
   // TODO consider supporting `innerHTML` prop.
   mutProp(tar, key, val) {
     if (key === `attributes`) return this.mutAttrs(tar, val)
-    if (key === `class`) return this.mutCls(tar, val)
-    if (key === `className`) return this.mutCls(tar, val)
+    if (key === `class`) return this.mutCls(tar, val, key)
+    if (key === `className`) return this.mutCls(tar, val, key)
     if (key === `style`) return this.mutStyle(tar, val)
     if (key === `dataset`) return this.mutDataset(tar, val)
     return this.mutPropAny(tar, key, val)
@@ -130,13 +133,13 @@ export class Ren extends l.Emp {
 
   mutAttrAny(tar, key, val) {
     l.reqStr(key)
-    val = this.strOpt(val)
+    val = this.renderOpt(val, key)
     if (l.isNil(val)) return tar.removeAttribute(key)
     return tar.setAttribute(key, val)
   }
 
-  mutCls(tar, val) {
-    val = this.strLax(val)
+  mutCls(tar, val, key) {
+    val = l.laxStr(this.renderOpt(val, key || `class`))
     if (val !== l.laxStr(tar.getAttribute(`class`))) {
       tar.setAttribute(`class`, val)
     }
@@ -163,7 +166,7 @@ export class Ren extends l.Emp {
   }
 
   mutDatasetProp(tar, key, val) {
-    val = this.strOpt(val)
+    val = this.renderOpt(val, key)
     if (l.isNil(val)) delete tar[key]
     else tar[key] = val
   }
@@ -173,7 +176,7 @@ export class Ren extends l.Emp {
 
     const src = tar[key]
     if (l.isNil(src)) return setOpt(tar, key, src, norm(val))
-    if (l.isStr(src)) return setOpt(tar, key, src, this.strLax(val))
+    if (l.isStr(src)) return setOpt(tar, key, src, l.laxStr(this.renderOpt(val, key)))
 
     if (l.isPrim(src)) {
       if (l.isPrim(val)) {
@@ -220,7 +223,7 @@ export class Ren extends l.Emp {
       if (l.isList(src)) return this.appendList(tar, src), tar
       return this.appendSeq(tar, src), tar
     }
-    return this.appendChi(tar, this.strOpt(src)), tar
+    return this.appendChi(tar, this.renderOpt(src)), tar
   }
 
   appendList(tar, src) {
@@ -259,7 +262,7 @@ export class Ren extends l.Emp {
 
   mutText(tar, src) {
     reqNode(tar)
-    setOpt(tar, `textContent`, tar.textContent, this.strLax(src))
+    setOpt(tar, `textContent`, tar.textContent, l.laxStr(this.renderOpt(src)))
     return tar
   }
 
@@ -290,11 +293,36 @@ export class Ren extends l.Emp {
   }
 
   isHtml(tar) {return tar.namespaceURI === nsHtml}
-
   isSvg(tar) {return tar.namespaceURI === nsSvg}
 
-  // Minor inefficiency. Can be avoided by creating elements with the
-  // correct namespace from the start. Shouldn't be anyone's bottleneck.
+  // Similar to `l.render` and `l.renderOpt` with slightly different rules.
+  renderOpt(val, key) {
+    if (l.isNil(val)) return undefined
+
+    const out = l.renderOpt(val)
+    if (l.isSome(out)) return out
+    if (this.lax) return undefined
+
+    if (key) {
+      throw TypeError(`unable to convert property ${l.show(l.reqStr(key))} ${l.show(val)} to string`)
+    }
+    throw l.errConv(val, `string`)
+  }
+
+  isBool(key) {return BOOL.has(key)}
+  isVoid(tag) {return VOID.has(tag)}
+
+  elemHtmlSvg(tag, props, ...chi) {
+    if (this.lax) return this.alignNs(this.elemSvg(tag, props, ...chi))
+    throw SyntaxError(`namespace mismatch for element ${l.show(tag)}: expected ${l.show(nsSvg)}, found ${l.show(nsHtml)})`)
+  }
+
+  /*
+  Inefficient adapter for incorrectly-written code that renders SVG elements in
+  the HTML namespace. Sometimes useful for migrating code from other rendering
+  systems. Can be avoided by creating elements with the correct namespace from
+  the start.
+  */
   alignNs(tar) {
     if (!(isElement(tar) && isNamespaced(tar))) return tar
 
@@ -309,20 +337,8 @@ export class Ren extends l.Emp {
     return tar
   }
 
-  // Slightly suboptimal, TODO tune.
-  strLax(val) {return l.laxStr(this.strOpt(val))}
-
-  // Wastes performance on double scalar check, TODO tune.
-  strOpt(val) {
-    if (l.isNil(val) || (this.lax && !l.isScalar(val))) return undefined
-    return l.render(val)
-  }
-
-  isBool(key) {return BOOL.has(key)}
-
-  isVoid(tag) {return VOID.has(tag)}
-
-  throwVoidChi(tag, chi) {
+  elemVoid(tag, props, ...chi) {
+    if (!chi.length) return this.elem(tag, props)
     throw SyntaxError(`expected void element ${l.show(tag)} to have no children, got ${l.show(chi)}`)
   }
 
@@ -615,7 +631,8 @@ function errMismatch(tar, key, val, src) {
 function setOpt(tar, key, prev, next) {if (!l.is(prev, next)) tar[key] = next}
 
 function spaced(one, two) {
-  one = l.laxStr(one), two = l.laxStr(two)
+  one = l.laxStr(one)
+  two = l.laxStr(two)
   return one + (one && two && ` `) + two
 }
 

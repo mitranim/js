@@ -125,7 +125,7 @@ export class HttpBui extends l.Emp {
   which could be a gotcha for `ReqBui`. It's better to avoid
   a ".head" method or property.
   */
-  heads() {return this.headers || (this.headers = l.npo())}
+  heads() {return this.headers ||= l.npo()}
   headHas(key) {return l.hasOwn(this.headers, reqHeadKey(key))}
   headGet(key) {return this.headHas(key) ? this.headers[key] : ``}
 
@@ -467,9 +467,9 @@ export class Ctx extends AbortController {
   sub() {return new this.constructor(this.signal)}
   abort() {this.deinit()}
 
-  deinit() {
+  deinit(...val) {
     this.unlink()
-    super.abort()
+    super.abort(...val)
   }
 }
 

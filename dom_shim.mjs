@@ -95,7 +95,7 @@ export class Node extends l.Emp {
   get [Symbol.toStringTag]() {return this.constructor.name}
   get isConnected() {return isDocument(this.getRootNode())}
   get parentElement() {return norm(l.only(this.parentNode, isElement))}
-  get childNodes() {return this[childNodesKey] || (this[childNodesKey] = this.NodeList())}
+  get childNodes() {return this[childNodesKey] ||= this.NodeList()}
   set childNodes(val) {this[childNodesKey] = l.reqArr(val)}
   get firstChild() {return norm(head(this[childNodesKey]))}
   get lastChild() {return norm(last(this[childNodesKey]))}
@@ -391,14 +391,14 @@ export class Element extends Textable {
     else if (was && dis && !this.isConnected) this.disconnectedCallback()
   }
 
-  get attributes() {return this[attributesKey] || (this[attributesKey] = this.Attributes())}
+  get attributes() {return this[attributesKey] ||= this.Attributes()}
   get children() {return this[childNodesKey]?.filter(isElement) ?? []}
   get childElementCount() {return count(this[childNodesKey], isElement)}
 
   get id() {return l.laxStr(this.getAttribute(`id`))}
   set id(val) {this.setAttribute(`id`, val)}
 
-  get style() {return (this[styleKey] || (this[styleKey] = this.Style())).pro}
+  get style() {return (this[styleKey] ||= this.Style()).pro}
 
   set style(val) {
     if (l.isNil(val)) {
@@ -420,10 +420,10 @@ export class Element extends Textable {
     this.style = l.render(val)
   }
 
-  get dataset() {return (this[datasetKey] || (this[datasetKey] = this.Dataset())).pro}
+  get dataset() {return (this[datasetKey] ||= this.Dataset()).pro}
   get className() {return l.laxStr(this.getAttribute(`class`))}
   set className(val) {this.setAttribute(`class`, val)}
-  get classList() {return this[classListKey] || (this[classListKey] = this.ClassList())}
+  get classList() {return this[classListKey] ||= this.ClassList()}
 
   get hidden() {return this.hasAttribute(`hidden`)}
   set hidden(val) {this.toggleAttribute(`hidden`, l.laxBool(val))}
@@ -515,7 +515,7 @@ export class Element extends Textable {
 
   outerHtml() {
     const tag = this.tagString()
-    if (!tag) throw Error(`missing localName`)
+    if (!tag) throw Error(`missing localName on ${l.show(this)}`)
 
     return (
       `<` + tag + this.attrPrefix() + this.attrString() + `>` +
@@ -631,6 +631,9 @@ class TextInputElement extends ToggleElement {
 
   get readOnly() {return this.hasAttribute(`readonly`)}
   set readOnly(val) {this.toggleAttribute(`readonly`, l.laxBool(val))}
+
+  get placeholder() {return this.hasAttribute(`placeholder`)}
+  set placeholder(val) {this.setAttribute(`placeholder`, val)}
 }
 
 export class HTMLInputElement extends TextInputElement {
@@ -1142,6 +1145,7 @@ export const dataToCamelCache = new class DataKeys extends o.Cache {
   make(val) {return dataToCamel(val)}
 }()
 
+// Hidden context that allows to automatically set `xmlns` on XML elements.
 export const outerHtmlDyn = new o.Dyn()
 
 /* Internal */

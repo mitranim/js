@@ -68,6 +68,8 @@ push:
 #   * `make prep`.
 #   * Commit.
 #   * `make release`.
+#
+# Note: publishing to NPM is done automatically via GitHub Actions.
 release: tag push
 
 define HOOK_PRE_COMMIT

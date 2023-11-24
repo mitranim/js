@@ -111,7 +111,25 @@ t.test(function test_Query() {
   })
 
   t.test(function test_encoding() {
-    t.test(function test_encoding_general() {
+    t.test(function test_encoding_from_structured() {
+      testStr(u.query(), ``)
+      testStr(u.query([]), ``)
+      testStr(u.query({}), ``)
+
+      testStr(u.query({one: []}), ``)
+      testStr(u.query({one: undefined}), ``)
+      testStr(u.query({one: ``}), `one=`)
+      testStr(u.query({one: [``]}), `one=`)
+      testStr(u.query({one: `two`}), `one=two`)
+
+      testStr(u.query({one: `two`, three: undefined}), `one=two`)
+      testStr(u.query({one: `two`, three: []}), `one=two`)
+      testStr(u.query({one: `two`, three: ``}), `one=two&three=`)
+      testStr(u.query({one: `two`, three: [``]}), `one=two&three=`)
+      testStr(u.query({one: `two`, three: [`four`]}), `one=two&three=four`)
+    })
+
+    t.test(function test_encoding_from_decoded() {
       function test(src, exp) {testStr(u.query(src), exp)}
       function same(src) {test(src, src)}
 

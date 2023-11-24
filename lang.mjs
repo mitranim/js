@@ -377,11 +377,17 @@ export function onlyInst(val, cls) {return isInst(val, cls) ? val : undefined}
 export function toInst(val, cls) {return isInst(val, cls) ? val : new cls(val)}
 export function toInstOpt(val, cls) {return isNil(val) ? val : toInst(val, cls)}
 
-export function render(val) {
+export function render(src) {
+  const out = renderOpt(src)
+  if (isSome(out)) return out
+  throw errConv(src, `string`)
+}
+
+export function renderOpt(val) {
   if (isStr(val)) return val
   if (isDate(val)) return renderDate(val)
   if (isScalar(val)) return String(val)
-  throw errConv(val, `string`)
+  return undefined
 }
 
 export function renderLax(val) {return isNil(val) ? `` : render(val)}

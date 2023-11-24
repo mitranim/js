@@ -181,19 +181,19 @@ t.test(function test_Ren_serialization() {
     t.test(function test_invalid_props() {
       t.throws(() => E(`div`, 10),                          TypeError, `expected variant of isObj, got 10`)
       t.throws(() => E(`div`, `str`),                       TypeError, `expected variant of isObj, got "str"`)
-      t.throws(() => E(`div`, {nop: l.nop}),                TypeError, `unable to convert [function nop] to string`)
+      t.throws(() => E(`div`, {nop: l.nop}),                TypeError, `unable to convert property "nop" [function nop] to string`)
       t.throws(() => E(`div`, []),                          TypeError, `expected variant of isStruct, got []`)
       t.throws(() => E(`div`, E),                           TypeError, `expected variant of isObj, got [function E]`)
       t.throws(() => E(`div`, new String()),                TypeError, `expected variant of isStruct, got [object String]`)
       t.throws(() => E(`div`, {attributes: 10}),            TypeError, `expected variant of isObj, got 10`)
       t.throws(() => E(`div`, {attributes: `str`}),         TypeError, `expected variant of isObj, got "str"`)
       t.throws(() => E(`div`, {attributes: []}),            TypeError, `expected variant of isStruct, got []`)
-      t.throws(() => E(`div`, {class: []}),                 TypeError, `unable to convert [] to string`)
-      t.throws(() => E(`div`, {className: []}),             TypeError, `unable to convert [] to string`)
-      t.throws(() => E(`div`, {class: {}}),                 TypeError, `unable to convert {} to string`)
-      t.throws(() => E(`div`, {className: {}}),             TypeError, `unable to convert {} to string`)
-      t.throws(() => E(`div`, {class: new class {}()}),     TypeError, `unable to convert [object Object] to string`)
-      t.throws(() => E(`div`, {className: new class {}()}), TypeError, `unable to convert [object Object] to string`)
+      t.throws(() => E(`div`, {class: []}),                 TypeError, `unable to convert property "class" [] to string`)
+      t.throws(() => E(`div`, {className: []}),             TypeError, `unable to convert property "className" [] to string`)
+      t.throws(() => E(`div`, {class: {}}),                 TypeError, `unable to convert property "class" {} to string`)
+      t.throws(() => E(`div`, {className: {}}),             TypeError, `unable to convert property "className" {} to string`)
+      t.throws(() => E(`div`, {class: new class {}()}),     TypeError, `unable to convert property "class" [object Object] to string`)
+      t.throws(() => E(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" [object Object] to string`)
       t.throws(() => E(`div`, {style: 10}),                 TypeError, `unable to convert 10 to style`)
       t.throws(() => E(`div`, {style: []}),                 TypeError, `unable to convert [] to style`)
       t.throws(() => E(`div`, {dataset: 10}),               TypeError, `expected variant of isObj, got 10`)
@@ -639,13 +639,21 @@ t.test(function test_Ren_serialization() {
           )
         })
 
-        t.test(function test_svg() {
+        t.test(function test_svg_in_strict_mode() {
+          t.throws(() => E(`svg`), SyntaxError, `namespace mismatch for element "svg": expected "http://www.w3.org/2000/svg", found "http://www.w3.org/1999/xhtml"`)
+        })
+
+        t.test(function test_svg_in_lax_mode() {
+          ren.lax = true
+
           t.is(E(`svg`).namespaceURI, `http://www.w3.org/2000/svg`)
 
           eqm(
             E(`svg`, {}, new p.Raw(`<line x1="12" y1="8" x2="12" y2="12"></line>`)),
             `<svg><line x1="12" y1="8" x2="12" y2="12"></line></svg>`,
           )
+
+          ren.lax = false
         })
       })
     })
@@ -722,17 +730,17 @@ function testNonScalarChiLax(E, eqm) {
 }
 
 function testNonScalarPropStrict(E) {
-  t.throws(() => E(`div`, {one: Symbol(`str`)}),       TypeError, `unable to convert Symbol(str) to string`)
-  t.throws(() => E(`div`, {one: {}}),                  TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {one: l.npo()}),             TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {one: new class {}()}),      TypeError, `unable to convert [object Object] to string`)
+  t.throws(() => E(`div`, {one: Symbol(`str`)}),       TypeError, `unable to convert property "one" Symbol(str) to string`)
+  t.throws(() => E(`div`, {one: {}}),                  TypeError, `unable to convert property "one" {} to string`)
+  t.throws(() => E(`div`, {one: l.npo()}),             TypeError, `unable to convert property "one" {} to string`)
+  t.throws(() => E(`div`, {one: new class {}()}),      TypeError, `unable to convert property "one" [object Object] to string`)
   t.throws(() => E(`div`, {}, () => {}),               TypeError, `unable to convert [function () => {}] to string`)
   t.throws(() => E(`div`, {}, function fun() {}),      TypeError, `unable to convert [function fun] to string`)
   t.throws(() => E(`div`, {}, Promise.resolve()),      TypeError, `unable to convert [object Promise] to string`)
 
   // Banned specifically in attrs, but allowed in children.
-  t.throws(() => E(`div`, {one: []}), TypeError, `unable to convert [] to string`)
-  t.throws(() => E(`div`, {one: new class extends Array {}()}), TypeError, `unable to convert [] to string`)
+  t.throws(() => E(`div`, {one: []}), TypeError, `unable to convert property "one" [] to string`)
+  t.throws(() => E(`div`, {one: new class extends Array {}()}), TypeError, `unable to convert property "one" [] to string`)
 }
 
 function testNonScalarPropLax(E, eqm) {
@@ -946,6 +954,34 @@ t.test(function test_Ren_custom_element() {
     new SomeElem().init(),
     `<elem-a5425a id="one" class="two">three</elem-a5425a>`,
   )
+})
+
+t.test(function test_Ren_node() {
+  t.is(ren.node(), null)
+
+  function same(val) {
+    t.is(ren.node(val), val)
+    t.isnt(ren.node(val, val), val)
+  }
+
+  same(new dg.glob.Text(`one`))
+  same(new dg.glob.Comment(`one`))
+  same(ren.elemHtml(`span`))
+  same(ren.frag())
+
+  function frag(src, exp) {
+    const tar = ren.node(...src)
+    t.inst(tar, dg.glob.DocumentFragment)
+    t.is(tar.textContent, exp)
+  }
+
+  frag([undefined], ``)
+  frag([undefined, null], ``)
+  frag([``], ``)
+  frag([`one`], `one`)
+  frag([`one`, ``], `one`)
+  frag([`one`, `_`], `one_`)
+  frag([`one`, `_`, `two`], `one_two`)
 })
 
 t.test(function test_renderDocument() {

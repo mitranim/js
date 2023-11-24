@@ -412,6 +412,12 @@ t.test(function test_concat() {
   t.eq(i.concat(), [])
   t.eq(i.concat([], undefined, null, []), [])
 
+  // This is the biggest difference from `Array.prototype.concat`.
+  // We concatenate only iterables, and treat any non-iterables as empty lists.
+  t.eq(i.concat(10), [])
+  t.eq(i.concat(`str`), [])
+  t.eq(i.concat(10, `str`), [])
+
   testColls([], {}, function testColl(make) {
     t.eq(i.concat(make()), [])
   })

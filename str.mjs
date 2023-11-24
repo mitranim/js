@@ -150,19 +150,21 @@ export function lower(val) {return l.laxStr(val).toLowerCase()}
 export function upper(val) {return l.laxStr(val).toUpperCase()}
 
 /*
-Probably suboptimal. Doesn't explicitly support surrogate pairs, but doesn't
-seem to break them either. See the test.
+Assumes that every capitalizable character is represented with one UTF-16 code
+point, without surrogate pairs. Doesn't explicitly support surrogate pairs, but
+doesn't seem to break them for unsupported characters such as emoji. See the
+test. Probably suboptimal.
 */
 export function title(val) {
-  val = lower(val)
-  if (!val.length) return val
-  return val[0].toUpperCase() + val.slice(1)
+  val = l.laxStr(val)
+  if (!val) return val
+  return val[0].toUpperCase() + val.slice(1).toLowerCase()
 }
 
 export function strMap(val) {return new StrMap(val)}
 
 /*
-Map<string, string[]> used by various subclasses such as `Query` and `Flag`.
+`Map<string, string[]>` used by various subclasses such as `Query` and `Flag`.
 Features:
 
   * Automatic type checks / sanity checks.
@@ -436,7 +438,10 @@ export function joinLinesLax(val) {return joinLax(val, `\n`)}
 export function joinLinesOpt(val) {return joinOpt(val, `\n`)}
 export function joinLinesOptLax(val) {return joinOptLax(val, `\n`)}
 
+// TODO: this needs a different algorithm that avoids redundant occurrences of
+// the separator.
 export function spaced(...val) {return joinOptLax(val, ` `)}
+
 export function dashed(...val) {return joinOptLax(val, `-`)}
 
 // TODO rename to something like `pathStartsWith` and swap args.
