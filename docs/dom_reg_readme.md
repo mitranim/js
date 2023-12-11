@@ -26,7 +26,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.48/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.49/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {
@@ -74,7 +74,7 @@ Registry for custom DOM element classes. Automatically derives tag name from cla
 By default, this registry has **no global side effects**. To enable global registration, provide a "definer" to the registry.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.48/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.49/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   static customName = `some-btn`
@@ -99,7 +99,7 @@ The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg
   * [`class CustomElementRegistry`](../dom_reg.mjs#L134)
   * [`function MixReg`](../dom_reg.mjs#L159)
   * [`class MixRegCache`](../dom_reg.mjs#L161)
-  * [`function isDefiner`](../dom_reg.mjs#L269)
-  * [`function optDefiner`](../dom_reg.mjs#L270)
-  * [`function isCustomName`](../dom_reg.mjs#L273)
-  * [`function reqCustomName`](../dom_reg.mjs#L277)
+  * [`function isDefiner`](../dom_reg.mjs#L280)
+  * [`function optDefiner`](../dom_reg.mjs#L281)
+  * [`function isCustomName`](../dom_reg.mjs#L284)
+  * [`function reqCustomName`](../dom_reg.mjs#L288)

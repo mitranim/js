@@ -1,6 +1,6 @@
 MAKEFLAGS := --silent --always-make
 MAKE_PAR := $(MAKE) -j 128
-DENO := deno run -A --no-check --unstable --allow-hrtime
+DENO := deno run -A --no-check --allow-hrtime
 RUN := $(if $(run),--run="$(run)",)
 FEAT := $(or $(feat),all_deno)
 VERB := $(if $(filter $(verb),true),--verb,)
@@ -13,6 +13,8 @@ CMD_DOC := doc/cmd_doc.mjs
 CMD_VER_INC := doc/cmd_ver_inc.mjs
 PKG := package.json
 HOOK_PRE_COMMIT_FILE := .git/hooks/pre-commit
+WATCH := watchexec -r -d=0 -n
+WATCH_SRC := $(WATCH) -e=mjs
 
 # This is a "function" that must be defined with "=", not ":=".
 VER = $(shell jq -r '.version' < $(PKG))
@@ -36,10 +38,21 @@ srv:
 	$(DENO) $(CMD_SRV)
 
 lint_w:
-	watchexec -r -c -d=0 -e=mjs -n -- $(MAKE) lint
+	$(MAKE_PAR) lint_deno_w lint_eslint_w
 
-lint:
+lint: lint_deno lint_eslint
+
+lint_deno_w:
+	$(WATCH_SRC) -- $(MAKE) lint_deno
+
+lint_deno:
 	deno lint --rules-exclude=no-empty,require-yield,require-await,constructor-super,no-self-assign
+
+lint_eslint_w:
+	$(WATCH_SRC) -- $(MAKE) lint_eslint
+
+lint_eslint:
+	eslint --config=.eslintrc --ext=mjs .
 
 doc_w:
 	$(DENO) --watch $(CMD_DOC) --watch
@@ -50,8 +63,7 @@ doc:
 watch:
 	$(MAKE_PAR) test_w lint_w doc_w
 
-prep: test
-	$(MAKE_PAR) lint doc
+prep: test lint doc
 
 tag:
 	git tag $(VER)

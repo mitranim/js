@@ -3,6 +3,7 @@ import * as o from './obj.mjs'
 import * as dr from './dom_reg.mjs'
 import * as p from './prax.mjs'
 import * as u from './url.mjs'
+import * as c from './coll.mjs'
 
 /* Vars */
 
@@ -26,6 +27,11 @@ export const implementationKey = Symbol.for(`implementation`)
 export const documentElementKey = Symbol.for(`documentElement`)
 
 /* Interfaces */
+
+/*
+TODO fully consolidate these with `dom.mjs`.
+(We're trying to avoid unnecessary imports.)
+*/
 
 export function isChildNode(val) {return l.hasIn(val, `parentNode`)}
 export function reqChildNode(val) {return l.req(val, isChildNode)}
@@ -215,7 +221,7 @@ export class Node extends l.Emp {
   owned(doc) {return this[ownerDocumentKey] = doc, this}
 }
 
-// Non-standard.
+// Non-standard intermediary class for internal use.
 export class Textable extends Node {
   get textContent() {return this.foldTextContent(``, this[childNodesKey])}
 
@@ -237,12 +243,18 @@ export class Textable extends Node {
   }
 }
 
-export class DocumentFragment extends Textable {
+// Non-standard intermediary class for internal use.
+export class TextableElementParent extends Textable {
+  get children() {return this[childNodesKey]?.filter(isElement) ?? []}
+  get childElementCount() {return count(this[childNodesKey], isElement)}
+}
+
+export class DocumentFragment extends TextableElementParent {
   get nodeType() {return Node.DOCUMENT_FRAGMENT_NODE}
   get nodeName() {return `#document-fragment`}
 }
 
-// Non-standard.
+// Non-standard intermediary class for internal use.
 export class Void extends Node {
   appendChild() {throw errIllegal()}
   removeChild() {throw errIllegal()}
@@ -251,7 +263,7 @@ export class Void extends Node {
   append() {throw errIllegal()}
 }
 
-// Non-standard.
+// Non-standard intermediary class for internal use.
 export class Data extends Void {
   constructor(val) {super().data = val}
   get data() {return l.laxStr(this[dataKey])}
@@ -338,7 +350,7 @@ export class NamedNodeMap extends Map {
   }
 }
 
-export class Element extends Textable {
+export class Element extends TextableElementParent {
   /* Standard behaviors. */
 
   get nodeType() {return Node.ELEMENT_NODE}
@@ -457,7 +469,6 @@ export class Element extends Textable {
   }
 
   hasAttribute(key) {return !!this[attributesKey]?.has(key)}
-
   getAttribute(key) {return norm(this[attributesKey]?.get(key))}
 
   removeAttribute(key) {
@@ -534,11 +545,8 @@ export class Element extends Textable {
   }
 
   isVoid() {return p.VOID.has(this.localName)}
-
   tagString() {return l.laxStr(this.localName)}
-
   attrString() {return l.laxStr(this[attributesKey]?.toString())}
-
   attrPrefix() {return this.attrIs() + this.attrXmlns()}
 
   attrIs() {
@@ -606,6 +614,11 @@ export class HTMLAnchorElement extends HTMLElement {
   set rel(val) {this.setAttribute(`rel`, val)}
 }
 
+export class HTMLLabelElement extends HTMLElement {
+  get htmlFor() {return l.laxStr(this.getAttribute(`for`))}
+  set htmlFor(val) {this.setAttribute(`for`, val)}
+}
+
 class ToggleElement extends HTMLElement {
   get disabled() {return this.hasAttribute(`disabled`)}
   set disabled(val) {this.toggleAttribute(`disabled`, l.laxBool(val))}
@@ -649,6 +662,14 @@ export class HTMLInputElement extends TextInputElement {
 }
 
 export class HTMLTextAreaElement extends TextInputElement {}
+export class HTMLObjectElement extends HTMLElement {}
+export class HTMLOutputElement extends HTMLElement {}
+export class HTMLSelectElement extends HTMLElement {}
+export class HTMLFieldSetElement extends HTMLElement {}
+
+export class HTMLFormElement extends HTMLElement {
+  get elements() {return new HTMLFormControlsCollection(this)}
+}
 
 export class HTMLTableElement extends HTMLElement {
   get caption() {return this.childNodes?.find(isCaption)}
@@ -988,7 +1009,6 @@ export class ClassList extends l.Emp {
   set value(val) {this.ref.className = val}
 
   item(ind) {return ind >= 0 ? norm(this.toArray()[ind]) : null}
-
   contains(val) {return this.toArray().includes(val)}
 
   add(...val) {
@@ -1031,11 +1051,16 @@ export class ClassList extends l.Emp {
   }
 
   toString() {return this.value}
-
   keys() {return this.toArray().keys()}
   values() {return this.toArray().values()}
   entries() {return this.toArray().entries()}
   forEach(...val) {return this.toArray().forEach(...val)}
+
+  /*
+  Technical note. In our shim, this object is iterable, but is not a list.
+  We avoid having a `.length` getter to prevent this object from being
+  accidentally mistaken for a list.
+  */
   [Symbol.iterator]() {return this.values()}
 
   /* Non-standard extensions. */
@@ -1044,6 +1069,120 @@ export class ClassList extends l.Emp {
   set ref(val) {this[refKey] = reqElement(val)}
   toArray() {return split(this.value.trim(), /\s+/g)}
 }
+
+const arrKey = Symbol.for(`arr`)
+const byIdKey = Symbol.for(`byId`)
+const byNameKey = Symbol.for(`byName`)
+
+/*
+Shim for the native interface `HTMLFormControlsCollection` used for the getter
+`HTMLFormElement..elements`. Or more like "sham", because for technical
+reasons, this implements only part of the interface, and isn't "live".
+
+Technical note. In violation of the standard DOM API, as well as basic sanity
+and various conventions, we minimize the number of regular (non-symbolic)
+properties on this object, whether own or inherited. It's also merely an
+iterable and not a list. While this is a major inconsistency with the standard
+implementations of this type, this is done in order to minimize bugs caused by
+such inconsistencies, by pushing user code towards using `.namedItem` and
+avoiding direct property access. Keeping the method `.namedItem` consistent
+with the standard implementations is fairly straightforward and practical.
+Keeping the set of own properties created by indexing controls by `.id` and/or
+`.name` is far less straightforward due to property collisions. In the standard
+API, this object is supposed to have an own enumerable property for each
+non-empty `.id` and `.name` that occurs among the form controls, but skipping
+any such properties that collide with inherited properties. This means in order
+to have the same set of control-referencing properties as in the standard API,
+we must also 100% match the set of inherited properties as in the standard API.
+We're not prepared to commit to such accuracy.
+*/
+export class HTMLFormControlsCollection extends l.Emp {
+  /* Standard behaviors. */
+
+  namedItem(key) {
+    return norm(this[byIdKey]?.get(key) ?? this[byNameKey]?.get(key))
+  }
+
+  [Symbol.iterator]() {return (this[arrKey] ?? []).values()}
+
+  /* Non-standard extensions. */
+
+  constructor(src) {
+    super()
+    this.constructor.addFrom(this, src)
+  }
+
+  static addFrom(tar, src) {
+    l.reqInst(tar, this)
+
+    if (!isParentNode(src)) return
+
+    for (const val of src.childNodes) {
+      this.addOpt(tar, val)
+      this.addFrom(tar, val)
+    }
+  }
+
+  static addOpt(tar, val) {
+    l.reqInst(tar, this)
+
+    if (!this.isControl(val)) return
+
+    const arr = tar[arrKey] ??= []
+    arr.push(val)
+
+    const id = val.id
+    if (l.isValidStr(id)) {
+      const index = tar[byIdKey] ??= new FormControlMap()
+      index.add(id, val)
+    }
+
+    const name = val.name
+    if (l.isValidStr(name)) {
+      const index = tar[byNameKey] ??= new FormControlMap()
+      index.add(name, val)
+    }
+  }
+
+  static isControl(val) {
+    return l.isObj(val) && (
+      false
+      || val instanceof HTMLButtonElement
+      || val instanceof HTMLFieldSetElement
+      || val instanceof HTMLInputElement
+      || val instanceof HTMLObjectElement
+      || val instanceof HTMLOutputElement
+      || val instanceof HTMLSelectElement
+      || val instanceof HTMLTextAreaElement
+    )
+  }
+}
+
+// For internal use.
+export class FormControlMap extends c.TypedMap {
+  reqKey(key) {return l.reqValidStr(key)}
+  reqVal(val) {return val}
+
+  add(key, val) {
+    l.reqValidStr(key)
+
+    const prev = this.get(key)
+    if (!prev) {
+      this.set(key, val)
+      return
+    }
+
+    if (l.isInst(prev, RadioNodeList)) {
+      prev.push(val)
+      return
+    }
+
+    this.set(key, RadioNodeList.of(prev, val))
+  }
+}
+
+// Semi-placeholder for internal use.
+export class RadioNodeList extends Array {}
 
 /* Namespaces */
 

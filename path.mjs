@@ -244,7 +244,8 @@ export const windows = new PathsWindows()
 
 // Must be called ONLY on the file name, without the directory path.
 function ext(val, sep) {
-  l.reqStr(val), l.reqStr(sep)
+  l.reqStr(val)
+  l.reqStr(sep)
   const ind = val.lastIndexOf(sep)
   return ind > 0 ? val.slice(ind) : ``
 }

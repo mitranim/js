@@ -18,9 +18,9 @@ export function arrOpt(val) {return l.isNil(val) ? val : arr(val)}
 export function arrCopy(val) {
   if (l.isNil(val)) return []
   if (l.isTrueArr(val)) return val.slice()
+  if (l.isArr(val)) return [].concat(val)
   if (l.isArrble(val)) return arrFromList(toArray(val))
-  if (l.isList(val)) return arrFromList(val)
-  if (l.isSeq(val)) return values(val)
+  if (l.isSeq(val)) return arrFromIter(val)
   throw l.errConv(val, `array`)
 }
 

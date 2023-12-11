@@ -13,6 +13,10 @@ const someStr = `hello world`
 const someDate = new Date(1024)
 const someProm = Promise.resolve()
 
+class IterSimple extends l.Emp {
+  [Symbol.iterator]() {throw Error(`unreachable`)}
+}
+
 const emptyStr = ``
 const emptyArr = []
 const emptyPlainDict = {}
@@ -21,6 +25,8 @@ const emptyEmpNotFrozen = new l.Emp()
 const emptyEmpFrozen = Object.freeze(new l.Emp())
 const emptyGen = gen()
 const emptyArgs = function args() {return arguments}()
+const emptySet = new Set()
+const emptyIterSimple = new IterSimple()
 
 class DateSub extends Date {
   constructor(...val) {
@@ -213,6 +219,12 @@ t.bench(function bench_isIter_hit_args() {l.nop(l.isIter(emptyArgs))})
 t.bench(function bench_isStruct_nil() {l.nop(l.isStruct())})
 t.bench(function bench_isStruct_miss() {l.nop(l.isStruct(emptyArr))})
 t.bench(function bench_isStruct_hit() {l.nop(l.isStruct(someDate))})
+
+t.bench(function bench_isSeq_nil() {l.nop(l.isSeq())})
+t.bench(function bench_isSeq_miss() {l.nop(l.isSeq(someProm))})
+t.bench(function bench_isSeq_hit_arr() {l.nop(l.isSeq(emptyArr))})
+t.bench(function bench_isSeq_hit_set() {l.nop(l.isSeq(emptySet))})
+t.bench(function bench_isSeq_hit_iter() {l.nop(l.isSeq(emptyIterSimple))})
 
 t.bench(function bench_isPromise_asm_nil() {l.nop(isPromiseAsm())})
 t.bench(function bench_isPromise_asm_miss() {l.nop(isPromiseAsm(emptyArr))})

@@ -227,19 +227,6 @@ export class Loop extends Rec {
 
 // Short for "proxy handler". Base for other handlers.
 export class Ph extends l.Emp {
-  /*
-  Hack/workaround for Chrome. At the time of writing, in recent versions of
-  Chrome, the engine invokes only "own" methods of proxy handlers, ignoring
-  methods on the prototype. TODO remove if they fix this.
-  */
-  constructor() {
-    super()
-    this.has = this.has
-    this.get = this.get
-    this.set = this.set
-    this.deleteProperty = this.deleteProperty
-  }
-
   /* Standard traps */
 
   has(tar, key) {

@@ -624,7 +624,7 @@ The argument order matches `instanceof` and `l.isInst`.
 export function inst(val, cls) {
   l.reqCls(cls)
   if (l.isInst(val, cls)) return
-  throw new AssertError(`expected instance of ${cls}, got ${l.show(val)}`)
+  throw new AssertError(`expected instance of ${l.show(cls)}, got ${l.show(val)}`)
 }
 
 /*
@@ -635,7 +635,7 @@ The argument order matches `instanceof` and `l.isInst`.
 export function optInst(val, cls) {
   l.reqCls(cls)
   if (l.isNil(val) || l.isInst(val, cls)) return
-  throw new AssertError(`expected nil or instance of ${cls}, got ${l.show(val)}`)
+  throw new AssertError(`expected nil or instance of ${l.show(cls)}, got ${l.show(val)}`)
 }
 
 /*

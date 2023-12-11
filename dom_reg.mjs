@@ -240,6 +240,17 @@ export class Reg extends o.MixMain(l.Emp) {
   assoc(tag, cls) {
     reqCustomName(tag)
     l.reqCls(cls)
+
+    const prevTag = this.clsToTag.get(cls)
+    if (prevTag && prevTag !== tag) {
+      throw Error(`tag mismatch for ${l.show(cls)}: expected ${l.show(tag)}, found ${l.show(prevTag)}`)
+    }
+
+    const prevCls = this.tagToCls.get(tag)
+    if (prevCls && prevTag !== cls) {
+      throw Error(`class mismatch for ${l.show(tag)}: expected ${l.show(cls)}, found ${l.show(prevCls)}`)
+    }
+
     this.clsToTag.set(cls, tag)
     this.tagToCls.set(tag, cls)
   }

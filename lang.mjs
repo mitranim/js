@@ -266,7 +266,7 @@ export function optList(val) {return isNil(val) ? val : reqList(val)}
 export function onlyList(val) {return isList(val) ? val : undefined}
 export function laxList(val) {return isNil(val) ? [] : reqList(val)}
 
-export function isSeq(val) {return isList(val) || isSet(val) || isArrble(val) || isIterator(val)}
+export function isSeq(val) {return isArr(val) || isSet(val) || (isIter(val) && !hasMeth(val, `keys`))}
 export function reqSeq(val) {return isSeq(val) ? val : throwErrFun(val, isSeq)}
 export function optSeq(val) {return isNil(val) ? val : reqSeq(val)}
 export function onlySeq(val) {return isSeq(val) ? val : undefined}
@@ -428,7 +428,8 @@ export function not(fun) {
 export function hasIn(val, key) {return isComp(val) && key in val}
 export function hasOwn(val, key) {return isComp(val) && Object.prototype.hasOwnProperty.call(val, key)}
 export function hasOwnEnum(val, key) {return isComp(val) && Object.prototype.propertyIsEnumerable.call(val, key)}
-export function hasMeth(val, key) {return hasIn(val, key) && isFun(val[key])}
+export function hasInherited(val, key) {return isComp(val) && key in val && !Object.prototype.hasOwnProperty.call(val, key)}
+export function hasMeth(val, key) {return isComp(val) && key in val && isFun(val[key])}
 
 export function eq(one, two) {
   if (is(one, two)) return true

@@ -447,9 +447,7 @@ export class PropBui extends o.MixMain(l.Emp) {
   }
 
   get $() {return this[refKey]}
-
   has(key) {return l.hasIn(this[refKey], key)}
-
   get(key) {return this[refKey] ? this[refKey][l.reqStr(key)] : undefined}
 
   set(key, val) {

@@ -934,6 +934,10 @@ t.test(function test_isSeq() {
   t.ok(l.isSeq(gen()))
   t.ok(l.isSeq(new Set()))
   t.ok(l.isSeq(new String(``)))
+
+  // Simplest way to implement an iterable in JS.
+  // Should also be considered a sequence.
+  t.ok(l.isSeq({[Symbol.iterator]: unreachable}))
 })
 
 t.test(function test_isVac() {
@@ -1076,6 +1080,20 @@ t.test(function test_isEmpty() {
   t.ok(l.isEmpty(args()))
 })
 
+t.test(function test_hasIn() {
+  t.no(l.hasIn(undefined,               `toString`))
+  t.no(l.hasIn(10,                      `toString`))
+  t.no(l.hasIn(`str`,                   `toString`))
+  t.ok(l.hasIn({},                      `toString`))
+  t.ok(l.hasIn({toString: 10},          `toString`))
+  t.ok(l.hasIn(inherit({toString: 10}), `toString`))
+
+  t.ok(l.hasIn(inherit(null, {toString: {value: 10, enumerable: true}}), `toString`))
+  t.ok(l.hasIn(inherit(null, {toString: {value: 10, enumerable: false}}), `toString`))
+  t.ok(l.hasIn(inherit(inherit(null, {toString: {value: 10, enumerable: true}})), `toString`))
+  t.ok(l.hasIn(inherit(inherit(null, {toString: {value: 10, enumerable: false}})), `toString`))
+})
+
 t.test(function test_hasOwn() {
   t.no(l.hasOwn(undefined,               `toString`))
   t.no(l.hasOwn(10,                      `toString`))
@@ -1102,6 +1120,45 @@ t.test(function test_hasOwnEnum() {
   t.no(l.hasOwnEnum(inherit(null, {toString: {value: 10, enumerable: false}}), `toString`))
   t.no(l.hasOwnEnum(inherit(inherit(null, {toString: {value: 10, enumerable: true}})), `toString`))
   t.no(l.hasOwnEnum(inherit(inherit(null, {toString: {value: 10, enumerable: false}})), `toString`))
+})
+
+t.test(function test_hasInherited() {
+  t.no(l.hasInherited(undefined,         `toString`))
+  t.ok(l.hasInherited(Object(undefined), `toString`))
+
+  t.no(l.hasInherited(10,         `toString`))
+  t.ok(l.hasInherited(Object(10), `toString`))
+
+  t.no(l.hasInherited(`str`,         `toString`))
+  t.ok(l.hasInherited(Object(`str`), `toString`))
+
+  t.no(l.hasInherited([], `length`))
+  t.ok(l.hasOwn([],       `length`))
+  t.no(l.hasOwnEnum([],   `length`))
+
+  t.ok(l.hasInherited(inherit([]), `length`))
+  t.no(l.hasOwn(inherit([]),       `length`))
+  t.no(l.hasOwnEnum(inherit([]),   `length`))
+
+  t.no(l.hasInherited({length: undefined},          `length`))
+  t.no(l.hasInherited({length: 0},                  `length`))
+  t.no(l.hasInherited({length: 10},                 `length`))
+  t.ok(l.hasInherited(inherit({length: undefined}), `length`))
+
+  t.no(l.hasInherited([10, 20, 30], 0))
+  t.no(l.hasInherited([10, 20, 30], `0`))
+  t.ok(l.hasOwnEnum([10, 20, 30], 0))
+  t.ok(l.hasOwnEnum([10, 20, 30], `0`))
+
+  t.no(l.hasInherited([10, 20, 30], 1))
+  t.no(l.hasInherited([10, 20, 30], `1`))
+  t.ok(l.hasOwnEnum([10, 20, 30], 1))
+  t.ok(l.hasOwnEnum([10, 20, 30], `1`))
+
+  t.no(l.hasInherited([10, 20, 30], 3))
+  t.no(l.hasInherited([10, 20, 30], `3`))
+  t.no(l.hasOwnEnum([10, 20, 30], 3))
+  t.no(l.hasOwnEnum([10, 20, 30], `3`))
 })
 
 t.test(function test_hasMeth() {
@@ -1174,7 +1231,7 @@ t.test(function test_eq() {
 
 t.test(function test_setProto() {
   class BrokenSuper {
-    constructor() {return Object.create(BrokenSuper.prototype)}
+    constructor() {return inherit(BrokenSuper.prototype)}
   }
 
   class UnfixedSub extends BrokenSuper {}

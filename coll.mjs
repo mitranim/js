@@ -31,7 +31,6 @@ export class Bset extends Set {
   toJSON() {return this.toArray()}
 
   static of(...val) {return new this(val)}
-
   static from(val) {return new this(l.optIter(val))}
 }
 
