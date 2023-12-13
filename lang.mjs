@@ -266,7 +266,7 @@ export function optList(val) {return isNil(val) ? val : reqList(val)}
 export function onlyList(val) {return isList(val) ? val : undefined}
 export function laxList(val) {return isNil(val) ? [] : reqList(val)}
 
-export function isSeq(val) {return isArr(val) || isSet(val) || (isIter(val) && !hasMeth(val, `keys`))}
+export function isSeq(val) {return isArr(val) || isSet(val) || isList(val) || isIterator(val)}
 export function reqSeq(val) {return isSeq(val) ? val : throwErrFun(val, isSeq)}
 export function optSeq(val) {return isNil(val) ? val : reqSeq(val)}
 export function onlySeq(val) {return isSeq(val) ? val : undefined}

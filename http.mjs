@@ -33,8 +33,8 @@ export const TYPE_JSON = `application/json`
 export const TYPE_FORM = `application/x-www-form-urlencoded`
 export const TYPE_MULTI = `multipart/form-data`
 
-export function jsonDecode(val) {return l.laxStr(val) ? JSON.parse(val) : null}
-export function jsonEncode(val) {return JSON.stringify(l.isNil(val) ? null : val)}
+export function jsonDecode(val) {return l.optStr(val) ? JSON.parse(val) : undefined}
+export function jsonEncode(val) {return l.isSome(val) ? JSON.stringify(val) : `null`}
 
 // True if given HTTP status code is between 100 and 199 inclusive.
 export function isStatusInfo(val) {return l.isNat(val) && val >= 100 && val <= 199}

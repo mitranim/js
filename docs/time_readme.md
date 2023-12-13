@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as ti from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.49/time.mjs'
+import * as ti from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.50/time.mjs'
 ```
 
 ## API

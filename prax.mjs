@@ -535,7 +535,7 @@ export class PropBui extends o.MixMain(l.Emp) {
 
   mut(val) {
     val = deref(val)
-    return val ? this.mutFromStruct(val) : this.mutable()
+    return l.isSome(val) ? this.mutFromStruct(val) : this
   }
 
   mutFromStruct(val) {
@@ -555,7 +555,7 @@ export class PropBui extends o.MixMain(l.Emp) {
   snapshot(val) {return this.with(val).frozen()}
   mutable() {return this.mutableOuter().mutableInner()}
   mutableOuter() {return this[frozenKey] ? new this.constructor().mut(this.$) : this}
-  mutableInner() {return (!this[refKey] && (this[refKey] = new l.Emp())), this}
+  mutableInner() {return (this[refKey] ??= new l.Emp()), this}
 
   static of(val) {
     if (l.isNil(val)) return new this()
@@ -575,11 +575,15 @@ export function renderDocument(src) {
   const pre = `<!doctype html>`
   if (l.isNil(src)) return ``
   if (l.isStr(src)) return src && (pre + src)
-  if (isRaw(src)) return renderDocument(src.outerHTML)
+  if (isRaw(src)) return renderDocument(l.laxStr(src.outerHTML))
   if (l.isScalar(src)) return renderDocument(l.render(src))
   throw l.errConv(src, `document`)
 }
 
+/*
+Much more restrictive than `lang.mjs`.`isSeq`. Designed to prevent programmer
+errors such as accidentally passing a `Set` as an element child.
+*/
 export function isSeq(val) {
   return l.isObj(val) && !l.isScalar(val) && (l.isList(val) || l.isIterator(val))
 }

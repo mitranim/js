@@ -146,16 +146,25 @@ t.test(function test_PropBui_A() {
   })
 
   t.test(function test_mut() {
-    function test(src) {
+    function none(src) {
+      const out = A.mut(src)
+      t.is(out, A)
+      t.is(out.$, undefined)
+    }
+
+    none()
+    none(undefined)
+    none(null)
+
+    function some(src) {
       const out = A.mut(src)
       t.isnt(out, A)
       testDerefOwn(out, {...src})
     }
 
-    test()
-    test({})
-    test({one: 10})
-    test({one: 10, two: 20})
+    some({})
+    some({one: 10})
+    some({one: 10, two: 20})
   })
 })
 

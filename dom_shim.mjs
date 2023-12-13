@@ -247,6 +247,8 @@ export class Textable extends Node {
 export class TextableElementParent extends Textable {
   get children() {return this[childNodesKey]?.filter(isElement) ?? []}
   get childElementCount() {return count(this[childNodesKey], isElement)}
+  get firstElementChild() {return norm(this[childNodesKey]?.find(isElement))}
+  get lastElementChild() {return norm(this[childNodesKey]?.findLast(isElement))}
 }
 
 export class DocumentFragment extends TextableElementParent {
@@ -404,8 +406,6 @@ export class Element extends TextableElementParent {
   }
 
   get attributes() {return this[attributesKey] ||= this.Attributes()}
-  get children() {return this[childNodesKey]?.filter(isElement) ?? []}
-  get childElementCount() {return count(this[childNodesKey], isElement)}
 
   get id() {return l.laxStr(this.getAttribute(`id`))}
   set id(val) {this.setAttribute(`id`, val)}
@@ -662,9 +662,31 @@ export class HTMLInputElement extends TextInputElement {
 }
 
 export class HTMLTextAreaElement extends TextInputElement {}
+
 export class HTMLObjectElement extends HTMLElement {}
+
 export class HTMLOutputElement extends HTMLElement {}
-export class HTMLSelectElement extends HTMLElement {}
+
+/*
+Doesn't support the `.value` getter/setter because the correct way to render
+pre-selection is via `HTMLOptionElement..selected`.
+*/
+export class HTMLSelectElement extends HTMLElement {
+  get name() {return l.laxStr(this.getAttribute(`name`))}
+  set name(val) {this.setAttribute(`name`, val)}
+
+  get multiple() {return this.hasAttribute(`multiple`)}
+  set multiple(val) {this.toggleAttribute(`multiple`, l.laxBool(val))}
+}
+
+export class HTMLOptionElement extends HTMLElement {
+  get value() {return l.laxStr(this.getAttribute(`value`))}
+  set value(val) {this.setAttribute(`value`, val)}
+
+  get selected() {return this.hasAttribute(`selected`)}
+  set selected(val) {this.toggleAttribute(`selected`, l.laxBool(val))}
+}
+
 export class HTMLFieldSetElement extends HTMLElement {}
 
 export class HTMLFormElement extends HTMLElement {

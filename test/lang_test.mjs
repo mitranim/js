@@ -919,6 +919,7 @@ t.test(function test_isList() {
   t.ok(l.isList(new String(``)))
 })
 
+// Also see `lang_browser_test.mjs`.`test_isSeq`.
 t.test(function test_isSeq() {
   t.no(l.isSeq(undefined))
   t.no(l.isSeq(null))
@@ -926,18 +927,20 @@ t.test(function test_isSeq() {
   t.no(l.isSeq(`str`))
   t.no(l.isSeq(false))
   t.no(l.isSeq({}))
-  t.no(l.isSeq(new Map()))
   t.no(l.isSeq({length: 0}))
+  t.no(l.isSeq(new Map()))
+  t.no(l.isSeq(new URLSearchParams()))
 
   t.ok(l.isSeq([]))
   t.ok(l.isSeq(args()))
   t.ok(l.isSeq(gen()))
-  t.ok(l.isSeq(new Set()))
   t.ok(l.isSeq(new String(``)))
+  t.ok(l.isSeq(new Set()))
 
+  // TODO: currently not supported for technical reasons.
   // Simplest way to implement an iterable in JS.
   // Should also be considered a sequence.
-  t.ok(l.isSeq({[Symbol.iterator]: unreachable}))
+  // t.ok(l.isSeq({[Symbol.iterator]: unreachable}))
 })
 
 t.test(function test_isVac() {

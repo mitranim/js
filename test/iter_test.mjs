@@ -97,6 +97,7 @@ t.test(function test_alloc() {
   t.eq(i.alloc(2), Array(2))
 })
 
+// Also see `iter_browser_test.mjs`.`test_arr`.
 t.test(function test_arr() {
   const fun = i.arr
   testArrOrArrCopy(fun)
