@@ -1304,4 +1304,28 @@ t.test(function test_replaceAll() {
   t.is(s.replaceAll(`one_two_one_two_three`, `two`, `three`), `one_three_one_three_three`)
 })
 
+t.test(function test_commonPrefixLen() {
+  function test(one, two, exp) {t.is(s.commonPrefixLen(one, two), exp)}
+
+  test(``,        ``,          0)
+  test(``,        `one`,       0)
+  test(`one`,     ``,          0)
+  test(`one`,     `two`,       0)
+  test(`_one`,    `_two`,      `_`.length)
+  test(`_two`,    `_three`,    `_t`.length)
+  test(`one_two`, `one_three`, `one_t`.length)
+})
+
+t.test(function test_commonPrefix() {
+  function test(one, two, exp) {t.is(s.commonPrefix(one, two), exp)}
+
+  test(``,        ``,          ``)
+  test(``,        `one`,       ``)
+  test(`one`,     ``,          ``)
+  test(`one`,     `two`,       ``)
+  test(`_one`,    `_two`,      `_`)
+  test(`_two`,    `_three`,    `_t`)
+  test(`one_two`, `one_three`, `one_t`)
+})
+
 if (import.meta.main) console.log(`[test] ok!`)

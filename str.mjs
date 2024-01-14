@@ -475,7 +475,7 @@ When unavailable, we fall back on `crypto.getRandomValues`.
 */
 export function uuid() {
   return (
-    crypto?.randomUUID?.().replace(/-/g, ``) ??
+    globalThis.crypto?.randomUUID?.().replace(/-/g, ``) ??
     arrHex(uuidArr())
   )
 }
@@ -644,4 +644,21 @@ export function replaceAll(src, pat, rep) {
   }
 
   return out + src
+}
+
+export function commonPrefixLen(one, two) {
+  one = l.reqStr(one)
+  two = l.reqStr(two)
+
+  let ind = 0
+  while (ind < one.length && ind < two.length) {
+    if (one[ind] !== two[ind]) return ind
+    ind += 1
+  }
+  return ind
+}
+
+export function commonPrefix(one, two) {
+  const len = commonPrefixLen(one, two)
+  return len ? one.slice(0, len) : ``
 }

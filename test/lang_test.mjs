@@ -33,7 +33,7 @@ t.test(function test_show() {
   test({},                                        `{}`)
   test(inherit(null),                             `{}`)
   test(inherit(inherit(null)),                    `{}`)
-  test({one: `two`, three: `four`},               `{"one": "two", "three": "four"}`)
+  test({one: `two`, three: `four`},               `{one: "two", three: "four"}`)
   test([],                                        `[]`)
   test([10, `str`],                               `[10, "str"]`)
   test(args,                                      `[function args]`)
@@ -128,7 +128,7 @@ function testRenderInvalid(fun) {
   t.throws(() => fun({}), TypeError, `unable to convert {} to string`)
   t.throws(() => fun(inherit(null)), TypeError, `unable to convert {} to string`)
   t.throws(() => fun(inherit(inherit(null))), TypeError, `unable to convert {} to string`)
-  t.throws(() => fun({one: `two`, three: `four`}), TypeError, `unable to convert {"one": "two", "three": "four"} to string`)
+  t.throws(() => fun({one: `two`, three: `four`}), TypeError, `unable to convert {one: "two", three: "four"} to string`)
   t.throws(() => fun([]), TypeError, `unable to convert [] to string`)
   t.throws(() => fun([10, `str`]), TypeError, `unable to convert [10, "str"] to string`)
   t.throws(() => fun(args), TypeError, `unable to convert [function args] to string`)
@@ -610,10 +610,41 @@ t.test(function test_isObj() {
   t.ok(l.isObj([]))
   t.ok(l.isObj(/_/))
   t.ok(l.isObj(inherit(null)))
+  t.ok(l.isObj(inherit(inherit(null))))
   t.ok(l.isObj(inherit({})))
   t.ok(l.isObj(new String()))
   t.ok(l.isObj(new Number()))
   t.ok(l.isObj(new Boolean()))
+})
+
+t.test(function test_isNpo() {
+  t.no(l.isNpo(undefined))
+  t.no(l.isNpo(null))
+  t.no(l.isNpo(``))
+  t.no(l.isNpo(l.nop))
+  t.no(l.isNpo([]))
+  t.no(l.isNpo(/_/))
+  t.no(l.isNpo({}))
+  t.no(l.isNpo(inherit({})))
+  t.no(l.isNpo(inherit(inherit({}))))
+  t.no(l.isNpo(inherit(inherit(null))))
+
+  t.ok(l.isNpo(inherit(null)))
+})
+
+t.test(function test_isDict() {
+  t.no(l.isDict(undefined))
+  t.no(l.isDict(null))
+  t.no(l.isDict(``))
+  t.no(l.isDict(l.nop))
+  t.no(l.isDict([]))
+  t.no(l.isDict(/_/))
+  t.no(l.isDict(inherit({})))
+  t.no(l.isDict(inherit(inherit({}))))
+  t.no(l.isDict(inherit(inherit(null))))
+
+  t.ok(l.isDict({}))
+  t.ok(l.isDict(inherit(null)))
 })
 
 t.test(function test_isStruct() {
@@ -625,9 +656,11 @@ t.test(function test_isStruct() {
   t.no(l.isStruct(new String()))
   t.no(l.isStruct(gen()))
 
-  t.ok(l.isStruct({}))
   t.ok(l.isStruct(/_/))
+  t.ok(l.isStruct({}))
   t.ok(l.isStruct(inherit({})))
+  t.ok(l.isStruct(inherit(inherit({}))))
+  t.ok(l.isStruct(inherit(inherit(null))))
   t.ok(l.isStruct(new Number()))
   t.ok(l.isStruct(new Boolean()))
 
@@ -889,19 +922,6 @@ t.test(function test_isCls() {
   t.ok(l.isCls(Object))
   t.ok(l.isCls(function Cls() {}))
   t.ok(l.isCls(class Cls {}))
-})
-
-t.test(function test_isDict() {
-  t.no(l.isDict(undefined))
-  t.no(l.isDict(null))
-  t.no(l.isDict(``))
-  t.no(l.isDict(l.nop))
-  t.no(l.isDict([]))
-  t.no(l.isDict(/_/))
-  t.no(l.isDict(inherit({})))
-
-  t.ok(l.isDict({}))
-  t.ok(l.isDict(inherit(null)))
 })
 
 t.test(function test_isList() {

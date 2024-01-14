@@ -132,26 +132,144 @@ t.test(function test_Paths() {
     t.ok(p.windows.isRel(`one`))
   })
 
-  t.test(function test_isDir() {
+  t.test(function test_isRelExplicit() {
+    t.test(function test_posix() {
+      t.no(p.posix.isRelExplicit(``))
+      t.no(p.posix.isRelExplicit(`one`))
+      t.no(p.posix.isRelExplicit(`one/`))
+      t.no(p.posix.isRelExplicit(`one/two`))
+      t.no(p.posix.isRelExplicit(`one/two/`))
+
+      t.no(p.posix.isRelExplicit(`/`))
+      t.no(p.posix.isRelExplicit(`/one`))
+      t.no(p.posix.isRelExplicit(`/one/`))
+      t.no(p.posix.isRelExplicit(`/one/two`))
+      t.no(p.posix.isRelExplicit(`/one/two/`))
+
+      t.no(p.posix.isRelExplicit(`C:`))
+      t.no(p.posix.isRelExplicit(`C:/`))
+      t.no(p.posix.isRelExplicit(`C://`))
+      t.no(p.posix.isRelExplicit(`C://one`))
+      t.no(p.posix.isRelExplicit(`C://one/`))
+
+      t.ok(p.posix.isRelExplicit(`.`))
+      t.ok(p.posix.isRelExplicit(`./`))
+      t.ok(p.posix.isRelExplicit(`./one`))
+      t.ok(p.posix.isRelExplicit(`./one/`))
+      t.ok(p.posix.isRelExplicit(`./one/two`))
+      t.ok(p.posix.isRelExplicit(`./one/two/`))
+    })
+
+    t.test(function test_windows() {
+      t.no(p.windows.isRelExplicit(``))
+      t.no(p.windows.isRelExplicit(`one`))
+      t.no(p.windows.isRelExplicit(`one\\`))
+      t.no(p.windows.isRelExplicit(`one\\two`))
+      t.no(p.windows.isRelExplicit(`one\\two\\`))
+
+      t.no(p.windows.isRelExplicit(`\\`))
+      t.no(p.windows.isRelExplicit(`\\one`))
+      t.no(p.windows.isRelExplicit(`\\one\\`))
+      t.no(p.windows.isRelExplicit(`\\one\\two`))
+      t.no(p.windows.isRelExplicit(`\\one\\two\\`))
+
+      t.no(p.windows.isRelExplicit(`C:`))
+      t.no(p.windows.isRelExplicit(`C:\\`))
+      t.no(p.windows.isRelExplicit(`C:\\\\`))
+      t.no(p.windows.isRelExplicit(`C:\\\\one`))
+      t.no(p.windows.isRelExplicit(`C:\\\\one\\`))
+
+      t.ok(p.windows.isRelExplicit(`.`))
+      t.ok(p.windows.isRelExplicit(`.\\`))
+      t.ok(p.windows.isRelExplicit(`.\\one`))
+      t.ok(p.windows.isRelExplicit(`.\\one\\`))
+      t.ok(p.windows.isRelExplicit(`.\\one\\two`))
+      t.ok(p.windows.isRelExplicit(`.\\one\\two\\`))
+    })
+  })
+
+  t.test(function test_isRelImplicit() {
+    t.test(function test_posix() {
+      t.ok(p.posix.isRelImplicit(``))
+      t.ok(p.posix.isRelImplicit(`one`))
+      t.ok(p.posix.isRelImplicit(`one/`))
+      t.ok(p.posix.isRelImplicit(`one/two`))
+      t.ok(p.posix.isRelImplicit(`one/two/`))
+
+      t.no(p.posix.isRelImplicit(`/`))
+      t.no(p.posix.isRelImplicit(`/one`))
+      t.no(p.posix.isRelImplicit(`/one/`))
+      t.no(p.posix.isRelImplicit(`/one/two`))
+      t.no(p.posix.isRelImplicit(`/one/two/`))
+
+      t.no(p.posix.isRelImplicit(`.`))
+      t.no(p.posix.isRelImplicit(`./`))
+      t.no(p.posix.isRelImplicit(`./one`))
+      t.no(p.posix.isRelImplicit(`./one/`))
+      t.no(p.posix.isRelImplicit(`./one/two`))
+      t.no(p.posix.isRelImplicit(`./one/two/`))
+
+      /*
+      This is considered an implicitly relative path under Posix because
+      `scheme:` is a valid file name or beginning of file name, and there
+      is no special detection/treatment for URL schemes or Windows-like
+      volume letters.
+      */
+      t.ok(p.posix.isRelImplicit(`C:`))
+      t.ok(p.posix.isRelImplicit(`C:/`))
+      t.ok(p.posix.isRelImplicit(`C://`))
+      t.ok(p.posix.isRelImplicit(`C://one`))
+      t.ok(p.posix.isRelImplicit(`C://one/`))
+    })
+
+    t.test(function test_windows() {
+      t.ok(p.windows.isRelImplicit(``))
+      t.ok(p.windows.isRelImplicit(`one`))
+      t.ok(p.windows.isRelImplicit(`one\\`))
+      t.ok(p.windows.isRelImplicit(`one\\two`))
+      t.ok(p.windows.isRelImplicit(`one\\two\\`))
+
+      t.no(p.windows.isRelImplicit(`\\`))
+      t.no(p.windows.isRelImplicit(`\\one`))
+      t.no(p.windows.isRelImplicit(`\\one\\`))
+      t.no(p.windows.isRelImplicit(`\\one\\two`))
+      t.no(p.windows.isRelImplicit(`\\one\\two\\`))
+
+      t.no(p.windows.isRelImplicit(`C:`))
+      t.no(p.windows.isRelImplicit(`C:\\`))
+      t.no(p.windows.isRelImplicit(`C:\\\\`))
+      t.no(p.windows.isRelImplicit(`C:\\\\one`))
+      t.no(p.windows.isRelImplicit(`C:\\\\one\\`))
+
+      t.no(p.windows.isRelImplicit(`.`))
+      t.no(p.windows.isRelImplicit(`.\\`))
+      t.no(p.windows.isRelImplicit(`.\\one`))
+      t.no(p.windows.isRelImplicit(`.\\one\\`))
+      t.no(p.windows.isRelImplicit(`.\\one\\two`))
+      t.no(p.windows.isRelImplicit(`.\\one\\two\\`))
+    })
+  })
+
+  t.test(function test_isDirLike() {
     const miss = [`one`, `one/two`, `one\\two`]
     const hit = [``, `.`]
     const hitPos = [`/`, `//`, `./`, `../`, `one/`, `one/two/`]
     const hitWin = [`C:`, `C:\\`, `C:\\one\\`, `\\`, `\\\\`, `.\\`, `..\\`, `one\\`, `one\\two\\`]
 
     t.test(function test_posix() {
-      for (const val of miss) t.no(p.posix.isDir(val), val)
-      for (const val of hitWin) t.no(p.posix.isDir(val), val)
+      for (const val of miss) t.no(p.posix.isDirLike(val), val)
+      for (const val of hitWin) t.no(p.posix.isDirLike(val), val)
 
-      for (const val of hit) t.ok(p.posix.isDir(val), val)
-      for (const val of hitPos) t.ok(p.posix.isDir(val), val)
+      for (const val of hit) t.ok(p.posix.isDirLike(val), val)
+      for (const val of hitPos) t.ok(p.posix.isDirLike(val), val)
     })
 
     t.test(function test_windows() {
-      for (const val of miss) t.no(p.windows.isDir(val), val)
-      for (const val of hitPos) t.no(p.windows.isDir(val), val)
+      for (const val of miss) t.no(p.windows.isDirLike(val), val)
+      for (const val of hitPos) t.no(p.windows.isDirLike(val), val)
 
-      for (const val of hit) t.ok(p.windows.isDir(val), val)
-      for (const val of hitWin) t.ok(p.windows.isDir(val), val)
+      for (const val of hit) t.ok(p.windows.isDirLike(val), val)
+      for (const val of hitWin) t.ok(p.windows.isDirLike(val), val)
     })
   })
 
@@ -448,9 +566,9 @@ t.test(function test_Paths() {
     })
   })
 
-  t.test(function test_isRelTo() {
+  t.test(function test_isSubOf() {
     t.test(function test_posix() {
-      function fun(...val) {return p.posix.isRelTo(...val)}
+      function fun(...val) {return p.posix.isSubOf(...val)}
 
       t.no(fun(`/`, ``))
       t.no(fun(`/`, `.`))
@@ -513,7 +631,7 @@ t.test(function test_Paths() {
     })
 
     t.test(function test_windows() {
-      function fun(...val) {return p.windows.isRelTo(...val)}
+      function fun(...val) {return p.windows.isSubOf(...val)}
 
       t.no(fun(`\\`, ``))
       t.no(fun(`\\`, `.`))
@@ -576,15 +694,15 @@ t.test(function test_Paths() {
     })
   })
 
-  t.test(function test_relTo() {
+  t.test(function test_strictRelTo() {
     t.test(function test_posix() {
-      function fun(...val) {return p.posix.relTo(...val)}
+      function fun(...val) {return p.posix.strictRelTo(...val)}
       function same(one, two) {t.is(fun(one, two), ``)}
 
       t.throws(() => fun(), Error, `unable to convert undefined to string`)
       t.throws(() => fun(`str`), Error, `unable to convert undefined to string`)
-      t.throws(() => fun(`/one`, `/two`), Error, `unable to make "/one" relative to "/two"`)
-      t.throws(() => fun(`/one`, `/one/two`), Error, `unable to make "/one" relative to "/one/two"`)
+      t.throws(() => fun(`/one`, `/two`), Error, `unable to make "/one" strictly relative to "/two"`)
+      t.throws(() => fun(`/one`, `/one/two`), Error, `unable to make "/one" strictly relative to "/one/two"`)
 
       same(``, ``)
       same(`.`, ``)
@@ -640,13 +758,13 @@ t.test(function test_Paths() {
     })
 
     t.test(function test_windows() {
-      function fun(...val) {return p.windows.relTo(...val)}
+      function fun(...val) {return p.windows.strictRelTo(...val)}
       function same(one, two) {t.is(fun(one, two), ``)}
 
       t.throws(() => fun(), Error, `unable to convert undefined to string`)
       t.throws(() => fun(`str`), Error, `unable to convert undefined to string`)
-      t.throws(() => fun(`\\one`, `\\two`), Error, `unable to make "\\\\one" relative to "\\\\two"`)
-      t.throws(() => fun(`\\one`, `\\one\\two`), Error, `unable to make "\\\\one" relative to "\\\\one\\\\two"`)
+      t.throws(() => fun(`\\one`, `\\two`), Error, `unable to make "\\\\one" strictly relative to "\\\\two"`)
+      t.throws(() => fun(`\\one`, `\\one\\two`), Error, `unable to make "\\\\one" strictly relative to "\\\\one\\\\two"`)
 
       same(``, ``)
       same(`.`, ``)
@@ -710,6 +828,32 @@ t.test(function test_Paths() {
       t.is(fun(`C:\\one\\two`, `C:\\one`), `two`)
       t.is(fun(`C:\\one\\two\\`, `C:\\one`), `two`)
       t.is(fun(`C:\\one\\two\\`, `C:\\one\\`), `two`)
+    })
+  })
+
+  t.test(function test_relTo() {
+    // TODO add test for `p.windows`.
+    // TODO test absolute paths.
+    //   * Both absolute.
+    //   * Sub absolute.
+    //   * Suf absolute.
+    t.test(function test_posix() {
+      function fun(...val) {return p.posix.relTo(...val)}
+
+      t.throws(() => fun(), Error, `unable to convert undefined to string`)
+      t.throws(() => fun(`str`), Error, `unable to convert undefined to string`)
+
+      t.is(fun(``,              ``),              ``)
+      t.is(fun(`one`,           ``),              `one`)
+      t.is(fun(`one/two`,       ``),              `one/two`)
+      t.is(fun(``,              `one`),           `..`)
+      t.is(fun(``,              `one/two`),       `../..`)
+      t.is(fun(`one`,           `two`),           `../one`)
+      t.is(fun(`one/two`,       `three`),         `../one/two`)
+      t.is(fun(`one`,           `two/three`),     `../../one`)
+      t.is(fun(`one/two`,       `one/three`),     `../two`)
+      t.is(fun(`one/two/three`, `one/two/four`),  `../three`)
+      t.is(fun(`one/two/three`, `one/four/five`), `../../two/three`)
     })
   })
 

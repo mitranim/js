@@ -101,9 +101,9 @@ export class DirRel extends DirBase {
     return undefined
   }
 
-  fsPathRel(val) {return p.posix.relTo(fsPathNorm(val), this.base)}
+  fsPathRel(val) {return p.posix.strictRelTo(fsPathNorm(val), this.base)}
   testUrlPath(val) {return l.isStr(val) && !hasDotDot(val)}
-  testFsPath(val) {return p.posix.isRelTo(fsPathNorm(val), this.base)}
+  testFsPath(val) {return p.posix.isSubOf(fsPathNorm(val), this.base)}
 }
 
 export function dirRel(base, fil) {return new DirRelFil(base, fil)}

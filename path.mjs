@@ -57,6 +57,9 @@ export class Paths extends l.Emp {
   // "Current working directory relative path".
   get cwdRel() {return `.`}
 
+  // "Parent directory relative path".
+  get parRel() {return `..`}
+
   // "Current working directory empty value".
   get cwdEmp() {return ``}
 
@@ -75,13 +78,29 @@ export class Paths extends l.Emp {
 
   isRel(val) {return !this.isAbs(val)}
 
-  /*
-  Can only be trusted when `true`. Cannot be trusted when `false`.
-  The following code is invalid and should not compile:
+  isRelExplicit(val) {
+    val = this.toStr(val)
 
-    if (!paths.isDir(path)) {}
+    return (
+      false
+      || val === this.cwdRel
+      || val === this.parRel
+      || val.startsWith(this.cwdRel + this.dirSep)
+      || val.startsWith(this.parRel + this.dirSep)
+    )
+  }
+
+  isRelImplicit(val) {
+    val = this.toStr(val)
+    return !this.isAbs(val) && !this.isRelExplicit(val)
+  }
+
+  /*
+  True if the path ends with a directory separator. When this returns `true`,
+  the path definitely describes a directory. However, when this returns
+  `false`, the path may be valid either as a file path or as a directory path.
   */
-  isDir(val) {
+  isDirLike(val) {
     val = this.toStr(val)
     return this.isCwdRel(val) || val.endsWith(this.dirSep)
   }
@@ -129,27 +148,62 @@ export class Paths extends l.Emp {
     return base
   }
 
-  isRelTo(val, pre) {
-    val = this.clean(val)
-    pre = this.clean(pre)
+  // Needs a more specific name because this also returns true if the paths are
+  // equivalent.
+  isSubOf(sub, sup) {
+    sub = this.clean(sub)
+    sup = this.clean(sup)
 
     return (
-      (this.isAbs(val) === this.isAbs(pre)) &&
-      (val === pre || val.startsWith(this.dirLike(pre)))
+      true
+      && (this.isAbs(sub) === this.isAbs(sup))
+      && (
+        false
+        || sub === sup
+        || sub.startsWith(this.dirLike(sup))
+      )
     )
   }
 
-  // Questionable implementation.
-  relTo(val, pre) {
-    val = this.clean(val)
-    pre = this.clean(pre)
+  // Known inefficiency: in the success case, this builds and checks/strips
+  // the directory prefix twice. TODO tune.
+  strictRelTo(sub, sup) {
+    sub = this.clean(sub)
+    sup = this.clean(sup)
 
-    if (!this.isRelTo(val, pre)) {
-      throw Error(`unable to make ${l.show(val)} relative to ${l.show(pre)}`)
+    if (!this.isSubOf(sub, sup)) {
+      throw Error(`unable to make ${l.show(sub)} strictly relative to ${l.show(sup)}: not a subpath`)
     }
 
-    if (val === pre) return this.cwdEmp
-    return s.stripPre(val, this.dirLike(pre))
+    if (sub === sup) return this.cwdEmp
+    return s.stripPre(sub, this.dirLike(sup))
+  }
+
+  relTo(sub, sup) {
+    sub = this.clean(sub)
+    sup = this.clean(sup)
+
+    const subAbs = this.isAbs(sub)
+    const supAbs = this.isAbs(sup)
+    if (subAbs !== supAbs) {
+      throw Error(`unable to make ${l.show(sub)} relative to ${l.show(sup)}: paths must be both absolute or both relative`)
+    }
+
+    const subPath = s.split(sub, this.dirSep)
+    const supPath = s.split(sup, this.dirSep)
+
+    // Length of the common prefix.
+    let len = 0
+    while (len < subPath.length && len < supPath.length) {
+      if (subPath[len] !== supPath[len]) break
+      len += 1
+    }
+
+    const preLen = supPath.length - len
+    const sep = this.dirSep
+    const pre = preLen ? Array(preLen).fill(this.parRel).join(sep) : ``
+    const suf = subPath.slice(len)
+    return s.inter(pre, sep, suf.join(sep))
   }
 
   /*
@@ -227,9 +281,9 @@ export class PathsWindows extends Paths {
     return (mat && mat[0]) || ``
   }
 
-  isDir(val) {
+  isDirLike(val) {
     val = this.toStr(val)
-    return super.isDir(val) || val === this.vol(val)
+    return super.isDirLike(val) || val === this.vol(val)
   }
 }
 

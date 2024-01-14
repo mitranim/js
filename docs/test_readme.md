@@ -63,7 +63,7 @@ Timing precision varies by JS engine and environment.
 Simple testing example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.50/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.51/test.mjs'
 
 t.test(function test_some_feature() {
   t.eq(someFunction(someInputs), `expected result`)
@@ -73,7 +73,7 @@ t.test(function test_some_feature() {
 Simple benchmarking example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.50/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.51/test.mjs'
 
 t.bench(function bench_some_feature() {
   someFunction(someInputs)
@@ -86,7 +86,7 @@ t.benches()
 Complex example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.50/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.51/test.mjs'
 
 // Optional CLI flag parsing.
 const cli = t.Args.os()
@@ -128,31 +128,37 @@ The following APIs are exported but undocumented. Check [test.mjs](../test.mjs).
   * [`class StringReporter`](../test.mjs#L231)
   * [`class ConsoleReporter`](../test.mjs#L270)
   * [`class ConsoleStartReporter`](../test.mjs#L281)
-  * [`class ConsoleAvgReporter`](../test.mjs#L292)
-  * [`class ConsoleRunsReporter`](../test.mjs#L309)
-  * [`class ConsoleBenchReporter`](../test.mjs#L322)
-  * [`function tsMilli`](../test.mjs#L331)
-  * [`function tsMicro`](../test.mjs#L332)
-  * [`function tsNano`](../test.mjs#L333)
-  * [`function tsPico`](../test.mjs#L334)
-  * [`const conf`](../test.mjs#L337)
-  * [`function test`](../test.mjs#L384)
-  * [`function bench`](../test.mjs#L421)
-  * [`class Bench`](../test.mjs#L433)
-  * [`function deopt`](../test.mjs#L463)
-  * [`function benches`](../test.mjs#L473)
-  * [`function ok`](../test.mjs#L492)
-  * [`function no`](../test.mjs#L520)
-  * [`function is`](../test.mjs#L540)
-  * [`function isnt`](../test.mjs#L562)
-  * [`function eq`](../test.mjs#L571)
+  * [`class ConsoleAvgReporter`](../test.mjs#L291)
+  * [`class ConsoleStartEndAvgReporter`](../test.mjs#L308)
+  * [`class ConsoleRunsReporter`](../test.mjs#L322)
+  * [`class ConsoleBenchReporter`](../test.mjs#L335)
+  * [`function tsMilli`](../test.mjs#L344)
+  * [`function tsMicro`](../test.mjs#L345)
+  * [`function tsNano`](../test.mjs#L346)
+  * [`function tsPico`](../test.mjs#L347)
+  * [`const conf`](../test.mjs#L350)
+  * [`function test`](../test.mjs#L397)
+  * [`function bench`](../test.mjs#L434)
+  * [`class Bench`](../test.mjs#L446)
+  * [`function deopt`](../test.mjs#L476)
+  * [`function benches`](../test.mjs#L486)
+  * [`function ok`](../test.mjs#L505)
+  * [`function no`](../test.mjs#L528)
+  * [`function is`](../test.mjs#L542)
+  * [`function isnt`](../test.mjs#L561)
+  * [`function eq`](../test.mjs#L574)
   * [`function notEq`](../test.mjs#L588)
-  * [`function own`](../test.mjs#L594)
-  * [`function inst`](../test.mjs#L624)
-  * [`function optInst`](../test.mjs#L635)
-  * [`function throws`](../test.mjs#L647)
-  * [`function equal`](../test.mjs#L725)
-  * [`function now`](../test.mjs#L842)
-  * [`function nowAvg`](../test.mjs#L853)
-  * [`function isRunner`](../test.mjs#L871)
-  * [`function isReporter`](../test.mjs#L873)
+  * [`function own`](../test.mjs#L598)
+  * [`function inst`](../test.mjs#L617)
+  * [`function optInst`](../test.mjs#L632)
+  * [`function throws`](../test.mjs#L645)
+  * [`function throwsCaught`](../test.mjs#L671)
+  * [`function throwsGotErr`](../test.mjs#L691)
+  * [`function throwsReturned`](../test.mjs#L708)
+  * [`function throwsFunMsg`](../test.mjs#L716)
+  * [`function throwsErrMsg`](../test.mjs#L721)
+  * [`function equal`](../test.mjs#L743)
+  * [`function now`](../test.mjs#L860)
+  * [`function nowAvg`](../test.mjs#L871)
+  * [`function isRunner`](../test.mjs#L889)
+  * [`function isReporter`](../test.mjs#L891)

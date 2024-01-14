@@ -28,7 +28,7 @@ Known limitations:
 Using a specific implementation:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.50/path.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.51/path.mjs'
 
 console.log(p.posix.join(`one`, `two`))
 // 'one/two'
@@ -40,7 +40,7 @@ console.log(p.windows.join(`one`, `two`))
 Using the default implementation for the current OS:
 
 ```js
-import {paths as p} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.50/io_deno.mjs'
+import {paths as p} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.51/io_deno.mjs'
 
 console.log(p.join(`one`, `two`))
 // 'one/two' or 'one\\two' depending on your OS
@@ -55,7 +55,7 @@ Links: [source](../path.mjs#L33); [test/example](../test/path_test.mjs#L17).
 Idempotently converts a path from Windows-style to Posix-style. Useful in some edge case scenarios.
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.50/path.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.51/path.mjs'
 
 console.log(p.toPosix(`one\\two\\three`))
 // 'one/two/three'
@@ -66,13 +66,13 @@ console.log(p.toPosix(`one/two/three`))
 
 ### `const posix`
 
-Links: [source](../path.mjs#L240); [test/example](../test/path_test.mjs#L47).
+Links: [source](../path.mjs#L294); [test/example](../test/path_test.mjs#L47).
 
 Implements various functions for Posix-style FS paths.
 
 ### `const windows`
 
-Links: [source](../path.mjs#L241); [test/example](../test/path_test.mjs#L52).
+Links: [source](../path.mjs#L295); [test/example](../test/path_test.mjs#L52).
 
 Implements various functions for Windows-style FS paths.
 
@@ -86,5 +86,5 @@ The following APIs are exported but undocumented. Check [path.mjs](../path.mjs).
   * [`function reqPath`](../path.mjs#L30)
   * [`function optPath`](../path.mjs#L31)
   * [`class Paths`](../path.mjs#L50)
-  * [`class PathsPosix`](../path.mjs#L211)
-  * [`class PathsWindows`](../path.mjs#L222)
+  * [`class PathsPosix`](../path.mjs#L265)
+  * [`class PathsWindows`](../path.mjs#L276)

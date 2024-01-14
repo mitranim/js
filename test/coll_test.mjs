@@ -274,8 +274,8 @@ t.test(function test_pk() {
   t.throws(() => c.pk(), TypeError, `expected undefined to provide key, got undefined`)
   t.throws(() => c.pk(10), TypeError, `expected 10 to provide key, got undefined`)
   t.throws(() => c.pk({}), TypeError, `expected {} to provide key, got undefined`)
-  t.throws(() => c.pk({pk: 10}), TypeError, `expected {"pk": 10} to provide key, got undefined`)
-  t.throws(() => c.pk({pk() {return null}}), TypeError, `expected {"pk": [function pk]} to provide key, got null`)
+  t.throws(() => c.pk({pk: 10}), TypeError, `expected {pk: 10} to provide key, got undefined`)
+  t.throws(() => c.pk({pk() {return null}}), TypeError, `expected {pk: [function pk]} to provide key, got null`)
 
   function test(val, exp) {t.is(c.pk(val), exp)}
   test({pk() {return 10}}, 10)

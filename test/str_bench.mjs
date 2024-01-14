@@ -72,6 +72,17 @@ function spacedDumb(...val) {
   return val.map(l.renderLax).filter(l.id).join(` `)
 }
 
+function strStrictJoin(...src) {
+  for (const val of src) l.reqStr(val)
+  return src.join(``)
+}
+
+function strStrictPlus(...src) {
+  let out = ``
+  for (src of src) out += l.reqStr(src)
+  return out
+}
+
 /*
 Measurably faster than our exported version, but not available in dominant
 Safari versions at the time of this writing.
@@ -201,6 +212,16 @@ t.bench(function bench_str_str_3() {l.nop(s.str(`one`, `two`, `three`))})
 t.bench(function bench_str_num_1() {l.nop(s.str(10))})
 t.bench(function bench_str_num_2() {l.nop(s.str(10, 20))})
 t.bench(function bench_str_num_3() {l.nop(s.str(10, 20, 30))})
+
+t.bench(function bench_str_strict_join_empty() {l.nop(strStrictJoin())})
+t.bench(function bench_str_strict_join_str_1() {l.nop(strStrictJoin(`one`))})
+t.bench(function bench_str_strict_join_str_2() {l.nop(strStrictJoin(`one`, `two`))})
+t.bench(function bench_str_strict_join_str_3() {l.nop(strStrictJoin(`one`, `two`, `three`))})
+
+t.bench(function bench_str_strict_plus_empty() {l.nop(strStrictPlus())})
+t.bench(function bench_str_strict_plus_str_1() {l.nop(strStrictPlus(`one`))})
+t.bench(function bench_str_strict_plus_str_2() {l.nop(strStrictPlus(`one`, `two`))})
+t.bench(function bench_str_strict_plus_str_3() {l.nop(strStrictPlus(`one`, `two`, `three`))})
 
 t.bench(function bench_strConcat_nil() {l.nop(s.strConcat())})
 t.bench(function bench_strConcat_empty() {l.nop(s.strConcat([]))})

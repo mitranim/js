@@ -4,6 +4,7 @@ import * as itc from './internal_test_coll.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
+import * as c from '../coll.mjs'
 
 /*
 At the time of writing, this doesn't seem to perform any better than an
@@ -25,6 +26,12 @@ class SpanIter extends l.Emp {
     return this
   }
 }
+
+class VecWithEntries extends c.Vec {
+  entries() {return this.toArray().entries()}
+}
+
+const numVecWithEntries = VecWithEntries.from(itc.numVec)
 
 t.bench(function bench_arr_spread_native() {l.reqArr([...itc.numArgs])})
 t.bench(function bench_arr_gen_spread_native() {l.reqArr([...itc.gen(itc.numArgs)])})
@@ -360,6 +367,22 @@ t.bench(function bench_each_array_native_forEach() {itc.numArr.forEach(l.nop)})
 t.bench(function bench_each_array_lodash_each() {lo.each(itc.numArr, l.nop)})
 t.bench(function bench_each_array_dumb() {arrayEachDumb(itc.numArr, l.nop)})
 t.bench(function bench_each_array_our_each() {i.each(itc.numArr, l.nop)})
+
+t.bench(function bench_each_entries_array_inline() {
+  for (const [key, val] of itc.numArr.entries()) l.nop(key, val)
+})
+
+t.bench(function bench_each_entries_array_almost_indirect() {
+  for (const [key, val] of numVecWithEntries.toArray().entries()) l.nop(key, val)
+})
+
+/*
+At the time of writing, in V8 10.4.132.20, this is significantly slower (≈x2)
+than "direct" use of a true array's `.entries` in the loop.
+*/
+t.bench(function bench_each_entries_array_actually_indirect() {
+  for (const [key, val] of numVecWithEntries.entries()) l.nop(key, val)
+})
 
 t.bench(function bench_each_dict_inline() {for (const key in itc.numDict) l.nop(key, itc.numDict[key])})
 t.bench(function bench_each_dict_lodash_each() {lo.each(itc.numDict, l.nop)})

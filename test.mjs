@@ -281,8 +281,7 @@ TODO implement an alternative DOM reporter that renders a table.
 export class ConsoleStartReporter extends ConsoleReporter {
   reportStart(run) {
     l.reqInst(run, Run)
-    this.log(this.pad.repeat(run.level() * 2) + `[start] ` + l.reqStr(run.name))
-    // this.log(this.pad.repeat(run.level() * 2) + l.reqStr(run.name))
+    this.log(this.runPrefix(run) + ` [start]`)
   }
 }
 
@@ -303,6 +302,20 @@ export class ConsoleAvgReporter extends ConsoleReporter {
 
   static default() {return this.with(tsNano)}
   static with(fun) {return new this(`·`, fun)}
+}
+
+// TODO dedup with above.
+export class ConsoleStartEndAvgReporter extends ConsoleAvgReporter {
+  reportStart(run) {
+    l.reqInst(run, Run)
+    this.log(this.runPrefix(run) + ` [start]`)
+  }
+
+  reportEnd(run) {
+    l.reqInst(run, Run)
+    const {fun} = this
+    this.report(this.runPrefix(run) + ` [end]`, l.req(fun(run.avg), l.isStr))
+  }
 }
 
 // Reports runs by printing name and amount of runs.
@@ -492,167 +505,152 @@ function reqNamedFun(fun, type) {
 export function ok(val, ...info) {
   if (val === true) return
 
-  throw new AssertError(`
-expected:
-
-  true
-
-got:
-
-  ${l.show(val)}
-
-${optInfo(...info)}
-`)
+  throw new AssertError(joinParagraphs(
+    joinParagraphs(`actual:`, indent(showSimple(val))),
+    joinParagraphs(`expected:`, indent(`true`)),
+    optInfo(...info),
+  ))
 }
 
 function optInfo(...val) {
-  val = val.filter(l.isSome).map(l.show).map(indent).join(`\n`)
+  val = val.filter(l.isSome).map(showInfo).map(indent).join(`\n`)
   if (!val) return ``
-
-  return `info:
-${val}
-`.trim()
+  return joinParagraphs(`info:`, val)
 }
 
+
+function showErr(err) {return l.isInst(err, Error) ? err.stack : l.show(err)}
+function showInfo(val) {return l.isScalar(val) ? l.render(val) : l.show(val)}
+function showSimple(val) {return l.isStr(val) ? val : l.show(val)}
 function indent(val) {return `  ` + l.reqStr(val)}
 
 // Asserts that the given value is exactly `false`. Otherwise throws `AssertError`.
 export function no(val, ...info) {
   if (val === false) return
 
-  throw new AssertError(`
-expected:
-
-  false
-
-got:
-
-  ${l.show(val)}
-
-${optInfo(...info)}
-`.trim())
+  throw new AssertError(joinParagraphs(
+    joinParagraphs(`actual:`, indent(showSimple(val))),
+    joinParagraphs(`expected:`, indent(`false`)),
+    optInfo(...info),
+  ))
 }
 
 /*
 Asserts that the inputs are identical, using `Object.is`.
 Otherwise throws `AssertError`.
 */
-export function is(act, exp) {
+export function is(act, exp, ...info) {
   if (Object.is(act, exp)) return
 
-  throw new AssertError(`
-actual:
-
-  ${l.show(act)}
-
-expected:
-
-  ${l.show(exp)}
-
-${equal(act, exp) ? `
-note:
-  equivalent structure, different reference
-`.trim() : ``}`)
+  throw new AssertError(joinParagraphs(
+    joinParagraphs(`actual:`, indent(showSimple(act))),
+    joinParagraphs(`expected:`, indent(showSimple(exp))),
+    (
+      equal(act, exp)
+      ? joinParagraphs(`note:`, `equivalent structure, different reference`)
+      : ``
+    ),
+    optInfo(...info),
+  ))
 }
 
 /*
 Asserts that the inputs are NOT identical, using `Object.is`.
 Otherwise throws `AssertError`.
 */
-export function isnt(act, exp) {
+export function isnt(act, exp, ...info) {
   if (!Object.is(act, exp)) return
-  throw new AssertError(`expected distinct values, but both inputs were ${l.show(act)}`)
+
+  throw new AssertError(joinParagraphs(
+    joinParagraphs(`expected distinct values, but both inputs were:`, indent(showSimple(act))),
+    optInfo(...info),
+  ))
 }
 
 /*
 Asserts that the inputs have equivalent structure, using `equal`.
 Otherwise throws `AssertError`.
 */
-export function eq(act, exp) {
+export function eq(act, exp, ...info) {
   if (equal(act, exp)) return
-  throw new AssertError(`
-actual:
 
-  ${l.show(act)}
-
-expected:
-
-  ${l.show(exp)}
-`)
+  throw new AssertError(joinParagraphs(
+    joinParagraphs(`actual:`, indent(showSimple(act))),
+    joinParagraphs(`expected:`, indent(showSimple(act))),
+    optInfo(...info),
+  ))
 }
 
 /*
 Asserts that the inputs DO NOT have equivalent structure, using `equal`.
 Otherwise throws `AssertError`.
 */
-export function notEq(act, exp) {
+export function notEq(act, exp, ...info) {
   if (!equal(act, exp)) return
-  throw new AssertError(`expected distinct values, but both inputs were ${l.show(act)}`)
+
+  throw new AssertError(joinParagraphs(
+    joinParagraphs(`expected distinct values, but both inputs were:`, indent(showSimple(act))),
+    optInfo(...info),
+  ))
 }
 
 // Tentative. May need to improve the error message.
-export function own(act, exp) {
+export function own(act, exp, ...info) {
   const actDesc = Object.getOwnPropertyDescriptors(act)
   const expDesc = Object.getOwnPropertyDescriptors(exp)
 
   if (equal(actDesc, expDesc)) return
 
-  throw new AssertError(`
-actual descriptors:
-
-  ${l.show(actDesc)}
-
-expected descriptors:
-
-  ${l.show(expDesc)}
-
-actual own enumerable properties:
-
-  ${l.show({...act})}
-
-expected own enumerable properties:
-
-  ${l.show({...exp})}
-`)
+  throw new AssertError(joinParagraphs(
+    joinParagraphs(`actual descriptors:`, indent(l.show(actDesc))),
+    joinParagraphs(`expected descriptors:`, indent(l.show(expDesc))),
+    joinParagraphs(`actual own enumerable properties:`, indent(l.show({...act}))),
+    joinParagraphs(`expected own enumerable properties:`, indent(l.show({...exp}))),
+    optInfo(...info),
+  ))
 }
 
 /*
-Asserts that the given value is an instance of the given class.
-Otherwise throws `AssertError`.
-The argument order matches `instanceof` and `l.isInst`.
+Asserts that the given value is an instance of the given class. Otherwise throws
+`AssertError`. The argument order matches `instanceof` and `l.isInst`.
 */
-export function inst(val, cls) {
-  l.reqCls(cls)
+export function inst(val, cls, ...info) {
   if (l.isInst(val, cls)) return
-  throw new AssertError(`expected instance of ${l.show(cls)}, got ${l.show(val)}`)
+
+  throw new AssertError(joinParagraphs(
+    joinParagraphs(`got:`, indent(showSimple(val))),
+    joinParagraphs(`expected instance of:`, indent(l.show(cls))),
+    optInfo(...info),
+  ))
 }
 
 /*
 Asserts that the given value is either nil or an instance of the given class.
-Otherwise throws `AssertError`.
-The argument order matches `instanceof` and `l.isInst`.
+Otherwise throws `AssertError`. The argument order matches `instanceof` and
+`l.isInst`.
 */
 export function optInst(val, cls) {
   l.reqCls(cls)
-  if (l.isNil(val) || l.isInst(val, cls)) return
-  throw new AssertError(`expected nil or instance of ${l.show(cls)}, got ${l.show(val)}`)
+  if (l.isNil(val)) return
+  inst(val, cls)
 }
 
 /*
 Asserts that the given function throws an instance of the given error class,
 with a given non-empty error message.
 
-TODO consider supporting `err.cause`. API?
+TODO consider supporting verifying error causes in addition to the topmost
+error. Unclear how to express that in user code.
 */
 export function throws(fun, cls, msg) {
   if (!l.isFun(fun)) {
-    throw new TypeError(`expected function, got ${l.show(fun)}`)
+    throw TypeError(`expected function, got ${l.show(fun)}`)
   }
   if (!l.isCls(cls) || !l.isSubCls(cls, Error)) {
-    throw new TypeError(`expected error class, got ${l.show(cls)}`)
+    throw TypeError(`expected error class, got ${l.show(cls)}`)
   }
   if (!l.isStr(msg) || !msg) {
-    throw new TypeError(`expected error message, got ${l.show(msg)}`)
+    throw TypeError(`expected error message, got ${l.show(msg)}`)
   }
 
   if (l.isFunAsync(fun)) return throwsAsync(fun, cls, msg)
@@ -666,51 +664,71 @@ export function throws(fun, cls, msg) {
 async function throwsAsync(fun, cls, msg) {
   let val
   try {val = await fun()}
-  catch (err) {
-    throwsCaught(fun, cls, msg, err)
-    return
-  }
-  throwsReturned(fun, cls, msg, val)
+  catch (err) {return throwsCaught(fun, cls, msg, err)}
+  return throwsReturned(fun, cls, msg, val)
 }
 
-function throwsCaught(fun, cls, msg, err) {
+export function throwsCaught(fun, cls, msg, err) {
   if (!l.isInst(err, cls)) {
-    throw new AssertError(`
-${throwsFunMsg(fun)}
-${throwsErrMsg(cls, msg)}
-got error:
-  ${l.show(err)}
-`)
+    throw new AssertError(joinParagraphs(
+      throwsFunMsg(fun),
+      throwsErrMsg(cls, msg),
+      throwsGotErr(err),
+    ))
   }
 
   if (!err.message.includes(msg)) {
-    throw new AssertError(`
-${throwsFunMsg(fun)}
-${throwsErrMsg(cls, msg)}
-got error:
-  ${l.isInst(err, Error) ? err.stack : l.show(err)}
-`)
+    throw new AssertError(joinParagraphs(
+      throwsFunMsg(fun),
+      throwsErrMsg(cls, msg),
+      throwsGotErr(err),
+    ))
   }
+
+  return err
 }
 
-function throwsReturned(fun, cls, msg, val) {
-  throw new AssertError(`
-${throwsFunMsg(fun)}
-${throwsErrMsg(cls, msg)}
-got return value:
-  ${l.show(val)}
-`)
+export function throwsGotErr(err) {
+  return joinParagraphs(
+    joinParagraphs(`got error:`, indent(showErr(err))),
+    causedBy(err),
+  )
 }
 
-function throwsFunMsg(fun) {
-  return `expected function to throw:
-  ${fun}`
+function causedBy(err) {
+  err = l.get(err, `cause`)
+  if (l.isNil(err)) return ``
+
+  return joinParagraphs(
+    joinParagraphs(`caused by:`, indent(showErr(err))),
+    causedBy(err),
+  )
 }
 
-function throwsErrMsg(cls, msg) {
-  return `expected error:
-  ${cls.name || l.show(cls)}: ${msg}`
+export function throwsReturned(fun, cls, msg, val) {
+  throw new AssertError(joinParagraphs(
+    throwsFunMsg(fun),
+    throwsErrMsg(cls, msg),
+    joinParagraphs(`got return value:`, indent(showSimple(val))),
+  ))
 }
+
+export function throwsFunMsg(fun) {
+  l.reqFun(fun)
+  return joinParagraphs(`expected function to throw:`, indent(fun.toString()))
+}
+
+export function throwsErrMsg(cls, msg) {
+  return joinParagraphs(`expected error:`, indent(errClsName(cls) + `: ` + msg))
+}
+
+function errClsName(cls) {return cls.name || l.show(cls)}
+
+/*
+Simple, naive version for internal use in test utils.
+Application code should use join functions in `str.mjs`.
+*/
+function joinParagraphs(...src) {return src.filter(Boolean).join(`\n\n`)}
 
 /*
 Returns true if the inputs have an equivalent structure. Supports plain dicts,
@@ -861,7 +879,7 @@ export function nowAvg(runs = 65536) {
 
 function reqRunner(val) {
   if (!isRunner(val)) {
-    throw new TypeError(`benchmarks require a valid runner, got ${l.show(val)}`)
+    throw TypeError(`benchmarks require a valid runner, got ${l.show(val)}`)
   }
   return val
 }

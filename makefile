@@ -1,6 +1,7 @@
 MAKEFLAGS := --silent --always-make
 MAKE_PAR := $(MAKE) -j 128
-DENO := deno run -A --no-check --allow-hrtime
+# `--unstable` enables `Deno?.consoleSize` which is used for benchmark printing.
+DENO := deno run -A --no-check --allow-hrtime --unstable
 RUN := $(if $(run),--run="$(run)",)
 FEAT := $(or $(feat),all_deno)
 VERB := $(if $(filter $(verb),true),--verb,)

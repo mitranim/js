@@ -38,7 +38,7 @@ export function reqFinPos(val) {return isFinPos(val) ? val : throwErrFun(val, is
 export function optFinPos(val) {return isNil(val) ? val : reqFinPos(val)}
 export function onlyFinPos(val) {return isFinPos(val) ? val : undefined}
 
-// TODO: must be equivalent to `Number.isSafeInteger`. Requires a test.
+// TODO: simply use `Number.isSafeInteger`.
 export function isInt(val) {return isNum(val) && ((val % 1) === 0)}
 export function reqInt(val) {return isInt(val) ? val : throwErrFun(val, isInt)}
 export function optInt(val) {return isNil(val) ? val : reqInt(val)}
@@ -150,6 +150,12 @@ export function isObj(val) {return isSome(val) && typeof val === `object`}
 export function reqObj(val) {return isObj(val) ? val : throwErrFun(val, isObj)}
 export function optObj(val) {return isNil(val) ? val : reqObj(val)}
 export function onlyObj(val) {return isObj(val) ? val : undefined}
+
+export function isNpo(val) {return isObj(val) && isNil(Object.getPrototypeOf(val))}
+export function reqNpo(val) {return isNpo(val) ? val : throwErrFun(val, isNpo)}
+export function optNpo(val) {return isNil(val) ? val : reqNpo(val)}
+export function onlyNpo(val) {return isNpo(val) ? val : undefined}
+export function laxNpo(val) {return isNil(val) ? npo() : reqNpo(val)}
 
 export function isDict(val) {return isObj(val) && isDictProto(Object.getPrototypeOf(val))}
 export function reqDict(val) {return isDict(val) ? val : throwErrFun(val, isDict)}
@@ -570,10 +576,16 @@ function showDict(src) {
   for (const key of structKeys(src)) {
     if (first) first = false
     else out += `, `
-    out += show(key) + `: ` + show(src[key])
+    out += showDictKey(key) + `: ` + show(src[key])
   }
   out += `}`
   return out
+}
+
+function showDictKey(val) {
+  reqStr(val)
+  if (/^[$_A-Za-z][\w]*$/.test(val)) return val
+  return show(val)
 }
 
 /*

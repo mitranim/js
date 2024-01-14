@@ -7,7 +7,8 @@ import * as l from '../lang.mjs'
 
 /* Global */
 
-const someInt = 123
+const someIntNat = 123
+const someIntNeg = -123
 const someFrac = 123.456
 const someStr = `hello world`
 const someDate = new Date(1024)
@@ -86,6 +87,10 @@ class Symboled extends l.Emp {
 
 const symboled = new Symboled()
 
+const someSymbol0 = Symbol.for(`some_symbol_0`)
+const someSymbol1 = Symbol.for(`some_symbol_1`)
+const someSymbol2 = Symbol.for(`some_symbol_0`) // Not a typo. See the test below.
+
 const isSafeInteger = Number.isSafeInteger
 
 /* Util */
@@ -136,17 +141,23 @@ t.bench(function bench_reqInst_hit() {l.nop(l.reqInst(someProm, Promise))})
 t.bench(function bench_isInt_nil() {l.nop(l.isInt())})
 t.bench(function bench_isInt_miss_str() {l.nop(l.isInt(someStr))})
 t.bench(function bench_isInt_miss_frac() {l.nop(l.isInt(someFrac))})
-t.bench(function bench_isInt_hit() {l.nop(l.isInt(someInt))})
+t.bench(function bench_isInt_hit() {l.nop(l.isInt(someIntNat))})
+
+t.bench(function bench_isNat_nil() {l.nop(l.isNat())})
+t.bench(function bench_isNat_miss_str() {l.nop(l.isNat(someStr))})
+t.bench(function bench_isNat_miss_frac() {l.nop(l.isNat(someFrac))})
+t.bench(function bench_isNat_miss_int_neg() {l.nop(l.isNat(someIntNeg))})
+t.bench(function bench_isNat_hit() {l.nop(l.isNat(someIntNat))})
 
 t.bench(function bench_Number_isSafeInteger_nil() {l.nop(Number.isSafeInteger())})
 t.bench(function bench_Number_isSafeInteger_miss_str() {l.nop(Number.isSafeInteger(someStr))})
 t.bench(function bench_Number_isSafeInteger_miss_frac() {l.nop(Number.isSafeInteger(someFrac))})
-t.bench(function bench_Number_isSafeInteger_hit() {l.nop(Number.isSafeInteger(someInt))})
+t.bench(function bench_Number_isSafeInteger_hit() {l.nop(Number.isSafeInteger(someIntNat))})
 
 t.bench(function bench_isSafeInteger_nil() {l.nop(isSafeInteger())})
 t.bench(function bench_isSafeInteger_miss_str() {l.nop(isSafeInteger(someStr))})
 t.bench(function bench_isSafeInteger_miss_frac() {l.nop(isSafeInteger(someFrac))})
-t.bench(function bench_isSafeInteger_hit() {l.nop(isSafeInteger(someInt))})
+t.bench(function bench_isSafeInteger_hit() {l.nop(isSafeInteger(someIntNat))})
 
 t.bench(function bench_isStr_nil() {l.nop(l.isStr())})
 t.bench(function bench_isStr_miss() {l.nop(l.isStr(emptyArr))})
@@ -248,13 +259,21 @@ t.bench(function bench_hasMeth_hit_inherit() {l.nop(l.hasMeth(someDate, `toISOSt
 t.bench(function bench_hasMeth_hit_own() {l.nop(l.hasMeth(someDateSub, `toISOString`))})
 t.bench(function bench_hasMeth_hit_own_shallow() {l.nop(l.hasMeth(shallow, `toISOString`))})
 
-t.bench(function bench_hasIn_nil() {l.nop(l.hasIn(undefined, `toISOString`))})
-t.bench(function bench_hasIn_miss_prim() {l.nop(l.hasIn(someStr, `toISOString`))})
-t.bench(function bench_hasIn_miss_fun() {l.nop(l.hasIn(l.nop, `toISOString`))})
-t.bench(function bench_hasIn_miss_obj() {l.nop(l.hasIn(emptyArr, `toISOString`))})
-t.bench(function bench_hasIn_hit_inherit() {l.nop(l.hasIn(someDate, `toISOString`))})
-t.bench(function bench_hasIn_hit_own() {l.nop(l.hasIn(someDateSub, `toISOString`))})
-t.bench(function bench_hasIn_hit_own_shallow() {l.nop(l.hasIn(shallow, `toISOString`))})
+t.bench(function bench_hasIn_inline_nil() {l.nop(l.isComp(undefined) && `toISOString` in undefined)})
+t.bench(function bench_hasIn_inline_miss_prim() {l.nop(l.isComp(someStr) && `toISOString` in someStr)})
+t.bench(function bench_hasIn_inline_miss_fun() {l.nop(l.isComp(l.nop) && `toISOString` in l.nop)})
+t.bench(function bench_hasIn_inline_miss_obj() {l.nop(l.isComp(emptyArr) && `toISOString` in emptyArr)})
+t.bench(function bench_hasIn_inline_hit_inherit() {l.nop(l.isComp(someDate) && `toISOString` in someDate)})
+t.bench(function bench_hasIn_inline_hit_own() {l.nop(l.isComp(someDateSub) && `toISOString` in someDateSub)})
+t.bench(function bench_hasIn_inline_hit_own_shallow() {l.nop(l.isComp(shallow) && `toISOString` in shallow)})
+
+t.bench(function bench_hasIn_ours_nil() {l.nop(l.hasIn(undefined, `toISOString`))})
+t.bench(function bench_hasIn_ours_miss_prim() {l.nop(l.hasIn(someStr, `toISOString`))})
+t.bench(function bench_hasIn_ours_miss_fun() {l.nop(l.hasIn(l.nop, `toISOString`))})
+t.bench(function bench_hasIn_ours_miss_obj() {l.nop(l.hasIn(emptyArr, `toISOString`))})
+t.bench(function bench_hasIn_ours_hit_inherit() {l.nop(l.hasIn(someDate, `toISOString`))})
+t.bench(function bench_hasIn_ours_hit_own() {l.nop(l.hasIn(someDateSub, `toISOString`))})
+t.bench(function bench_hasIn_ours_hit_own_shallow() {l.nop(l.hasIn(shallow, `toISOString`))})
 
 t.bench(function bench_hasOwn_nil() {l.nop(l.hasOwn(undefined, `toISOString`))})
 t.bench(function bench_hasOwn_miss_prim() {l.nop(l.hasOwn(someStr, `toISOString`))})
@@ -329,5 +348,10 @@ t.bench(function bench_symbol_for_proxied() {l.nop(sym.proxied)})
 t.bench(function bench_symbol_method_normal() {l.nop(symboled.normal())})
 t.bench(function bench_symbol_method_proxied() {l.nop(symboled.proxied())})
 t.bench(function bench_symbol_method_prepared() {l.nop(symboled.prepared())})
+
+t.bench(function bench_symbol_equality_miss() {l.nop(someSymbol0 === someSymbol1)})
+t.bench(function bench_symbol_equality_hit() {l.nop(someSymbol0 === someSymbol2)})
+
+t.bench(function bench_symbol_description() {l.nop(someSymbol0.description)})
 
 if (import.meta.main) t.deopt(), t.benches()

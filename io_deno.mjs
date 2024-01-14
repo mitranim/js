@@ -84,7 +84,7 @@ from absolute to relative.
 */
 export async function* watchRel(base) {
   l.req(base, paths.isAbs.bind(paths))
-  const toRel = path => paths.relTo(path, base)
+  const toRel = path => paths.strictRelTo(path, base)
 
   for await (const event of Deno.watchFs(base, {recursive: true})) {
     event.paths = event.paths.map(toRel)

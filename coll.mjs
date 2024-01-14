@@ -74,7 +74,7 @@ export class Bmap extends Map {
     return this
   }
 
-  setted(key, val) {return this.set(key, val), val}
+  setted(key, val) {return this.set(key, val).get(key)}
   reset(src) {return this.clear(), this.mut(src)}
   clear() {return (super.size && super.clear()), this}
   clone() {return new this.constructor(this)}
@@ -102,7 +102,6 @@ export class TypedMap extends Bmap {
   reqKey() {throw l.errImpl()}
   reqVal() {throw l.errImpl()}
   set(key, val) {return super.set(this.reqKey(key), this.reqVal(val))}
-  setted(key, val) {return super.setted(this.reqKey(key), this.reqVal(val))}
 }
 
 /*
