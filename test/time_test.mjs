@@ -157,9 +157,14 @@ function testDurReset(fun) {
 }
 
 function testDurResetFromStr(make) {
+  t.eq(
+    {years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0},
+    {years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0},
+  )
+
   function test(src, str, fields) {
     t.is(make(src).toString(), str)
-    t.eq({...make(src)}, fields)
+    t.own(make(src), fields)
   }
 
   test(``, `PT0S`, durEmpty)

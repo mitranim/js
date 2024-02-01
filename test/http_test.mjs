@@ -444,10 +444,9 @@ TODO:
   * Test fetching from a local server in the same process.
   * Test instantiation of responses.
 
-Requires async support from our testing library.
 In the meantime, those features are tested in apps.
 */
-t.test(function test_ReqBui() {
+await t.test(async function test_ReqBui() {
   // Same as `HttpBui`. Just a sanity check.
   t.test(function test_constructor() {
     testReqBui(new h.ReqBui(), {})
@@ -520,23 +519,37 @@ t.test(function test_ReqBui() {
   })
 
   // Incomplete.
-  t.test(function test_req() {
-    t.notEq(
-      h.reqBui().to(`https://example.com`).req(),
-      new Request(`https://example.com/one`),
+  await t.test(async function test_req() {
+    await t.throws(
+      async () => eqReq(
+        h.reqBui().to(`https://example.com`).req(),
+        new Request(`https://example.com/one`),
+      ),
+      t.AssertError,
+      `actual:
+
+  https://example.com/
+
+expected:
+
+  https://example.com/one
+
+info:
+
+  request URL`,
     )
 
-    t.eq(
+    await eqReq(
       h.reqBui().to(`https://example.com`).req(),
       new Request(`https://example.com`),
     )
 
-    t.eq(
+    await eqReq(
       h.reqBui().to(`https://example.com`).post().req(),
       new Request(`https://example.com`, {method: `POST`}),
     )
 
-    t.eq(
+    await eqReq(
       h.reqBui().to(`https://example.com`).post().json().req(),
       new Request(`https://example.com`, {
         method: `POST`,
@@ -566,6 +579,14 @@ t.test(function test_ReqBui() {
     )
   })
 })
+
+async function eqReq(one, two) {
+  t.is(one.url, two.url, `request URL`)
+  t.is(one.method, two.method, `request method`)
+  t.is(one.mode, two.mode, `request mode`)
+  t.eq(one.headers, two.headers, `request headers`)
+  t.is((await iti.readFullOpt(one.body)), (await iti.readFullOpt(two.body)), `request body`)
+}
 
 /*
 TODO:

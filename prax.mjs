@@ -52,6 +52,18 @@ export class Ren extends l.Emp {
   */
   get S() {return o.priv(this, `S`, new Proxy(this, RenSvgPh))}
 
+  /*
+  Short for "element function". Similar to `.E`, but each property is an
+  element-generating method bound to the given tagname.
+  */
+  get EF() {return o.priv(this, `EF`, new Proxy(this, RenFunHtmlPh))}
+
+  /*
+  Short for "SVG element function". Similar to `.S`, but each property is an
+  element-generating method bound to the given tagname.
+  */
+  get SF() {return o.priv(this, `SF`, new Proxy(this, RenFunSvgPh))}
+
   elemHtml(tag, props, ...chi) {
     if (tag === `svg`) return this.elemHtmlSvg(tag, props, ...chi)
     if (this.isVoid(tag)) return this.elemVoid(tag, props, ...chi)
@@ -215,6 +227,7 @@ export class Ren extends l.Emp {
   }
 
   appendChi(tar, src) {
+    if (isNodable(src)) src = src.toNode()
     if (l.isNil(src)) return tar
     if (l.isStr(src)) return tar.append(src), tar
     if (isNode(src)) return tar.appendChild(src), tar
@@ -384,6 +397,21 @@ export class RenHtmlPh extends o.BlankStaticPh {
 
 export class RenSvgPh extends o.BlankStaticPh {
   static get(ren, key) {return ren.makeSvg(key)}
+}
+
+export class RenFunPh extends o.BlankStaticPh {
+  static funs = l.npo()
+  static get(ren, key) {return this.funs[key] ??= ren.elem.bind(ren, key)}
+}
+
+export class RenFunHtmlPh extends o.BlankStaticPh {
+  static funs = l.npo()
+  static get(ren, key) {return this.funs[key] ??= ren.elemHtml.bind(ren, key)}
+}
+
+export class RenFunSvgPh extends o.BlankStaticPh {
+  static funs = l.npo()
+  static get(ren, key) {return this.funs[key] ??= ren.elemSvg.bind(ren, key)}
 }
 
 export class MixRenCache extends o.DedupMixinCache {
@@ -587,6 +615,9 @@ errors such as accidentally passing a `Set` as an element child.
 export function isSeq(val) {
   return l.isObj(val) && !l.isScalar(val) && (l.isList(val) || l.isIterator(val))
 }
+
+export function isNodable(val) {return l.isComp(val) && `toNode` in val && l.isFun(val)}
+export function reqNodable(val) {return l.req(val, isNodable)}
 
 export function isRaw(val) {return l.hasIn(val, `outerHTML`)}
 export function reqRaw(val) {return l.req(val, isRaw)}

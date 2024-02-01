@@ -18,6 +18,9 @@ t.eq(numVec.toArray(), itc.numArr)
 
 const vecEmpty = new c.Vec()
 
+const weakMap = new WeakMap()
+weakMap.set(weakMap, 123)
+
 /* Bench */
 
 t.bench(function bench_set_new_Array_empty() {l.nop(Array.of())})
@@ -129,5 +132,11 @@ t.bench(function bench_vec_filter_inner_native() {l.nop(numVec.$.filter(l.id))})
 t.bench(function bench_vec_filter_our_iter() {l.nop(i.filter(numVec, l.id))})
 
 t.bench(function bench_vec_clear_empty() {l.nop(vecEmpty.clear())})
+
+t.bench(function bench_WeakMap_get_miss_nil() {l.nop(weakMap.get(undefined))})
+t.bench(function bench_WeakMap_get_miss_prim() {l.nop(weakMap.get(10))})
+t.bench(function bench_WeakMap_get_miss_fun() {l.nop(weakMap.get(l.nop))})
+t.bench(function bench_WeakMap_get_miss_obj() {l.nop(weakMap.get(vecEmpty))})
+t.bench(function bench_WeakMap_get_hit_obj() {l.nop(weakMap.get(weakMap))})
 
 if (import.meta.main) t.deopt(), t.benches()

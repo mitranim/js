@@ -60,7 +60,7 @@ The built-in `AbortError` is not a separate class but an instance of
 `DOMException`. We're unable to detect it purely by `instanceof`.
 */
 export function isErrAbort(val) {
-  return l.isInst(val, Error) && val.name === `AbortError`
+  return l.isErr(val) && val.name === `AbortError`
 }
 
 // TODO rename to `ErrHttp`.

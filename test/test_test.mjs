@@ -179,18 +179,6 @@ t.test(function test_equal() {
 
   t.no(t.equal(new URL(`https://example.com`), new URL(`https://example.comm`)))
   t.ok(t.equal(new URL(`https://example.com`), new URL(`https://example.com`)))
-
-  t.no(t.equal(new Request(`one://two.three`), new Request(`two://three.four`)))
-  t.no(t.equal(new Request(`one://two.three`, {method: `GET`}), new Request(`one://two.three`, {method: `POST`})))
-  t.ok(t.equal(new Request(`one://two.three`), new Request(`one://two.three`)))
-  t.ok(t.equal(new Request(`one://two.three`, {method: `GET`}), new Request(`one://two.three`, {method: `GET`})))
-  t.ok(t.equal(new Request(`one://two.three`, {method: `POST`}), new Request(`one://two.three`, {method: `POST`})))
-  t.ok(t.equal(new Request(`one://two.three`, {method: `POST`, body: `one`}), new Request(`one://two.three`, {method: `POST`, body: `one`})))
-
-  // Wasn't implemented because reading streams requires awaiting,
-  // and `test.mjs` didn't support async. Now it does, so let's fix this.
-  //
-  // t.no(t.equal(new Request(`one://two.three`, {method: `POST`, body: `one`}), new Request(`one://two.three`, {method: `POST`, body: `two`})))
 })
 
 t.test(function test_now() {advanceTime()})

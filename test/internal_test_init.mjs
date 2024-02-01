@@ -50,6 +50,11 @@ export async function readFull(src) {
   return out
 }
 
+export function readFullOpt(src) {
+  if (l.isNil(src)) return ``
+  return readFull(src)
+}
+
 function chunkToStr(val) {
   if (l.isInst(val, Uint8Array)) return new TextDecoder().decode(val)
   return l.reqStr(val)

@@ -637,7 +637,8 @@ t.test(function test_Element_parentNode_and_lifecycle() {
   function test(tar, par, con, dis) {
     t.inst(tar, Counted)
     t.is(tar.parentNode, par)
-    t.own(tar, {con, dis})
+    t.is(tar.con, con)
+    t.is(tar.dis, dis)
   }
 
   const body = dom.createHTMLDocument().body

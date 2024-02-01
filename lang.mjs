@@ -22,7 +22,7 @@ export function optNum(val) {return isNil(val) ? val : reqNum(val)}
 export function onlyNum(val) {return isNum(val) ? val : undefined}
 export function laxNum(val) {return isNil(val) ? 0 : reqNum(val)}
 
-export function isFin(val) {return isNum(val) && !isNaN(val) && !isInf(val)}
+export function isFin(val) {return Number.isFinite(val)}
 export function reqFin(val) {return isFin(val) ? val : throwErrFun(val, isFin)}
 export function optFin(val) {return isNil(val) ? val : reqFin(val)}
 export function onlyFin(val) {return isFin(val) ? val : undefined}
@@ -88,7 +88,6 @@ export function isValidStr(val) {return isStr(val) && !!val}
 export function reqValidStr(val) {return isValidStr(val) ? val : throwErrFun(val, isValidStr)}
 export function optValidStr(val) {return isNil(val) ? val : reqValidStr(val)}
 export function onlyValidStr(val) {return isValidStr(val) ? val : undefined}
-export function laxValidStr(val) {return isNil(val) ? `` : reqValidStr(val)}
 
 export function isSym(val) {return typeof val === `symbol`}
 export function reqSym(val) {return isSym(val) ? val : throwErrFun(val, isSym)}
@@ -157,7 +156,14 @@ export function optNpo(val) {return isNil(val) ? val : reqNpo(val)}
 export function onlyNpo(val) {return isNpo(val) ? val : undefined}
 export function laxNpo(val) {return isNil(val) ? npo() : reqNpo(val)}
 
-export function isDict(val) {return isObj(val) && isDictProto(Object.getPrototypeOf(val))}
+export function isDict(val) {
+  if (!isObj(val)) return false
+  const pro = Object.getPrototypeOf(val)
+  return isNil(pro) || (
+    pro === Object.prototype
+    && (!own.call(val, `constructor`) || enu.call(val, `constructor`))
+  )
+}
 export function reqDict(val) {return isDict(val) ? val : throwErrFun(val, isDict)}
 export function optDict(val) {return isNil(val) ? val : reqDict(val)}
 export function onlyDict(val) {return isDict(val) ? val : undefined}
@@ -217,20 +223,16 @@ export function optMap(val) {return isNil(val) ? val : reqMap(val)}
 export function onlyMap(val) {return isMap(val) ? val : undefined}
 export function laxMap(val) {return isNil(val) ? new Map() : reqMap(val)}
 
-export function isPromise(val) {return isObj(val) && `then` in val && isFun(val.then)}
+export function isPromise(val) {return isComp(val) && `then` in val && isFun(val.then)}
 export function reqPromise(val) {return isPromise(val) ? val : throwErrFun(val, isPromise)}
 export function optPromise(val) {return isNil(val) ? val : reqPromise(val)}
 export function onlyPromise(val) {return isPromise(val) ? val : undefined}
 
-// Skips the function check for performance reasons.
-// In well-behaved code, this property must always be a function.
 export function isIter(val) {return isObj(val) && Symbol.iterator in val}
 export function reqIter(val) {return isIter(val) ? val : throwErrFun(val, isIter)}
 export function optIter(val) {return isNil(val) ? val : reqIter(val)}
 export function onlyIter(val) {return isIter(val) ? val : undefined}
 
-// Skips the function check for performance reasons.
-// In well-behaved code, this property must always be a function.
 export function isIterAsync(val) {return isObj(val) && Symbol.asyncIterator in val}
 export function reqIterAsync(val) {return isIterAsync(val) ? val : throwErrFun(val, isIterAsync)}
 export function optIterAsync(val) {return isNil(val) ? val : reqIterAsync(val)}
@@ -432,9 +434,9 @@ export function not(fun) {
 }
 
 export function hasIn(val, key) {return isComp(val) && key in val}
-export function hasOwn(val, key) {return isComp(val) && Object.prototype.hasOwnProperty.call(val, key)}
-export function hasOwnEnum(val, key) {return isComp(val) && Object.prototype.propertyIsEnumerable.call(val, key)}
-export function hasInherited(val, key) {return isComp(val) && key in val && !Object.prototype.hasOwnProperty.call(val, key)}
+export function hasOwn(val, key) {return isComp(val) && own.call(val, key)}
+export function hasOwnEnum(val, key) {return isComp(val) && enu.call(val, key)}
+export function hasInherited(val, key) {return isComp(val) && key in val && !own.call(val, key)}
 export function hasMeth(val, key) {return isComp(val) && key in val && isFun(val[key])}
 
 export function eq(one, two) {
@@ -477,7 +479,9 @@ export function dec(val) {return val - 1}
 
 /* Internal */
 
-function isDictProto(val) {return isNil(val) || val === Object.prototype}
+const own = Object.prototype.hasOwnProperty
+const enu = Object.prototype.propertyIsEnumerable
+
 function isFunType(val, name) {return isFun(val) && val.constructor.name === name}
 function instDesc(val) {return isFun(val) ? `instance of ${showFunName(val)} ` : ``}
 function hasNext(val) {return `next` in val && isFun(val.next)}
@@ -558,33 +562,40 @@ function showFuns(funs) {return funs.map(showFunName).join(`, `)}
 export function showFunName(fun) {return fun.name || showFun(fun)}
 
 function showObj(val) {
-  if (isInst(val, Error)) return String(val)
+  if (isErr(val)) return String(val)
   if (isArr(val)) return showArr(val)
 
   const con = getCon(val)
   if (!con || con === Object) return showDict(val)
 
   const name = getName(con)
-  return name ? `[object ${name}]` : String(val)
+  if (!name) return String(val)
+
+  return `[object ${name}]`
 }
 
 function showArr(src) {return `[` + src.map(show).join(`, `) + `]`}
 
 function showDict(src) {
-  let out = `{`
-  let first = true
-  for (const key of structKeys(src)) {
-    if (first) first = false
-    else out += `, `
-    out += showDictKey(key) + `: ` + show(src[key])
+  const buf = []
+  for (const key of Object.getOwnPropertySymbols(src)) {
+    buf.push(showDictEntry(key, src[key]))
   }
-  out += `}`
-  return out
+  for (const key of Object.getOwnPropertyNames(src)) {
+    buf.push(showDictEntry(key, src[key]))
+  }
+  return `{` + buf.join(`, `) + `}`
+}
+
+function showDictEntry(key, val) {
+  return showDictKey(key) + `: ` + show(val)
 }
 
 function showDictKey(val) {
-  reqStr(val)
-  if (/^[$_A-Za-z][\w]*$/.test(val)) return val
+  if (isSym(val)) return `[` + show(val) + `]`
+  if (/^(?:\d+|\d+\.\d+|\d+n|[A-Za-z_$][\w$]*)$/.test(reqStr(val))) {
+    return val
+  }
   return show(val)
 }
 

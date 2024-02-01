@@ -23,7 +23,7 @@ Written carefully and with benchmarks, but doesn't claim to be optimal at what i
 Example case conversion:
 
 ```js
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.51/str.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.52/str.mjs'
 
 s.words(`oneTwoThree`).title().snake() === `One_Two_Three`
 
@@ -103,23 +103,23 @@ The following APIs are exported but undocumented. Check [str.mjs](../str.mjs).
   * [`function dashed`](../str.mjs#L445)
   * [`function isSubpath`](../str.mjs#L448)
   * [`function rndHex`](../str.mjs#L458)
-  * [`function arrHex`](../str.mjs#L464)
-  * [`function uuid`](../str.mjs#L476)
-  * [`function uuidArr`](../str.mjs#L484)
-  * [`function draftParse`](../str.mjs#L498)
-  * [`function draftRender`](../str.mjs#L499)
-  * [`function draftRenderAsync`](../str.mjs#L500)
-  * [`class Draft`](../str.mjs#L515)
-  * [`function isRen`](../str.mjs#L545)
-  * [`class Embed`](../str.mjs#L548)
-  * [`function str`](../str.mjs#L571)
-  * [`function strLax`](../str.mjs#L577)
-  * [`function strConcat`](../str.mjs#L583)
-  * [`function strConcatLax`](../str.mjs#L587)
-  * [`function san`](../str.mjs#L595)
-  * [`function sanLax`](../str.mjs#L597)
-  * [`function interpolate`](../str.mjs#L600)
-  * [`class Str`](../str.mjs#L619)
-  * [`function replaceAll`](../str.mjs#L629)
-  * [`function commonPrefixLen`](../str.mjs#L649)
-  * [`function commonPrefix`](../str.mjs#L661)
+  * [`function arrHex`](../str.mjs#L463)
+  * [`function uuid`](../str.mjs#L477)
+  * [`function uuidArr`](../str.mjs#L485)
+  * [`function draftParse`](../str.mjs#L499)
+  * [`function draftRender`](../str.mjs#L500)
+  * [`function draftRenderAsync`](../str.mjs#L501)
+  * [`class Draft`](../str.mjs#L516)
+  * [`function isRen`](../str.mjs#L546)
+  * [`class Embed`](../str.mjs#L549)
+  * [`function str`](../str.mjs#L572)
+  * [`function strLax`](../str.mjs#L578)
+  * [`function strConcat`](../str.mjs#L584)
+  * [`function strConcatLax`](../str.mjs#L588)
+  * [`function san`](../str.mjs#L596)
+  * [`function sanLax`](../str.mjs#L598)
+  * [`function interpolate`](../str.mjs#L601)
+  * [`class Str`](../str.mjs#L620)
+  * [`function replaceAll`](../str.mjs#L630)
+  * [`function commonPrefixLen`](../str.mjs#L650)
+  * [`function commonPrefix`](../str.mjs#L662)

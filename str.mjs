@@ -460,13 +460,14 @@ export function rndHex(len) {
   return arrHex(crypto.getRandomValues(new Uint8Array(len)))
 }
 
-// Stupidly inefficient, but all attempted alternatives were worse.
-export function arrHex(val) {
-  l.reqInst(val, Uint8Array)
-  const buf = Array(val.length)
-  let ind = -1
-  while (++ind < val.length) buf[ind] = val[ind].toString(16).padStart(2, `0`)
-  return buf.join(``)
+export function arrHex(src) {
+  l.reqInst(src, Uint8Array)
+  let out = ``
+  for (src of src) {
+    if (src < 0x10) out += `0`
+    out += src.toString(16)
+  }
+  return out
 }
 
 /*

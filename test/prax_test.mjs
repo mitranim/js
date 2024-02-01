@@ -99,11 +99,10 @@ t.test(function test_PropBui() {
 function testPropBuiConstructor(fun) {
   function test(src) {
     const out = fun(src)
-
     t.inst(out, p.PropBui)
     t.isnt(out, src)
 
-    t.own(out, {})
+    t.own(out, {[Symbol.for(`$`)]: src, [Symbol.for(`frozen`)]: false})
     testDerefOwn(out, src)
   }
 

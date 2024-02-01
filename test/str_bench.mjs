@@ -89,6 +89,8 @@ Safari versions at the time of this writing.
 */
 function uuidCryptoShort() {return crypto.randomUUID().replace(/-/g, ``)}
 
+const uuidArr = s.uuidArr()
+
 /* Bench */
 
 t.bench(function bench_walk() {for (const val of LONG_NARROW) l.nop(val)})
@@ -239,5 +241,7 @@ t.bench(function bench_san_str_3() {l.nop(s.san`one ${`two`} three ${`four`} fiv
 t.bench(function bench_san_num_1() {l.nop(s.san`one ${10}`)})
 t.bench(function bench_san_num_2() {l.nop(s.san`one ${10} two ${20}`)})
 t.bench(function bench_san_num_3() {l.nop(s.san`one ${10} two ${20} three ${30}`)})
+
+t.bench(function bench_arrHex() {l.nop(s.arrHex(uuidArr))})
 
 if (import.meta.main) t.deopt(), t.benches()

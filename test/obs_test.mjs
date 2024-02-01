@@ -21,10 +21,6 @@ class Track extends l.Emp {
 
     // Counts deinit calls.
     this.de = l.reqInt(de)
-
-    // Bind methods, keeping these properties non-enumerable.
-    Object.defineProperty(this, `trig`, {value: this.trig.bind(this)})
-    Object.defineProperty(this, `deinit`, {value: this.deinit.bind(this)})
   }
 
   trig() {this.tr++}
@@ -231,31 +227,31 @@ t.test(function test_de() {
   const second = new Track()
   const third  = new Track()
 
-  Object.defineProperty(ref, `hidden`, {value: third, enumerable: false})
+  Object.defineProperty(ref, `nonEnum`, {value: third, enumerable: false})
 
   ref.val = first
   t.is(ref.val, first)
-  t.eq(ref, {val: new Track()})
+  t.own(ref, {val: new Track(), nonEnum: third})
 
   ref.val = ref.val
   t.is(ref.val, first)
-  t.eq(ref, {val: new Track()})
+  t.own(ref, {val: new Track(), nonEnum: third})
 
   ref.val = second
   t.is(ref.val, second)
-  t.eq(ref, {val: new Track()})
+  t.own(ref, {val: new Track(), nonEnum: third})
   t.eq(first, new Track({de: 1}))
 
   ref.deinit()
   t.is(ref.val, second)
-  t.eq(ref, {val: new Track({de: 1})})
+  t.own(ref, {val: new Track({de: 1}), nonEnum: third})
 
   delete ref.val
   t.is(ref.val, undefined)
   t.is(l.hasOwn(ref, `val`), false)
   t.eq(second, new Track({de: 2}))
 
-  t.is(ref.hidden, third)
+  t.is(ref.nonEnum, third)
   t.eq(third, new Track())
 })
 
@@ -267,8 +263,11 @@ t.test(function test_obs() {
     const first = new Track()
     const second = new Track()
 
-    obs.sub(first.trig)
-    obs.sub(second.trig)
+    function firstTrig() {return first.trig()}
+    function secondTrig() {return second.trig()}
+
+    obs.sub(firstTrig)
+    obs.sub(secondTrig)
     t.eq(first, new Track())
     t.eq(second, new Track())
 
@@ -286,7 +285,7 @@ t.test(function test_obs() {
     t.eq(first, new Track({tr: 2}))
     t.eq(second, new Track({tr: 2}))
 
-    obs.unsub(first.trig)
+    obs.unsub(firstTrig)
     t.eq(first, new Track({tr: 2}))
     t.eq(second, new Track({tr: 2}))
 

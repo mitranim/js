@@ -246,6 +246,7 @@ t.test(function test_isNum() {
   t.no(l.isNum(null))
   t.no(l.isNum(`10`))
   t.no(l.isNum([]))
+  t.no(l.isNum([0]))
 
   t.ok(l.isNum(10))
   t.ok(l.isNum(NaN))
@@ -260,6 +261,7 @@ t.test(function test_isFin() {
   t.no(l.isFin(null))
   t.no(l.isFin(`10`))
   t.no(l.isFin([]))
+  t.no(l.isFin([0]))
 
   t.ok(l.isFin(10))
   t.ok(l.isFin(10.20))
@@ -271,6 +273,7 @@ t.test(function test_isFinNeg() {
   t.no(l.isFinNeg(`-10`))
   t.no(l.isFinNeg(`10`))
   t.no(l.isFinNeg([]))
+  t.no(l.isFinNeg([0]))
 
   t.no(l.isFinNeg(NaN))
   t.no(l.isFinNeg(Infinity))
@@ -290,6 +293,7 @@ t.test(function test_isFinPos() {
   t.no(l.isFinPos(`-10`))
   t.no(l.isFinPos(`10`))
   t.no(l.isFinPos([]))
+  t.no(l.isFinPos([0]))
 
   t.no(l.isFinPos(NaN))
   t.no(l.isFinPos(Infinity))
@@ -314,6 +318,7 @@ t.test(function test_isInt() {
   t.no(l.isInt(null))
   t.no(l.isInt(`10`))
   t.no(l.isInt([]))
+  t.no(l.isInt([0]))
 
   t.ok(l.isInt(0))
   t.ok(l.isInt(10))
@@ -334,6 +339,7 @@ t.test(function test_isNat() {
   t.no(l.isNat(null))
   t.no(l.isNat(`10`))
   t.no(l.isNat([]))
+  t.no(l.isNat([0]))
 
   t.ok(l.isNat(0))
   t.ok(l.isNat(1))
@@ -642,9 +648,12 @@ t.test(function test_isDict() {
   t.no(l.isDict(inherit({})))
   t.no(l.isDict(inherit(inherit({}))))
   t.no(l.isDict(inherit(inherit(null))))
+  t.no(l.isDict(l.isDict.prototype))
+  t.no(l.isDict(l.nop.prototype))
 
-  t.ok(l.isDict({}))
   t.ok(l.isDict(inherit(null)))
+  t.ok(l.isDict({}))
+  t.ok(l.isDict({constructor: undefined}))
 })
 
 t.test(function test_isStruct() {
@@ -663,6 +672,8 @@ t.test(function test_isStruct() {
   t.ok(l.isStruct(inherit(inherit(null))))
   t.ok(l.isStruct(new Number()))
   t.ok(l.isStruct(new Boolean()))
+  t.ok(l.isStruct(l.isStruct.prototype))
+  t.ok(l.isStruct(l.nop.prototype))
 
   /*
   Most of the code using `isStruct` doesn't care about this,

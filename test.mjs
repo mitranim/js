@@ -576,7 +576,7 @@ export function eq(act, exp, ...info) {
 
   throw new AssertError(joinParagraphs(
     joinParagraphs(`actual:`, indent(showSimple(act))),
-    joinParagraphs(`expected:`, indent(showSimple(act))),
+    joinParagraphs(`expected:`, indent(showSimple(exp))),
     optInfo(...info),
   ))
 }
@@ -599,13 +599,13 @@ export function own(act, exp, ...info) {
   const actDesc = Object.getOwnPropertyDescriptors(act)
   const expDesc = Object.getOwnPropertyDescriptors(exp)
 
-  if (equal(actDesc, expDesc)) return
+  if (new Eq().equalDescs(actDesc, expDesc)) return
 
   throw new AssertError(joinParagraphs(
+    joinParagraphs(`actual properties:`, indent(l.show({...act}))),
+    joinParagraphs(`expected properties:`, indent(l.show({...exp}))),
     joinParagraphs(`actual descriptors:`, indent(l.show(actDesc))),
     joinParagraphs(`expected descriptors:`, indent(l.show(expDesc))),
-    joinParagraphs(`actual own enumerable properties:`, indent(l.show({...act}))),
-    joinParagraphs(`expected own enumerable properties:`, indent(l.show({...exp}))),
     optInfo(...info),
   ))
 }
@@ -741,99 +741,103 @@ function proves the occasional need, but live apps should avoid wasting
 performance on this.
 */
 export function equal(one, two) {
-  return Object.is(one, two) || (
-    l.isObj(one) && l.isObj(two) && equalObj(one, two)
-  )
+  return new Eq().equal(one, two)
 }
 
-function equalObj(one, two) {
-  // Probably faster than letting `equalList` compare them.
-  if (l.isInst(one, String)) return equalCons(one, two) && one.valueOf() === two.valueOf()
-  if (l.isList(one)) return equalCons(one, two) && equalList(one, two)
-  if (l.isSet(one)) return equalCons(one, two) && equalSet(one, two)
-  if (l.isMap(one)) return equalCons(one, two) && equalMap(one, two)
-  if (l.isInst(one, URL)) return equalCons(one, two) && one.href === two.href
-  if (l.isInst(one, Date)) return equalCons(one, two) && one.valueOf() === two.valueOf()
-  if (l.isInst(one, Request)) return equalCons(one, two) && equalRequest(one, two)
-  if (l.isDict(one)) return l.isDict(two) && equalStruct(one, two)
-  return equalCons(one, two) && equalStruct(one, two)
+export class Eq extends WeakSet {
+  equal(one, two) {
+    if (Object.is(one, two)) return true
+    if (!(l.isObj(one) && l.isObj(two))) return false
+    if (this.has(one) || this.has(two)) return false
+    return this.add(one).add(two).equalObj(one, two)
+  }
+
+  equalObj(one, two) {
+    // Probably faster than letting `.equalList` compare them.
+    if (l.isInst(one, String)) return equalCons(one, two) && one.valueOf() === two.valueOf()
+    if (l.isList(one)) return equalCons(one, two) && this.equalList(one, two)
+    if (l.isSet(one)) return equalCons(one, two) && this.equalSet(one, two)
+    if (l.isMap(one)) return equalCons(one, two) && this.equalMap(one, two)
+    if (l.isInst(one, URL)) return equalCons(one, two) && one.href === two.href
+    if (l.isInst(one, Date)) return equalCons(one, two) && one.valueOf() === two.valueOf()
+    if (l.isDict(one)) return l.isDict(two) && this.equalStruct(one, two)
+    if (l.isDict(two)) return l.isDict(one) && this.equalStruct(one, two)
+    return equalCons(one, two) && this.equalStruct(one, two)
+  }
+
+  equalList(one, two) {
+    if (one.length !== two.length) return false
+    let ind = -1
+    while (++ind < one.length) if (!this.equal(one[ind], two[ind])) return false
+    return true
+  }
+
+  equalSet(one, two) {
+    if (one.size !== two.size) return false
+
+    outer:
+    for (const valOne of setVals(one)) {
+      if (two.has(valOne)) continue outer
+      for (const valTwo of setVals(two)) {
+        if (this.equal(valOne, valTwo)) continue outer
+      }
+      return false
+    }
+    return true
+  }
+
+  equalMap(one, two) {
+    if (one.size !== two.size) return false
+    for (const [key, val] of Map.prototype.entries.call(one)) {
+      if (!this.equal(val, Map.prototype.get.call(two, key))) return false
+    }
+    return true
+  }
+
+  equalStruct(one, two) {
+    // Takes care of primitive wrapper objects such as `new Number`,
+    // as well as arbitrary classes with a custom `.valueOf`.
+    const oneVal = maybeValueOf(one)
+    const twoVal = maybeValueOf(two)
+    if (one !== oneVal && two !== twoVal) return this.equal(oneVal, twoVal)
+
+    return this.equalDescs(
+      Object.getOwnPropertyDescriptors(one),
+      Object.getOwnPropertyDescriptors(two),
+    )
+  }
+
+  equalDescs(one, two) {
+    for (const key of Object.getOwnPropertySymbols(one)) {
+      if (!(key in two && this.equalDesc(one[key], two[key]))) return false
+    }
+    for (const key of Object.getOwnPropertyNames(one)) {
+      if (!(key in two && this.equalDesc(one[key], two[key]))) return false
+    }
+    for (const key of Object.getOwnPropertySymbols(two)) {
+      if (!(key in one)) return false
+    }
+    for (const key of Object.getOwnPropertyNames(two)) {
+      if (!(key in one)) return false
+    }
+    return true
+  }
+
+  equalDesc(one, two) {
+    return (
+      true
+      && one.get === two.get
+      && one.set === two.set
+      && this.equal(one.value, two.value)
+    )
+  }
 }
 
 function equalCons(one, two) {
   return l.isComp(one) && l.isComp(two) && equal(one.constructor, two.constructor)
 }
 
-function equalList(one, two) {
-  if (one.length !== two.length) return false
-  let ind = -1
-  while (++ind < one.length) if (!equal(one[ind], two[ind])) return false
-  return true
-}
-
-function equalSet(one, two) {
-  if (one.size !== two.size) return false
-
-outer:
-  for (const valOne of setVals(one)) {
-    if (two.has(valOne)) continue outer
-
-    for (const valTwo of setVals(two)) {
-      if (equal(valOne, valTwo)) continue outer
-    }
-
-    return false
-  }
-  return true
-}
-
 function setVals(val) {return Set.prototype.values.call(val)}
-
-function equalMap(one, two) {
-  if (one.size !== two.size) return false
-  for (const [key, val] of Map.prototype.entries.call(one)) {
-    if (!equal(val, Map.prototype.get.call(two, key))) return false
-  }
-  return true
-}
-
-// https://developer.mozilla.org/en-US/docs/Web/API/Request
-function equalRequest(one, two) {
-  return (
-    equal(one.body, two.body) && // Not properly implemented.
-    equal(one.bodyUsed, two.bodyUsed) &&
-    equal(one.credentials, two.credentials) &&
-    equal(one.destination, two.destination) &&
-    equal(one.headers, two.headers) &&
-    equal(one.integrity, two.integrity) &&
-    equal(one.method, two.method) &&
-    equal(one.mode, two.mode) &&
-    equal(one.redirect, two.redirect) &&
-    equal(one.referrer, two.referrer) &&
-    equal(one.referrerPolicy, two.referrerPolicy) &&
-    equal(one.url, two.url)
-  )
-}
-
-function equalStruct(one, two) {
-  // Takes care of primitive wrapper objects such as `new Number`,
-  // as well as arbitrary classes with a custom `.valueOf`.
-  const oneVal = maybeValueOf(one)
-  const twoVal = maybeValueOf(two)
-  if (one !== oneVal && two !== twoVal) return equal(oneVal, twoVal)
-
-  const keysOne = Object.keys(one)
-  const keysTwo = Object.keys(two)
-
-  for (const key of keysOne) {
-    if (!l.hasOwnEnum(two, key) || !equal(one[key], two[key])) return false
-  }
-
-  for (const key of keysTwo) {
-    if (!l.hasOwnEnum(one, key) || !equal(two[key], one[key])) return false
-  }
-
-  return true
-}
 
 function maybeValueOf(val) {
   if (l.hasMeth(val, `valueOf`)) return val.valueOf()
