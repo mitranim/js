@@ -154,7 +154,7 @@ export function isNpo(val) {return isObj(val) && isNil(Object.getPrototypeOf(val
 export function reqNpo(val) {return isNpo(val) ? val : throwErrFun(val, isNpo)}
 export function optNpo(val) {return isNil(val) ? val : reqNpo(val)}
 export function onlyNpo(val) {return isNpo(val) ? val : undefined}
-export function laxNpo(val) {return isNil(val) ? npo() : reqNpo(val)}
+export function laxNpo(val) {return isNil(val) ? Emp() : reqNpo(val)}
 
 export function isDict(val) {
   if (!isObj(val)) return false
@@ -167,13 +167,13 @@ export function isDict(val) {
 export function reqDict(val) {return isDict(val) ? val : throwErrFun(val, isDict)}
 export function optDict(val) {return isNil(val) ? val : reqDict(val)}
 export function onlyDict(val) {return isDict(val) ? val : undefined}
-export function laxDict(val) {return isNil(val) ? npo() : reqDict(val)}
+export function laxDict(val) {return isNil(val) ? Emp() : reqDict(val)}
 
 export function isStruct(val) {return isObj(val) && !(Symbol.iterator in val)}
 export function reqStruct(val) {return isStruct(val) ? val : throwErrFun(val, isStruct)}
 export function optStruct(val) {return isNil(val) ? val : reqStruct(val)}
 export function onlyStruct(val) {return isStruct(val) ? val : undefined}
-export function laxStruct(val) {return isNil(val) ? npo() : reqStruct(val)}
+export function laxStruct(val) {return isNil(val) ? Emp() : reqStruct(val)}
 
 export function isArr(val) {return Array.isArray(val)}
 export function reqArr(val) {return isArr(val) ? val : throwErrFun(val, isArr)}
@@ -454,12 +454,8 @@ export function setProto(tar, cls) {
   }
 }
 
-export function npo() {return Object.create(null)}
-
-function empty() {}
-empty.prototype = null
-
-export class Emp extends empty {}
+export function Emp() {return new.target && new.target !== Emp ? this : Object.create(null)}
+Emp.prototype = null
 
 /* Op */
 
@@ -566,17 +562,23 @@ function showObj(val) {
   if (isArr(val)) return showArr(val)
 
   const con = getCon(val)
-  if (!con || con === Object) return showDict(val)
+  if (!con || con === Object) return showDictOpt(val) || `{}`
 
-  const name = getName(con)
-  if (!name) return String(val)
+  const name = getName(con) || getTag(val)
+  if (isInst(val, Boolean)) return `[${name || `Boolean`}: ${show(val.valueOf())}]`
+  if (isInst(val, Number)) return `[${name || `Number`}: ${show(val.valueOf())}]`
+  if (isInst(val, BigInt)) return `[${name || `BigInt`}: ${show(val.valueOf())}n]`
+  if (isInst(val, String)) return `[${name || `String`}: ${show(val.valueOf())}]`
+  if (isInst(val, Symbol)) return `[${name || `Symbol`}: ${show(val.valueOf())}]`
 
-  return `[object ${name}]`
+  const dict = showDictOpt(val)
+  if (!name) return dict || `{}`
+  return `[object ${name}${dict && `: `}${dict}]`
 }
 
 function showArr(src) {return `[` + src.map(show).join(`, `) + `]`}
 
-function showDict(src) {
+function showDictOpt(src) {
   const buf = []
   for (const key of Object.getOwnPropertySymbols(src)) {
     buf.push(showDictEntry(key, src[key]))
@@ -584,7 +586,8 @@ function showDict(src) {
   for (const key of Object.getOwnPropertyNames(src)) {
     buf.push(showDictEntry(key, src[key]))
   }
-  return `{` + buf.join(`, `) + `}`
+  const out = buf.join(`, `)
+  return out && (`{` + out + `}`)
 }
 
 function showDictEntry(key, val) {
@@ -616,6 +619,7 @@ function getName(val) {return get(val, `name`)}
 function getLength(val) {return get(val, `length`)}
 function getSize(val) {return get(val, `size`)}
 function getCon(val) {return get(val, `constructor`)}
+function getTag(val) {return get(val, Symbol.toStringTag)}
 
 // This is actually faster than default rendering.
 function renderDate(val) {

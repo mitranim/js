@@ -68,7 +68,7 @@ export class StructType extends l.Emp {
     super()
     this[clsKey] = l.reqCls(cls)
     this.list = []
-    this.dict = l.npo()
+    this.dict = l.Emp()
     this.spec = l.reqInst(cls.getSpec(), StructSpec)
     this.initFromSpec()
   }
@@ -264,7 +264,7 @@ export class StrictStaticPh extends l.Emp {
   }
 }
 
-// Note: proxy target should be `l.npo()`.
+// Note: proxy target should be an empty object (null-prototype or `l.Emp`).
 export class MakerPh extends l.Emp {
   get(tar, key) {return key in tar ? tar[key] : (tar[key] = this.make(key, tar))}
   make(val) {return val}
@@ -333,7 +333,7 @@ export class StaticWeakCache extends StaticCache {
 }
 
 export class MixinCache extends StaticWeakCache {
-  static goc(cls) {return l.reqCls(super.goc(l.reqCls(cls)))}
+  static goc(cls) {return super.goc(l.reqFun(cls))}
 }
 
 // TODO tests.
@@ -341,7 +341,7 @@ export class DedupMixinCache extends MixinCache {
   static get Set() {return Set}
   static ownTags() {return this.optTags() || (this.tags = new this.Set())}
   static optTags() {return l.getOwn(this, `tags`)}
-  static tag(cls) {return this.ownTags().add(l.reqCls(cls)), cls}
+  static tag(cls) {return this.ownTags().add(l.reqFun(cls)), cls}
   static goc(cls) {return this.isTagged(cls) ? cls : this.tag(super.goc(cls))}
 
   static isTagged(val) {

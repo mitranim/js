@@ -339,11 +339,24 @@ export function compareFin(one, two) {
 }
 
 export function sort(val, fun) {return valuesCopy(val).sort(fun)}
-export function reverse(val) {return valuesCopy(val).reverse()}
+
+export function reverse(val) {return reverseMut(valuesCopy(val))}
+
+export function reverseMut(tar) {
+  l.reqArr(tar)
+  let ind0 = 0
+  let ind1 = tar.length - 1
+  while (ind0 < ind1) {
+    [tar[ind0], tar[ind1]] = [tar[ind1], tar[ind0]]
+    ind0++
+    ind1--
+  }
+  return tar
+}
 
 export function index(val, fun) {
   l.reqFun(fun)
-  const out = l.npo()
+  const out = l.Emp()
   for (val of values(val)) {
     const key = fun(val)
     if (l.isKey(key)) out[key] = val
@@ -353,7 +366,7 @@ export function index(val, fun) {
 
 export function group(val, fun) {
   l.reqFun(fun)
-  const out = l.npo()
+  const out = l.Emp()
   for (val of values(val)) {
     const key = fun(val)
     if (l.isKey(key)) (out[key] || (out[key] = [])).push(val)
@@ -375,7 +388,7 @@ function addFin(acc, val) {return toFin(acc) + toFin(val)}
 function toFin(val) {return l.isFin(val) ? val : 0}
 
 export function zip(src) {
-  const out = l.npo()
+  const out = l.Emp()
   for (const [key, val] of values(src)) if (l.isKey(key)) out[key] = val
   return out
 }
@@ -411,7 +424,7 @@ export function repeat(len, val) {return alloc(l.laxNat(len)).fill(val)}
 
 export function mapDict(val, fun) {
   l.reqFun(fun)
-  const out = l.npo()
+  const out = l.Emp()
   for (const key of l.structKeys(val)) out[key] = fun(val[key])
   return out
 }
@@ -419,7 +432,7 @@ export function mapDict(val, fun) {
 // Antipattern, should probably remove.
 export function pick(val, fun) {
   l.reqFun(fun)
-  const out = l.npo()
+  const out = l.Emp()
   for (const key of l.structKeys(val)) {
     const elem = val[key]
     if (fun(elem)) out[key] = elem
@@ -433,7 +446,7 @@ export function omit(val, fun) {return pick(val, l.not(fun))}
 // Antipattern, should probably remove.
 export function pickKeys(val, keys) {
   val = l.laxStruct(val)
-  const out = l.npo()
+  const out = l.Emp()
   for (const key of values(keys)) if (l.hasOwnEnum(val, key)) out[key] = val[key]
   return out
 }
@@ -442,7 +455,7 @@ export function pickKeys(val, keys) {
 export function omitKeys(val, keys) {
   val = l.laxStruct(val)
   keys = setFrom(keys)
-  const out = l.npo()
+  const out = l.Emp()
   for (const key of l.structKeys(val)) if (!keys.has(key)) out[key] = val[key]
   return out
 }

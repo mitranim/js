@@ -6,6 +6,7 @@ import * as ds from '../dom_shim.mjs'
 import {eqm} from './prax_test.mjs'
 
 const dom = ds.document.implementation
+function unreachable() {throw Error(`unreachable`)}
 
 function fragOf(...val) {
   const buf = new ds.DocumentFragment()
@@ -189,7 +190,7 @@ t.test(function test_Node_replaceChild() {
   t.is(two.parentNode, top)
   t.is(three.parentNode, null)
 
-  t.throws(() => top.replaceChild(`four`, three), Error, `missing child [object Text]`)
+  t.throws(() => top.replaceChild(`four`, three), Error, `missing child [object Text`)
 
   t.is(top.replaceChild(three, one), one)
 
@@ -231,7 +232,7 @@ t.test(function test_Node_insertBefore() {
   const two = new ds.Text(`two`)
   const three = new ds.Text(`three`)
 
-  t.throws(() => top.insertBefore(`four`, two), Error, `missing child [object Text]`)
+  t.throws(() => top.insertBefore(`four`, two), Error, `missing child [object Text`)
 
   t.is(top.insertBefore(one, null), one)
   t.eq(top.childNodes, [one])
@@ -1210,10 +1211,10 @@ t.test(function test_Element_textContent() {
   reset(new ds.Comment(`comment`))
   t.is(tar.textContent, ``)
 
-  reset({}, [], [{}, l.npo])
+  reset({}, [], [{}, unreachable])
   t.is(tar.textContent, ``)
 
-  reset({}, [], [{}, l.npo], `one`)
+  reset({}, [], [{}, unreachable], `one`)
   t.is(tar.textContent, `one`)
 
   reset(fragOf(10), [fragOf(20, 30)])

@@ -192,7 +192,7 @@ t.test(function test_Ren_serialization() {
       t.throws(() => E(`div`, {nop: l.nop}),                TypeError, `unable to convert property "nop" [function nop] to string`)
       t.throws(() => E(`div`, []),                          TypeError, `expected variant of isStruct, got []`)
       t.throws(() => E(`div`, E),                           TypeError, `expected variant of isObj, got [function E]`)
-      t.throws(() => E(`div`, new String()),                TypeError, `expected variant of isStruct, got [object String]`)
+      t.throws(() => E(`div`, new String()),                TypeError, `expected variant of isStruct, got [String: ""]`)
       t.throws(() => E(`div`, {attributes: 10}),            TypeError, `expected variant of isObj, got 10`)
       t.throws(() => E(`div`, {attributes: `str`}),         TypeError, `expected variant of isObj, got "str"`)
       t.throws(() => E(`div`, {attributes: []}),            TypeError, `expected variant of isStruct, got []`)
@@ -200,8 +200,8 @@ t.test(function test_Ren_serialization() {
       t.throws(() => E(`div`, {className: []}),             TypeError, `unable to convert property "className" [] to string`)
       t.throws(() => E(`div`, {class: {}}),                 TypeError, `unable to convert property "class" {} to string`)
       t.throws(() => E(`div`, {className: {}}),             TypeError, `unable to convert property "className" {} to string`)
-      t.throws(() => E(`div`, {class: new class {}()}),     TypeError, `unable to convert property "class" [object Object] to string`)
-      t.throws(() => E(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" [object Object] to string`)
+      t.throws(() => E(`div`, {class: new class {}()}),     TypeError, `unable to convert property "class" {} to string`)
+      t.throws(() => E(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" {} to string`)
       t.throws(() => E(`div`, {style: 10}),                 TypeError, `unable to convert 10 to style`)
       t.throws(() => E(`div`, {style: []}),                 TypeError, `unable to convert [] to style`)
       t.throws(() => E(`div`, {dataset: 10}),               TypeError, `expected variant of isObj, got 10`)
@@ -720,8 +720,8 @@ t.test(function test_Ren_serialization() {
 function testNonScalarChiStrict(E) {
   t.throws(() => E(`div`, {}, Symbol(`str`)),       TypeError, `unable to convert Symbol(str) to string`)
   t.throws(() => E(`div`, {}, {}),                  TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {}, l.npo()),             TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {}, new class {}()),      TypeError, `unable to convert [object Object] to string`)
+  t.throws(() => E(`div`, {}, Object.create(null)),             TypeError, `unable to convert {} to string`)
+  t.throws(() => E(`div`, {}, new class {}()),      TypeError, `unable to convert {} to string`)
   t.throws(() => E(`div`, {}, () => {}),            TypeError, `unable to convert [function () => {}] to string`)
   t.throws(() => E(`div`, {}, function fun() {}),   TypeError, `unable to convert [function fun] to string`)
   t.throws(() => E(`div`, {}, Promise.resolve()),   TypeError, `unable to convert [object Promise] to string`)
@@ -730,7 +730,7 @@ function testNonScalarChiStrict(E) {
 function testNonScalarChiLax(E, eqm) {
   eqm(E(`div`, {}, Symbol(`str`)), `<div></div>`)
   eqm(E(`div`, {}, {}), `<div></div>`)
-  eqm(E(`div`, {}, l.npo()), `<div></div>`)
+  eqm(E(`div`, {}, Object.create(null)), `<div></div>`)
   eqm(E(`div`, {}, new class {}()), `<div></div>`)
   eqm(E(`div`, {}, () => {}), `<div></div>`)
   eqm(E(`div`, {}, function fun() {}), `<div></div>`)
@@ -740,8 +740,8 @@ function testNonScalarChiLax(E, eqm) {
 function testNonScalarPropStrict(E) {
   t.throws(() => E(`div`, {one: Symbol(`str`)}),       TypeError, `unable to convert property "one" Symbol(str) to string`)
   t.throws(() => E(`div`, {one: {}}),                  TypeError, `unable to convert property "one" {} to string`)
-  t.throws(() => E(`div`, {one: l.npo()}),             TypeError, `unable to convert property "one" {} to string`)
-  t.throws(() => E(`div`, {one: new class {}()}),      TypeError, `unable to convert property "one" [object Object] to string`)
+  t.throws(() => E(`div`, {one: l.Emp()}),             TypeError, `unable to convert property "one" {} to string`)
+  t.throws(() => E(`div`, {one: new class {}()}),      TypeError, `unable to convert property "one" {} to string`)
   t.throws(() => E(`div`, {}, () => {}),               TypeError, `unable to convert [function () => {}] to string`)
   t.throws(() => E(`div`, {}, function fun() {}),      TypeError, `unable to convert [function fun] to string`)
   t.throws(() => E(`div`, {}, Promise.resolve()),      TypeError, `unable to convert [object Promise] to string`)
@@ -754,7 +754,7 @@ function testNonScalarPropStrict(E) {
 function testNonScalarPropLax(E, eqm) {
   eqm(E(`div`, {one: Symbol(`str`)}), `<div></div>`)
   eqm(E(`div`, {one: {}}), `<div></div>`)
-  eqm(E(`div`, {one: l.npo()}), `<div></div>`)
+  eqm(E(`div`, {one: l.Emp()}), `<div></div>`)
   eqm(E(`div`, {one: new class {}()}), `<div></div>`)
   eqm(E(`div`, {}, () => {}), `<div></div>`)
   eqm(E(`div`, {}, function fun() {}), `<div></div>`)
@@ -857,7 +857,7 @@ t.test(function test_Ren_dom_behaviors() {
 
     t.throws(() => ren.mutText(node, {}), TypeError, `unable to convert {} to string`)
     t.throws(() => ren.mutText(node, []), TypeError, `unable to convert [] to string`)
-    t.throws(() => ren.mutText(node, new p.Raw()), TypeError, `unable to convert [object Raw] to string`)
+    t.throws(() => ren.mutText(node, new p.Raw()), TypeError, `unable to convert [object Raw: {outerHTML: ""}] to string`)
 
     t.is(ren.mutText(node), node)
     eqm(node, `<div class="one"></div>`)

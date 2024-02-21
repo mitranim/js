@@ -5,6 +5,8 @@ import * as i from '../iter.mjs'
 import * as dr from '../dom_reg.mjs'
 import * as dg from '../dom_glob_shim.mjs'
 
+class Empty extends l.Emp {}
+
 // `Reg` is tested below. This is a sanity check.
 t.test(function test_cer() {l.reqInst(dr.Reg.main, dr.Reg)})
 
@@ -21,21 +23,21 @@ t.test(function test_reg() {
 
 t.test(function test_CustomElementRegistry() {
   const reg = new dr.CustomElementRegistry()
-  reg.define(`one-two`, l.Emp)
+  reg.define(`one-two`, Empty)
 
   t.test(function test_invalid() {
     t.throws(() => reg.define(), TypeError, `expected variant of isCustomName, got undefined`)
-    t.throws(() => reg.define(`one`, l.Emp), TypeError, `expected variant of isCustomName, got "one"`)
+    t.throws(() => reg.define(`one`, Empty), TypeError, `expected variant of isCustomName, got "one"`)
     t.throws(() => reg.define(`one-two`, 10), TypeError, `expected variant of isCls, got 10`)
   })
 
   t.test(function test_redundant() {
     t.throws(() => reg.define(`one-two`, l.nop), Error, `redundant registration of "one-two"`)
-    t.throws(() => reg.define(`two-three`, l.Emp), Error, `redundant registration of [function Emp]`)
+    t.throws(() => reg.define(`two-three`, Empty), Error, `redundant registration of [function Empty]`)
   })
 
   t.test(function test_get() {
-    t.is(reg.get(`one-two`), l.Emp)
+    t.is(reg.get(`one-two`), Empty)
     t.is(reg.get(`two-three`), undefined)
   })
 })

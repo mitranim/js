@@ -74,7 +74,7 @@ const symPrepared = Symbol.for(`prepared`)
 Shortcut for making symbol keys via property access.
 Kinda slow, avoid in hotspots.
 */
-const sym = new Proxy(l.npo(), new class SymPh extends l.Emp {
+const sym = new Proxy(l.Emp(), new class SymPh extends l.Emp {
   get(_, key) {return l.isSym(key) ? key : Symbol.for(key)}
 }())
 
@@ -124,7 +124,7 @@ const miscVals = [
   shallow,
   symboled,
   Object.create(emptyArr),
-  Object.create(l.npo),
+  Object.create(l.Emp), // Not a typo. The object's prototype is the function.
 ]
 
 /* Util */
@@ -234,13 +234,13 @@ miscVals.forEach(l.isFun)
 t.bench(function bench_isFun_nil() {l.nop(l.isFun())})
 t.bench(function bench_isFun_miss() {l.nop(l.isFun(somePromNative))})
 t.bench(function bench_isFun_hit() {l.nop(l.isFun(l.isFun))})
-t.bench(function bench_reqFun_nil() {l.nop(l.reqFun(l.reqFun))})
+t.bench(function bench_reqFun_hit() {l.nop(l.reqFun(l.reqFun))})
 
 miscVals.forEach(l.isCls)
 t.bench(function bench_isCls_nil() {l.nop(l.isCls())})
 t.bench(function bench_isCls_miss() {l.nop(l.isCls(somePromNative))})
 t.bench(function bench_isCls_hit() {l.nop(l.isCls(l.isCls))})
-t.bench(function bench_reqCls_nil() {l.nop(l.reqCls(l.Emp))})
+t.bench(function bench_reqCls_hit() {l.nop(l.reqCls(l.reqCls))})
 
 miscVals.forEach(l.isComp)
 t.bench(function bench_isComp_nil() {l.nop(l.isComp())})
@@ -409,7 +409,7 @@ t.bench(function bench_keys_empty_tricky() {l.nop(keysTricky(emptyPlainDict))})
 
 t.bench(function bench_empty_Object_create_null() {l.nop(Object.create(null))})
 t.bench(function bench_empty_Object_create_Object_create_null() {l.nop(Object.create(emptyNpo))})
-t.bench(function bench_empty_npo() {l.nop(l.npo())})
+t.bench(function bench_empty_Emp() {l.nop(l.Emp())})
 t.bench(function bench_empty_Emp_new() {l.nop(new l.Emp())})
 t.bench(function bench_empty_Emp_sub_new() {l.nop(new EmpSub())})
 
@@ -451,5 +451,20 @@ const throwable = `some_err`
 t.bench(function bench_throw_inline() {try {throw throwable} catch {}})
 t.bench(function bench_throw_panic() {try {l.panic(throwable)} catch {}})
 t.bench(function bench_throw_inline_iife() {try {void function panic(err){throw err}(throwable)} catch {}})
+
+t.bench(function bench_object_from_block_iife() {l.nop((() => {
+  const one = 10
+  const two = 20
+  const three = 30
+  const four = 40
+  return {one, two, three, four}
+})())})
+
+t.bench(function bench_object_inline() {l.nop({
+  one: 10,
+  two: 20,
+  three: 30,
+  four: 40,
+})})
 
 if (import.meta.main) t.deopt(), t.benches()

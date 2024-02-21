@@ -40,7 +40,7 @@ t.test(function test_show() {
   test(gen(),                                     `[object Generator]`)
   test(agen(),                                    `[object AsyncGenerator]`)
   test(class Cls {},                              `[function Cls]`)
-  test(new class {}(),                            `[object Object]`)
+  test(new class {}(),                            `{}`)
   test(new class extends Array {}(),              `[]`)
   test(new class extends Array {}(10, `str`),     `[10, "str"]`)
   test(new class Cls extends Array {}(),          `[]`)
@@ -135,7 +135,7 @@ function testRenderInvalid(fun) {
   t.throws(() => fun(gen()), TypeError, `unable to convert [object Generator] to string`)
   t.throws(() => fun(agen()), TypeError, `unable to convert [object AsyncGenerator] to string`)
   t.throws(() => fun(class Cls {}), TypeError, `unable to convert [function Cls] to string`)
-  t.throws(() => fun(new class {}), TypeError, `unable to convert [object Object] to string`)
+  t.throws(() => fun(new class {}), TypeError, `unable to convert {} to string`)
   t.throws(() => fun(new class Cls {}), TypeError, `unable to convert [object Cls] to string`)
   t.throws(() => fun(new class Cls extends Array {}), TypeError, `unable to convert [] to string`)
 }
@@ -1231,7 +1231,8 @@ t.test(function test_eq() {
     test(undefined, NaN)
     test([], [])
     test({}, {})
-    test(l.npo(), l.npo())
+    test(Object.create(null), Object.create(null))
+    test(l.Emp(), l.Emp())
     test(new EqNever(), new EqNever())
   })
 
@@ -1279,43 +1280,37 @@ t.test(function test_setProto() {
   t.is(Object.getPrototypeOf(new FixedSub()), FixedSub.prototype)
 })
 
-t.test(function test_npo() {
-  testNpo(l.npo())
-  t.isnt(l.npo(), l.npo())
+t.test(function test_Emp() {
+  testNpo(l.Emp())
+  testNpo(new l.Emp())
+
+  t.throws(
+    () => new l.Emp() instanceof l.Emp,
+    TypeError,
+    `Function has non-object prototype 'null' in instanceof check`,
+  )
+
+  class Sub extends l.Emp {}
+
+  t.is(Object.getPrototypeOf(Sub.prototype), null)
+
+  t.eq(Object.getOwnPropertyDescriptors(Sub.prototype), {
+    constructor: {
+      value: Sub,
+      writable: true,
+      enumerable: false,
+      configurable: true,
+    },
+  })
+
+  t.inst(new Sub(), Sub)
+  testEmpty(new Sub())
 })
 
 function testNpo(val) {
   t.is(Object.getPrototypeOf(val), null)
   testEmpty(val)
 }
-
-t.test(function test_Emp() {
-  t.test(function test_proto() {
-    const val = l.Emp.prototype
-
-    t.is(Object.getPrototypeOf(val), null)
-
-    t.no(val instanceof Object)
-
-    t.eq(Object.getOwnPropertyDescriptors(val), {
-      constructor: {
-        value: l.Emp,
-        writable: true,
-        enumerable: false,
-        configurable: true,
-      },
-    })
-
-    t.no(`toString` in val)
-  })
-
-  t.inst(new l.Emp(), l.Emp)
-  testEmpty(new l.Emp())
-
-  class Sub extends l.Emp {}
-  t.inst(new Sub(), Sub)
-  testEmpty(new Sub())
-})
 
 function testEmpty(val) {
   t.no(val instanceof Object)

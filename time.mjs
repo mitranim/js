@@ -94,17 +94,23 @@ export class Dur extends l.Emp {
   }
 
   resetFromMilli(val) {
+    return this.resetFromSec(l.reqFin(val) / MS_IN_SEC)
+  }
+
+  // TODO needs its own dedicated tests.
+  // We have tests for `.resetFromMilli` which uses this.
+  resetFromSec(val) {
     l.reqFin(val)
     this.clear()
 
-    this.hours = Math.trunc(val / MS_IN_HOUR)
-    val = val % MS_IN_HOUR
+    this.hours = Math.trunc(val / SEC_IN_HOUR)
+    val = val % SEC_IN_HOUR
 
-    this.minutes = Math.trunc(val / MS_IN_MIN)
-    val = val % MS_IN_MIN
+    this.minutes = Math.trunc(val / SEC_IN_MIN)
+    val = val % SEC_IN_MIN
 
     // TODO consider not truncating. Preserve fraction.
-    this.seconds = Math.trunc(val / MS_IN_SEC)
+    this.seconds = Math.trunc(val)
     return this
   }
 

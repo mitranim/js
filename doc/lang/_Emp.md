@@ -1,15 +1,21 @@
-Empty class that inherits from `null` rather than `Object`. Intended for subclassing, giving you a "cleaner" class. The only inherited property is `.constructor`, which is unavoidable in JS classes.
+Short for "empty". Hybrid function / superclass for empty objects.
+
+In function mode, `Emp()` returns `Object.create(null)`, with no measurable overhead. Basically a syntactic shortcut.
+
+Calling `new Emp()` also returns `Object.create(null)`. This is pointless and should be avoided.
+
+Subclassing `Emp` creates a class with the cleanest possible `.prototype`, which is `null`-based, sharing no common ancestry with anything.
 
 ```js
 class Empty extends l.Emp {}
-
-const ref = new Empty()
+Object.getPrototypeOf(Empty.prototype) === null
 
 // Instantiation and inheritance works as expected.
-ref.constructor === Empty
-ref instanceof Empty === true
+const val = new Empty()
+val instanceof Empty
+val.constructor === Empty
 
 // `Object` stuff is not inherited.
-ref instanceof Object === false
-ref.toString === undefined
+!(val instanceof Object)
+!(`toString` in val)
 ```

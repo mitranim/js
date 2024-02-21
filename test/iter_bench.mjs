@@ -33,6 +33,10 @@ class VecWithEntries extends c.Vec {
 
 const numVecWithEntries = VecWithEntries.from(itc.numVec)
 
+function reverseUsingLodash(val) {return lo.reverse(i.valuesCopy(val))}
+function reverseUsingNative(val) {return i.valuesCopy(val).reverse()}
+function reverseUsingOurs(val) {return i.reverseMut(i.valuesCopy(val))}
+
 t.bench(function bench_arr_spread_native() {l.reqArr([...itc.numArgs])})
 t.bench(function bench_arr_gen_spread_native() {l.reqArr([...itc.gen(itc.numArgs)])})
 
@@ -248,9 +252,9 @@ t.bench(function bench_map_set_with_our_map() {l.reqArr(i.map(itc.numSet, l.inc)
 itc.deoptCollHof(mapClsDumb)
 itc.deoptCollHof(mapClsClosure)
 itc.deoptCollHof(i.mapCls)
-t.bench(function bench_mapCls_array_dumb() {l.reqArr(mapClsDumb(itc.numArr, l.Emp))})
-t.bench(function bench_mapCls_array_closure() {l.reqArr(mapClsClosure(itc.numArr, l.Emp))})
-t.bench(function bench_mapCls_array_actual() {l.reqArr(i.mapCls(itc.numArr, l.Emp))})
+t.bench(function bench_mapCls_array_dumb() {l.reqArr(mapClsDumb(itc.numArr, l.id))})
+t.bench(function bench_mapCls_array_closure() {l.reqArr(mapClsClosure(itc.numArr, l.id))})
+t.bench(function bench_mapCls_array_actual() {l.reqArr(i.mapCls(itc.numArr, l.id))})
 
 itc.deoptSeqHof(mapCompactDumb)
 itc.deoptSeqHof(i.mapCompact)
@@ -316,6 +320,7 @@ t.bench(function bench_filter_maps_with_our_filter() {
   l.reqArr(i.filter(itc.mapArr, val => val.get(`val`) === 0))
 })
 
+// TODO add deopt.
 t.bench(function bench_compact_native_filter() {l.reqArr(itc.numArr.filter(l.id))})
 t.bench(function bench_compact_lodash_compact() {l.reqArr(lo.compact(itc.numArr))})
 t.bench(function bench_compact_dumb() {l.reqArr(compactDumb(itc.numArr))})
@@ -396,6 +401,18 @@ t.bench(function bench_each_map_our_each() {i.each(itc.numMap, l.nop)})
 
 t.bench(function bench_each_vec_inline() {for (const val of itc.numVec) l.nop(val)})
 t.bench(function bench_each_vec_our_each() {i.each(itc.numVec, l.nop)})
+
+/*
+At the time of writing, our version is around 20 times faster than the versions
+using native and lodash reverse (in V8). All versions have the same overhead of
+copying the array, which is several times faster than the fastest reversal.
+*/
+itc.deoptCollFun(reverseUsingLodash)
+itc.deoptCollFun(reverseUsingNative)
+itc.deoptCollFun(reverseUsingOurs)
+t.bench(function bench_reverse_using_lodash() {l.nop(reverseUsingLodash(itc.numArr))})
+t.bench(function bench_reverse_using_native() {l.nop(reverseUsingNative(itc.numArr))})
+t.bench(function bench_reverse_using_ours() {l.nop(reverseUsingOurs(itc.numArr))})
 
 itc.deoptSeqHof(lo.groupBy)
 itc.deoptCollHof(i.group)

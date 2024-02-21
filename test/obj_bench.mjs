@@ -131,7 +131,7 @@ const descriptorList = [
   },
 ]
 
-const empty = Object.freeze(l.npo())
+const empty = Object.freeze(Object.create(null))
 
 /* Bench */
 
@@ -172,10 +172,10 @@ t.bench(function bench_Object_getPrototypeOf() {
   l.nop(Object.getPrototypeOf(shallowLax))
 })
 
-t.bench(function bench_assign_Object_assign() {l.reqStruct(Object.assign(l.npo(), itc.numDict))})
-t.bench(function bench_assign_lodash_assign() {l.reqStruct(lo.assign(l.npo(), itc.numDict))})
-t.bench(function bench_assign_our_assign() {l.reqStruct(o.assign(l.npo(), itc.numDict))})
-t.bench(function bench_assign_our_patch() {l.reqStruct(o.patch(l.npo(), itc.numDict))})
+t.bench(function bench_assign_Object_assign() {l.reqStruct(Object.assign(Object.create(null), itc.numDict))})
+t.bench(function bench_assign_lodash_assign() {l.reqStruct(lo.assign(Object.create(null), itc.numDict))})
+t.bench(function bench_assign_our_assign() {l.reqStruct(o.assign(Object.create(null), itc.numDict))})
+t.bench(function bench_assign_our_patch() {l.reqStruct(o.patch(Object.create(null), itc.numDict))})
 
 const frozen = freeze({})
 t.bench(function bench_object_freeze_new() {l.nop(freeze({}))})
@@ -214,21 +214,21 @@ t.bench(function bench_struct_new_declared_lax() {l.nop(new StructDeclaredLax(st
 t.bench(function bench_struct_new_declared() {l.nop(new StructDeclared(structSrc))})
 
 // For comparison with `Struct` instantiation.
-t.bench(function bench_struct_assign_Object_assign() {l.nop(Object.assign(l.npo(), structSrc))})
-t.bench(function bench_struct_assign_lodash_assign() {l.nop(lo.assign(l.npo(), structSrc))})
-t.bench(function bench_struct_assign_our_assign() {l.nop(o.assign(l.npo(), structSrc))})
-t.bench(function bench_struct_assign_our_patch() {l.nop(o.patch(l.npo(), structSrc))})
+t.bench(function bench_struct_assign_Object_assign() {l.nop(Object.assign(Object.create(null), structSrc))})
+t.bench(function bench_struct_assign_lodash_assign() {l.nop(lo.assign(Object.create(null), structSrc))})
+t.bench(function bench_struct_assign_our_assign() {l.nop(o.assign(Object.create(null), structSrc))})
+t.bench(function bench_struct_assign_our_patch() {l.nop(o.patch(Object.create(null), structSrc))})
 
 t.bench(function bench_define_properties_from_dict_empty() {
-  Object.defineProperties(l.npo(), empty)
+  Object.defineProperties(Object.create(null), empty)
 })
 
 t.bench(function bench_define_properties_from_dict() {
-  Object.defineProperties(l.npo(), descriptorDict)
+  Object.defineProperties(Object.create(null), descriptorDict)
 })
 
 t.bench(function bench_define_properties_from_list() {
-  const tar = l.npo()
+  const tar = Object.create(null)
   for (const desc of descriptorList) Object.defineProperty(tar, desc.key, desc)
 })
 

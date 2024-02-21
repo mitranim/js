@@ -3,7 +3,7 @@ Signature: `({[Key: A]}, A => B) => {[Key: B]}`.
 Similar to {{link iter map}} but for dicts.
 
 * The input must be either {{link lang isNil nil}} or a {{link lang isStruct struct}}. Nil is considered `{}`.
-* The output is always a {{link lang npo plain dict}} with the same keys but altered values.
+* The output is always a {{link lang Emp plain dict}} with the same keys but altered values.
 * The mapping function receives only one argument: each value.
 
 ```js

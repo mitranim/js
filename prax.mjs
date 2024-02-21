@@ -400,17 +400,17 @@ export class RenSvgPh extends o.BlankStaticPh {
 }
 
 export class RenFunPh extends o.BlankStaticPh {
-  static funs = l.npo()
+  static funs = l.Emp()
   static get(ren, key) {return this.funs[key] ??= ren.elem.bind(ren, key)}
 }
 
 export class RenFunHtmlPh extends o.BlankStaticPh {
-  static funs = l.npo()
+  static funs = l.Emp()
   static get(ren, key) {return this.funs[key] ??= ren.elemHtml.bind(ren, key)}
 }
 
 export class RenFunSvgPh extends o.BlankStaticPh {
-  static funs = l.npo()
+  static funs = l.Emp()
   static get(ren, key) {return this.funs[key] ??= ren.elemSvg.bind(ren, key)}
 }
 
@@ -460,7 +460,7 @@ avoid object rest/spread and providing more efficient "merge" shortcuts such as
 The cost of the wrapper is insignificant; the main cost is giving up object
 literals which are nearly free to construct.
 
-Using `Object.create(null)` for the inner dict would reduce our performance in
+Using `l.Emp()` for the inner dict would reduce our performance in
 benchmarks. Using an object with a clean but non-null prototype, via `Emp`,
 avoids that. Unclear if this makes any difference in actual apps.
 
@@ -583,7 +583,7 @@ export class PropBui extends o.MixMain(l.Emp) {
   snapshot(val) {return this.with(val).frozen()}
   mutable() {return this.mutableOuter().mutableInner()}
   mutableOuter() {return this[frozenKey] ? new this.constructor().mut(this.$) : this}
-  mutableInner() {return (this[refKey] ??= new l.Emp()), this}
+  mutableInner() {return (this[refKey] ??= l.Emp()), this}
 
   static of(val) {
     if (l.isNil(val)) return new this()

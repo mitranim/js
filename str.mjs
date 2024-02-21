@@ -246,7 +246,7 @@ export class StrMap extends c.TypedMap {
   }
 
   toDict() {
-    const out = l.npo()
+    const out = l.Emp()
     for (const [key, val] of this.entries()) if (val.length) out[key] = val[0]
     return out
   }

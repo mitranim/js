@@ -135,6 +135,13 @@ t.test(function test_equal() {
   t.no(t.equal(10, `10`))
   t.ok(t.equal(10, 10))
 
+  t.no(t.equal(Symbol(`one`), Symbol(`one`)))
+  t.no(t.equal(Symbol(`one`), Symbol.for(`one`)))
+  t.no(t.equal(Symbol.for(`one`), Symbol(`one`)))
+  t.ok(t.equal(Symbol.for(`one`), Symbol.for(`one`)))
+  const sym = Symbol(`one`)
+  t.ok(t.equal(sym, sym))
+
   t.no(t.equal(new Boolean(false), new Boolean(true)))
   t.ok(t.equal(new Boolean(false), new Boolean(false)))
   t.ok(t.equal(new Boolean(true), new Boolean(true)))

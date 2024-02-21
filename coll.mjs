@@ -80,7 +80,7 @@ export class Bmap extends Map {
   clone() {return new this.constructor(this)}
 
   toDict() {
-    const out = l.npo()
+    const out = l.Emp()
     for (const [key, val] of this.entries()) {
       if (l.isStr(key)) out[key] = val
     }

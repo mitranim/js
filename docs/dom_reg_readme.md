@@ -26,7 +26,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.52/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.53/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {
@@ -61,20 +61,20 @@ document.body.append(new MyLink(`click me`, `/some-link`))
 
 ### `function reg`
 
-Links: [source](../dom_reg.mjs#L172); [test/example](../test/dom_reg_test.mjs#L16).
+Links: [source](../dom_reg.mjs#L172); [test/example](../test/dom_reg_test.mjs#L18).
 
 Shortcut for calling `Reg.main.reg`. Takes a custom element class and idempotently registers it, automatically deriving the custom element tag name _and_ the base tag for `extends`.
 
 ### `class Reg`
 
-Links: [source](../dom_reg.mjs#L174); [test/example](../test/dom_reg_test.mjs#L43).
+Links: [source](../dom_reg.mjs#L174); [test/example](../test/dom_reg_test.mjs#L45).
 
 Registry for custom DOM element classes. Automatically derives tag name from class name, using salting when necessary to avoid collisions. Supports idempotent registration which can be safely called in an element constructor. Allows immediate registration, deferred registration, or a mix of those.
 
 By default, this registry has **no global side effects**. To enable global registration, provide a "definer" to the registry.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.52/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.53/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   static customName = `some-btn`

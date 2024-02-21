@@ -745,6 +745,7 @@ export class DocumentType extends Node {
   get systemId() {return l.laxStr(this[systemIdKey])}
   set systemId(val) {this[systemIdKey] = l.optStr(val)}
 
+  // Non-standard.
   get outerHTML() {return `<!doctype ${l.reqStr(this.name)}>`}
 }
 
@@ -894,7 +895,7 @@ export class DictPh extends l.Emp {
   constructor(tar) {
     super()
     this.tar = l.reqInst(tar, Element)
-    this.buf = l.npo()
+    this.buf = l.Emp()
     this.pro = new Proxy(this.buf, this)
     this.dec()
   }
@@ -1229,7 +1230,7 @@ export class GlobPh extends o.MakerPh {
   }
 }
 
-export const glob = new Proxy(l.npo(), new GlobPh())
+export const glob = new Proxy(l.Emp(), new GlobPh())
 export const document = new DOMImplementation().createHTMLDocument()
 export const customElements = document.customElements
 
