@@ -607,6 +607,7 @@ export class Cookie extends l.Emp {
 export class Cookies extends c.ClsColl {
   get cls() {return Cookie}
 
+  reqKey(key) {return l.reqStr(key)}
   getVal(key) {return this.get(key)?.value}
   setVal(key, val) {return this.addOpt(this.cls.make(key, val))}
 
@@ -622,6 +623,8 @@ export class Cookies extends c.ClsColl {
     }
     return this
   }
+
+  toString() {return this.toArray().join(`; `)}
 
   static native() {return new this(window.document?.cookie)}
 }

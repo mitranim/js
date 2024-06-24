@@ -940,9 +940,16 @@ t.test(function test_Cookie() {
 
   t.test(function test_toString() {
     testStr(h.cook(), ``)
+
+    testStr(h.cook().setName(``), ``)
+    testStr(h.cook().setName(``).setValue(), ``)
+    testStr(h.cook().setName(``).setValue(``), `=`)
+    testStr(h.cook().setName(``).setValue(`one`), `=one`)
+
     testStr(h.cook().setName(`one`), ``)
     testStr(h.cook().setName(`one`).setValue(), ``)
     testStr(h.cook().setName(`one`).setValue(``), `one=`)
+    testStr(h.cook().setName(`one`).setValue(`two`), `one=two`)
 
     testStr(h.cook().lax(), ``)
     testStr(h.cook().expired(), ``)
@@ -993,25 +1000,19 @@ t.test(function test_Cookie() {
 
 // TODO more comprehensive test.
 t.test(function test_Cookies() {
-  function test(tar, exp) {t.eq([...tar], exp)}
+  function test(src, exp) {
+    t.is(new h.Cookies(src).toString(), exp)
+  }
 
-  t.test(function test_from_string() {
-    test(new h.Cookies(``), [])
-    test(new h.Cookies(`    `), [])
+  test(``, ``)
+  test(`one`, `=one`)
+  test(`=one`, `=one`)
+  test(`one=`, `one=`)
+  test(`one=two`, `one=two`)
+  test(`one=two; three=four`, `one=two; three=four`)
 
-    test(
-      new h.Cookies(`one=two`),
-      [h.cook().setName(`one`).setValue(`two`)],
-    )
-
-    test(
-      new h.Cookies(`one=two; three=four`),
-      [
-        h.cook().setName(`one`).setValue(`two`),
-        h.cook().setName(`three`).setValue(`four`),
-      ],
-    )
-  })
+  // Two cookies have an empty name, one of them is lost.
+  test(`one; =two; three=`, `=two; three=`)
 })
 
 if (import.meta.main) console.log(`[test] ok!`)
