@@ -3,7 +3,7 @@ import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
 import * as dr from '../dom_reg.mjs'
-import * as dg from '../dom_glob_shim.mjs'
+import * as ds from '../dom_shim.mjs'
 
 class Empty extends l.Emp {}
 
@@ -16,7 +16,7 @@ This is a sanity check to verify that the global function uses
 this on the default instance.
 */
 t.test(function test_reg() {
-  class SomeDetails extends dg.glob.HTMLDetailsElement {}
+  class SomeDetails extends ds.global.HTMLDetailsElement {}
   dr.reg(SomeDetails)
   testCerMatch(dr.Reg.main, SomeDetails, `details`, `some-details`)
 })
@@ -45,7 +45,7 @@ t.test(function test_CustomElementRegistry() {
 t.test(function test_Reg() {
   t.test(function test_misc() {
     const reg = new dr.Reg()
-    class SomeLink extends dg.glob.HTMLAnchorElement {}
+    class SomeLink extends ds.global.HTMLAnchorElement {}
 
     t.no(reg.hasCls(SomeLink))
     t.no(reg.hasTag(`some-link`))
@@ -56,7 +56,7 @@ t.test(function test_Reg() {
 
   t.test(function test_with_localName() {
     const reg = new dr.Reg()
-    class SomeLink extends dg.glob.HTMLAnchorElement {
+    class SomeLink extends ds.global.HTMLAnchorElement {
       static customName = `my-link`
     }
     reg.reg(SomeLink)
@@ -67,7 +67,7 @@ t.test(function test_Reg() {
     t.test(function test_multiple_sequential_regs() {
       const reg = new dr.Reg()
 
-      class Details extends dg.glob.HTMLDetailsElement {}
+      class Details extends ds.global.HTMLDetailsElement {}
 
       function test0() {
         reg.reg(Details)
@@ -78,7 +78,7 @@ t.test(function test_Reg() {
       test0()
       test0()
 
-      class SomeBtn extends dg.glob.HTMLButtonElement {}
+      class SomeBtn extends ds.global.HTMLButtonElement {}
 
       function test1() {
         reg.reg(SomeBtn)
@@ -105,19 +105,19 @@ t.test(function test_Reg() {
       const reg = new dr.Reg()
 
       {
-        class SomeBtn extends dg.glob.HTMLButtonElement {}
+        class SomeBtn extends ds.global.HTMLButtonElement {}
         reg.reg(SomeBtn)
         testCerMatch(reg, SomeBtn, `button`, `some-btn`)
       }
 
       {
-        class SomeBtn extends dg.glob.HTMLButtonElement {}
+        class SomeBtn extends ds.global.HTMLButtonElement {}
         reg.reg(SomeBtn)
         testCerMatch(reg, SomeBtn, `button`, `some-btn-1`)
       }
 
       {
-        class SomeBtn extends dg.glob.HTMLButtonElement {}
+        class SomeBtn extends ds.global.HTMLButtonElement {}
         reg.reg(SomeBtn)
         testCerMatch(reg, SomeBtn, `button`, `some-btn-2`)
       }
@@ -127,11 +127,11 @@ t.test(function test_Reg() {
   t.test(function test_tag_ambiguity() {
     const reg = new dr.Reg()
 
-    class HeadCell extends dg.glob.HTMLTableCellElement {
+    class HeadCell extends ds.global.HTMLTableCellElement {
       static localName = `th`
     }
 
-    class BodyCell extends dg.glob.HTMLTableCellElement {
+    class BodyCell extends ds.global.HTMLTableCellElement {
       static localName = `td`
     }
 
@@ -150,9 +150,9 @@ t.test(function test_Reg() {
     reg.setDefiner()
     t.is(reg.definer, undefined)
 
-    class Cls0 extends dg.glob.HTMLElement {}
-    class Cls1 extends dg.glob.HTMLElement {}
-    class Cls2 extends dg.glob.HTMLElement {}
+    class Cls0 extends ds.global.HTMLElement {}
+    class Cls1 extends ds.global.HTMLElement {}
+    class Cls2 extends ds.global.HTMLElement {}
 
     reg.reg(Cls0)
     reg.reg(Cls1)
@@ -187,7 +187,7 @@ t.test(function test_Reg() {
 })
 
 t.test(function test_MixReg() {
-  class SomeElem extends dr.MixReg(dg.glob.HTMLElement) {
+  class SomeElem extends dr.MixReg(ds.global.HTMLElement) {
     static customName = `elem-47bd69`
   }
 

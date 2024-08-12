@@ -46,6 +46,7 @@ export function keys(val) {
   if (!l.isObj(val)) return []
   if (l.isList(val)) return span(val.length)
   if (l.isIter(val) && l.hasMeth(val, `keys`)) return arrFromIter(val.keys())
+  if (l.isIterator(val)) return span(iterLen(val))
   if (l.isArrble(val)) return span(l.onlyNat(getSize(val)) ?? toArray(val).length)
   if (isStructSync(val)) return Object.keys(val)
   throw l.errConv(val, `keys`)
@@ -85,8 +86,8 @@ export function entries(val) {
   if (!l.isObj(val)) return []
   if (l.isList(val)) return entriesFromList(val)
   if (l.isIter(val) && l.hasMeth(val, `entries`)) return arrFromIter(val.entries())
-  if (l.isArrble(val)) return entriesFromList(toArray(val))
   if (l.isIterator(val)) return arrFromIter(val)
+  if (l.isArrble(val)) return entriesFromList(toArray(val))
   if (isStructSync(val)) return structEntries(val)
   throw l.errConv(val, `entries`)
 }

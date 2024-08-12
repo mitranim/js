@@ -16,13 +16,13 @@ Short overview of features:
     * No need for JSX.
     * No need for a build system.
   * Render only once. Use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
-    * Use [`dom_reg`](dom_reg_readme.md) for automatic element registration.
+    * Use [`dom_reg`](dom_reg_readme.md) for more convenient element registration.
   * Good for SSR/SPA hybrids.
 
 Complemented by:
 
   * [`dom_shim`](dom_shim_readme.md) for SSR.
-  * [`dom_reg`](dom_reg_readme.md) for automatically registering custom elements.
+  * [`dom_reg`](dom_reg_readme.md) for registering custom elements in SSR.
   * [`obs_dom`](obs_dom_readme.md) for making custom elements automatically react to [observables](obs_readme.md).
 
 ## TOC
@@ -40,70 +40,50 @@ Rendering is done via `Ren`. You must create an instance, which should be a sing
 Browser example:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/prax.mjs'
-import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/prax.mjs'
+import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/prax.mjs'
 
-const ren = p.Ren.native()
-const {E} = ren
+const ren = new p.Ren()
+const E = ren.elemHtml.bind(ren)
 
-document.body.append(
-  E.div.props(A.id(`main`).cls(`outer`)).chi(
-    E.p.props(A.cls(`inner`)).chi(
-      `hello `,
-      `world!`,
-    ),
+const elem = E(`div`, {id: `main`, class: `outer`},
+  E(`p`, {class: `inner`},
+    `hello `,
+    `world!`,
   ),
 )
+
+document.body.append(elem)
 
 /*
 The following elements (not strings) have been appended:
 
-<div id="main" class="outer">
-  <p class="inner">hello world!</p>
-</div>
+<div id="main" class="outer"><p class="inner">hello world!</p></div>
 */
 ```
 
-For string rendering, use `.outerHTML`:
+For rendering to string, use `.outerHTML`:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/prax.mjs'
-import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/prax.mjs'
-
-const ren = p.Ren.native()
-const {E} = ren
-
-// Note the `.outerHTML` call at the end.
-console.log(
-  E.div.props(A.id(`main`).cls(`outer`)).chi(
-    E.p.props(A.cls(`inner`)).chi(
-      `hello `,
-      `world!`,
-    ),
-  ).outerHTML,
-)
+console.log(elem.outerHTML)
 
 /*
-<div id="main" class="outer">
-  <p class="inner">hello world!</p>
-</div>
+<div id="main" class="outer"><p class="inner">hello world!</p></div>
 */
 ```
 
-Usage with custom elements. The methods `.props` and `.chi` are provided by patching the prototype of the given base element class, which is entirely opt-in.
+Usage with custom elements:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/prax.mjs'
-import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/prax.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/dom_reg.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/prax.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/dom_reg.mjs'
 
-const ren = p.Ren.native()
+const ren = new p.Ren()
+const E = ren.elemHtml.bind(ren)
 
 class SomeLink extends dr.MixReg(HTMLAnchorElement) {
   init(href, text) {
-    return this
-      .props(A.href(href).cls(`link`))
-      .chi(text)
+    return E(this, {href, class: `link`}, text)
   }
 }
 
@@ -114,44 +94,79 @@ document.body.append(
 
 ### SSR
 
-For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right "dom globals" for the right environment, and pass those globals to the `Ren` you're instantiating. The rest will just work.
+For SSR (server-side rendering), Prax needs our lightweight DOM shim:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/dom_global_shim.mjs'
 
-// Choose the right one.
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/dom_glob_shim.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/dom_glob_native.mjs'
+const ren = new p.Ren(dg.global.document)
+const E = ren.elemHtml.bind(ren)
 
-const ren = p.Ren.from(dg.glob)
+const elem = E(`div`, {id: `main`, class: `outer`},
+  E(`p`, {class: `inner`}, `hello world!`),
+)
+
+console.log(elem.outerHTML)
+
+/*
+<div id="main" class="outer"><p class="inner">hello world!</p></div>
+*/
+```
+
+For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global `document` and pass it to `Ren`. The rest will just work.
+
+```js
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/prax.mjs'
+
+// Your bundler or importmap should choose the right one.
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/dom_global_shim.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/dom_global_native.mjs'
+
+const ren = new p.Ren(dg.global.document)
+const E = ren.elemHtml.bind(ren)
+
+// In both environments, this will be a DOM element.
+// In SSR, it will be shimmed.
+const elem = E(`div`, {id: `main`, class: `outer`},
+  E(`p`, {class: `inner`}, `hello world!`),
+)
 ```
 
 Rendering a complete document with doctype:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/dom_glob_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/dom_global_shim.mjs'
 
-const ren = p.Ren.from(dg.glob)
-const {E} = ren
-const A = p.PropBui.main
+const ren = new p.Ren(dg.global.document)
+const E = ren.elemHtml.bind(ren)
 
-console.log(p.renderDocument(
-  E.html.props(A.lang(`en`)).chi(
-    E.head.chi(
-      E.link.props(A.rel(`stylesheet`).href(`/styles/main.css`)),
-      E.title.chi(`page title`),
-    ),
-    E.body.chi(
-      E.main.props(A.cls(`main`)).chi(
-        `hello world!`,
-      ),
-    ),
+const elem = E(`html`, {lang: `en`},
+  E(`head`, null,
+    E(`link`, {rel: `stylesheet`, href: `/styles/main.css`}),
+    E(`title`, null, `page title`),
   ),
-))
+  E(`body`, null,
+    E(`main`, {class: `main`}, `hello world!`),
+  ),
+)
+
+console.log(p.DOCTYPE_HTML + elem.outerHTML)
 
 /*
-<!doctype html><html lang="en"><head><link rel="stylesheet" href="/styles/main.css" /><title>page title</title></head><body><main class="main">hello world!</main></body></html>
+Formatted here for viewing convenience:
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="/styles/main.css" />
+    <title>page title</title>
+  </head>
+  <body>
+    <main class="main">hello world!</main>
+  </body>
+</html>
 */
 ```
 
@@ -161,33 +176,24 @@ console.log(p.renderDocument(
 
 The following APIs are exported but undocumented. Check [prax.mjs](../prax.mjs).
 
-  * [`const nsHtml`](../prax.mjs#L4)
-  * [`const nsSvg`](../prax.mjs#L5)
-  * [`const nsMathMl`](../prax.mjs#L6)
-  * [`const BOOL`](../prax.mjs#L14)
-  * [`const VOID`](../prax.mjs#L22)
-  * [`class Ren`](../prax.mjs#L28)
-  * [`class Raw`](../prax.mjs#L386)
-  * [`class RenPh`](../prax.mjs#L390)
-  * [`class RenHtmlPh`](../prax.mjs#L394)
-  * [`class RenSvgPh`](../prax.mjs#L398)
-  * [`class RenFunPh`](../prax.mjs#L402)
-  * [`class RenFunHtmlPh`](../prax.mjs#L407)
-  * [`class RenFunSvgPh`](../prax.mjs#L412)
-  * [`class MixRenCache`](../prax.mjs#L417)
-  * [`class PropBui`](../prax.mjs#L470)
-  * [`function renderDocument`](../prax.mjs#L602)
-  * [`function isSeq`](../prax.mjs#L615)
-  * [`function isNodable`](../prax.mjs#L619)
-  * [`function reqNodable`](../prax.mjs#L620)
-  * [`function isRaw`](../prax.mjs#L622)
-  * [`function reqRaw`](../prax.mjs#L623)
-  * [`function isNode`](../prax.mjs#L626)
-  * [`function reqNode`](../prax.mjs#L627)
-  * [`function isElement`](../prax.mjs#L630)
-  * [`function reqElement`](../prax.mjs#L631)
-  * [`function isDocument`](../prax.mjs#L633)
-  * [`function optDocument`](../prax.mjs#L641)
-  * [`function reqDocument`](../prax.mjs#L642)
-  * [`function isNamespaced`](../prax.mjs#L644)
-  * [`function deref`](../prax.mjs#L647)
+  * [`const nsHtml`](../prax.mjs#L3)
+  * [`const nsSvg`](../prax.mjs#L4)
+  * [`const nsMathMl`](../prax.mjs#L5)
+  * [`const BOOL`](../prax.mjs#L13)
+  * [`const VOID`](../prax.mjs#L21)
+  * [`class Ren`](../prax.mjs#L27)
+  * [`class Raw`](../prax.mjs#L332)
+  * [`class PropBui`](../prax.mjs#L379)
+  * [`const DOCTYPE_HTML`](../prax.mjs#L526)
+  * [`function isSeq`](../prax.mjs#L532)
+  * [`function isNodable`](../prax.mjs#L536)
+  * [`function reqNodable`](../prax.mjs#L537)
+  * [`function isRaw`](../prax.mjs#L539)
+  * [`function reqRaw`](../prax.mjs#L540)
+  * [`function isNode`](../prax.mjs#L542)
+  * [`function reqNode`](../prax.mjs#L543)
+  * [`function isDocument`](../prax.mjs#L545)
+  * [`function optDocument`](../prax.mjs#L553)
+  * [`function reqDocument`](../prax.mjs#L554)
+  * [`function isNamespaced`](../prax.mjs#L556)
+  * [`function deref`](../prax.mjs#L559)

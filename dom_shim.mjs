@@ -33,39 +33,39 @@ TODO fully consolidate these with `dom.mjs`.
 (We're trying to avoid unnecessary imports.)
 */
 
-export function isChildNode(val) {return l.hasIn(val, `parentNode`)}
+export function isChildNode(val) {return l.isObj(val) && `parentNode` in val}
 export function reqChildNode(val) {return l.req(val, isChildNode)}
 export function optChildNode(val) {return l.opt(val, isChildNode)}
 
-export function isParentNode(val) {return l.hasIn(val, `childNodes`)}
+export function isParentNode(val) {return l.isObj(val) && `childNodes` in val}
 export function reqParentNode(val) {return l.req(val, isParentNode)}
 export function optParentNode(val) {return l.opt(val, isParentNode)}
 
-export function isElement(val) {return hasNodeType(val, Node.ELEMENT_NODE)}
+export function isElement(val) {return l.isObj(val) && val.nodeType === Node.ELEMENT_NODE}
 export function reqElement(val) {return l.req(val, isElement)}
 export function optElement(val) {return l.opt(val, isElement)}
 
-export function isAttr(val) {return hasNodeType(val, Node.ATTRIBUTE_NODE)}
+export function isAttr(val) {return l.isObj(val) && val.nodeType === Node.ATTRIBUTE_NODE}
 export function reqAttr(val) {return l.req(val, isAttr)}
 export function optAttr(val) {return l.opt(val, isAttr)}
 
-export function isText(val) {return hasNodeType(val, Node.TEXT_NODE)}
+export function isText(val) {return l.isObj(val) && val.nodeType === Node.TEXT_NODE}
 export function reqText(val) {return l.req(val, isText)}
 export function optText(val) {return l.opt(val, isText)}
 
-export function isComment(val) {return hasNodeType(val, Node.COMMENT_NODE)}
+export function isComment(val) {return l.isObj(val) && val.nodeType === Node.COMMENT_NODE}
 export function reqComment(val) {return l.req(val, isComment)}
 export function optComment(val) {return l.opt(val, isComment)}
 
-export function isDocument(val) {return hasNodeType(val, Node.DOCUMENT_NODE)}
+export function isDocument(val) {return l.isObj(val) && val.nodeType === Node.DOCUMENT_NODE}
 export function reqDocument(val) {return l.req(val, isDocument)}
 export function optDocument(val) {return l.opt(val, isDocument)}
 
-export function isDocumentType(val) {return hasNodeType(val, Node.DOCUMENT_TYPE_NODE)}
+export function isDocumentType(val) {return l.isObj(val) && val.nodeType === Node.DOCUMENT_TYPE_NODE}
 export function reqDocumentType(val) {return l.req(val, isDocumentType)}
 export function optDocumentType(val) {return l.opt(val, isDocumentType)}
 
-export function isFragment(val) {return hasNodeType(val, Node.DOCUMENT_FRAGMENT_NODE)}
+export function isFragment(val) {return l.isObj(val) && val.nodeType === Node.DOCUMENT_FRAGMENT_NODE}
 export function reqFragment(val) {return l.req(val, isFragment)}
 export function optFragment(val) {return l.opt(val, isFragment)}
 
@@ -193,7 +193,7 @@ export class Node extends l.Emp {
 
   remove() {
     const par = this.parentNode
-    if (l.hasIn(par, `removeChild`)) par.removeChild(this)
+    if (l.isObj(par) && `removeChild` in par) par.removeChild(this)
     if (this[parentNodeKey]) this.parentNode = null
   }
 
@@ -462,7 +462,6 @@ export class Element extends TextableElementParent {
 
   get outerHTML() {
     if (outerHtmlDyn.has()) return this.outerHtml()
-
     outerHtmlDyn.set(this)
     try {return this.outerHtml()}
     finally {outerHtmlDyn.set()}
@@ -853,7 +852,7 @@ export class HTMLDocument extends Document {
   }
 
   baseClassByTag(tag) {
-    return glob[l.reqStr(dr.TagToCls.main.get(tag) || `HTMLElement`)]
+    return global[l.reqStr(dr.TagToCls.main.get(tag) || `HTMLElement`)]
   }
 }
 
@@ -1230,14 +1229,9 @@ export class GlobPh extends o.MakerPh {
   }
 }
 
-export const glob = new Proxy(l.Emp(), new GlobPh())
+export const global = new Proxy(l.Emp(), new GlobPh())
 export const document = new DOMImplementation().createHTMLDocument()
 export const customElements = document.customElements
-
-export function auto() {
-  if (isDocument(l.get(globalThis, `document`))) return globalThis
-  return glob
-}
 
 /* Misc */
 
@@ -1314,7 +1308,6 @@ export const outerHtmlDyn = new o.Dyn()
 
 function head(val) {return val?.[0]}
 function last(val) {return val?.[val.length - 1]}
-function hasNodeType(src, tar) {return l.get(src, `nodeType`) === tar}
 function hasLocalName(val, name) {return isElement(val) && val.localName ===  name}
 function errIllegal() {return TypeError(`illegal invocation`)}
 function norm(val) {return val ?? null}
@@ -1330,7 +1323,7 @@ function isTableHead(val) {return hasLocalName(val, `thead`)}
 function isTableBody(val) {return hasLocalName(val, `tbody`)}
 function isTableFoot(val) {return hasLocalName(val, `tfoot`)}
 function isTableRow(val) {return hasLocalName(val, `tr`)}
-function isRemovable(val) {return l.hasIn(val, `remove`)}
+function isRemovable(val) {return l.isObj(val) && `remove` in val}
 function remove(val) {if (isRemovable(val)) val.remove()}
 function fromCharCode(val) {return val ? String.fromCharCode(val) : ``}
 function adopt(chi, par) {if (isChildNode(chi)) chi.parentNode = par}

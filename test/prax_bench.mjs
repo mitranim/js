@@ -3,12 +3,13 @@ import * as itc from './internal_test_coll.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as p from '../prax.mjs'
-import * as dg from '../dom_glob_shim.mjs'
+import * as o from '../obj.mjs'
+import * as ds from '../dom_shim.mjs'
 
 /* Util */
 
-const ren = p.Ren.from(dg.glob)
-const {E} = ren
+const ren = new p.Ren(ds.document)
+const E = ren.elemHtml.bind(ren)
 const A = p.PropBui.main
 
 function P(val) {return p.PropBui.of(val)}
@@ -65,13 +66,52 @@ t.bench(function bench_props_walk_static_PropBui() {each(longPropBui.$, l.nop)})
 t.bench(function bench_props_walk_dynamic_dict() {each(makeDictSpread(), l.nop)})
 t.bench(function bench_props_walk_dynamic_PropBui() {each(makePropBuiBuildFull().$, l.nop)})
 
-t.bench(function bench_Ren_make_normal() {l.nop(ren.makeHtml(`span`))})
-t.bench(function bench_Ren_make_proxy() {l.nop(E.span)})
+/*
+The following code allows an alternative syntax for constructing and mutating
+elements in Prax markup. See examples in the benchmarks below. The proxy acts
+as a "namespace" where accessing any property creates an element with that tag
+name. Patching the element prototype allows to mutate props / attrs and
+children on any element by calling methods `.props` and `.chi`, chainable.
+
+This approach has been removed from the Prax module because it provides little
+value over `ren.elem` and similar methods, creates learning barriers due to
+being very magical, and pollutes native prototypes, creating dangers of
+collisions in the future.
+*/
+
+class Ph_Ren_makeElemHtml extends o.BlankStaticPh {
+  static get(ren, key) {return ren.makeElem(key)}
+}
+
+const EP = new Proxy(ren, Ph_Ren_makeElemHtml)
+
+o.priv(ds.Element.prototype, `ren`, ren)
+
+o.priv(ds.Element.prototype, `props`, function props(src) {
+  return this.ren.mutProps(this, src)
+})
+
+o.priv(ds.Element.prototype, `chi`, function chi(...src) {
+  return this.ren.mutChi(this, ...src)
+})
+
+t.bench(function bench_Ren_elem_make_normal() {l.nop(ren.makeElemHtml(`span`))})
+t.bench(function bench_Ren_elem_make_proxy() {l.nop(EP.span)})
+
+t.bench(function bench_Ren_elem_empty_normal() {l.nop(ren.elemHtml(`span`))})
+t.bench(function bench_Ren_elem_empty_bound() {l.nop(E(`span`))})
+t.bench(function bench_Ren_elem_empty_proxy() {l.nop(EP.span)})
+
 t.bench(function bench_Ren_elem_props_normal() {l.nop(ren.elemHtml(`span`, {class: `cls`}))})
-t.bench(function bench_Ren_elem_props_proxy() {l.nop(E.span.props({class: `cls`}))})
+t.bench(function bench_Ren_elem_props_bound() {l.nop(E(`span`, {class: `cls`}))})
+t.bench(function bench_Ren_elem_props_proxy() {l.nop(EP.span.props({class: `cls`}))})
+
 t.bench(function bench_Ren_elem_chi_normal() {l.nop(ren.elemHtml(`span`, undefined, `text`))})
-t.bench(function bench_Ren_elem_chi_proxy() {l.nop(E.span.chi(`text`))})
+t.bench(function bench_Ren_elem_chi_bound() {l.nop(E(`span`, undefined, `text`))})
+t.bench(function bench_Ren_elem_chi_proxy() {l.nop(EP.span.chi(`text`))})
+
 t.bench(function bench_Ren_elem_props_chi_normal() {l.nop(ren.elemHtml(`span`, {class: `cls`}, `text`))})
-t.bench(function bench_Ren_elem_props_chi_proxy() {l.nop(E.span.props({class: `cls`}).chi(`text`))})
+t.bench(function bench_Ren_elem_props_chi_bound() {l.nop(E(`span`, {class: `cls`}, `text`))})
+t.bench(function bench_Ren_elem_props_chi_proxy() {l.nop(EP.span.props({class: `cls`}).chi(`text`))})
 
 if (import.meta.main) t.deopt(), t.benches()

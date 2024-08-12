@@ -32,7 +32,16 @@ const style = new ds.StylePh(new ds.Element())
 style.decode(`one: two; three: four; five: six`)
 t.eq(style.buf, {one: `two`, three: `four`, five: `six`})
 
+const someDict = {}
+
 /* Bench */
+
+t.bench(function bench_isElement_nil() {l.nop(ds.isElement())})
+t.bench(function bench_isElement_miss_string() {l.nop(ds.isElement(`str`))})
+t.bench(function bench_isElement_miss_number() {l.nop(ds.isElement(123))})
+t.bench(function bench_isElement_miss_dict() {l.nop(ds.isElement(someDict))})
+t.bench(function bench_isElement_miss_node() {l.nop(ds.isElement(nodeEmpty))})
+t.bench(function bench_isElement_hit() {l.nop(ds.isElement(elemSimple))})
 
 t.bench(function bench_document_baseClassByTag() {
   l.nop(ds.document.baseClassByTag(`span`))

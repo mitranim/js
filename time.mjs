@@ -27,10 +27,7 @@ export function dur(val) {return new Dur(val)}
 
 // https://en.wikipedia.org/wiki/ISO_8601#Durations
 export class Dur extends l.Emp {
-  constructor(val) {
-    super().clear()
-    if (l.isSome(val)) this.reset(val)
-  }
+  constructor(val) {super().reset(val)}
 
   clear() {
     this.years = 0

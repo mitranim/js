@@ -16,13 +16,13 @@ Short overview of features:
     * No need for JSX.
     * No need for a build system.
   * Render only once. Use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
-    * Use {{featLink dom_reg}} for automatic element registration.
+    * Use {{featLink dom_reg}} for more convenient element registration.
   * Good for SSR/SPA hybrids.
 
 Complemented by:
 
   * {{featLink dom_shim}} for SSR.
-  * {{featLink dom_reg}} for automatically registering custom elements.
+  * {{featLink dom_reg}} for registering custom elements in SSR.
   * {{featLink obs_dom}} for making custom elements automatically react to {{featLink obs observables}}.
 
 ## TOC
@@ -43,67 +43,47 @@ Browser example:
 import * as p from '{{featUrl prax}}'
 import {A} from '{{featUrl prax}}'
 
-const ren = p.Ren.native()
-const {E} = ren
+const ren = new p.Ren()
+const E = ren.elemHtml.bind(ren)
 
-document.body.append(
-  E.div.props(A.id(`main`).cls(`outer`)).chi(
-    E.p.props(A.cls(`inner`)).chi(
-      `hello `,
-      `world!`,
-    ),
+const elem = E(`div`, {id: `main`, class: `outer`},
+  E(`p`, {class: `inner`},
+    `hello `,
+    `world!`,
   ),
 )
+
+document.body.append(elem)
 
 /*
 The following elements (not strings) have been appended:
 
-<div id="main" class="outer">
-  <p class="inner">hello world!</p>
-</div>
+<div id="main" class="outer"><p class="inner">hello world!</p></div>
 */
 ```
 
-For string rendering, use `.outerHTML`:
+For rendering to string, use `.outerHTML`:
 
 ```js
-import * as p from '{{featUrl prax}}'
-import {A} from '{{featUrl prax}}'
-
-const ren = p.Ren.native()
-const {E} = ren
-
-// Note the `.outerHTML` call at the end.
-console.log(
-  E.div.props(A.id(`main`).cls(`outer`)).chi(
-    E.p.props(A.cls(`inner`)).chi(
-      `hello `,
-      `world!`,
-    ),
-  ).outerHTML,
-)
+console.log(elem.outerHTML)
 
 /*
-<div id="main" class="outer">
-  <p class="inner">hello world!</p>
-</div>
+<div id="main" class="outer"><p class="inner">hello world!</p></div>
 */
 ```
 
-Usage with custom elements. The methods `.props` and `.chi` are provided by patching the prototype of the given base element class, which is entirely opt-in.
+Usage with custom elements:
 
 ```js
 import * as p from '{{featUrl prax}}'
-import {A} from '{{featUrl prax}}'
 import * as dr from '{{featUrl dom_reg}}'
 
-const ren = p.Ren.native()
+const ren = new p.Ren()
+const E = ren.elemHtml.bind(ren)
 
 class SomeLink extends dr.MixReg(HTMLAnchorElement) {
   init(href, text) {
-    return this
-      .props(A.href(href).cls(`link`))
-      .chi(text)
+    return E(this, {href, class: `link`}, text)
   }
 }
 
@@ -114,44 +94,79 @@ document.body.append(
 
 ### SSR
 
-For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right "dom globals" for the right environment, and pass those globals to the `Ren` you're instantiating. The rest will just work.
+For SSR (server-side rendering), Prax needs our lightweight DOM shim:
+
+```js
+import * as p from '{{featUrl prax}}'
+import * as dg from '{{featUrl dom_global_shim}}'
+
+const ren = new p.Ren(dg.global.document)
+const E = ren.elemHtml.bind(ren)
+
+const elem = E(`div`, {id: `main`, class: `outer`},
+  E(`p`, {class: `inner`}, `hello world!`),
+)
+
+console.log(elem.outerHTML)
+
+/*
+<div id="main" class="outer"><p class="inner">hello world!</p></div>
+*/
+```
+
+For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global `document` and pass it to `Ren`. The rest will just work.
 
 ```js
 import * as p from '{{featUrl prax}}'
 
-// Choose the right one.
-import * as dg from '{{featUrl dom_glob_shim}}'
-import * as dg from '{{featUrl dom_glob_native}}'
+// Your bundler or importmap should choose the right one.
+import * as dg from '{{featUrl dom_global_shim}}'
+import * as dg from '{{featUrl dom_global_native}}'
 
-const ren = p.Ren.from(dg.glob)
+const ren = new p.Ren(dg.global.document)
+const E = ren.elemHtml.bind(ren)
+
+// In both environments, this will be a DOM element.
+// In SSR, it will be shimmed.
+const elem = E(`div`, {id: `main`, class: `outer`},
+  E(`p`, {class: `inner`}, `hello world!`),
+)
 ```
 
 Rendering a complete document with doctype:
 
 ```js
 import * as p from '{{featUrl prax}}'
-import * as dg from '{{featUrl dom_glob_shim}}'
+import * as dg from '{{featUrl dom_global_shim}}'
 
-const ren = p.Ren.from(dg.glob)
-const {E} = ren
-const A = p.PropBui.main
+const ren = new p.Ren(dg.global.document)
+const E = ren.elemHtml.bind(ren)
 
-console.log(p.renderDocument(
-  E.html.props(A.lang(`en`)).chi(
-    E.head.chi(
-      E.link.props(A.rel(`stylesheet`).href(`/styles/main.css`)),
-      E.title.chi(`page title`),
-    ),
-    E.body.chi(
-      E.main.props(A.cls(`main`)).chi(
-        `hello world!`,
-      ),
-    ),
+const elem = E(`html`, {lang: `en`},
+  E(`head`, null,
+    E(`link`, {rel: `stylesheet`, href: `/styles/main.css`}),
+    E(`title`, null, `page title`),
   ),
-))
+  E(`body`, null,
+    E(`main`, {class: `main`}, `hello world!`),
+  ),
+)
+
+console.log(p.DOCTYPE_HTML + elem.outerHTML)
 
 /*
-<!doctype html><html lang="en"><head><link rel="stylesheet" href="/styles/main.css" /><title>page title</title></head><body><main class="main">hello world!</main></body></html>
+Formatted here for viewing convenience:
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="/styles/main.css" />
+    <title>page title</title>
+  </head>
+  <body>
+    <main class="main">hello world!</main>
+  </body>
+</html>
 */
 ```
 

@@ -442,41 +442,6 @@ export class MixChildConCache extends MixChildCache {
   }
 }
 
-/*
-Monkeypatching tool. Mutates the target class and its prototype, adding
-descriptors from the source classes and their prototypes.
-
-EXTREMELY dirty. AVOID at many costs. Prototype patching makes it much harder to
-track down method definitions and has broken semantics. For example, it breaks
-access to "super" methods. Additionally, the current implementation skips
-pre-existing descriptors, which may lead to quiet conflicts and bugs.
-
-Prefer `DedupMixinCache` whenever possible.
-*/
-export function mixMut(tar, ...src) {
-  l.reqCls(tar)
-  for (src of src) {
-    l.reqCls(src)
-    mixMutDescriptors(tar, src)
-    mixMutDescriptors(tar.prototype, src.prototype)
-  }
-  return tar
-}
-
-// TODO better name.
-export function mixMutDescriptors(tar, src) {
-  l.reqComp(tar)
-  l.reqComp(src)
-
-  while (src) {
-    for (const [key, val] of descriptors(src)) {
-      if (!(key in tar)) Object.defineProperty(tar, key, val)
-    }
-    src = Object.getPrototypeOf(src)
-  }
-  return tar
-}
-
 export function pub(tar, key, val) {
   Object.defineProperty(tar, reqObjKey(key), {
     value: val,

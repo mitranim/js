@@ -26,8 +26,6 @@ const emptyStr = ``
 const emptyArr = []
 const emptyPlainDict = {}
 const emptyNpo = Object.create(null)
-const emptyEmpNotFrozen = new l.Emp()
-const emptyEmpFrozen = Object.freeze(new l.Emp())
 const emptyGen = gen()
 const emptyArgs = function args() {return arguments}()
 const emptySet = new Set()
@@ -104,8 +102,6 @@ const miscVals = [
   emptyArr,
   emptyPlainDict,
   emptyNpo,
-  emptyEmpNotFrozen,
-  emptyEmpFrozen,
   emptyGen,
   emptyArgs,
   emptySet,
@@ -146,12 +142,21 @@ function isPromiseAsm(val) {
   )
 }
 
-
 function reqStrDirect(val) {return l.isStr(val) ? val : l.throwErrFun(val, l.isStr)}
 function reqStrIndirect(val) {return l.req(val, l.isStr)}
 
 function keysDumb(val) {return Object.keys(l.laxStruct(val))}
 function keysTricky(val) {return l.isNil(val) ? [] : Object.keys(l.reqStruct(val))}
+
+/*
+This function has been removed from the API and forbidden because in some cases
+it causes noticeable deoptimization and doesn't save all that much typing.
+Unfortunately, after moving it to the benchmark module, the deoptimization
+disappeared from the benchmark, presumably because we don't provide enough
+varied inputs here. Which makes it harder to demonstrate the issue or detect
+if it's gone in future JS engines.
+*/
+function hasIn(val, key) {return l.isComp(val) && key in val}
 
 /* Bench */
 
@@ -355,13 +360,13 @@ t.bench(function bench_hasIn_inline_hit_inherit() {l.nop(l.isComp(someDate) && `
 t.bench(function bench_hasIn_inline_hit_own() {l.nop(l.isComp(someDateSub) && `toISOString` in someDateSub)})
 t.bench(function bench_hasIn_inline_hit_own_shallow() {l.nop(l.isComp(shallow) && `toISOString` in shallow)})
 
-t.bench(function bench_hasIn_ours_nil() {l.nop(l.hasIn(undefined, `toISOString`))})
-t.bench(function bench_hasIn_ours_miss_prim() {l.nop(l.hasIn(someStr, `toISOString`))})
-t.bench(function bench_hasIn_ours_miss_fun() {l.nop(l.hasIn(l.nop, `toISOString`))})
-t.bench(function bench_hasIn_ours_miss_obj() {l.nop(l.hasIn(emptyArr, `toISOString`))})
-t.bench(function bench_hasIn_ours_hit_inherit() {l.nop(l.hasIn(someDate, `toISOString`))})
-t.bench(function bench_hasIn_ours_hit_own() {l.nop(l.hasIn(someDateSub, `toISOString`))})
-t.bench(function bench_hasIn_ours_hit_own_shallow() {l.nop(l.hasIn(shallow, `toISOString`))})
+t.bench(function bench_hasIn_ours_nil() {l.nop(hasIn(undefined, `toISOString`))})
+t.bench(function bench_hasIn_ours_miss_prim() {l.nop(hasIn(someStr, `toISOString`))})
+t.bench(function bench_hasIn_ours_miss_fun() {l.nop(hasIn(l.nop, `toISOString`))})
+t.bench(function bench_hasIn_ours_miss_obj() {l.nop(hasIn(emptyArr, `toISOString`))})
+t.bench(function bench_hasIn_ours_hit_inherit() {l.nop(hasIn(someDate, `toISOString`))})
+t.bench(function bench_hasIn_ours_hit_own() {l.nop(hasIn(someDateSub, `toISOString`))})
+t.bench(function bench_hasIn_ours_hit_own_shallow() {l.nop(hasIn(shallow, `toISOString`))})
 
 t.bench(function bench_hasOwn_inline_miss_fun() {l.nop(Object.hasOwnProperty.call(l.nop, `toISOString`))})
 t.bench(function bench_hasOwn_inline_miss_obj() {l.nop(Object.hasOwnProperty.call(emptyArr, `toISOString`))})
@@ -412,9 +417,6 @@ t.bench(function bench_empty_Object_create_Object_create_null() {l.nop(Object.cr
 t.bench(function bench_empty_Emp() {l.nop(l.Emp())})
 t.bench(function bench_empty_Emp_new() {l.nop(new l.Emp())})
 t.bench(function bench_empty_Emp_sub_new() {l.nop(new EmpSub())})
-
-t.bench(function bench_Object_isFrozen_miss() {l.nop(Object.isFrozen(emptyEmpNotFrozen))})
-t.bench(function bench_Object_isFrozen_hit() {l.nop(Object.isFrozen(emptyEmpFrozen))})
 
 t.bench(function bench_eq_miss_prim_nil() {l.nop(l.eq(undefined, null))})
 t.bench(function bench_eq_hit_prim_nil() {l.nop(l.eq())})

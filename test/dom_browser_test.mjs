@@ -7,8 +7,8 @@ import * as p from '../prax.mjs'
 import * as d from '../dom.mjs'
 import * as ds from '../dom_shim.mjs'
 
-const ren = p.Ren.native()
-const {E} = ren
+const ren = new p.Ren()
+const E = ren.elemHtml.bind(ren)
 
 t.test(function test_DocHeadMut() {
   function mutHead(val) {return d.DocHeadMut.main.mut(val)}
@@ -17,30 +17,30 @@ t.test(function test_DocHeadMut() {
 
   const prev = [...document.head.children]
 
-  mutHead(E.head)
+  mutHead(E(`head`))
   t.eq([...document.head.children], prev)
 
-  mutHead(E.head)
+  mutHead(E(`head`))
   t.eq([...document.head.children], prev)
 
   t.test(function test_reset_title() {
     t.eq(document.title, `test`)
 
-    mutHead(E.head.chi(E.title.chi(`test title 0`)))
+    mutHead(E(`head`, null, E(`title`, null, `test title 0`)))
     t.eq([...document.head.children], prev)
     t.eq(document.title, `test title 0`)
 
-    mutHead(E.head.chi(E.title.chi(`test title 1`)))
+    mutHead(E(`head`, null, E(`title`, null, `test title 1`)))
     t.eq([...document.head.children], prev)
     t.eq(document.title, `test title 1`)
   })
 
   t.test(function test_reset_nodes() {
     const nodes0 = [
-      E.meta.props({name: `author`, content: `test author 0`}),
-      E.meta.props({name: `description`, content: `test description 0`}),
+      E(`meta`, {name: `author`, content: `test author 0`}),
+      E(`meta`, {name: `description`, content: `test description 0`}),
     ]
-    mutHead(E.head.chi(...nodes0))
+    mutHead(E(`head`, null, ...nodes0))
 
     t.eq(
       [...document.head.children],
@@ -49,10 +49,10 @@ t.test(function test_DocHeadMut() {
     t.eq(document.title, `test title 1`)
 
     const nodes1 = [
-      E.meta.props({name: `author`, content: `test author 1`}),
-      E.link.props({rel: `icon`, href: `data:;base64,=`}),
+      E(`meta`, {name: `author`, content: `test author 1`}),
+      E(`link`, {rel: `icon`, href: `data:;base64,=`}),
     ]
-    mutHead(E.head.chi(E.title.chi(`test title 2`), ...nodes1))
+    mutHead(E(`head`, null, E(`title`, null, `test title 2`), ...nodes1))
 
     t.eq(
       [...document.head.children],
@@ -87,6 +87,7 @@ function testIsElement(fun) {
 
   t.ok(fun(document.body))
   t.ok(fun(document.createElement(`div`)))
+
   // Causes an "illegal invocation" error when accessing `.nodeType`.
   // t.ok(fun(Element.prototype))
 

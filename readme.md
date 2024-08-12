@@ -45,14 +45,14 @@ Alternatives that suck:
 Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import many core modules at once:
 
 ```js
-import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/all.mjs'
+import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/all.mjs'
 ```
 
 Otherwise, import specific modules you need. See the list below. Example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/lang.mjs'
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.54/str.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/lang.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/str.mjs'
 ```
 
 Also available on NPM:
@@ -74,8 +74,8 @@ npm i -E @mitranim/js
   * [`path`](docs/path_readme.md): various functions for working with FS paths.
   * [`dom`](docs/dom_readme.md): shortcuts for working with the DOM.
   * [`dom_shim`](docs/dom_shim_readme.md): lightweight and performant shim for DOM nodes and elements.
-  * [`dom_glob_shim`](docs/dom_glob_shim_readme.md): shimmed DOM globals, interchangeable with `dom_glob_native`
-  * [`dom_glob_native`](docs/dom_glob_native_readme.md): native DOM globals, interchangeable with `dom_glob_shim`
+  * [`dom_global_shim`](docs/dom_global_shim_readme.md): shimmed DOM globals, interchangeable with `dom_global_native`
+  * [`dom_global_native`](docs/dom_global_native_readme.md): native DOM globals, interchangeable with `dom_global_shim`
   * [`dom_reg`](docs/dom_reg_readme.md): shortcuts for registering custom DOM elements.
   * [`prax`](docs/prax_readme.md): simple system for rendering DOM elements. React-inspired syntax, better semantics and performance.
   * [`obs`](docs/obs_readme.md): observables via proxies.

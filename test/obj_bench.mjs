@@ -10,7 +10,14 @@ import * as o from '../obj.mjs'
 
 /* Global */
 
-const {freeze} = Object
+const emptyNpoNotFrozen = Object.create(null)
+const emptyNpoFrozen = Object.freeze(Object.create(null))
+
+const emptyDictNotFrozen = {}
+const emptyDictFrozen = Object.freeze({})
+
+const emptyEmpNotFrozen = new l.Emp()
+const emptyEmpFrozen = Object.freeze(new l.Emp())
 
 class MemGet {
   get one() {}
@@ -21,7 +28,7 @@ o.memGet(MemGet)
 
 const memGet = new MemGet()
 l.nop(memGet.one)
-freeze(memGet)
+Object.freeze(memGet)
 
 class Shallow {
   constructor() {
@@ -177,9 +184,21 @@ t.bench(function bench_assign_lodash_assign() {l.reqStruct(lo.assign(Object.crea
 t.bench(function bench_assign_our_assign() {l.reqStruct(o.assign(Object.create(null), itc.numDict))})
 t.bench(function bench_assign_our_patch() {l.reqStruct(o.patch(Object.create(null), itc.numDict))})
 
-const frozen = freeze({})
-t.bench(function bench_object_freeze_new() {l.nop(freeze({}))})
-t.bench(function bench_object_freeze_frozen() {l.nop(freeze(frozen))})
+t.bench(function bench_Object_isFrozen_miss_npo() {l.nop(Object.isFrozen(emptyNpoNotFrozen))})
+t.bench(function bench_Object_isFrozen_miss_dict() {l.nop(Object.isFrozen(emptyDictNotFrozen))})
+t.bench(function bench_Object_isFrozen_miss_emp() {l.nop(Object.isFrozen(emptyEmpNotFrozen))})
+
+t.bench(function bench_Object_isFrozen_hit_npo() {l.nop(Object.isFrozen(emptyNpoFrozen))})
+t.bench(function bench_Object_isFrozen_hit_dict() {l.nop(Object.isFrozen(emptyDictFrozen))})
+t.bench(function bench_Object_isFrozen_hit_emp() {l.nop(Object.isFrozen(emptyEmpFrozen))})
+
+t.bench(function bench_Object_freeze_npo_new() {l.nop(Object.freeze(Object.create(null)))})
+t.bench(function bench_Object_freeze_dict_new() {l.nop(Object.freeze({}))})
+t.bench(function bench_Object_freeze_emp_new() {l.nop(Object.freeze(new l.Emp()))})
+
+t.bench(function bench_Object_freeze_npo_frozen() {l.nop(Object.freeze(emptyNpoFrozen))})
+t.bench(function bench_Object_freeze_dict_frozen() {l.nop(Object.freeze(emptyDictFrozen))})
+t.bench(function bench_Object_freeze_emp_frozen() {l.nop(Object.freeze(emptyEmpFrozen))})
 
 /*
 Results in V8 at the time of writing:

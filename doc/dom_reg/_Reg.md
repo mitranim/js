@@ -6,9 +6,12 @@ By default, this registry has **no global side effects**. To enable global regis
 import * as dr from '{{featUrl dom_reg}}'
 
 class Btn extends HTMLButtonElement {
+  // Optional. If omitted, `dr.reg` autogenerates
+  // this from the name of the class.
   static customName = `some-btn`
 
-  // Registers `Btn` in `dr.Reg.main`, but NOT in `window.customElements`.
+  // Registers `Btn` in `dr.Reg.main`,
+  // but NOT in `window.customElements`.
   static {dr.reg(this)}
 }
 

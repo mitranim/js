@@ -1,5 +1,4 @@
 import * as l from './lang.mjs'
-import * as o from './obj.mjs'
 
 export const nsHtml = `http://www.w3.org/1999/xhtml`
 export const nsSvg = `http://www.w3.org/2000/svg`
@@ -26,56 +25,49 @@ Short for "renderer". Creates or mutates DOM elements. Compatible with native
 DOM API and `dom_shim.mjs`.
 */
 export class Ren extends l.Emp {
-  constructor(doc) {
+  constructor(doc = globalThis.document) {
     super()
     this.lax = false
     this.doc = reqDocument(doc)
-    this.elemHtml = this.elemHtml.bind(this)
-    this.elemSvg = this.elemSvg.bind(this)
-    this.elem = this.elem.bind(this)
-    this.frag = this.frag.bind(this)
   }
 
-  /*
-  Short for "element". This lazily-initialized property is a "namespace" where
-  accessing an arbitrary property "X" is equivalent to calling `ren.elemHtml`
-  with the same tag "X". The elements are created in the HTML namespace, with
-  the exception of the `svg` tag which is created in the SVG namespace.
-  */
-  get E() {return o.priv(this, `E`, new Proxy(this, RenHtmlPh))}
-
-  /*
-  Short for "SVG element". This lazily-initialized property is a "namespace"
-  where accessing an arbitrary property "X" is equivalent to calling
-  `ren.elemSvg` with the same tag "X". The elements are created in the SVG
-  namespace.
-  */
-  get S() {return o.priv(this, `S`, new Proxy(this, RenSvgPh))}
-
-  /*
-  Short for "element function". Similar to `.E`, but each property is an
-  element-generating method bound to the given tagname.
-  */
-  get EF() {return o.priv(this, `EF`, new Proxy(this, RenFunHtmlPh))}
-
-  /*
-  Short for "SVG element function". Similar to `.S`, but each property is an
-  element-generating method bound to the given tagname.
-  */
-  get SF() {return o.priv(this, `SF`, new Proxy(this, RenFunSvgPh))}
-
   elemHtml(tag, props, ...chi) {
-    if (tag === `svg`) return this.elemHtmlSvg(tag, props, ...chi)
-    if (this.isVoid(tag)) return this.elemVoid(tag, props, ...chi)
-    return this.elem(tag, props, ...chi)
+    if (l.isObj(tag)) return this.mut(tag, props, ...chi)
+    if (l.isStr(tag)) {
+      if (tag === `svg`) return this.elemHtmlSvg(tag, props, ...chi)
+      if (!this.lax && this.isVoid(tag)) return this.elemVoid(tag, props, ...chi)
+      return this.elem(tag, props, ...chi)
+    }
+    throw l.errConv(tag, `HTML element`)
   }
 
   elemSvg(tag, props, ...chi) {
-    return this.mut(this.makeSvg(tag, props), props, ...chi)
+    if (l.isObj(tag)) return this.mut(tag, props, ...chi)
+    if (l.isStr(tag)) return this.mut(this.makeElemSvg(tag, props), props, ...chi)
+    throw l.errConv(tag, `SVG element`)
   }
 
   elem(tag, props, ...chi) {
-    return this.mut(this.make(tag, props), props, ...chi)
+    if (l.isObj(tag)) return this.mut(tag, props, ...chi)
+    if (l.isStr(tag)) return this.mut(this.makeElem(tag, props), props, ...chi)
+    throw l.errConv(tag, `element`)
+  }
+
+  makeElemHtml(tag, props) {
+    if (tag === `svg`) return this.makeElemSvg(tag, props)
+    return this.makeElemNs(nsHtml, tag, deref(props))
+  }
+
+  makeElemSvg(tag, props) {
+    return this.makeElemNs(nsSvg, tag, deref(props))
+  }
+
+  makeElemNs(ns, tag, props) {
+    return this.doc.createElementNS(l.reqStr(ns), l.reqStr(tag), deref(props))
+  }
+
+  makeElem(tag, props) {
+    return this.doc.createElement(l.reqStr(tag), deref(props))
   }
 
   frag(...val) {
@@ -90,35 +82,13 @@ export class Ren extends l.Emp {
     return this.frag(...val)
   }
 
-  makeHtml(tag, props) {
-    if (tag === `svg`) return this.makeSvg(tag, props)
-    return this.makeNs(nsHtml, tag, deref(props))
-  }
-
-  makeSvg(tag, props) {
-    return this.makeNs(nsSvg, tag, deref(props))
-  }
-
-  makeNs(ns, tag, props) {
-    return this.doc.createElementNS(l.reqStr(ns), l.reqStr(tag), deref(props))
-  }
-
-  make(tag, props) {
-    return this.doc.createElement(l.reqStr(tag), deref(props))
-  }
-
-  makeBuf(src) {
-    const ns = l.get(src, `namespaceURI`)
-    return ns ? this.makeNs(ns, `span`) : this.make(`span`)
-  }
-
   mut(tar, props, ...chi) {
     this.mutProps(tar, props)
     this.mutChi(tar, ...chi)
     return tar
   }
 
-  mutProps(tar, val) {return this.loop(reqElement(tar), val, this.mutProp)}
+  mutProps(tar, val) {return this.loop(l.reqObj(tar), val, this.mutProp)}
 
   // TODO consider supporting `innerHTML` prop.
   mutProp(tar, key, val) {
@@ -249,7 +219,7 @@ export class Ren extends l.Emp {
       this.appendChi(tar, src[ind])
 
       ind += 1
-      ind -= l.reqFin(reduction(len, src.length))
+      ind -= Math.max(0, len - src.length)
     }
   }
 
@@ -268,7 +238,9 @@ export class Ren extends l.Emp {
       return tar
     }
 
-    const buf = this.makeBuf(tar)
+    const ns = l.get(src, `namespaceURI`)
+    const buf = ns ? this.makeElemNs(ns, `span`) : this.makeElem(`span`)
+
     buf.innerHTML = l.laxStr(src.outerHTML)
     return this.move(tar, buf)
   }
@@ -337,7 +309,7 @@ export class Ren extends l.Emp {
   the start.
   */
   alignNs(tar) {
-    if (!(isElement(tar) && isNamespaced(tar))) return tar
+    if (!isNamespaced(tar)) return tar
 
     const chi = tar.firstChild
     if (!isNamespaced(chi)) return tar
@@ -354,74 +326,11 @@ export class Ren extends l.Emp {
     if (!chi.length) return this.elem(tag, props)
     throw SyntaxError(`expected void element ${l.show(tag)} to have no children, got ${l.show(chi)}`)
   }
-
-  /*
-  Takes a class and returns a subclass with methods and properties from the
-  mixin `.MixRenCache`, connected to the current renderer. Subclasses may
-  override the mixin. Also see `.mixMut` which patches the given class instead
-  of subclassing.
-  */
-  mix(cls) {return this.MixRenCache.goc(cls)}
-
-  /*
-  Patches the given class, connecting it to the current renderer and adding
-  methods and properties from the mixin `.MixRenCache`. Subclasses may override
-  the mixin. Also see `.mix` which creates a subclass instead of patching the
-  given class.
-  */
-  mixMut(cls) {
-    o.mixMut(cls, this.MixRenCache.goc(l.Emp))
-    cls.ren = this
-    return this
-  }
-
-  get MixRenCache() {return MixRenCache}
-
-  static from(glob) {return new this(glob.document).mixMut(glob.Element)}
-
-  static native() {return this.from(globalThis)}
 }
 
 // Marks "raw text" which must be preserved as-is without escaping.
 export class Raw extends l.Emp {
   constructor(val) {super().outerHTML = l.renderLax(val)}
-}
-
-export class RenPh extends o.BlankStaticPh {
-  static get(ren, key) {return ren.make(key)}
-}
-
-export class RenHtmlPh extends o.BlankStaticPh {
-  static get(ren, key) {return ren.makeHtml(key)}
-}
-
-export class RenSvgPh extends o.BlankStaticPh {
-  static get(ren, key) {return ren.makeSvg(key)}
-}
-
-export class RenFunPh extends o.BlankStaticPh {
-  static funs = l.Emp()
-  static get(ren, key) {return this.funs[key] ??= ren.elem.bind(ren, key)}
-}
-
-export class RenFunHtmlPh extends o.BlankStaticPh {
-  static funs = l.Emp()
-  static get(ren, key) {return this.funs[key] ??= ren.elemHtml.bind(ren, key)}
-}
-
-export class RenFunSvgPh extends o.BlankStaticPh {
-  static funs = l.Emp()
-  static get(ren, key) {return this.funs[key] ??= ren.elemSvg.bind(ren, key)}
-}
-
-export class MixRenCache extends o.DedupMixinCache {
-  static make(cls) {
-    return class MixRenCls extends cls {
-      get ren() {return this.constructor.ren}
-      props(val) {return this.ren.mutProps(this, val)}
-      chi(...val) {return this.ren.mutChi(this, ...val)}
-    }
-  }
 }
 
 /*
@@ -467,7 +376,7 @@ avoids that. Unclear if this makes any difference in actual apps.
 Custom frozen marker has much better performance than `Object.freeze` and
 `Object.isFrozen`.
 */
-export class PropBui extends o.MixMain(l.Emp) {
+export class PropBui extends l.Emp {
   constructor(val) {
     super()
     this[refKey] = deref(val)
@@ -475,8 +384,17 @@ export class PropBui extends o.MixMain(l.Emp) {
   }
 
   get $() {return this[refKey]}
-  has(key) {return l.hasIn(this[refKey], key)}
-  get(key) {return this[refKey] ? this[refKey][l.reqStr(key)] : undefined}
+
+  has(key) {
+    l.reqStr(key)
+    const src = this[refKey]
+    return !!src && key in src
+  }
+
+  get(key) {
+    l.reqStr(key)
+    return this[refKey]?.[key]
+  }
 
   set(key, val) {
     const self = this.mutable()
@@ -591,6 +509,12 @@ export class PropBui extends o.MixMain(l.Emp) {
     return new this(val)
   }
 
+  // Copied from `obj.mjs`.`MixMain` to avoid import.
+  static get main() {
+    const key = Symbol.for(`main`)
+    return l.hasOwn(this, key) ? this[key] : this[key] = this.default()
+  }
+
   static default() {return new this().frozen()}
 }
 
@@ -599,14 +523,7 @@ const frozenKey = Symbol.for(`frozen`)
 
 function hasScheme(val) {return /^\w+:/.test(l.laxStr(val))}
 
-export function renderDocument(src) {
-  const pre = `<!doctype html>`
-  if (l.isNil(src)) return ``
-  if (l.isStr(src)) return src && (pre + src)
-  if (isRaw(src)) return renderDocument(l.laxStr(src.outerHTML))
-  if (l.isScalar(src)) return renderDocument(l.render(src))
-  throw l.errConv(src, `document`)
-}
+export const DOCTYPE_HTML = `<!doctype html>`
 
 /*
 Much more restrictive than `lang.mjs`.`isSeq`. Designed to prevent programmer
@@ -619,16 +536,11 @@ export function isSeq(val) {
 export function isNodable(val) {return l.isComp(val) && `toNode` in val && l.isFun(val)}
 export function reqNodable(val) {return l.req(val, isNodable)}
 
-export function isRaw(val) {return l.hasIn(val, `outerHTML`)}
+export function isRaw(val) {return l.isObj(val) && `outerHTML` in val}
 export function reqRaw(val) {return l.req(val, isRaw)}
 
-// Dup from `dom.mjs` to avoid import.
 export function isNode(val) {return l.isObj(val) && `parentNode` in val && `childNodes` in val}
 export function reqNode(val) {return l.req(val, isNode)}
-
-// Dup from `dom.mjs` to avoid import.
-export function isElement(val) {return isNode(val) && `setAttribute` in val}
-export function reqElement(val) {return l.req(val, isElement)}
 
 export function isDocument(val) {
   return (
@@ -641,7 +553,7 @@ export function isDocument(val) {
 export function optDocument(val) {return l.opt(val, isDocument)}
 export function reqDocument(val) {return l.req(val, isDocument)}
 
-export function isNamespaced(val) {return l.hasIn(val, `namespaceURI`)}
+export function isNamespaced(val) {return l.isObj(val) && `namespaceURI` in val}
 
 // Used for adapting various "props" inputs.
 export function deref(val) {
@@ -673,5 +585,3 @@ function optAt(key, val, fun) {
   if (l.isNil(val) || fun(val)) return val
   throw TypeError(`invalid property ${l.show(key)}: ` + l.msgType(val, l.showFunName(fun)))
 }
-
-function reduction(one, two) {return one > two ? one - two : 0}

@@ -195,13 +195,22 @@ while set "keys" are values.
 */
 t.test(function test_keys() {
   testFunEmptyList(i.keys)
-  testNoIterator(i.keys)
+  testNoAsyncIterator(i.keys)
 
   function test(src, exp) {t.eq(i.keys(src), exp)}
 
-  test([10, 20],                      [0, 1])
-  test(args(10, 20),                  [0, 1])
-  test(new Vec([10, 20]),             [0, 1])
+  function testList(src, exp) {
+    test(src,          exp)
+    test(args(...src), exp)
+    test(copygen(src), exp)
+    test(new Vec(src), exp)
+  }
+
+  testList([],           [])
+  testList([10],         [0])
+  testList([10, 20],     [0, 1])
+  testList([10, 20, 30], [0, 1, 2])
+
   test(new Set([10, 20]),             [10, 20])
   test({one: 10, two: 20},            [`one`, `two`])
   test(new Map([[10, 20], [30, 40]]), [10, 30])
@@ -454,15 +463,6 @@ function testFunEmpty(fun, zero) {
   t.eq(fun([]), zero)
   t.eq(fun(new Set()), zero)
   t.eq(fun(new Map()), zero)
-}
-
-function testNoIterator(fun) {
-  testNoSyncIterator(fun)
-  testNoAsyncIterator(fun)
-}
-
-function testNoSyncIterator(fun) {
-  t.throws(() => fun(copygen([])), TypeError, `unable to convert [object Generator]`)
 }
 
 function testNoAsyncIterator(fun) {

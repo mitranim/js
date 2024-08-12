@@ -1220,8 +1220,13 @@ t.test(function test_Element_textContent() {
   reset(fragOf(10), [fragOf(20, 30)])
   t.is(tar.textContent, `102030`)
 
-  const inner = new ds.HTMLElement()
+  const inner = new ds.global.HTMLElement()
   inner.localName = `span`
+
+  // Appending lists and nested lists would absolutely not work in a spec
+  // compliant DOM API. It works in ours by accident because storing them
+  // as-is, and flattening in `.textContent` and `.innerHTML`, saves some
+  // complexity and performance.
   inner.append(
     `one `,
     [[new ds.Text(`two`)]],
@@ -1510,7 +1515,7 @@ t.test(function test_xmlns_several_layers_inside_HTMLDocument() {
 })
 
 t.test(function test_HTMLAnchorElement() {
-  const tar = new ds.HTMLAnchorElement()
+  const tar = new ds.global.HTMLAnchorElement()
 
   t.is(tar.protocol, ``)
   t.is(tar.origin, ``)

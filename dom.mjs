@@ -12,21 +12,21 @@ export function isEvent(val) {return typeof Event === `function` && l.isInst(val
 export function reqEvent(val) {return l.req(val, isEvent)}
 export function optEvent(val) {return l.opt(val, isEvent)}
 
-export function isChildNode(val) {return l.hasIn(val, `parentNode`)}
+export function isChildNode(val) {return l.isObj(val) && `parentNode` in val}
 export function reqChildNode(val) {return l.req(val, isChildNode)}
 export function optChildNode(val) {return l.opt(val, isChildNode)}
 
-export function isParentNode(val) {return l.hasIn(val, `childNodes`)}
+export function isParentNode(val) {return l.isObj(val) && `childNodes` in val}
 export function reqParentNode(val) {return l.req(val, isParentNode)}
 export function optParentNode(val) {return l.opt(val, isParentNode)}
 
 // See `dom_shim.mjs` → `Node`.
-export function isNode(val) {return l.hasIn(val, `nodeType`)}
+export function isNode(val) {return l.isObj(val) && `nodeType` in val}
 export function reqNode(val) {return l.req(val, isNode)}
 export function optNode(val) {return l.opt(val, isNode)}
 
 // See `dom_shim.mjs` → `Node.ELEMENT_NODE`.
-export function isElement(val) {return isNode(val) && val.nodeType === 1}
+export function isElement(val) {return l.isObj(val) && val.nodeType === 1}
 export function reqElement(val) {return l.req(val, isElement)}
 export function optElement(val) {return l.opt(val, isElement)}
 
@@ -59,7 +59,6 @@ export class DocHeadMut extends o.MixMain(WeakSet) {
     for (const val of copy(this.head.children)) {
       if (this.has(val) && !set.has(val)) val.remove()
     }
-
     for (const val of set) this.append(val)
   }
 
@@ -118,9 +117,12 @@ export class DocFoc extends o.MixMain(Array) {
 function copy(val) {return Array.prototype.slice.call(val)}
 function indexOf(list, val) {return Array.prototype.indexOf.call(list, val)}
 
-export function eventKill(val) {eventPrevent(val), eventStop(val)}
-
-export function eventPrevent(val) {if (optEvent(val)) val.preventDefault()}
+export function eventKill(val) {
+  if (optEvent(val)) {
+    val.preventDefault()
+    eventStop(val)
+  }
+}
 
 export function eventStop(val) {
   if (optEvent(val)) {

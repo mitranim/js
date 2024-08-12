@@ -22,8 +22,8 @@ export function reqSubber(val) {return l.req(val, isSubber)}
 export function isRunTrig(val) {return l.isComp(val) && l.hasMeth(val, `run`) && isTrig(val)}
 export function reqRunTrig(val) {return l.req(val, isRunTrig)}
 
-export function ph(val) {return l.hasIn(val, keyPh) ? val[keyPh] : undefined}
-export function self(val) {return l.hasIn(val, keySelf) ? val[keySelf] : val}
+export function ph(val) {return l.isComp(val) && keyPh in val ? val[keyPh] : undefined}
+export function self(val) {return l.isComp(val) && keySelf in val ? val[keySelf] : val}
 
 export const keyPh = Symbol.for(`ph`)
 export const keySelf = Symbol.for(`self`)

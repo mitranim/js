@@ -300,7 +300,6 @@ export function reqScalarOpt(val) {return isScalarOpt(val) ? val : throwErrFun(v
 export function optScalarOpt(val) {return isNil(val) ? val : reqScalarOpt(val)}
 export function onlyScalarOpt(val) {return isScalarOpt(val) ? val : undefined}
 
-// Custom interface for iterables that wrap arrays.
 export function isArrble(val) {return isIter(val) && `toArray` in val && isFun(val.toArray)}
 export function reqArrble(val) {return isArrble(val) ? val : throwErrFun(val, isArrble)}
 export function optArrble(val) {return isNil(val) ? val : reqArrble(val)}
@@ -433,7 +432,6 @@ export function not(fun) {
   return function not() {return !fun.apply(this, arguments)}
 }
 
-export function hasIn(val, key) {return isComp(val) && key in val}
 export function hasOwn(val, key) {return isComp(val) && own.call(val, key)}
 export function hasOwnEnum(val, key) {return isComp(val) && enu.call(val, key)}
 export function hasInherited(val, key) {return isComp(val) && key in val && !own.call(val, key)}
@@ -543,13 +541,13 @@ let ERROR_CAUSE
 
 function errOneOf(val, funs) {return TypeError(msgType(val, `[` + showFuns(funs) + `]`))}
 
-export function convType(val, src, msg) {
-  if (isSome(val)) return val
+export function convType(tar, src, msg) {
+  if (isSome(tar)) return tar
   throw errConv(src, msg)
 }
 
-export function convSynt(val, src, msg) {
-  if (isSome(val)) return val
+export function convSynt(tar, src, msg) {
+  if (isSome(tar)) return tar
   throw errSynt(src, msg)
 }
 
@@ -606,13 +604,15 @@ function showDictKey(val) {
 Like `val?.[key]` but with sanity checks: works only on composite values and
 avoids accessing the property unless it satisfies the `in` check.
 */
-export function get(val, key) {return hasIn(val, key) ? val[key] : undefined}
+export function get(val, key) {
+  return isComp(val) && key in val ? val[key] : undefined
+}
 
 export function getOwn(val, key) {return hasOwn(val, key) ? val[key] : undefined}
 
 export function reqGet(val, key) {
-  if (!hasIn(val, key)) throw errIn(val, key)
-  return val[key]
+  if (isComp(val) && key in val) return val[key]
+  throw errIn(val, key)
 }
 
 function getName(val) {return get(val, `name`)}

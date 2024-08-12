@@ -33,12 +33,15 @@ t.test(function test_show() {
   test({},                                        `{}`)
   test(inherit(null),                             `{}`)
   test(inherit(inherit(null)),                    `{}`)
+  test(inherit({one: `two`}),                     `{}`)
   test({one: `two`, three: `four`},               `{one: "two", three: "four"}`)
   test([],                                        `[]`)
   test([10, `str`],                               `[10, "str"]`)
   test(args,                                      `[function args]`)
   test(gen(),                                     `[object Generator]`)
   test(agen(),                                    `[object AsyncGenerator]`)
+  test(new Set(),                                 `[object Set]`)
+  test(new Map(),                                 `[object Map]`)
   test(class Cls {},                              `[function Cls]`)
   test(new class {}(),                            `{}`)
   test(new class extends Array {}(),              `[]`)
@@ -67,7 +70,7 @@ t.test(function test_show() {
   testCls(class Cls extends Set   {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
   testCls(class Cls extends Map   {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
 
-  // For comparison, inane behavior we dislike:
+  // For comparison, inane built-in behavior we dislike:
   t.is(String({}), `[object Object]`)
   t.is(String([]), ``)
   t.is(String(new class Cls extends Set {}()), `[object Set]`)
@@ -1112,20 +1115,6 @@ t.test(function test_isEmpty() {
   t.ok(l.isEmpty(new Set()))
   t.ok(l.isEmpty(new Map()))
   t.ok(l.isEmpty(args()))
-})
-
-t.test(function test_hasIn() {
-  t.no(l.hasIn(undefined,               `toString`))
-  t.no(l.hasIn(10,                      `toString`))
-  t.no(l.hasIn(`str`,                   `toString`))
-  t.ok(l.hasIn({},                      `toString`))
-  t.ok(l.hasIn({toString: 10},          `toString`))
-  t.ok(l.hasIn(inherit({toString: 10}), `toString`))
-
-  t.ok(l.hasIn(inherit(null, {toString: {value: 10, enumerable: true}}), `toString`))
-  t.ok(l.hasIn(inherit(null, {toString: {value: 10, enumerable: false}}), `toString`))
-  t.ok(l.hasIn(inherit(inherit(null, {toString: {value: 10, enumerable: true}})), `toString`))
-  t.ok(l.hasIn(inherit(inherit(null, {toString: {value: 10, enumerable: false}})), `toString`))
 })
 
 t.test(function test_hasOwn() {
