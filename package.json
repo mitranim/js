@@ -1,6 +1,6 @@
 {
 	"name": "@mitranim/js",
-	"version": "0.1.56",
+	"version": "0.1.57",
 	"type": "module",
 	"repository": {"type": "git", "url": "https://github.com/mitranim/js.git"},
 	"license": "Unlicense"

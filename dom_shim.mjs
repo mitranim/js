@@ -644,7 +644,7 @@ class TextInputElement extends ToggleElement {
   get readOnly() {return this.hasAttribute(`readonly`)}
   set readOnly(val) {this.toggleAttribute(`readonly`, l.laxBool(val))}
 
-  get placeholder() {return this.getAttribute(`placeholder`)}
+  get placeholder() {return l.laxStr(this.getAttribute(`placeholder`))}
   set placeholder(val) {this.setAttribute(`placeholder`, val)}
 }
 
