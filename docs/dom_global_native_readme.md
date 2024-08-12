@@ -15,8 +15,8 @@ In code intended only for browsers, simply use DOM globals. In code intended onl
 ```js
 /*
 Use a bundler or importmap to alias this import to one of:
-  https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/dom_global_native.mjs
-  https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.55/dom_global_shim.mjs
+  https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.56/dom_global_native.mjs
+  https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.56/dom_global_shim.mjs
 */
 import * as dg from 'dom_global'
 
