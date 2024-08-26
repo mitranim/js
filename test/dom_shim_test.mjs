@@ -270,6 +270,33 @@ t.test(function test_Node_append() {
   t.is(three.parentNode, top)
 })
 
+t.test(function test_Node_prepend() {
+  const top = new ds.Node()
+  const one = new ds.Text(`one`)
+  const two = new ds.Text(`two`)
+  const three = new ds.Comment(`three`)
+  const four = new ds.Comment(`four`)
+
+  t.is(top.prepend(one, two), undefined)
+  t.eq(top.childNodes, [one, two])
+  t.is(one.parentNode, top)
+  t.is(two.parentNode, top)
+
+  t.is(top.prepend(three, four), undefined)
+  t.eq(top.childNodes, [three, four, one, two])
+  t.is(one.parentNode, top)
+  t.is(two.parentNode, top)
+  t.is(three.parentNode, top)
+  t.is(four.parentNode, top)
+
+  t.is(top.prepend(...top.childNodes), undefined)
+  t.eq(top.childNodes, [three, four, one, two])
+  t.is(one.parentNode, top)
+  t.is(two.parentNode, top)
+  t.is(three.parentNode, top)
+  t.is(four.parentNode, top)
+})
+
 t.test(function test_Node_remove() {
   const top = new ds.Node()
   const one = new ds.Text(`one`)

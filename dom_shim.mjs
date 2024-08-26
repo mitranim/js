@@ -189,7 +189,14 @@ export class Node extends l.Emp {
     return next
   }
 
-  append(...val) {val.forEach(this.appendChild, this)}
+  append(...val) {for (val of val) this.appendChild(val)}
+
+  prepend(...src) {
+    for (const val of src) remove(val)
+    // Potential trap. Has bad combinatorial complexity for large inputs.
+    this.childNodes.unshift(...src)
+    for (const val of src) adopt(val, this)
+  }
 
   remove() {
     const par = this.parentNode

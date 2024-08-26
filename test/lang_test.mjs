@@ -70,6 +70,16 @@ t.test(function test_show() {
   testCls(class Cls extends Set   {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
   testCls(class Cls extends Map   {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
 
+  {
+    const one = Object.create(null)
+    const two = Object.create(null)
+    one.one = one
+    one.two = two
+    two.one = one
+    two.two = two
+    test(one, `{one: [cyclic 1], two: {one: [cyclic 1], two: [cyclic 2]}}`)
+  }
+
   // For comparison, inane built-in behavior we dislike:
   t.is(String({}), `[object Object]`)
   t.is(String([]), ``)

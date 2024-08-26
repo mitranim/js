@@ -24,7 +24,7 @@ class IterSimple extends l.Emp {
 
 const emptyStr = ``
 const emptyArr = []
-const emptyPlainDict = {}
+const emptyDict = {}
 const emptyNpo = Object.create(null)
 const emptyGen = gen()
 const emptyArgs = function args() {return arguments}()
@@ -100,7 +100,7 @@ function isPromiseInst(val) {return l.isInst(val, Promise)}
 const miscVals = [
   emptyStr,
   emptyArr,
-  emptyPlainDict,
+  emptyDict,
   emptyNpo,
   emptyGen,
   emptyArgs,
@@ -250,7 +250,7 @@ t.bench(function bench_reqCls_hit() {l.nop(l.reqCls(l.reqCls))})
 miscVals.forEach(l.isComp)
 t.bench(function bench_isComp_nil() {l.nop(l.isComp())})
 t.bench(function bench_isComp_miss_prim() {l.nop(l.isComp(`str`))})
-t.bench(function bench_isComp_hit_dict() {l.nop(l.isComp(emptyPlainDict))})
+t.bench(function bench_isComp_hit_dict() {l.nop(l.isComp(emptyDict))})
 t.bench(function bench_isComp_hit_arr() {l.nop(l.isComp(emptyArr))})
 t.bench(function bench_isComp_hit_fun() {l.nop(l.isComp(l.isComp))})
 
@@ -258,7 +258,7 @@ miscVals.forEach(l.isObj)
 t.bench(function bench_isObj_nil() {l.nop(l.isObj())})
 t.bench(function bench_isObj_miss_prim() {l.nop(l.isObj(`str`))})
 t.bench(function bench_isObj_miss_fun() {l.nop(l.isObj(l.isObj))})
-t.bench(function bench_isObj_hit_dict() {l.nop(l.isObj(emptyPlainDict))})
+t.bench(function bench_isObj_hit_dict() {l.nop(l.isObj(emptyDict))})
 t.bench(function bench_isObj_hit_arr() {l.nop(l.isObj(emptyArr))})
 
 /*
@@ -300,7 +300,7 @@ t.bench(function bench_isDict_miss_fun() {l.nop(l.isDict(l.isDict))})
 t.bench(function bench_isDict_miss_arr() {l.nop(l.isDict(emptyArr))})
 t.bench(function bench_isDict_miss_obj() {l.nop(l.isDict(shallow))})
 t.bench(function bench_isDict_hit_npo() {l.nop(l.isDict(emptyNpo))})
-t.bench(function bench_isDict_hit_dict() {l.nop(l.isDict(emptyPlainDict))})
+t.bench(function bench_isDict_hit_dict() {l.nop(l.isDict(emptyDict))})
 
 miscVals.forEach(l.isStruct)
 t.bench(function bench_isStruct_nil() {l.nop(l.isStruct())})
@@ -318,7 +318,7 @@ miscVals.forEach(isPromiseInst)
 t.bench(function bench_isPromise_inst_nil() {l.nop(isPromiseInst())})
 t.bench(function bench_isPromise_inst_miss_prim() {l.nop(isPromiseInst(someStr))})
 t.bench(function bench_isPromise_inst_miss_arr() {l.nop(isPromiseInst(emptyArr))})
-t.bench(function bench_isPromise_inst_miss_dict() {l.nop(isPromiseInst(emptyPlainDict))})
+t.bench(function bench_isPromise_inst_miss_dict() {l.nop(isPromiseInst(emptyDict))})
 t.bench(function bench_isPromise_inst_miss_custom() {l.nop(isPromiseInst(somePromCustom))})
 t.bench(function bench_isPromise_inst_hit_native() {l.nop(isPromiseInst(somePromNative))})
 
@@ -326,7 +326,7 @@ miscVals.forEach(isPromiseAsm)
 t.bench(function bench_isPromise_asm_nil() {l.nop(isPromiseAsm())})
 t.bench(function bench_isPromise_asm_miss_prim() {l.nop(isPromiseAsm(someStr))})
 t.bench(function bench_isPromise_asm_miss_arr() {l.nop(isPromiseAsm(emptyArr))})
-t.bench(function bench_isPromise_asm_miss_dict() {l.nop(isPromiseAsm(emptyPlainDict))})
+t.bench(function bench_isPromise_asm_miss_dict() {l.nop(isPromiseAsm(emptyDict))})
 t.bench(function bench_isPromise_asm_hit_custom() {l.nop(isPromiseAsm(somePromCustom))})
 t.bench(function bench_isPromise_asm_hit_native() {l.nop(isPromiseAsm(somePromNative))})
 
@@ -334,7 +334,7 @@ miscVals.forEach(l.isPromise)
 t.bench(function bench_isPromise_nil() {l.nop(l.isPromise())})
 t.bench(function bench_isPromise_miss_prim() {l.nop(l.isPromise(someStr))})
 t.bench(function bench_isPromise_miss_arr() {l.nop(l.isPromise(emptyArr))})
-t.bench(function bench_isPromise_miss_dict() {l.nop(l.isPromise(emptyPlainDict))})
+t.bench(function bench_isPromise_miss_dict() {l.nop(l.isPromise(emptyDict))})
 t.bench(function bench_isPromise_hit_custom() {l.nop(l.isPromise(somePromCustom))})
 t.bench(function bench_isPromise_hit_native() {l.nop(l.isPromise(somePromNative))})
 
@@ -394,7 +394,7 @@ t.bench(function bench_reqGet_hit_own_shallow() {l.nop(l.reqGet(shallow, `toISOS
 const funs = [l.isNum, l.isStr, l.isFun, l.isBool]
 t.bench(function bench_reqOneOf() {l.nop(l.reqOneOf(false, funs))})
 
-t.bench(function bench_show_dict() {l.nop(l.show(emptyPlainDict))})
+t.bench(function bench_show_dict() {l.nop(l.show(emptyDict))})
 t.bench(function bench_show_arr() {l.nop(l.show(emptyArr))})
 t.bench(function bench_show_gen() {l.nop(l.show(emptyGen))})
 t.bench(function bench_show_prom() {l.nop(l.show(somePromNative))})
@@ -409,8 +409,8 @@ t.bench(function bench_render_date() {l.nop(l.render(someDate))})
 t.bench(function bench_keys_nil_dumb() {l.nop(keysDumb())})
 t.bench(function bench_keys_nil_tricky() {l.nop(keysTricky())})
 
-t.bench(function bench_keys_empty_dumb() {l.nop(keysDumb(emptyPlainDict))})
-t.bench(function bench_keys_empty_tricky() {l.nop(keysTricky(emptyPlainDict))})
+t.bench(function bench_keys_empty_dumb() {l.nop(keysDumb(emptyDict))})
+t.bench(function bench_keys_empty_tricky() {l.nop(keysTricky(emptyDict))})
 
 t.bench(function bench_empty_Object_create_null() {l.nop(Object.create(null))})
 t.bench(function bench_empty_Object_create_Object_create_null() {l.nop(Object.create(emptyNpo))})
@@ -468,5 +468,40 @@ t.bench(function bench_object_inline() {l.nop({
   three: 30,
   four: 40,
 })})
+
+t.bench(function bench_delete_unchecked_miss_npo_prealloc() {delete emptyNpo.one})
+t.bench(function bench_delete_unchecked_miss_dict_prealloc() {delete emptyDict.one})
+t.bench(function bench_delete_unchecked_miss_npo_new() {delete Object.create(null).one})
+t.bench(function bench_delete_unchecked_miss_dict_new() {delete {}.one})
+t.bench(function bench_delete_unchecked_hit_npo_new() {
+  const tar = Object.create(null)
+  tar.one = 10
+  delete tar.one
+})
+t.bench(function bench_delete_unchecked_hit_dict_new() {delete {one: 10}.one})
+
+t.bench(function bench_delete_checked_miss_npo_prealloc() {
+  if (`one` in emptyNpo) delete emptyNpo.one
+})
+t.bench(function bench_delete_checked_miss_dict_prealloc() {
+  if (`one` in emptyDict) delete emptyDict.one
+})
+t.bench(function bench_delete_checked_miss_npo_new() {
+  const tar = Object.create(null)
+  if (`one` in tar) delete tar.one
+})
+t.bench(function bench_delete_checked_miss_dict_new() {
+  const tar = {}
+  if (`one` in tar) delete tar.one
+})
+t.bench(function bench_delete_checked_hit_npo_new() {
+  const tar = Object.create(null)
+  tar.one = 10
+  if (`one` in tar) delete tar.one
+})
+t.bench(function bench_delete_checked_hit_dict_new() {
+  const tar = {one: 10}
+  if (`one` in tar) delete tar.one
+})
 
 if (import.meta.main) t.deopt(), t.benches()

@@ -399,11 +399,11 @@ export function renderOpt(val) {
 
 export function renderLax(val) {return isNil(val) ? `` : render(val)}
 
-export function show(val) {
+export function show(val, vis = new Map()) {
   if (isStr(val)) return JSON.stringify(val)
   if (isSym(val)) return val.toString()
   if (isFun(val)) return showFun(val)
-  if (isObj(val)) return showObj(val)
+  if (isObj(val)) return showObj(val, vis)
   return String(val)
 }
 
@@ -555,49 +555,57 @@ function showFun(val) {return `[function ${val.name || val}]`}
 function showFuns(funs) {return funs.map(showFunName).join(`, `)}
 export function showFunName(fun) {return fun.name || showFun(fun)}
 
-function showObj(val) {
-  if (isErr(val)) return String(val)
-  if (isArr(val)) return showArr(val)
+function showObj(src, vis) {
+  const ind = vis?.get(src)
+  if (ind) return `[cyclic ` + ind + `]`
+  vis?.set(src, vis.size + 1)
 
-  const con = getCon(val)
-  if (!con || con === Object) return showDictOpt(val) || `{}`
+  if (isErr(src)) return String(src)
+  if (isArr(src)) return showArr(src, vis)
 
-  const name = getName(con) || getTag(val)
-  if (isInst(val, Boolean)) return `[${name || `Boolean`}: ${show(val.valueOf())}]`
-  if (isInst(val, Number)) return `[${name || `Number`}: ${show(val.valueOf())}]`
-  if (isInst(val, BigInt)) return `[${name || `BigInt`}: ${show(val.valueOf())}n]`
-  if (isInst(val, String)) return `[${name || `String`}: ${show(val.valueOf())}]`
-  if (isInst(val, Symbol)) return `[${name || `Symbol`}: ${show(val.valueOf())}]`
+  const con = getCon(src)
+  if (!con || con === Object) return showDictOpt(src, vis) || `{}`
 
-  const dict = showDictOpt(val)
+  const name = getName(con) || getTag(src)
+  if (isInst(src, Boolean)) return `[${name || `Boolean`}: ${show(src.valueOf())}]`
+  if (isInst(src, Number)) return `[${name || `Number`}: ${show(src.valueOf())}]`
+  if (isInst(src, BigInt)) return `[${name || `BigInt`}: ${show(src.valueOf())}n]`
+  if (isInst(src, String)) return `[${name || `String`}: ${show(src.valueOf())}]`
+  if (isInst(src, Symbol)) return `[${name || `Symbol`}: ${show(src.valueOf())}]`
+
+  const dict = showDictOpt(src, vis)
   if (!name) return dict || `{}`
   return `[object ${name}${dict && `: `}${dict}]`
 }
 
-function showArr(src) {return `[` + src.map(show).join(`, `) + `]`}
+function showArr(src, vis) {
+  const tar = []
+  for (src of src) tar.push(show(src, vis))
+  return `[` + tar.join(`, `) + `]`
+}
 
-function showDictOpt(src) {
+function showDictOpt(src, vis) {
   const buf = []
   for (const key of Object.getOwnPropertySymbols(src)) {
-    buf.push(showDictEntry(key, src[key]))
+    buf.push(showDictEntry(key, src[key], vis))
   }
   for (const key of Object.getOwnPropertyNames(src)) {
-    buf.push(showDictEntry(key, src[key]))
+    buf.push(showDictEntry(key, src[key], vis))
   }
   const out = buf.join(`, `)
   return out && (`{` + out + `}`)
 }
 
-function showDictEntry(key, val) {
-  return showDictKey(key) + `: ` + show(val)
+function showDictEntry(key, val, vis) {
+  return showDictKey(key, vis) + `: ` + show(val, vis)
 }
 
-function showDictKey(val) {
-  if (isSym(val)) return `[` + show(val) + `]`
+function showDictKey(val, vis) {
+  if (isSym(val)) return `[` + show(val, vis) + `]`
   if (/^(?:\d+|\d+\.\d+|\d+n|[A-Za-z_$][\w$]*)$/.test(reqStr(val))) {
     return val
   }
-  return show(val)
+  return show(val, vis)
 }
 
 /*
