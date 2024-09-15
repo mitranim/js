@@ -137,9 +137,13 @@ export function includes(src, val) {
   return l.isSet(src) ? src.has(val) : values(src).includes(val)
 }
 
-export function append(src, val) {return values(src).concat([val])}
+export function append(src, val) {
+  return l.isNil(src) ? [val] : values(src).concat([val])
+}
 
-export function prepend(src, val) {return [val].concat(values(src))}
+export function prepend(src, val) {
+  return l.isNil(src) ? [val] : [val].concat(values(src))
+}
 
 export function concat(...val) {
   return val.length ? Array.prototype.concat.call(...mapMut(val, values)) : []

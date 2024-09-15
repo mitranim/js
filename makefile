@@ -21,7 +21,7 @@ WATCH_SRC := $(WATCH) -e=mjs
 VER = $(shell jq -r '.version' < $(PKG))
 
 test_w:
-	$(DENO) --watch $(TEST)
+	$(DENO) --watch $(TEST) --clear
 
 test:
 	$(DENO) $(TEST)

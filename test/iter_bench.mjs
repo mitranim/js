@@ -171,9 +171,13 @@ t.bench(function bench_concat_array_3_ours() {l.reqArr(i.concat(itc.numArr, itc.
 t.bench(function bench_concat_spread_arr() {l.reqArr(concatSpreadArr(itc.numArr, itc.dictArr))})
 t.bench(function bench_concat_spread_values() {l.reqArr(concatSpreadValues(itc.numArr, itc.dictArr))})
 
-t.bench(function bench_append() {l.reqArr(i.append(itc.numArr, 10))})
-t.bench(function bench_append_spread_arr() {l.reqArr(appendSpreadArr(itc.numArr, 10))})
-t.bench(function bench_append_spread_values() {l.reqArr(appendSpreadValues(itc.numArr, 10))})
+t.bench(function bench_append_nil() {l.reqArr(i.append(undefined, 10))})
+t.bench(function bench_append_nil_spread_arr() {l.reqArr(appendSpreadArr(undefined, 10))})
+t.bench(function bench_append_nil_spread_values() {l.reqArr(appendSpreadValues(undefined, 10))})
+
+t.bench(function bench_append_big() {l.reqArr(i.append(itc.numArr, 10))})
+t.bench(function bench_append_big_spread_arr() {l.reqArr(appendSpreadArr(itc.numArr, 10))})
+t.bench(function bench_append_big_spread_values() {l.reqArr(appendSpreadValues(itc.numArr, 10))})
 
 t.bench(function bench_prepend() {l.reqArr(i.prepend(itc.numArr, 10))})
 t.bench(function bench_prepend_spread_arr() {l.reqArr(prependSpreadArr(itc.numArr, 10))})

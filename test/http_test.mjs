@@ -1,8 +1,6 @@
 import './internal_test_init.mjs'
-import * as iti from './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
-import * as s from '../str.mjs'
 import * as h from '../http.mjs'
 import * as u from '../url.mjs'
 
@@ -10,13 +8,9 @@ import * as u from '../url.mjs'
 
 const URL_LONG = `scheme://user:pass@host:123/path?key=val#hash`
 
-function mockInst(cls, ...val) {return Object.assign(Object.create(cls.prototype), ...val)}
-function mockHttpBui(...val) {return mockInst(h.HttpBui, ...val)}
-function mockReqBui(...val) {return mockInst(h.ReqBui, ...val)}
 function mockReq() {return new Request(URL_LONG, {method: h.POST})}
 function mockReqRou() {return new h.ReqRou(mockReq())}
 function simpleReq(url, meth) {return new Request(url, {method: meth})}
-function testHead(bui, exp) {t.eq(bui.heads(), exp)}
 
 /*
 Needs better support from our testing library.
@@ -30,16 +24,6 @@ function testRes(res, exp) {
   }
 }
 
-function testHttpBui(act, exp) {
-  t.inst(act, h.HttpBui)
-  t.own(act, exp)
-}
-
-function testReqBui(act, exp) {
-  t.inst(act, h.ReqBui)
-  t.own(act, exp)
-}
-
 function testStr(src, exp) {t.is(src.toString(), exp)}
 
 /* Test */
@@ -51,11 +35,35 @@ t.test(function test_POST() {t.is(h.POST, `POST`)})
 t.test(function test_PUT() {t.is(h.PUT, `PUT`)})
 t.test(function test_PATCH() {t.is(h.PATCH, `PATCH`)})
 t.test(function test_DELETE() {t.is(h.DELETE, `DELETE`)})
-t.test(function test_HEAD_CONTENT_TYPE() {t.is(h.HEAD_CONTENT_TYPE, `content-type`)})
-t.test(function test_TYPE_HTML() {t.is(h.TYPE_HTML, `text/html`)})
-t.test(function test_TYPE_JSON() {t.is(h.TYPE_JSON, `application/json`)})
-t.test(function test_TYPE_FORM() {t.is(h.TYPE_FORM, `application/x-www-form-urlencoded`)})
-t.test(function test_TYPE_MULTI() {t.is(h.TYPE_MULTI, `multipart/form-data`)})
+t.test(function test_HEADER_NAME_CONTENT_TYPE() {t.is(h.HEADER_NAME_CONTENT_TYPE, `content-type`)})
+t.test(function test_MIME_TYPE_HTML() {t.is(h.MIME_TYPE_HTML, `text/html`)})
+t.test(function test_MIME_TYPE_JSON() {t.is(h.MIME_TYPE_JSON, `application/json`)})
+t.test(function test_MIME_TYPE_FORM() {t.is(h.MIME_TYPE_FORM, `application/x-www-form-urlencoded`)})
+t.test(function test_MIME_TYPE_MULTI() {t.is(h.MIME_TYPE_MULTI, `multipart/form-data`)})
+
+await t.test(async function test_resOk() {
+  async function test(res, exp) {
+    t.is(await h.resOk(res), res)
+    t.is(await h.resOk(Promise.resolve(res)), res)
+    t.is(await res.text(), exp)
+  }
+
+  async function fail(res, exp) {
+    await t.throws(async () => h.resOk(res), h.ErrHttp, exp)
+  }
+
+  await test(new Response(), ``)
+  await test(new Response(undefined, {status: 200}), ``)
+  await test(new Response(`text`), `text`)
+  await test(new Response(`text`, {status: 200}), `text`)
+
+  await fail(new Response(undefined, {status: 301}), `unknown fetch error`)
+  await fail(new Response(undefined, {status: 400}), `unknown fetch error`)
+  await fail(new Response(undefined, {status: 500}), `unknown fetch error`)
+  await fail(new Response(`text`, {status: 301}), `text`)
+  await fail(new Response(`text`, {status: 400}), `text`)
+  await fail(new Response(`text`, {status: 500}), `text`)
+})
 
 t.test(function test_jsonDecode() {
   t.throws(() => h.jsonDecode(10), TypeError, `expected variant of isStr, got 10`)
@@ -86,21 +94,21 @@ t.test(function test_jsonEncode() {
   t.is(h.jsonEncode(``), `""`)
 })
 
-t.test(function test_HttpErr() {
-  t.throws(() => new h.HttpErr(10, 20), TypeError, `expected variant of isStr, got 10`)
-  t.throws(() => new h.HttpErr(``, `str`), TypeError, `expected variant of isNat, got "str"`)
-  t.throws(() => new h.HttpErr(``, 0, `str`), TypeError, `expected instance of Response, got "str"`)
+t.test(function test_ErrHttp() {
+  t.throws(() => new h.ErrHttp(10, 20), TypeError, `expected variant of isStr, got 10`)
+  t.throws(() => new h.ErrHttp(``, `str`), TypeError, `expected variant of isNat, got "str"`)
+  t.throws(() => new h.ErrHttp(``, 0, `str`), TypeError, `expected instance of Response, got "str"`)
 
-  t.is(new h.HttpErr(``, 0).name, `HttpErr`)
-  t.is(new h.HttpErr(`one`, 0).message, `one`)
-  t.is(new h.HttpErr(`one`, 20).message, `20: one`)
+  t.is(new h.ErrHttp(``, 0).name, `ErrHttp`)
+  t.is(new h.ErrHttp(`one`, 0).message, `one`)
+  t.is(new h.ErrHttp(`one`, 20).message, `20: one`)
 })
 
 t.test(function test_getStatus() {
   t.is(h.getStatus(), undefined)
   t.is(h.getStatus(Error()), undefined)
-  t.is(h.getStatus(new h.HttpErr(``, 0)), 0)
-  t.is(h.getStatus(new h.HttpErr(``, 400)), 400)
+  t.is(h.getStatus(new h.ErrHttp(``, 0)), 0)
+  t.is(h.getStatus(new h.ErrHttp(``, 400)), 400)
   t.is(h.getStatus({}), undefined)
   t.is(h.getStatus({status: 0}), 0)
   t.is(h.getStatus({status: 400}), 400)
@@ -120,509 +128,12 @@ t.test(function test_hasStatus() {
     test(Error())
   })
 
-  t.no(h.hasStatus(new h.HttpErr(``, 0), 400))
+  t.no(h.hasStatus(new h.ErrHttp(``, 0), 400))
   t.no(h.hasStatus(new Response(``, {status: 200}), 400))
 
-  t.ok(h.hasStatus(new h.HttpErr(``, 400), 400))
+  t.ok(h.hasStatus(new h.ErrHttp(``, 400), 400))
   t.ok(h.hasStatus(new Response(``, {status: 400}), 400))
 })
-
-t.test(function test_HttpBui() {
-  // Constructor just calls `.mut` which is tested below.
-  t.test(function test_constructor() {
-    testHttpBui(new h.HttpBui(), {})
-    testHttpBui(new h.HttpBui({one: 10, two: 20}), {one: 10, two: 20})
-  })
-
-  t.test(function test_mut() {
-    t.test(function test_same_reference() {
-      function test(src, val) {
-        const ref = new h.HttpBui(src)
-        t.is(ref.mut(val), ref)
-      }
-
-      test(undefined, undefined)
-      test(undefined, {two: 20})
-      test({one: 10}, undefined)
-      test({one: 10}, {two: 20})
-    })
-
-    t.test(function test_headers() {
-      function test(src, add, exp) {
-        if (add.headers) Object.freeze(add.headers)
-
-        const ref = new h.HttpBui(src)
-        const prev = ref.headers
-
-        ref.mut(add)
-        const next = ref.headers
-
-        t.eq(next, exp)
-        if (prev) t.is(prev, next)
-        if (next) {
-          t.isnt(ref.headers, src.headers)
-          t.isnt(ref.headers, add.headers)
-          t.isnt(ref.headers, exp)
-        }
-      }
-
-      // Delegates to `.headMut`, which is tested separately.
-      test({}, {}, undefined)
-      test({headers: {}}, {}, undefined)
-      test({headers: {one: `10`}}, {}, {one: `10`})
-      test({headers: {one: `10`, two: `20`}}, {}, {one: `10`, two: `20`})
-      test({}, {headers: {one: `10`, two: `20`}}, {one: `10`, two: `20`})
-      test({headers: {one: `10`}}, {headers: {two: `20`}}, {one: `10`, two: `20`})
-      test({headers: {one: `10`}}, {headers: {one: undefined}}, {one: `10`})
-      test({headers: {one: `10`}}, {headers: {one: `20`}}, {one: `10, 20`})
-    })
-
-    testHttpBui(
-      new h.HttpBui().mut({one: 10, two: 20}),
-      {one: 10, two: 20},
-    )
-
-    testHttpBui(
-      new h.HttpBui({one: 10}).mut({two: 20}),
-      {one: 10, two: 20},
-    )
-
-    testHttpBui(
-      new h.HttpBui({one: 10, two: 20}).mut({two: 30, three: 40}),
-      {one: 10, two: 30, three: 40},
-    )
-
-    testHttpBui(
-      new h.HttpBui({one: 10, headers: {two: `20`}}).mut({three: 30, headers: {four: `40`}}),
-      {one: 10, three: 30, headers: {two: `20`, four: `40`}},
-    )
-  })
-
-  // Delegates to `.headSet` which is tested separately.
-  t.test(function test_type() {
-    testHttpBui(new h.HttpBui().type(), {})
-    testHttpBui(new h.HttpBui().type(`one`), {headers: {'content-type': `one`}})
-    testHttpBui(new h.HttpBui().type(`one`).type(), {headers: {}})
-  })
-
-  t.test(function test_types() {
-    testHttpBui(new h.HttpBui().typeText(), {headers: {'content-type': `text/plain`}})
-    testHttpBui(new h.HttpBui().typeText().type(), {headers: {}})
-
-    testHttpBui(new h.HttpBui().typeHtml(), {headers: {'content-type': `text/html`}})
-    testHttpBui(new h.HttpBui().typeHtml().type(), {headers: {}})
-
-    testHttpBui(new h.HttpBui().typeJson(), {headers: {'content-type': `application/json`}})
-    testHttpBui(new h.HttpBui().typeJson().type(), {headers: {}})
-
-    testHttpBui(new h.HttpBui().typeForm(), {headers: {'content-type': `application/x-www-form-urlencoded`}})
-    testHttpBui(new h.HttpBui().typeForm().type(), {headers: {}})
-
-    testHttpBui(new h.HttpBui().typeMulti(), {headers: {'content-type': `multipart/form-data`}})
-    testHttpBui(new h.HttpBui().typeMulti().type(), {headers: {}})
-  })
-
-  t.test(function test_heads() {
-    const ref = new h.HttpBui()
-    t.is(ref.heads(), ref.heads())
-    t.is(ref.heads(), ref.headers)
-    t.is(ref.headers, ref.heads())
-    t.is(ref.headers, ref.headers)
-    t.eq(ref.headers, {})
-    t.is(Object.getPrototypeOf(ref.headers), null)
-  })
-
-  t.test(function test_headHas() {
-    t.throws(() => new h.HttpBui().headHas(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headHas(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-
-    function test(src, key, exp) {t.is(mockHttpBui({headers: src}).headHas(key), exp)}
-    function none(src, key) {test(src, key, false)}
-    function some(src, key) {test(src, key, true)}
-
-    none(undefined, `one`)
-    none({}, `one`)
-    none({one: ``}, `two`)
-    none({one: ``, two: ``}, `three`)
-
-    some({one: ``}, `one`)
-    some({one: ``, two: ``}, `one`)
-    some({one: ``, two: ``}, `two`)
-  })
-
-  t.test(function test_headGet() {
-    t.throws(() => new h.HttpBui().headGet(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headGet(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-
-    function test(src, key, exp) {t.is(mockHttpBui({headers: src}).headGet(key), exp)}
-    function none(src, key) {test(src, key, ``)}
-
-    none(undefined, `one`)
-    none({}, `one`)
-    none({one: ``}, `one`)
-    none({one: ``}, `two`)
-    none({one: ``, two: ``}, `one`)
-    none({one: ``, two: ``}, `two`)
-    none({one: ``, two: ``}, `three`)
-    none({one: `two`, three: `four`}, `five`)
-
-    test({one: `two`}, `one`, `two`)
-    test({one: `two`, three: `four`}, `one`, `two`)
-    test({one: `two`, three: `four`}, `three`, `four`)
-  })
-
-  t.test(function test_headSet() {
-    t.throws(() => new h.HttpBui().headSet(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headSet(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => new h.HttpBui().headSet(`one`, []), TypeError, `unable to convert [] to string`)
-
-    testHead(new h.HttpBui().headSet(`one`), {})
-    testHead(new h.HttpBui().headSet(`one`, ``), {one: ``})
-    testHead(new h.HttpBui().headSet(`one`, ``).headSet(`one`), {})
-    testHead(new h.HttpBui().headSet(`one`, `two`), {one: `two`})
-    testHead(new h.HttpBui().headSet(`one`, `two`).headSet(`one`), {})
-    testHead(new h.HttpBui().headSet(`one`, `two`).headSet(`three`, `four`), {one: `two`, three: `four`})
-    testHead(new h.HttpBui().headSet(`one`, `two`).headSet(`three`, `four`).headSet(`one`), {three: `four`})
-
-    testHead(new h.HttpBui().headSet(`one`, 10), {one: `10`})
-    testHead(new h.HttpBui().headSet(`location`, u.url(URL_LONG)), {location: URL_LONG})
-  })
-
-  t.test(function test_headSetAll() {
-    t.throws(() => new h.HttpBui().headSetAll(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headSetAll(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => new h.HttpBui().headSetAll(`one`, {}), TypeError, `expected variant of isArr, got {}`)
-
-    testHead(new h.HttpBui().headSetAll(`one`), {})
-    testHead(new h.HttpBui().headSetAll(`one`, [``]), {one: ``})
-    testHead(new h.HttpBui().headSetAll(`one`, [``, ``, ``]), {one: ``})
-    testHead(new h.HttpBui().headSetAll(`one`, [``, undefined, ``]), {one: ``})
-    testHead(new h.HttpBui().headSetAll(`one`, [`two`]), {one: `two`})
-    testHead(new h.HttpBui().headSetAll(`one`, [`two`, `three`]), {one: `two, three`})
-    testHead(new h.HttpBui().headSetAll(`one`, [`two`, ``, `three`]), {one: `two, three`})
-    testHead(new h.HttpBui().headSetAll(`one`, [`two`]).headSetAll(`one`), {})
-    testHead(new h.HttpBui().headSetAll(`one`, [`two`]).headSetAll(`one`, []), {})
-  })
-
-  t.test(function test_headSetAny() {
-    t.throws(() => new h.HttpBui().headSetAny(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headSetAny(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => new h.HttpBui().headSetAny(`one`, {}), TypeError, `unable to convert {} to string`)
-
-    testHead(new h.HttpBui().headSetAny(`one`), {})
-    testHead(new h.HttpBui().headSetAny(`one`, []), {})
-    testHead(new h.HttpBui().headSetAny(`one`, ``), {one: ``})
-    testHead(new h.HttpBui().headSetAny(`one`, [`two`]), {one: `two`})
-    testHead(new h.HttpBui().headSetAny(`one`, [`two`, `three`]), {one: `two, three`})
-    testHead(new h.HttpBui().headSetAny(`one`, [`two`, `three`]).headSetAny(`one`, `four`), {one: `four`})
-  })
-
-  t.test(function test_headSetOpt() {
-    t.throws(() => new h.HttpBui().headSetOpt(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headSetOpt(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => new h.HttpBui().headSetOpt(`one`, []), TypeError, `unable to convert [] to string`)
-
-    testHead(new h.HttpBui().headSetOpt(`one`, ``), {})
-    testHead(new h.HttpBui().headSetOpt(`one`, `two`), {one: `two`})
-    testHead(new h.HttpBui().headSet(`one`, `two`).headSetOpt(`one`, undefined), {one: `two`})
-    testHead(new h.HttpBui().headSet(`one`, `two`).headSetOpt(`one`, ``), {one: `two`})
-    testHead(new h.HttpBui().headSet(`one`, `two`).headSetOpt(`one`, `three`), {one: `two`})
-  })
-
-  t.test(function test_headAppend() {
-    t.throws(() => new h.HttpBui().headAppend(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headAppend(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => new h.HttpBui().headAppend(`one`, []), TypeError, `unable to convert [] to string`)
-
-    testHead(new h.HttpBui().headAppend(`one`), {})
-    testHead(new h.HttpBui().headAppend(`one`, ``), {one: ``})
-    testHead(new h.HttpBui().headAppend(`one`, ``).headAppend(`one`, ``), {one: ``})
-    testHead(new h.HttpBui().headAppend(`one`, `two`).headAppend(`one`, ``), {one: `two`})
-    testHead(new h.HttpBui().headAppend(`one`, ``).headAppend(`one`, `two`), {one: `two`})
-    testHead(new h.HttpBui().headAppend(`one`, `two`).headAppend(`one`, `three`), {one: `two, three`})
-  })
-
-  t.test(function test_headAppendAll() {
-    t.throws(() => new h.HttpBui().headAppendAll(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headAppendAll(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => new h.HttpBui().headAppendAll(`one`, {}), TypeError, `expected variant of isArr, got {}`)
-
-    testHead(new h.HttpBui().headAppendAll(`one`), {})
-    testHead(new h.HttpBui().headAppendAll(`one`, [``]), {one: ``})
-    testHead(new h.HttpBui().headAppendAll(`one`, [``, ``, ``]), {one: ``})
-    testHead(new h.HttpBui().headAppendAll(`one`, [``, undefined, ``]), {one: ``})
-    testHead(new h.HttpBui().headAppendAll(`one`, [`two`]), {one: `two`})
-    testHead(new h.HttpBui().headAppendAll(`one`, [`two`, `three`]), {one: `two, three`})
-    testHead(new h.HttpBui().headAppendAll(`one`, [`two`, ``, `three`]), {one: `two, three`})
-    testHead(new h.HttpBui().headAppendAll(`one`, [`two`]).headAppendAll(`one`), {one: `two`})
-    testHead(new h.HttpBui().headAppendAll(`one`, [`two`]).headAppendAll(`one`, []), {one: `two`})
-    testHead(new h.HttpBui().headAppendAll(`one`, [`two`]).headAppendAll(`one`, [`three`]), {one: `two, three`})
-  })
-
-  t.test(function test_headAppendAny() {
-    t.throws(() => new h.HttpBui().headAppendAny(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headAppendAny(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-    t.throws(() => new h.HttpBui().headAppendAny(`one`, {}), TypeError, `unable to convert {} to string`)
-
-    testHead(new h.HttpBui().headAppendAny(`one`), {})
-    testHead(new h.HttpBui().headAppendAny(`one`, []), {})
-    testHead(new h.HttpBui().headAppendAny(`one`, ``), {one: ``})
-    testHead(new h.HttpBui().headAppendAny(`one`, [`two`]), {one: `two`})
-    testHead(new h.HttpBui().headAppendAny(`one`, [`two`, `three`]), {one: `two, three`})
-    testHead(new h.HttpBui().headAppendAny(`one`, [`two`, `three`]).headAppendAny(`one`, `four`), {one: `two, three, four`})
-  })
-
-  t.test(function test_headDelete() {
-    t.throws(() => new h.HttpBui().headDelete(undefined, ``), TypeError, `expected variant of isHeadKey, got undefined`)
-    t.throws(() => new h.HttpBui().headDelete(10, ``), TypeError, `expected variant of isHeadKey, got 10`)
-
-    function test(src, key, exp) {
-      t.eq(mockHttpBui({headers: src}).headDelete(key).headers, exp)
-    }
-
-    test(undefined, `one`, undefined)
-    test({}, `one`, {})
-    test({one: `two`}, `one`, {})
-    test({one: `two`, three: `four`}, `one`, {three: `four`})
-  })
-
-  t.test(function test_headMut() {
-    t.throws(() => new h.HttpBui().headMut(10), TypeError, `unable to convert 10 to head`)
-    t.throws(() => new h.HttpBui().headMut(`str`), TypeError, `unable to convert "str" to head`)
-
-    function test(src, add, exp) {
-      const ref = mockHttpBui({headers: src}).headMut(add)
-      t.eq(ref.headers, exp)
-      if (ref.headers) t.isnt(ref.headers, exp)
-    }
-
-    test(undefined, undefined, undefined)
-    test(undefined, {}, undefined)
-    test(undefined, [], undefined)
-    test(undefined, new Headers(), undefined)
-    test(undefined, s.strMap(), undefined)
-
-    test({}, undefined, {})
-    test({}, {}, {})
-    test({}, [], {})
-    test({}, new Headers(), {})
-    test({}, s.strMap(), {})
-
-    test({}, {one: `two`}, {one: `two`})
-    test({}, {one: `two`, three: [`four`, `five`]}, {one: `two`, three: `four, five`})
-    test({one: `two`}, {three: `four`}, {one: `two`, three: `four`})
-    test({one: `two`}, {one: `three`}, {one: `two, three`})
-    test({one: `two`}, {one: [`three`, `four`]}, {one: `two, three, four`})
-
-    test({}, [[`one`, `two`]], {one: `two`})
-    test({}, [[`one`, `two`], [`three`, [`four`, `five`]]], {one: `two`, three: `four, five`})
-    test({one: `two`}, [[`three`, `four`]], {one: `two`, three: `four`})
-    test({one: `two`}, [[`one`, `three`]], {one: `two, three`})
-    test({one: `two`}, [[`one`, [`three`, `four`]]], {one: `two, three, four`})
-
-    test({}, new Headers([[`one`, `two`]]), {one: `two`})
-    test({}, new Headers([[`one`, `two`], [`three`, `four`], [`three`, `five`]]), {one: `two`, three: `four, five`})
-    test({one: `two`}, new Headers([[`three`, `four`]]), {one: `two`, three: `four`})
-    test({one: `two`}, new Headers([[`one`, `three`]]), {one: `two, three`})
-    test({one: `two`}, new Headers([[`one`, `three`], [`one`, `four`]]), {one: `two, three, four`})
-
-    test({}, s.strMap({one: `two`}), {one: `two`})
-    test({}, s.strMap({one: `two`, three: [`four`, `five`]}), {one: `two`, three: `four, five`})
-    test({one: `two`}, s.strMap({three: `four`}), {one: `two`, three: `four`})
-    test({one: `two`}, s.strMap({one: `three`}), {one: `two, three`})
-    test({one: `two`}, s.strMap({one: [`three`, `four`]}), {one: `two, three, four`})
-  })
-})
-
-t.test(function test_reqBui() {
-  l.reqInst(h.reqBui(), h.ReqBui)
-})
-
-/*
-TODO:
-
-  * Test fetching from a local server in the same process.
-  * Test instantiation of responses.
-
-In the meantime, those features are tested in apps.
-*/
-await t.test(async function test_ReqBui() {
-  // Same as `HttpBui`. Just a sanity check.
-  t.test(function test_constructor() {
-    testReqBui(new h.ReqBui(), {})
-    testReqBui(new h.ReqBui({one: 10, two: 20}), {one: 10, two: 20})
-  })
-
-  t.test(function test_meth() {
-    testReqBui(h.reqBui().meth(), {method: undefined})
-    testReqBui(h.reqBui().meth(``), {method: undefined})
-    testReqBui(h.reqBui().meth(`GET`), {method: `GET`})
-    testReqBui(h.reqBui().meth(`POST`), {method: `POST`})
-    testReqBui(h.reqBui().meth(`GET`).meth(`POST`), {method: `POST`})
-    testReqBui(h.reqBui().meth(`GET`).meth(), {method: undefined})
-    testReqBui(h.reqBui().meth(`GET`).meth(``), {method: undefined})
-    testReqBui(h.reqBui().meth().meth(`POST`), {method: `POST`})
-  })
-
-  t.test(function test_methods() {
-    testReqBui(h.reqBui().get(), {method: `GET`})
-    testReqBui(h.reqBui({method: `HEAD`}).get(), {method: `GET`})
-
-    testReqBui(h.reqBui().post(), {method: `POST`})
-    testReqBui(h.reqBui({method: `HEAD`}).post(), {method: `POST`})
-
-    testReqBui(h.reqBui().put(), {method: `PUT`})
-    testReqBui(h.reqBui({method: `HEAD`}).put(), {method: `PUT`})
-
-    testReqBui(h.reqBui().patch(), {method: `PATCH`})
-    testReqBui(h.reqBui({method: `HEAD`}).patch(), {method: `PATCH`})
-
-    testReqBui(h.reqBui().delete(), {method: `DELETE`})
-    testReqBui(h.reqBui({method: `HEAD`}).delete(), {method: `DELETE`})
-  })
-
-  t.test(function test_to() {
-    t.throws(() => h.reqBui().to({}), TypeError, `expected variant of isScalar, got {}`)
-
-    testReqBui(h.reqBui().to(), {url: undefined})
-    testReqBui(h.reqBui().to(new URL(URL_LONG)), {url: new URL(URL_LONG)})
-    testReqBui(h.reqBui().to(URL_LONG), {url: URL_LONG})
-    testReqBui(h.reqBui().to().to(URL_LONG), {url: URL_LONG})
-    testReqBui(h.reqBui().to(URL_LONG).to(), {url: undefined})
-  })
-
-  t.test(function test_sig() {
-    t.throws(() => h.reqBui().sig(`str`), TypeError, `expected instance of AbortSignal, got "str"`)
-
-    const sig = new AbortController().signal
-
-    testReqBui(h.reqBui().sig(), {signal: undefined})
-    testReqBui(h.reqBui().sig(sig), {signal: sig})
-    testReqBui(h.reqBui().sig(sig).sig(), {signal: undefined})
-    t.is(h.reqBui().sig(sig).signal, sig)
-  })
-
-  t.test(function test_inp() {
-    t.throws(() => h.reqBui().inp({}), TypeError, `expected variant of [isScalar, isUint8Array, isReadableStream, isFormData], got {}`)
-
-    testReqBui(h.reqBui().inp(), {body: undefined})
-    testReqBui(h.reqBui().inp(`str`), {body: `str`})
-    testReqBui(h.reqBui().inp(`str`).inp(), {body: undefined})
-    testReqBui(h.reqBui().inp(10), {body: 10})
-    testReqBui(h.reqBui().inp(new Uint8Array()), {body: new Uint8Array()})
-  })
-
-  t.test(function test_json() {
-    testReqBui(h.reqBui().json(), {body: `null`, headers: {'content-type': `application/json`}})
-    testReqBui(h.reqBui().json(10), {body: `10`, headers: {'content-type': `application/json`}})
-    testReqBui(h.reqBui().json(10).json(), {body: `null`, headers: {'content-type': `application/json`}})
-  })
-
-  // Incomplete.
-  await t.test(async function test_req() {
-    await t.throws(
-      async () => eqReq(
-        h.reqBui().to(`https://example.com`).req(),
-        new Request(`https://example.com/one`),
-      ),
-      t.AssertError,
-      `actual:
-
-  https://example.com/
-
-expected:
-
-  https://example.com/one
-
-info:
-
-  request URL`,
-    )
-
-    await eqReq(
-      h.reqBui().to(`https://example.com`).req(),
-      new Request(`https://example.com`),
-    )
-
-    await eqReq(
-      h.reqBui().to(`https://example.com`).post().req(),
-      new Request(`https://example.com`, {method: `POST`}),
-    )
-
-    await eqReq(
-      h.reqBui().to(`https://example.com`).post().json().req(),
-      new Request(`https://example.com`, {
-        method: `POST`,
-        headers: {'content-type': `application/json`},
-        body: `null`,
-      }),
-    )
-  })
-
-  t.test(function test_chain() {
-    t.eq(
-      h.reqBui()
-      .to(`https://example.com`)
-      .post()
-      .json()
-      .headSet(`x-session-id`, `a4c187abf0ba4a5f94f50ed991da6225`),
-
-      mockReqBui({
-        url: `https://example.com`,
-        method: h.POST,
-        body: `null`,
-        headers: {
-          [h.HEAD_CONTENT_TYPE]: h.TYPE_JSON,
-          'x-session-id': `a4c187abf0ba4a5f94f50ed991da6225`,
-        },
-      }),
-    )
-  })
-})
-
-async function eqReq(one, two) {
-  t.is(one.url, two.url, `request URL`)
-  t.is(one.method, two.method, `request method`)
-  t.is(one.mode, two.mode, `request mode`)
-  t.eq(one.headers, two.headers, `request headers`)
-  t.is((await iti.readFullOpt(one.body)), (await iti.readFullOpt(two.body)), `request body`)
-}
-
-/*
-TODO:
-
-  * Test fetching from a local server in the same process.
-  * Test instantiation of responses by `ReqBui`.
-  * Test proxying of read-only fields that can't be instantiated manually.
-  * Test various async "ok" methods.
-*/
-await t.test(async function test_Res() {
-  await t.test(async function test_constructor() {
-    await t.test(async function test_from_Response() {
-      const src = new Response(`hello world`, {status: 400})
-      const tar = new h.Res(src)
-      await testResSimple(tar, src)
-    })
-
-    await t.test(async function test_from_body_and_Response() {
-      const src = new Response(`goodbye world`, {status: 400})
-      const res = new h.Res(`hello world`, src)
-      await testResSimple(res, src)
-    })
-
-    await t.test(async function test_from_body_and_init() {
-      const res = new h.Res(`hello world`, {status: 400})
-      await testResSimple(res, res)
-    })
-  })
-})
-
-async function testResSimple(res, src) {
-  await iti.testStream(res.body, `hello world`)
-  t.is(res.res, src)
-  t.is(res.status, 400)
-  t.no(res.ok)
-}
 
 t.test(function test_Rou() {
   t.test(function test_constructor() {
@@ -688,16 +199,16 @@ t.test(function test_ReqRou() {
     t.own(rou, {req, url: u.url(URL_LONG), groups: undefined})
   })
 
-  t.test(function test_meth() {
+  t.test(function test_method() {
     const rou = mockReqRou()
 
-    t.throws(() => rou.meth(), TypeError, `expected variant of isMethod, got undefined`)
-    t.throws(() => rou.meth({}), TypeError, `expected variant of isMethod, got {}`)
+    t.throws(() => rou.method(), TypeError, `expected variant of isMethod, got undefined`)
+    t.throws(() => rou.method({}), TypeError, `expected variant of isMethod, got {}`)
 
-    t.no(rou.meth(h.GET))
-    t.no(rou.meth(h.HEAD))
+    t.no(rou.method(h.GET))
+    t.no(rou.method(h.HEAD))
 
-    t.ok(rou.meth(h.POST))
+    t.ok(rou.method(h.POST))
   })
 
   t.test(function test_preflight() {

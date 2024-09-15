@@ -501,6 +501,8 @@ function reqNamedFun(fun, type) {
   return fun
 }
 
+export {ok as true}
+
 // Asserts that the given value is exactly `true`. Otherwise throws `AssertError`.
 export function ok(val, ...info) {
   if (val === true) return
@@ -523,6 +525,8 @@ function showErr(err) {return l.isInst(err, Error) ? err.stack : l.show(err)}
 function showInfo(val) {return l.isScalar(val) ? l.render(val) : l.show(val)}
 function showSimple(val) {return l.isStr(val) ? val : l.show(val)}
 function indent(val) {return `  ` + l.reqStr(val)}
+
+export {no as false}
 
 // Asserts that the given value is exactly `false`. Otherwise throws `AssertError`.
 export function no(val, ...info) {
@@ -847,7 +851,7 @@ function maybeValueOf(val) {
 function pos(val) {return Math.max(0, l.laxInt(val))}
 
 function toFilter(src) {
-  if (l.isNil(src)) return undefined
+  if (l.isNil(src)) return src
   if (l.isStr(src)) return src.split(`/`).map(toReg)
   if (l.isReg(src)) return [src]
   if (l.isArr(src)) return src.map(toReg)

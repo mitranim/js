@@ -22,10 +22,18 @@ class IterSimple extends l.Emp {
   [Symbol.iterator]() {throw Error(`unreachable`)}
 }
 
+/*
+Word of warning: class prototypes are never null and never completely empty.
+It's possible to use symbolic and private methods to avoid collision with
+properties, but the prototype always has `.constructor`.
+*/
+class EmpSub extends l.Emp {}
+
 const emptyStr = ``
 const emptyArr = []
 const emptyDict = {}
 const emptyNpo = Object.create(null)
+const emptyEmpSub = new EmpSub()
 const emptyGen = gen()
 const emptyArgs = function args() {return arguments}()
 const emptySet = new Set()
@@ -47,13 +55,6 @@ class Shallow {
 }
 
 const shallow = new Shallow()
-
-/*
-Word of warning: class prototypes are never null and never completely empty.
-It's possible to use symbolic and private methods to avoid collision with
-properties, but the prototype always has `.constructor`.
-*/
-class EmpSub extends l.Emp {}
 
 class EqAlways extends l.Emp {eq() {return true}}
 const someEqAlways0 = new EqAlways()
@@ -102,6 +103,7 @@ const miscVals = [
   emptyArr,
   emptyDict,
   emptyNpo,
+  emptyEmpSub,
   emptyGen,
   emptyArgs,
   emptySet,
@@ -299,8 +301,9 @@ t.bench(function bench_isDict_miss_prim() {l.nop(l.isDict(`str`))})
 t.bench(function bench_isDict_miss_fun() {l.nop(l.isDict(l.isDict))})
 t.bench(function bench_isDict_miss_arr() {l.nop(l.isDict(emptyArr))})
 t.bench(function bench_isDict_miss_obj() {l.nop(l.isDict(shallow))})
-t.bench(function bench_isDict_hit_npo() {l.nop(l.isDict(emptyNpo))})
 t.bench(function bench_isDict_hit_dict() {l.nop(l.isDict(emptyDict))})
+t.bench(function bench_isDict_hit_npo() {l.nop(l.isDict(emptyNpo))})
+t.bench(function bench_isDict_hit_emp_sub() {l.nop(l.isDict(emptyEmpSub))})
 
 miscVals.forEach(l.isStruct)
 t.bench(function bench_isStruct_nil() {l.nop(l.isStruct())})
@@ -469,29 +472,47 @@ t.bench(function bench_object_inline() {l.nop({
   four: 40,
 })})
 
-t.bench(function bench_delete_unchecked_miss_npo_prealloc() {delete emptyNpo.one})
 t.bench(function bench_delete_unchecked_miss_dict_prealloc() {delete emptyDict.one})
-t.bench(function bench_delete_unchecked_miss_npo_new() {delete Object.create(null).one})
+t.bench(function bench_delete_unchecked_miss_npo_prealloc() {delete emptyNpo.one})
+t.bench(function bench_delete_unchecked_miss_emp_sub_prealloc() {delete emptyEmpSub.one})
 t.bench(function bench_delete_unchecked_miss_dict_new() {delete {}.one})
+t.bench(function bench_delete_unchecked_miss_npo_new() {delete Object.create(null).one})
+t.bench(function bench_delete_unchecked_miss_emp_sub_new() {delete new EmpSub().one})
+t.bench(function bench_delete_unchecked_hit_dict_new() {delete {one: 10}.one})
 t.bench(function bench_delete_unchecked_hit_npo_new() {
   const tar = Object.create(null)
   tar.one = 10
   delete tar.one
 })
-t.bench(function bench_delete_unchecked_hit_dict_new() {delete {one: 10}.one})
+t.bench(function bench_delete_unchecked_hit_emp_sub_new() {
+  const tar = new EmpSub()
+  tar.one = 10
+  delete tar.one
+})
 
+t.bench(function bench_delete_checked_miss_dict_prealloc() {
+  if (`one` in emptyDict) delete emptyDict.one
+})
 t.bench(function bench_delete_checked_miss_npo_prealloc() {
   if (`one` in emptyNpo) delete emptyNpo.one
 })
-t.bench(function bench_delete_checked_miss_dict_prealloc() {
-  if (`one` in emptyDict) delete emptyDict.one
+t.bench(function bench_delete_checked_miss_emp_sub_prealloc() {
+  if (`one` in emptyEmpSub) delete emptyEmpSub.one
+})
+t.bench(function bench_delete_checked_miss_dict_new() {
+  const tar = {}
+  if (`one` in tar) delete tar.one
 })
 t.bench(function bench_delete_checked_miss_npo_new() {
   const tar = Object.create(null)
   if (`one` in tar) delete tar.one
 })
-t.bench(function bench_delete_checked_miss_dict_new() {
-  const tar = {}
+t.bench(function bench_delete_checked_miss_emp_sub_new() {
+  const tar = new EmpSub()
+  if (`one` in tar) delete tar.one
+})
+t.bench(function bench_delete_checked_hit_dict_new() {
+  const tar = {one: 10}
   if (`one` in tar) delete tar.one
 })
 t.bench(function bench_delete_checked_hit_npo_new() {
@@ -499,8 +520,9 @@ t.bench(function bench_delete_checked_hit_npo_new() {
   tar.one = 10
   if (`one` in tar) delete tar.one
 })
-t.bench(function bench_delete_checked_hit_dict_new() {
-  const tar = {one: 10}
+t.bench(function bench_delete_checked_hit_emp_sub_new() {
+  const tar = new EmpSub()
+  tar.one = 10
   if (`one` in tar) delete tar.one
 })
 

@@ -200,11 +200,11 @@ export class HttpFileStream extends io.FileStream {
 
   setType(head) {
     const val = this.type()
-    if (val) head.set(h.HEAD_CONTENT_TYPE, val)
+    if (val) head.set(h.HEADER_NAME_CONTENT_TYPE, val)
   }
 
   setTypeOpt(head) {
-    if (!head.get(h.HEAD_CONTENT_TYPE)) this.setType(head)
+    if (!head.get(h.HEADER_NAME_CONTENT_TYPE)) this.setType(head)
   }
 
   static async res(path, opt) {
@@ -251,7 +251,8 @@ export class Srv extends l.Emp {
 
   This method must ALWAYS be async. Our error handling assumes that we can pass
   the resulting promise to `event.respondWith` without having to handle
-  synchonous exceptions resulting from the call.
+  synchronous exceptions resulting from the call in cases where the response
+  might be malformed.
   */
   async response(req) {
     try {return await this.res(req)}
@@ -288,9 +289,7 @@ export class Srv extends l.Emp {
   }
 }
 
-export function errRes(err) {
-  return new Response(l.show(err), {status: 500})
-}
+export function errRes(err) {return new Response(l.show(err), {status: 500})}
 
 // Short for "filter".
 export class Fil extends l.Emp {

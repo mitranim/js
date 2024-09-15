@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.58/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.59/url.mjs'
 ```
 
 Example parsing:
@@ -443,6 +443,7 @@ The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
   * [`const RE_ORIGIN`](../url.mjs#L19)
   * [`const RE_PATHNAME`](../url.mjs#L20)
   * [`const RE_HASH`](../url.mjs#L21)
+  * [`function toUrlOpt`](../url.mjs#L28)
   * [`function loc`](../url.mjs#L346)
   * [`function toLoc`](../url.mjs#L347)
   * [`class Loc`](../url.mjs#L357)

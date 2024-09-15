@@ -25,7 +25,7 @@ export function toQuery(val) {return l.toInst(val, Query)}
 
 export function url(val) {return new Url(val)}
 export function toUrl(val) {return l.toInst(val, Url)}
-
+export function toUrlOpt(val) {return l.toInstOpt(val, Url)}
 export function urlJoin(val, ...vals) {return Url.join(val, ...vals)}
 
 export class Query extends s.StrMap {

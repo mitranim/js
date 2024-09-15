@@ -341,7 +341,7 @@ export function date(val) {
 }
 
 export function dateOpt(val) {
-  if (l.isNil(val)) return undefined
+  if (l.isNil(val)) return val
   return l.toInst(val, DateTime).onlyValid()
 }
 

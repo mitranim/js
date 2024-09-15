@@ -1,4 +1,3 @@
-import '../cli_emptty.mjs'
 import * as l from '../lang.mjs'
 import * as cl from '../cli.mjs'
 import * as t from '../test.mjs'
@@ -11,6 +10,9 @@ export const verb = cli.boolOpt(`verb`)
 export const more = cli.boolOpt(`more`)
 export const prec = cli.boolOpt(`prec`)
 export const once = cli.boolOpt(`once`)
+export const clear = cli.boolOpt(`clear`)
+
+if (clear) cl.emptty()
 
 t.conf.setTestFilter(run)
 t.conf.setBenchFilter(run)

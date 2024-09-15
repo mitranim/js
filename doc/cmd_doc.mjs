@@ -20,7 +20,6 @@ const FEATS = [
   [`coll`, `extended versions of JS data structure classes, with better APIs.`],
   [`url`, `better URL implementation.`],
   [`time`, `tools for datetimes and intervals.`],
-  [`http`, `shortcuts for the native fetch/Request/Response APIs.`],
   [`path`, `various functions for working with FS paths.`],
   [`dom`, `shortcuts for working with the DOM.`],
   [`dom_shim`, `lightweight and performant shim for DOM nodes and elements.`],
@@ -30,6 +29,10 @@ const FEATS = [
   [`prax`, `simple system for rendering DOM elements. React-inspired syntax, better semantics and performance.`],
   [`obs`, `observables via proxies.`],
   [`obs_dom`, `automatic reactivity for custom DOM elements.`],
+  [`http`, `shortcuts for the fetch/Response APIs, URL routing, cookie decoding/encoding.`],
+  [`http_deno`, `tools for HTTP servers running in Deno.`],
+  [`http_srv`, `streaming and broadcasting tools for generic HTTP servers.`],
+  [`live_deno`, `tools for live-reloading in development.`],
   [`cli`, `essential tools for CLI apps.`],
   [`test`, `tools for testing and benchmarking.`],
 ]

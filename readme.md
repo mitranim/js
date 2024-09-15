@@ -45,14 +45,14 @@ Alternatives that suck:
 Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import many core modules at once:
 
 ```js
-import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.58/all.mjs'
+import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.59/all.mjs'
 ```
 
 Otherwise, import specific modules you need. See the list below. Example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.58/lang.mjs'
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.58/str.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.59/lang.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.59/str.mjs'
 ```
 
 Also available on NPM:
@@ -70,7 +70,6 @@ npm i -E @mitranim/js
   * [`coll`](docs/coll_readme.md): extended versions of JS data structure classes, with better APIs.
   * [`url`](docs/url_readme.md): better URL implementation.
   * [`time`](docs/time_readme.md): tools for datetimes and intervals.
-  * [`http`](docs/http_readme.md): shortcuts for the native fetch/Request/Response APIs.
   * [`path`](docs/path_readme.md): various functions for working with FS paths.
   * [`dom`](docs/dom_readme.md): shortcuts for working with the DOM.
   * [`dom_shim`](docs/dom_shim_readme.md): lightweight and performant shim for DOM nodes and elements.
@@ -80,6 +79,10 @@ npm i -E @mitranim/js
   * [`prax`](docs/prax_readme.md): simple system for rendering DOM elements. React-inspired syntax, better semantics and performance.
   * [`obs`](docs/obs_readme.md): observables via proxies.
   * [`obs_dom`](docs/obs_dom_readme.md): automatic reactivity for custom DOM elements.
+  * [`http`](docs/http_readme.md): shortcuts for the fetch/Response APIs, URL routing, cookie decoding/encoding.
+  * [`http_deno`](docs/http_deno_readme.md): tools for HTTP servers running in Deno.
+  * [`http_srv`](docs/http_srv_readme.md): streaming and broadcasting tools for generic HTTP servers.
+  * [`live_deno`](docs/live_deno_readme.md): tools for live-reloading in development.
   * [`cli`](docs/cli_readme.md): essential tools for CLI apps.
   * [`test`](docs/test_readme.md): tools for testing and benchmarking.
 

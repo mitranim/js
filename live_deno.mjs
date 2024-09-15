@@ -19,7 +19,7 @@ Simplified example of sending notifications to clients:
   }
 */
 
-import {main as clientMain} from './live_client.mjs'
+import * as lc from './live_client.mjs'
 import * as l from './lang.mjs'
 import * as h from './http.mjs'
 import * as hd from './http_deno.mjs'
@@ -44,15 +44,17 @@ export class LiveBroad extends hs.Broad {
   }
 
   clientRes() {
-    return h.resBui()
-      .inp(`void ${clientMain.toString()}()`)
-      .type(`application/javascript`)
-      .corsAll()
-      .res()
+    return new Response(
+      `void ${lc.main.toString()}()`,
+      {headers: HEADERS_LIVE_SCRIPT},
+    )
   }
 
   eventsRes(rou) {
-    return h.resBui().inp(this.make(rou.req.signal)).typeEventStream().corsAll().res()
+    return new Response(
+      this.make(rou.req.signal),
+      {headers: HEADERS_LIVE_EVENT_STREAM},
+    )
   }
 
   async sendRes(rou) {
@@ -65,6 +67,17 @@ export class LiveBroad extends hs.Broad {
     throw err
   }
 }
+
+const HEADERS_LIVE_SCRIPT = [
+  ...h.HEADERS_CORS_PROMISCUOUS,
+  [h.HEADER_NAME_CONTENT_TYPE, `application/javascript`],
+]
+
+const HEADERS_LIVE_EVENT_STREAM = [
+  ...h.HEADERS_CORS_PROMISCUOUS,
+  [h.HEADER_NAME_CONTENT_TYPE, `text/event-stream`],
+  [`transfer-encoding`, `utf-8`],
+]
 
 export function dirs(...val) {return LiveDirs.of(...val)}
 
@@ -101,7 +114,6 @@ The client URL can be acquired from a `LiveBroad` instance, constructed via URL
 tools, hardcoded, etc.
 */
 export function withLiveClient(url, res) {
-  l.reqInst(res, Response)
   if (isResHtml(res)) {
     return new Response(
       io.ConcatStreamSource.stream(res.body, script(url)),
@@ -119,13 +131,15 @@ small use case. This is a development tool, the input should be trusted and
 shouldn't contain characters that require escaping.
 */
 function script(src) {
-  src = l.render(src)
-  return `<script type="module" src="${l.reqStr(src)}"></script>`
+  return `<script type="module" src="${l.render(src)}"></script>`
 }
 
 // May consider moving to `http_srv.mjs` later.
 function isResHtml(res) {
-  return contentTypeMatch(res?.headers.get(h.HEAD_CONTENT_TYPE), h.TYPE_HTML)
+  return (
+    l.isInst(res, Response) &&
+    contentTypeMatch(res?.headers.get(h.HEADER_NAME_CONTENT_TYPE), h.MIME_TYPE_HTML)
+  )
 }
 
 // May consider moving to `http_srv.mjs` later.

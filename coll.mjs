@@ -22,8 +22,7 @@ export class Bset extends Set {
     return this
   }
 
-  added(val) {return this.add(val), val}
-  addedOpt(val) {return this.addOpt(val), val}
+  added(val) {return !this.has(val) && (this.add(val), true)}
   reset(src) {return this.clear(), this.mut(src)}
   clear() {return (super.size && super.clear()), this}
   clone() {return new this.constructor(this)}
@@ -143,7 +142,14 @@ export class Coll extends TypedMap {
   reqVal(val) {return val}
   add(val) {return this.set(this.getKey(val), val)}
   addOpt(val) {return this.setOpt(this.getKeyOpt(val), val)}
-  added(val) {return this.add(val), val}
+
+  added(val) {
+    const key = this.getKey(val)
+    const got = this.has(key)
+    this.set(key, val)
+    return got
+  }
+
   toArray() {return [...this.values()]}
   toJSON() {return this.toArray()}
   [Symbol.iterator]() {return this.values()}
@@ -152,9 +158,9 @@ export class Coll extends TypedMap {
 export class ClsColl extends Coll {
   get cls() {return Object}
   reqVal(val) {return l.reqInst(val, this.cls)}
-  add(val) {return super.add(this.make(val))}
+  add(val) {return (val = this.make(val)), this.set(this.getKey(val), val)}
   addOpt(val) {return l.isSome(val) ? super.addOpt(this.make(val)) : this}
-  added(val) {return this.add((val = this.make(val))), val}
+  added(val) {return super.added(this.make(val))}
   make(val) {return l.toInst(val, this.cls)}
 }
 
@@ -217,7 +223,6 @@ export class ClsVec extends TypedVec {
   constructor(src) {super().mut(src)}
   reqVal(val) {return l.reqInst(val, this.cls)}
   add(val) {return super.add(this.make(val))}
-  added(val) {return this.add((val = this.make(val))), val}
   make(val) {return l.toInst(val, this.cls)}
 }
 

@@ -1,38 +1,30 @@
 ## Overview
 
-[http.mjs](../http.mjs) provides tiny syntactic shortcuts for native `Request`/`Response`/`Headers`/`fetch`.
+[http.mjs](../http.mjs) provides essential tools for HTTP servers and clients:
 
-* Fluent builder-style API.
-* Interoperable with built-ins.
-* Shortcuts for common actions, such as:
-  * Building HTTP requests via [#`ReqBui`](#class-reqbui).
-    * A builder-style API is more concise and flexible than the native one.
-  * Handling HTTP errors in responses via [#`Res`](#class-res).
-    * Constructing descriptive exceptions with HTTP status and response text.
-  * Routing incoming HTTP requests via [#`Rou`](#class-rou).
+* Shortcuts for making requests via native `fetch`.
+* Cookie decoding and encoding.
+* URL-based routing for SSR and SPA apps.
 
-HTTP request/response utils are ported and reworked from https://github.com/mitranim/xhttp. Routing utils are ported and reworked from https://github.com/mitranim/imperouter.
+Also see [`http_deno`](http_deno_readme.md) for Deno HTTP servers, [`http_srv`](http_srv_readme.md) for generic tools for HTTP servers using native stream APIs, and [`live_deno`](live_deno_readme.md) for live-reload tools for development.
 
 ## TOC
 
 * [#Usage](#usage)
 * [#API](#api)
 * [#Misc](#misc)
+  * [#`function resOk`](#function-resok)
   * [#`function jsonDecode`](#function-jsondecode)
   * [#`function jsonEncode`](#function-jsonencode)
-  * [#`class HttpErr`](#class-httperr)
-  * [#`function reqBui`](#function-reqbui)
-  * [#`class ReqBui`](#class-reqbui)
-  * [#`class Res`](#class-res)
+  * [#`class ErrHttp`](#class-errhttp)
   * [#`class Rou`](#class-rou)
-  * [#`class ReqRou`](#class-reqrou)
   * [#`class Ctx`](#class-ctx)
   * [#Undocumented](#undocumented)
 
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.58/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.59/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -40,26 +32,43 @@ const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
 
 ## API
 
+### `function resOk`
+
+Links: [source](../http.mjs#L61); [test/example](../test/http_test.mjs#L44).
+
+Signature: `(res: Response | Promise<Response>) => Promise<Response>`.
+
+Missing feature of the [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API). If the response is OK (HTTP code between 200 and 299, `.ok === true`), the resulting promise resolves to that response as-is. Otherwise the resulting promise is rejected with a descriptive [#`ErrHttp`](#class-errhttp) which includes the response status code, the response body (if any) as the error message, and the response itself for introspection if needed.
+
+```js
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.59/http.mjs'
+
+// If response is unsuccessful, this will throw `h.ErrHttp`.
+const res = await h.resOk(await fetch(someUrl, someOpt))
+
+const body = res.json()
+```
+
 ### `function jsonDecode`
 
-Links: [source](../http.mjs#L36); [test/example](../test/http_test.mjs#L60).
+Links: [source](../http.mjs#L68); [test/example](../test/http_test.mjs#L68).
 
 Sanity-checking wrapper for [`JSON.parse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse). If the input is nil or an empty string, returns `null`. Otherwise the input must be a primitive string. Throws on other inputs, without trying to stringify them.
 
 ### `function jsonEncode`
 
-Links: [source](../http.mjs#L37); [test/example](../test/http_test.mjs#L75).
+Links: [source](../http.mjs#L69); [test/example](../test/http_test.mjs#L83).
 
 Sanity-checking wrapper for [`JSON.stringify`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify). Equivalent to `JSON.stringify(val ?? null)`. If the input is `undefined`, returns `'null'` (string) rather than `undefined` (nil). Output is _always_ a valid JSON string.
 
-### `class HttpErr`
+### `class ErrHttp`
 
-Links: [source](../http.mjs#L68); [test/example](../test/http_test.mjs#L89).
+Links: [source](../http.mjs#L96); [test/example](../test/http_test.mjs#L97).
 
 Subclass of `Error` for HTTP responses. The error message includes the HTTP status code, if any.
 
 ```ts
-class HttpErr extends Error {
+class ErrHttp extends Error {
   message: string
   status: int
   res?: Response
@@ -68,148 +77,9 @@ class HttpErr extends Error {
 }
 ```
 
-### `function reqBui`
-
-Links: [source](../http.mjs#L203); [test/example](../test/http_test.mjs#L437).
-
-Same as `new` [#`ReqBui`](#class-reqbui) but syntactically shorter and a function.
-
-### `class ReqBui`
-
-Links: [source](../http.mjs#L206); [test/example](../test/http_test.mjs#L449).
-
-Request builder. Does _not_ subclass `Request`. Call `.req()` to create a native request, or the various `.fetchX()` methods to immediately execute. Unlike the native request, the body is not always a stream. This means `ReqBui` can be stored and reused several times.
-
-`RequestInit` and `BodyInit` are referenced from Deno typedefs.
-
-```ts
-class ReqBui extends RequestInit {
-  // Uses native `fetch` and constructs `Res` from the resulting response.
-  fetch(): Promise<Res>
-
-  /*
-  Returns the resulting `Res` if the response is OK. If the response is
-  received, but HTTP status code is non-OK, throws a descriptive `HttpErr`.
-
-  Shortcut for `(await this.fetch()).okRes()`.
-  */
-  fetchOk(): Promise<Res>
-
-  // Shortcut for `(await this.fetch()).okText()`.
-  fetchOkText(): Promise<string>
-
-  // Shortcut for `(await this.fetch()).okJson()`.
-  fetchOkJson(): Promise<any>
-
-  /*
-  Mutates the request by applying the given options and returns the same
-  reference. Automatically merges headers.
-  */
-  mut(init?: RequestInit): ReqBui
-
-  // Shortcut for `new Request(this.url, this)`.
-  req(): Request
-
-  // Sets `.url` and returns the same reference.
-  to(val: string | {toString(): string}): ReqBui
-
-  // Sets `.signal` and returns the same reference.
-  sig(val?: AbortSignal): ReqBui
-
-  // Sets `.method` and returns the same reference.
-  meth(val: string): ReqBui
-
-  // Sets `.body` and returns the same reference. Short for "input".
-  inp(val: BodyInit): ReqBui
-
-  /*
-  JSON-encodes the input, sets `.body`, and sets JSON request headers.
-  Does NOT set the `accept` header. Returns the same reference.
-
-  ALWAYS sets both the header `content-type: application/json` and the body,
-  protecting you from the mistake of setting only the header. If the body is
-  not provided, it will be `'null'` rather than empty. This means the resulting
-  request is always valid decodable JSON, avoiding EOF errors on the server
-  side.
-  */
-  json(val?: any): ReqBui
-
-  // Shortcuts for setting the corresponding HTTP method.
-  get(): ReqBui
-  post(): ReqBui
-  put(): ReqBui
-  patch(): ReqBui
-  delete(): ReqBui
-
-  // Shortcuts for modifying the `content-type` header.
-  type(val: string): ReqBui
-  typeJson(): ReqBui
-  typeForm(): ReqBui
-  typeMulti(): ReqBui
-
-  // Idempotently sets `.headers` and returns the resulting reference.
-  heads(): Record<string, string>
-
-  // Shortcuts for modifying the headers. All mutate and return the request.
-  headHas(key: string): boolean
-  headGet(key: string): string | undefined
-  headSet(key: string, val?: string): ReqBui
-  headSetAll(key: string, val?: string[]): ReqBui
-  headSetAny(key: string, val?: string | string[]): ReqBui
-  headSetOpt(key: string, val?: string): ReqBui
-  headAppend(key: string, val?: string): ReqBui
-  headAppendAll(key: string, val?: string[]): ReqBui
-  headAppendAny(key: string, val?: string | string[]): ReqBui
-  headMut(src: Headers | Record<string, string>): ReqBui
-  headDelete(key: string): ReqBui
-
-  // Class used for responses. Can override in subclass.
-  get Res(): {new(): Res}
-}
-```
-
-### `class Res`
-
-Links: [source](../http.mjs#L287); [test/example](../test/http_test.mjs#L599).
-
-Subclass of `Response` with additional shortcuts for response handling. Always wraps a native response received from another source. [#`ReqBui`](#class-reqbui) automatically uses this for responses. You don't need to construct this.
-
-The following getters are always deferred to the wrapped original: `.redirected`, `.type`, `.url`.
-
-```ts
-class Res extends Response {
-  constructor(res: Response)
-  constructor(body: BodyInit | null, init?: ResponseInit)
-
-  // Wrapped response.
-  res: Response
-
-  /*
-  If `res.ok`, returns the response as-is. Otherwise throws an instance of
-  `HttpErr` with the status code and response text in its error message.
-  */
-  okRes(): Promise<Res>
-
-  /*
-  Shortcut for `(await this.okRes()).text()`. On unsuccessful response,
-  throws a descriptive error. On success, returns response text.
-  */
-  okText(): Promise<string>
-
-  /*
-  Shortcut for `(await this.okRes()).json()`. On unsuccessful response,
-  throws a descriptive error. On success, returns decoded JSON.
-  */
-  okJson(): Promise<any>
-
-  // Class used for response errors. Can override in subclass.
-  get Err(): {new(): HttpErr}
-}
-```
-
 ### `class Rou`
 
-Links: [source](../http.mjs#L330); [test/example](../test/http_test.mjs#L627).
+Links: [source](../http.mjs#L126); [test/example](../test/http_test.mjs#L138).
 
 Simple router that uses only URL and pathname. Suitable for SPA. For servers, use [#`ReqRou`](#class-reqrou) which supports requests and HTTP methods.
 
@@ -234,8 +104,8 @@ rou.groups // {key: `path`}
 Routing is imperative:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.58/http.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.58/lang.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.59/http.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.59/lang.mjs'
 
 const nextPage = route(window.location)
 
@@ -254,56 +124,9 @@ function PageArticle(rou) {
 }
 ```
 
-### `class ReqRou`
-
-Links: [source](../http.mjs#L378); [test/example](../test/http_test.mjs#L673).
-
-Short for "request router" or "request-response router". Advanced version of [#`Rou`](#class-rou). Suitable for servers and SSR/SPA hybrid apps.
-
-Routing can be shared between SSR and SPA:
-
-```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.58/http.mjs'
-
-function route(rou) {
-  l.reqInst(rou, h.ReqRou)
-
-  if (rou.pat(`/`)) return PageIndex(rou)
-  if (rou.pat(`/articles`)) return PageArticles(rou)
-  if (rou.pat(/^[/]articles[/](?<key>[^/]+)$/)) return PageArticle(rou)
-  return Page404(rou)
-}
-
-function PageArticle(rou) {
-  const key = l.reqPk(rou.reqGroups().key)
-  return `page for article ${key}`
-}
-```
-
-SSR uses incoming requests:
-
-```js
-function response(req) {
-  return htmlRes(route(new h.ReqRou(req)))
-}
-
-// Consider also using `h.ResBui`.
-function htmlRes(body) {
-  return new Response(body, {headers: {[h.HEAD_CONTENT_TYPE]: h.TYPE_HTML}})
-}
-```
-
-SPA uses current URL:
-
-```js
-const page = route(h.ReqRou.from(window.location))
-```
-
-For SSR/SPA isomorphic rendering, use [`prax`](prax_readme.md).
-
 ### `class Ctx`
 
-Links: [source](../http.mjs#L440); [test/example](../test/http_test.mjs#L766).
+Links: [source](../http.mjs#L233); [test/example](../test/http_test.mjs#L277).
 
 Subclass of built-in [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController). Features:
 
@@ -335,43 +158,41 @@ The following APIs are exported but undocumented. Check [http.mjs](../http.mjs).
   * [`const PUT`](../http.mjs#L19)
   * [`const PATCH`](../http.mjs#L20)
   * [`const DELETE`](../http.mjs#L21)
-  * [`const HEAD_CACHE_CONTROL`](../http.mjs#L23)
-  * [`const HEAD_CONTENT_TYPE`](../http.mjs#L24)
-  * [`const HEAD_ETAG`](../http.mjs#L25)
-  * [`const HEAD_ACCEPT`](../http.mjs#L26)
-  * [`const HEAD_ORIGIN`](../http.mjs#L27)
-  * [`const HEAD_HOST`](../http.mjs#L28)
-  * [`const TYPE_TEXT`](../http.mjs#L30)
-  * [`const TYPE_HTML`](../http.mjs#L31)
-  * [`const TYPE_JSON`](../http.mjs#L32)
-  * [`const TYPE_FORM`](../http.mjs#L33)
-  * [`const TYPE_MULTI`](../http.mjs#L34)
-  * [`function isStatusInfo`](../http.mjs#L40)
-  * [`function isStatusOk`](../http.mjs#L43)
-  * [`function isStatusRedir`](../http.mjs#L46)
-  * [`function isStatusClientErr`](../http.mjs#L49)
-  * [`function isStatusServerErr`](../http.mjs#L52)
-  * [`function hasStatus`](../http.mjs#L55)
-  * [`function getStatus`](../http.mjs#L56)
-  * [`function isErrAbort`](../http.mjs#L62)
-  * [`class AbortError`](../http.mjs#L90)
-  * [`class HttpBui`](../http.mjs#L99)
-  * [`function resBui`](../http.mjs#L232)
-  * [`class ResBui`](../http.mjs#L235)
-  * [`function toRou`](../http.mjs#L327)
-  * [`function toReqRou`](../http.mjs#L375)
-  * [`function cookieSplitPairs`](../http.mjs#L477)
-  * [`function cookieSplitPair`](../http.mjs#L483)
-  * [`function cook`](../http.mjs#L496)
-  * [`class Cookie`](../http.mjs#L498)
-  * [`class Cookies`](../http.mjs#L607)
-  * [`function reqBody`](../http.mjs#L644)
-  * [`function optBody`](../http.mjs#L645)
-  * [`const bodyFuns`](../http.mjs#L646)
-
-
-## Misc
-
-`Req..headers` is a null-prototype dict, rather than `Headers`, for performance and compatibility reasons. In Deno, many operations involving `Headers` are stupidly slow. Using plain dicts for headers seems to performs better, and is automatically compatible with object rest/spread and `Object.assign`.
-
-Each header is stored as a single string. When appending, values are joined with `, `. This matches the limitations of the `Headers` and `fetch` APIs, which don't seem to support multiple occurrences of the same header.
+  * [`const HEADER_NAME_CACHE_CONTROL`](../http.mjs#L23)
+  * [`const HEADER_NAME_CONTENT_TYPE`](../http.mjs#L24)
+  * [`const HEADER_NAME_ACCEPT`](../http.mjs#L25)
+  * [`const HEADER_NAME_ETAG`](../http.mjs#L26)
+  * [`const HEADER_NAME_ORIGIN`](../http.mjs#L27)
+  * [`const HEADER_NAME_HOST`](../http.mjs#L28)
+  * [`const HEADER_NAME_CORS_CREDENTIALS`](../http.mjs#L29)
+  * [`const HEADER_NAME_CORS_HEADERS`](../http.mjs#L30)
+  * [`const HEADER_NAME_CORS_METHODS`](../http.mjs#L31)
+  * [`const HEADER_NAME_CORS_ORIGIN`](../http.mjs#L32)
+  * [`const MIME_TYPE_TEXT`](../http.mjs#L34)
+  * [`const MIME_TYPE_HTML`](../http.mjs#L35)
+  * [`const MIME_TYPE_JSON`](../http.mjs#L36)
+  * [`const MIME_TYPE_FORM`](../http.mjs#L37)
+  * [`const MIME_TYPE_MULTI`](../http.mjs#L38)
+  * [`const HEADER_TEXT`](../http.mjs#L40)
+  * [`const HEADER_HTML`](../http.mjs#L41)
+  * [`const HEADER_JSON`](../http.mjs#L42)
+  * [`const HEADER_JSON_ACCEPT`](../http.mjs#L44)
+  * [`const HEADERS_JSON_INOUT`](../http.mjs#L45)
+  * [`const HEADERS_CORS_PROMISCUOUS`](../http.mjs#L47)
+  * [`function isStatusInfo`](../http.mjs#L72)
+  * [`function isStatusOk`](../http.mjs#L75)
+  * [`function isStatusRedir`](../http.mjs#L78)
+  * [`function isStatusClientErr`](../http.mjs#L81)
+  * [`function isStatusServerErr`](../http.mjs#L84)
+  * [`function hasStatus`](../http.mjs#L87)
+  * [`function getStatus`](../http.mjs#L88)
+  * [`function isErrAbort`](../http.mjs#L94)
+  * [`class AbortError`](../http.mjs#L118)
+  * [`function toRou`](../http.mjs#L123)
+  * [`function toReqRou`](../http.mjs#L171)
+  * [`class ReqRou`](../http.mjs#L174)
+  * [`function cookieSplitPairs`](../http.mjs#L270)
+  * [`function cookieSplitPair`](../http.mjs#L276)
+  * [`function cook`](../http.mjs#L289)
+  * [`class Cookie`](../http.mjs#L291)
+  * [`class Cookies`](../http.mjs#L399)

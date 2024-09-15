@@ -20,18 +20,50 @@ export const PUT = `PUT`
 export const PATCH = `PATCH`
 export const DELETE = `DELETE`
 
-export const HEAD_CACHE_CONTROL = `cache-control`
-export const HEAD_CONTENT_TYPE = `content-type`
-export const HEAD_ETAG = `etag`
-export const HEAD_ACCEPT = `accept`
-export const HEAD_ORIGIN = `origin`
-export const HEAD_HOST = `host`
+export const HEADER_NAME_CACHE_CONTROL = `cache-control`
+export const HEADER_NAME_CONTENT_TYPE = `content-type`
+export const HEADER_NAME_ACCEPT = `accept`
+export const HEADER_NAME_ETAG = `etag`
+export const HEADER_NAME_ORIGIN = `origin`
+export const HEADER_NAME_HOST = `host`
+export const HEADER_NAME_CORS_CREDENTIALS = `access-control-allow-credentials`
+export const HEADER_NAME_CORS_HEADERS = `access-control-allow-headers`
+export const HEADER_NAME_CORS_METHODS = `access-control-allow-methods`
+export const HEADER_NAME_CORS_ORIGIN = `access-control-allow-origin`
 
-export const TYPE_TEXT = `text/plain`
-export const TYPE_HTML = `text/html`
-export const TYPE_JSON = `application/json`
-export const TYPE_FORM = `application/x-www-form-urlencoded`
-export const TYPE_MULTI = `multipart/form-data`
+export const MIME_TYPE_TEXT = `text/plain`
+export const MIME_TYPE_HTML = `text/html`
+export const MIME_TYPE_JSON = `application/json`
+export const MIME_TYPE_FORM = `application/x-www-form-urlencoded`
+export const MIME_TYPE_MULTI = `multipart/form-data`
+
+export const HEADER_TEXT = tuple(HEADER_NAME_CONTENT_TYPE, MIME_TYPE_TEXT)
+export const HEADER_HTML = tuple(HEADER_NAME_CONTENT_TYPE, MIME_TYPE_HTML)
+export const HEADER_JSON = tuple(HEADER_NAME_CONTENT_TYPE, MIME_TYPE_JSON)
+
+export const HEADER_JSON_ACCEPT = tuple(HEADER_NAME_ACCEPT, MIME_TYPE_JSON)
+export const HEADERS_JSON_INOUT = tuple(HEADER_JSON, HEADER_JSON_ACCEPT)
+
+export const HEADERS_CORS_PROMISCUOUS = tuple(
+  tuple(HEADER_NAME_CORS_CREDENTIALS, `true`),
+  tuple(HEADER_NAME_CORS_HEADERS, HEADER_NAME_CONTENT_TYPE),
+  tuple(HEADER_NAME_CORS_HEADERS, HEADER_NAME_CACHE_CONTROL),
+  tuple(HEADER_NAME_CORS_METHODS, GET),
+  tuple(HEADER_NAME_CORS_METHODS, HEAD),
+  tuple(HEADER_NAME_CORS_METHODS, OPTIONS),
+  tuple(HEADER_NAME_CORS_METHODS, POST),
+  tuple(HEADER_NAME_CORS_METHODS, PUT),
+  tuple(HEADER_NAME_CORS_METHODS, PATCH),
+  tuple(HEADER_NAME_CORS_METHODS, DELETE),
+  tuple(HEADER_NAME_CORS_ORIGIN, `*`),
+)
+
+export async function resOk(res) {
+  if (l.isPromise(res)) res = await res
+  if (res.ok) return res
+  const text = await res.text()
+  throw new ErrHttp((text || `unknown fetch error`), res.status, res)
+}
 
 export function jsonDecode(val) {return l.optStr(val) ? JSON.parse(val) : undefined}
 export function jsonEncode(val) {return l.isSome(val) ? JSON.stringify(val) : `null`}
@@ -51,7 +83,7 @@ export function isStatusClientErr(val) {return l.isNat(val) && val >= 400 && val
 // True if given HTTP status code is between 500 and 599 inclusive.
 export function isStatusServerErr(val) {return l.isNat(val) && val >= 500 && val <= 599}
 
-// Usable on instances of `HttpErr` and instances of `Response`.
+// Usable on instances of `ErrHttp` and instances of `Response`.
 export function hasStatus(val, code) {return l.reqNat(code) === getStatus(val)}
 export function getStatus(val) {return l.get(val, `status`)}
 
@@ -59,13 +91,9 @@ export function getStatus(val) {return l.get(val, `status`)}
 The built-in `AbortError` is not a separate class but an instance of
 `DOMException`. We're unable to detect it purely by `instanceof`.
 */
-export function isErrAbort(val) {
-  return l.isErr(val) && val.name === `AbortError`
-}
+export function isErrAbort(val) {return l.isErr(val) && val.name === `AbortError`}
 
-// TODO rename to `ErrHttp`.
-// TODO dedup `status` with `res`.
-export class HttpErr extends Error {
+export class ErrHttp extends Error {
   constructor(msg, status, res) {
     l.reqStr(msg)
     l.reqNat(status)
@@ -81,247 +109,15 @@ export class HttpErr extends Error {
 
 /*
 Do not confuse this with the built-in `AbortError` thrown by `AbortSignal` and
-various APIs using it. The built-in `AbortError` is an instance of
-`DOMException` instead of being its own class. At the time of writing, the only
-built-in way to throw it is via `AbortSignal.prototype.throwIfAborted`, with
-very little browser support. Our own `AbortError` is an emulation. Our
-`isErrAbort` detects both types.
+some other APIs. The built-in `AbortError` is an instance of `DOMException`
+rather than its own class. At the time of writing, the only built-in way to
+throw it is via `AbortSignal.prototype.throwIfAborted`, with very little
+browser support. Our own `AbortError` is an emulation. Our `isErrAbort` detects
+both types.
 */
 export class AbortError extends Error {
   constructor(msg) {super(l.renderLax(msg) || `signal has been aborted`)}
   get name() {return this.constructor.name}
-}
-
-/*
-"Bui" is short for "builder". This is a common component of `ReqBui` and
-`ResBui`, providing shortcuts for building HTTP headers.
-*/
-export class HttpBui extends l.Emp {
-  constructor(val) {super().mut(val)}
-
-  mut(val) {
-    if (l.isNil(val)) return this
-    if (l.isStruct(val)) return this.mutFromStruct(val)
-    throw l.errConvInst(val, this)
-  }
-
-  mutFromStruct(val) {
-    for (const key of l.structKeys(val)) {
-      if (key === `headers`) this.headMut(val[key])
-      else this[key] = val[key]
-    }
-    return this
-  }
-
-  type(val) {return this.headSet(HEAD_CONTENT_TYPE, val)}
-  typeText() {return this.type(TYPE_TEXT)}
-  typeHtml() {return this.type(TYPE_HTML)}
-  typeJson() {return this.type(TYPE_JSON)}
-  typeForm() {return this.type(TYPE_FORM)}
-  typeMulti() {return this.type(TYPE_MULTI)}
-
-  /*
-  Not called ".head" to avoid accidental confusion with HEAD,
-  which could be a gotcha for `ReqBui`. It's better to avoid
-  a ".head" method or property.
-  */
-  heads() {return this.headers ||= l.Emp()}
-  headHas(key) {return l.hasOwn(this.headers, reqHeadKey(key))}
-  headGet(key) {return this.headHas(key) ? this.headers[key] : ``}
-
-  headSet(key, val) {
-    if (l.isNil(val)) return this.headDelete(key)
-    this.heads()[reqHeadKey(key)] = this.headRender(val)
-    return this
-  }
-
-  headSetAll(key, val) {
-    this.headDelete(key)
-    if (l.optArr(val)) for (val of val) this.headAppend(key, val)
-    return this
-  }
-
-  headSetAny(key, val) {
-    if (l.isArr(val)) return this.headSetAll(key, val)
-    return this.headSet(key, val)
-  }
-
-  headSetOpt(key, val) {
-    reqHeadKey(key)
-    val = this.headRender(val)
-    if (this.headHas(key) || !val) return this
-    return this.headSet(key, val)
-  }
-
-  headAppend(key, val) {
-    reqHeadKey(key)
-    if (l.isNil(val)) return this
-    val = this.headRender(val)
-
-    const head = this.heads()
-    const prev = head[key]
-    head[key] = (prev && val) ? (prev + `, ` + val) : (prev || val)
-    return this
-  }
-
-  headAppendAll(key, val) {
-    reqHeadKey(key)
-    if (l.optArr(val)) for (val of val) this.headAppend(key, val)
-    return this
-  }
-
-  headAppendAny(key, val) {
-    if (l.isArr(val)) return this.headAppendAll(key, val)
-    return this.headAppend(key, val)
-  }
-
-  headDelete(key) {
-    if (this.headHas(key)) delete this.headers[key]
-    return this
-  }
-
-  headMut(val) {
-    if (l.isNil(val)) return this
-    if (l.isIter(val)) return this.headMutFromIter(val)
-    if (l.isStruct(val)) return this.headMutFromStruct(val)
-    throw l.errConv(val, `head`)
-  }
-
-  headMutFromIter(src) {
-    for (const [key, val] of l.reqIter(src)) this.headAppendAny(key, val)
-    return this
-  }
-
-  headMutFromStruct(src) {
-    for (const key of l.structKeys(src)) this.headAppendAny(key, src[key])
-    return this
-  }
-
-  headRender(val) {return l.renderLax(val).trim()}
-}
-
-export function reqBui(val) {return new ReqBui(val)}
-
-// Short for "request builder".
-export class ReqBui extends HttpBui {
-  async fetch() {return new this.Res(await fetch(l.reqScalar(this.url), this))}
-  async fetchOk() {return (await this.fetch()).okRes()}
-  async fetchOkText() {return (await this.fetch()).okText()}
-  async fetchOkJson() {return (await this.fetch()).okJson()}
-
-  req() {return new Request(l.reqScalar(this.url), this)}
-  meth(val) {return this.method = l.laxStr(val) || undefined, this}
-  get() {return this.meth(GET)}
-  post() {return this.meth(POST)}
-  put() {return this.meth(PUT)}
-  patch() {return this.meth(PATCH)}
-  delete() {return this.meth(DELETE)}
-
-  to(val) {return this.url = l.optScalar(val), this}
-  path(...val) {return this.initUrl().setPath(...val), this}
-  query(val) {return this.initUrl().setQuery(val), this}
-  initUrl() {return this.url = u.toUrl(this.url)}
-
-  sig(val) {return this.signal = l.optInst(val, AbortSignal), this}
-  inp(val) {return this.body = optBody(val), this}
-  json(val) {return this.inp(jsonEncode(val)).typeJson()}
-
-  get Res() {return Res}
-}
-
-export function resBui(val) {return new ResBui(val)}
-
-// Short for "response builder".
-export class ResBui extends HttpBui {
-  res() {return new this.Res(this.body, this)}
-  inp(val) {return this.body = val, this}
-  text(val) {return this.inp(val).typeText()}
-  html(val) {return this.inp(val).typeHtml()}
-  json(val) {return this.inp(jsonEncode(val)).typeJson()}
-  code(val) {return this.status = l.optNat(val), this}
-  isRedir() {return isStatusRedir(this.status)}
-  redirMoved(val) {return this.code(301).headSet(`location`, val)}
-  redirFound(val) {return this.code(302).headSet(`location`, val)}
-  redirSeeOther(val) {return this.code(303).headSet(`location`, val)}
-  redirTemp(val) {return this.code(307).headSet(`location`, val)}
-  redirPerm(val) {return this.code(308).headSet(`location`, val)}
-
-  /*
-  For an actual implementation of an event stream, see the following:
-  `WritableReadableStream`, `Broad`, `LiveBroad`.
-  */
-  typeEventStream() {
-    return this.type(`text/event-stream`).headSet(`transfer-encoding`, `utf-8`)
-  }
-
-  corsCredentials() {return this.headSet(`access-control-allow-credentials`, `true`)}
-  corsHeaders(...val) {return this.headSetAll(`access-control-allow-headers`, val)}
-  corsMethods(...val) {return this.headSetAll(`access-control-allow-methods`, val)}
-  corsOrigin(val) {return this.headSet(`access-control-allow-origin`, val)}
-
-  /*
-  Note: `content-type` is whitelisted by default but not redundant here.
-  Default has restrictions on allowed values.
-  */
-  corsHeadersCommon() {
-    return this.corsHeaders(HEAD_CONTENT_TYPE, HEAD_CACHE_CONTROL)
-  }
-
-  corsMethodsAll() {
-    return this.corsMethods(GET, HEAD, OPTIONS, POST, PUT, PATCH, DELETE)
-  }
-
-  corsOriginAll() {return this.corsOrigin(`*`)}
-
-  corsAll() {
-    return this
-      .corsCredentials()
-      .corsHeadersCommon()
-      .corsMethodsAll()
-      .corsOriginAll()
-  }
-
-  get Res() {return Response}
-}
-
-export class Res extends Response {
-  constructor(one, two) {
-    // This non-standard clause is used by `ReqBui`.
-    if (l.isInst(one, Response)) {
-      l.reqNil(two)
-      super(optBody(one.body), one)
-      this.res = one
-      return
-    }
-
-    // Allows to instantiate from an existing response but override the body.
-    if (l.isInst(two, Response)) {
-      super(optBody(one), two)
-      this.res = two
-      return
-    }
-
-    // Like standard constructor but with stricter type checks.
-    super(optBody(one), l.optStruct(two))
-    this.res = this
-  }
-
-  get redirected() {return this.res.redirected}
-  get type() {return this.res.type}
-  get url() {return this.res.url}
-
-  async okRes() {
-    if (!this.ok) {
-      const msg = (await this.text()) || `unknown fetch error`
-      throw new this.Err(msg, this.status, this)
-    }
-    return this
-  }
-
-  async okText() {return (await this.okRes()).text()}
-  async okJson() {return (await this.okRes()).json()}
-
-  get Err() {return HttpErr}
 }
 
 export function toRou(val) {return l.toInst(val, Rou)}
@@ -382,17 +178,14 @@ export class ReqRou extends Rou {
     this.req = req
   }
 
-  get method() {return l.reqStr(this.req.method)}
-  get signal() {return this.req.signal}
-
   /*
   Example (depends on app semantics):
 
     if (rou.preflight()) return h.resBui().corsAll().res()
   */
-  preflight() {return this.someMeth(HEAD, OPTIONS)}
+  preflight() {return this.someMethod(HEAD, OPTIONS)}
 
-  match(met, pat) {return this.meth(met) && this.pat(pat)}
+  match(met, pat) {return this.method(met) && this.pat(pat)}
   found(fun) {return this.either(fun, this.notFound)}
   methods(fun) {return this.either(fun, this.notAllowed)}
 
@@ -404,8 +197,8 @@ export class ReqRou extends Rou {
   patch(pat) {return this.match(PATCH, pat)}
   delete(pat) {return this.match(DELETE, pat)}
 
-  meth(val) {return this.method === reqMethod(val)}
-  someMeth(...val) {return val.some(this.meth, this)}
+  method(val) {return this.req.method === reqMethod(val)}
+  someMethod(...val) {return val.some(this.method, this)}
 
   either(fun, def) {
     const val = this.call(fun)
@@ -436,7 +229,7 @@ export class ReqRou extends Rou {
   }
 }
 
-// Short for "context". Supports chains/trees, like Go context.
+// Short for "context". Supports subcontexts / trees, like Go context.
 export class Ctx extends AbortController {
   constructor(sig) {
     l.setProto(super(), new.target)
@@ -464,7 +257,7 @@ export class Ctx extends AbortController {
   }
 
   handleEvent({type}) {if (type === `abort`) this.deinit()}
-  sub() {return new this.constructor(this.signal)}
+  sub() {return new this.constructor(this.req.signal)}
   abort() {this.deinit()}
 
   deinit(...val) {
@@ -479,7 +272,7 @@ export function cookieSplitPairs(val) {
   return s.split(s.trim(val), /\s*;\s*/g).filter(l.id)
 }
 
-// Used internally by `Cookies` and `Cookie`.
+// Used internally, exported for testing.
 export function cookieSplitPair(src) {
   src = l.reqStr(src).trim()
   if (!src) throw TypeError(`unexpected empty cookie pair`)
@@ -532,7 +325,7 @@ export class Cookie extends l.Emp {
   root() {return this.setPath(`/`)}
   expired() {return this.setValue(this.value || ``).setExpires().setMaxAge(0)}
   durable() {return this.setMaxAge(60 * 60 * 24 * 365 * 17)}
-  install() {return document.cookie = this, this}
+  install() {return document.cookie = this.toString(), this}
 
   reset(val) {
     if (l.isNil(val)) return this
@@ -589,7 +382,6 @@ export class Cookie extends l.Emp {
   }
 
   static make(key, val) {return new this().setName(key).setValue(val)}
-
   static expired(key) {return this.make(key).expired()}
 
   // TODO browser test.
@@ -632,31 +424,16 @@ export class Cookies extends c.ClsColl {
 /* Internal */
 
 const sigKey = Symbol.for(`sig`)
+function tuple(...src) {return Object.freeze(src)}
 
-// Semi-placeholder. May tighten up.
-function isHeadKey(val) {return l.isStr(val) && val !== ``}
-function reqHeadKey(val) {return isHeadKey(val) ? val : l.throwErrFun(val, isHeadKey)}
-
-// Semi-placeholder. May tighten up.
-function isMethod(val) {return l.isStr(val)}
+function isMethod(val) {return l.isValidStr(val)}
 function reqMethod(val) {return isMethod(val) ? val : l.throwErrFun(val, isMethod)}
-
-export function reqBody(val) {return l.reqOneOf(val, bodyFuns)}
-export function optBody(val) {return l.optOneOf(val, bodyFuns)}
-export const bodyFuns = [l.isScalar, isUint8Array, isReadableStream, isFormData]
-
-function isUint8Array(val) {return l.isInst(val, Uint8Array)}
-function isReadableStream(val) {return l.isInst(val, ReadableStream)}
-function isFormData(val) {return typeof FormData === `function` && l.isInst(val, FormData)}
 
 function isCookieName(val) {return l.isStr(val) && !/[;=]/.test(val)}
 function optCookieName(val) {return l.opt(val, isCookieName)}
-// function reqCookieName(val) {return l.req(val, isCookieName)}
 
 function isCookieValue(val) {return l.isStr(val) && !/[;]/.test(val)}
 function optCookieValue(val) {return l.opt(val, isCookieValue)}
-// function reqCookieValue(val) {return l.req(val, isCookieValue)}
 
 function isCookieAttr(val) {return l.isStr(val) && !/[\s;]/.test(val)}
 function optCookieAttr(val) {return l.opt(val, isCookieAttr)}
-// function reqCookieAttr(val) {return l.req(val, isCookieAttr)}
