@@ -1,4 +1,4 @@
-Superclass for classes representing a "struct"/"model"/"record". Subclass of {{link obj Struct}} with added support for undeclared properties.
+Superclass for classes representing a "struct" / "model" / "record". Subclass of {{link obj Struct}} with added support for undeclared properties.
 
 Differences from {{link obj Struct}}:
 
@@ -15,9 +15,9 @@ import * as l from '{{featUrl lang}}'
 import * as o from '{{featUrl obj}}'
 
 class Person extends o.StructLax {
-  static Spec = class extends super.Spec {
-    id = l.reqFin
-    name = l.reqStr
+  static spec = {
+    id: l.reqFin,
+    name: l.reqStr,
   }
 }
 

@@ -1,1 +1,1 @@
-Same as `typeof val === 'symbol'`. True if value is a primitive symbol.
+Same as `typeof val === 'symbol'`. True if the value is a primitive symbol.

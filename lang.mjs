@@ -100,6 +100,11 @@ export function reqKey(val) {return isKey(val) ? val : throwErrFun(val, isKey)}
 export function optKey(val) {return isNil(val) ? val : reqKey(val)}
 export function onlyKey(val) {return isKey(val) ? val : undefined}
 
+export function isStructKey(val) {return isStr(val) || isSym(val)}
+export function reqStructKey(val) {return isStructKey(val) ? val : throwErrFun(val, isKey)}
+export function optStructKey(val) {return isNil(val) ? val : reqStructKey(val)}
+export function onlyStructKey(val) {return isStructKey(val) ? val : undefined}
+
 export function isPk(val) {return isValidStr(val) || isIntPos(val)}
 export function reqPk(val) {return isPk(val) ? val : throwErrFun(val, isPk)}
 export function optPk(val) {return isNil(val) ? val : reqPk(val)}
@@ -279,7 +284,7 @@ export function reqSeq(val) {return isSeq(val) ? val : throwErrFun(val, isSeq)}
 export function optSeq(val) {return isNil(val) ? val : reqSeq(val)}
 export function onlySeq(val) {return isSeq(val) ? val : undefined}
 
-export function isVac(val) {return !val || (isArr(val) && val.every(isVac))}
+export function isVac(val) {return !val || (isArr(val) && (!val.length || val.every(isVac)))}
 export function reqVac(val) {return isVac(val) ? val : throwErrFun(val, isVac)}
 export function optVac(val) {return isNil(val) ? val : reqVac(val)}
 export function onlyVac(val) {return isVac(val) ? val : undefined}

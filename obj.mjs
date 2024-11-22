@@ -31,13 +31,6 @@ export class Struct extends l.Emp {
     return this
   }
 
-  static get Spec() {return StructSpec}
-
-  static getSpec() {
-    own(this, `spec`)
-    return this.spec ??= new this.Spec(this)
-  }
-
   static get Type() {return StructType}
 
   static getType() {
@@ -50,37 +43,26 @@ export class StructLax extends Struct {
   static get Type() {return StructTypeLax}
 }
 
-export const clsKey = Symbol.for(`cls`)
-
-export class StructSpec extends l.Emp {
-  // Allows a spec to access its class. Note that we ignore symbolic properties
-  // and getters of a spec when initializing `StructType` from `StructSpec`.
-  constructor(val) {super()[clsKey] = l.reqCls(val)}
-
-  static validate() {}
-  static any(val) {return val}
-  static getCls(tar) {return l.reqInst(tar, this)[clsKey]}
-}
-
 // Internal tool for type checking in structs.
 export class StructType extends l.Emp {
   constructor(cls) {
     super()
-    this[clsKey] = l.reqCls(cls)
+    this.cls = l.reqCls(cls)
     this.list = []
     this.dict = l.Emp()
-    this.spec = l.reqInst(cls.getSpec(), StructSpec)
-    this.initFromSpec()
+    this.hasAny = l.hasMeth(cls, `any`)
+    this.initType()
   }
 
-  get Spec() {return this.spec.constructor}
-
-  getCls() {return this[clsKey]}
+  any(val, key) {
+    if (this.hasAny) return this.cls.any(val, key)
+    return val
+  }
 
   // Called after `.init`/`.reinit`.
   // Subclasses may override this.
   // TODO test.
-  validate(tar) {this.Spec.validate(tar)}
+  validate(tar) {this.cls.validate?.(tar)}
 
   // Used by `Struct..constructor`. Subclasses may override this.
   init(tar, src) {
@@ -99,46 +81,51 @@ export class StructType extends l.Emp {
   mutOpt(tar, src) {if (l.isSome(src)) this.mut(tar, src)}
   reset(tar, src) {for (const field of this.list) field.reset(tar, src)}
   resetOpt(tar, src) {if (l.isSome(src)) this.reset(tar, src)}
-  patch(tar, src) {for (const key of l.structKeys(src)) this.set(tar, key, src[key])}
+
+  patch(tar, src) {
+    for (const key of l.structKeys(src)) {
+      this.patchField(tar, key, src[key])
+    }
+  }
 
   // Must mimic the semantics of `obj.mjs`.`patch` (not `assign`), with
   // additional support for calling `.mut` on properties that implement
   // `isMut`, and using the spec's validate/transform method.
-  set(tar, key, val) {
+  patchField(tar, key, val) {
     if (this.isDeclared(key)) return false
     touch(tar, key)
     if (mutated(tar, key, val)) return true
     if (!canSet(tar, key)) return false
     // TODO report name of invalid property if it fails.
-    tar[key] = this.Spec.any(val, key)
+    tar[key] = this.any(val, key)
     return true
   }
 
   isDeclared(key) {return l.reqStr(key) in this.dict}
 
-  initFromSpec() {
-    const {dict, list, spec} = this
-    const proto = this.getCls().prototype
-    const visited = new Set()
-    let src = spec
+  initType() {
+    const cls = this.cls
+    const spec = l.optStruct(cls.spec)
+    if (!spec) return
+    const {dict, list} = this
+    const proto = cls.prototype
 
-    do {
-      for (const [key, desc] of descriptors(src)) {
-        if (key === `constructor` || visited.has(key)) continue
+    for (const [key, desc] of descriptors(spec)) {
+      const val = desc.value
+      if (l.isNil(val)) continue
 
-        visited.add(key)
-
-        if (hasOnlyGetter(proto, key)) continue
-
-        if (l.isFun(desc.value)) {
-          list.push(dict[key] = new this.Field(this, key))
-        }
+      if (l.hasOwn(proto, key)) {
+        throw TypeError(`property collision on ${l.show(key)} in ${l.show(cls)}`)
       }
-    }
-    while ((src = Object.getPrototypeOf(src)))
-  }
 
-  get Field() {return StructField}
+      if (!l.isFun(val)) {
+        throw TypeError(`invalid definition of ${l.show(key)} in ${l.show(cls)}: expected nil or function, got ${l.show(val)}`)
+      }
+
+      const Field = key in proto ? StructFieldOverride : StructField
+      list.push(dict[key] = new Field(key, val))
+    }
+  }
 }
 
 export class StructTypeLax extends StructType {
@@ -149,25 +136,16 @@ export class StructTypeLax extends StructType {
 }
 
 // Field definition used by `StructType`.
-export class StructField extends l.Emp {
-  constructor(typ, key) {
-    l.reqInst(typ, StructType)
-    l.reqStr(key)
-
+class StructField extends l.Emp {
+  constructor(key, fun) {
     super()
-
-    priv(this, `typ`, typ)
-    this.key = key
-
-    if (!l.isFun(typ.spec[key])) {
-      throw TypeError(`invalid property ${l.show(key)}: missing validator function in spec`)
-    }
+    this.key = l.reqStr(key)
+    this.fun = l.reqFun(fun)
   }
 
-  val(val) {
-    const key = l.reqStr(this.key)
-    try {return this.typ.spec[key](val)}
-    catch (err) {throw l.errTrans(err, TypeError, `invalid property ${l.show(key)}`)}
+  val(val, tar) {
+    try {return this.fun.call(tar, val)}
+    catch (err) {throw l.errTrans(err, TypeError, `invalid property ${l.show(this.key)}`)}
   }
 
   reset(tar, src) {this.set(tar, src?.[this.key])}
@@ -176,9 +154,17 @@ export class StructField extends l.Emp {
   // additional support for calling `.mut` on properties that implement
   // `isMut`, and using the spec's validate/transform method.
   set(tar, val) {
-    const key = l.reqStr(this.key)
+    const key = this.key
     if (l.isSome(val) && mutated(tar, key, val)) return
-    tar[key] = this.val(val)
+    tar[key] = this.val(val, tar)
+  }
+}
+
+class StructFieldOverride extends StructField {
+  set(tar, val) {
+    const key = this.key
+    if (l.isSome(val) && mutated(tar, key, val)) return
+    pub(tar, key, this.val(val, tar))
   }
 }
 
@@ -516,11 +502,6 @@ function descIn(tar, key) {
     tar = Object.getPrototypeOf(tar)
   }
   return undefined
-}
-
-function hasOnlyGetter(tar, key) {
-  const desc = descIn(tar, key)
-  return !!desc?.get && !desc?.set
 }
 
 function goc(maker, cache, key) {

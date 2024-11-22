@@ -1,4 +1,4 @@
-Superclass for classes representing a "struct"/"model"/"record". Also see {{link obj StructLax}}. Features:
+Superclass for classes representing a "struct" / "model" / "record". Also see {{link obj StructLax}}. Features:
 
   * Supports property declarations, with validation/transformation functions.
 
@@ -25,9 +25,9 @@ import * as l from '{{featUrl lang}}'
 import * as o from '{{featUrl obj}}'
 
 class Person extends o.Struct {
-  static Spec = class extends super.Spec {
-    id = l.reqFin
-    name = l.reqStr
+  static spec = {
+    id: l.reqFin,
+    name: l.reqStr,
   }
 }
 

@@ -1,3 +1,6 @@
+/* eslint-disable getter-return */
+// deno-lint-ignore-file getter-return
+
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
@@ -186,6 +189,22 @@ t.test(function test_patch() {
 })
 
 t.test(function test_StructType() {
+  t.test(function test_invalid() {
+    function fail(val) {
+      t.throws(
+        () => class Tar extends o.Struct {static spec = {one: val}}.getType(),
+        TypeError,
+        `invalid definition of "one" in [function Tar]: expected nil or function, got ` + l.show(val),
+      )
+    }
+
+    fail(10)
+    fail(`str`)
+    fail(true)
+    fail({one: 10})
+    fail([10])
+  })
+
   class Type extends o.StructType {
     init() {}
     reinit() {}
@@ -194,9 +213,9 @@ t.test(function test_StructType() {
   class Tar extends o.Struct {
     static get Type() {return Type}
 
-    static Spec = class extends super.Spec {
-      id = l.reqIntPos
-      name = l.reqStr
+    static spec = {
+      id: l.reqIntPos,
+      name: l.reqStr,
     }
   }
 
@@ -208,9 +227,7 @@ t.test(function test_StructType() {
     t.is(o.StructLax.Type, o.StructTypeLax)
     t.inst(o.StructLax.getType(), o.StructTypeLax)
 
-    t.inst(Tar.getSpec(), Tar.Spec)
     t.inst(Tar.getType(), Tar.Type)
-    t.is(Tar.getSpec(), Tar.getSpec())
     t.is(Tar.getType(), Tar.getType())
   })
 
@@ -236,6 +253,9 @@ t.test(function test_StructType() {
 
     type.patch(tar, {id: 30, name: `two`, undeclared0: 40, undeclared1: 50, constructor: 60})
     t.own(tar, {undeclared0: 40, undeclared1: 50})
+
+    type.patch(tar, {})
+    t.own(tar, {undeclared0: 40, undeclared1: 50})
   })
 
   t.test(function test_mut() {
@@ -251,11 +271,8 @@ t.test(function test_StructType() {
   t.test(function test_fallback() {
     class Tar extends o.Struct {
       static get Type() {return Type}
-
-      static Spec = class extends super.Spec {
-        id = l.reqIntPos
-        static any(val) {return val + 1}
-      }
+      static spec = {id: l.reqIntPos}
+      static any(val) {return val + 1}
     }
 
     const type = Tar.getType()
@@ -275,11 +292,12 @@ t.test(function test_StructType() {
     class Tar extends o.Struct {
       static get Type() {return Type}
 
-      static Spec = class extends super.Spec {
-        id(val) {return l.reqIntPos(val)}
-        declared(val) {return l.toInstOpt(val, SubDeclared)}
-        static any(val) {return l.toInstOpt(val, SubUndeclared)}
+      static spec = {
+        id(val) {return l.reqIntPos(val)},
+        declared(val) {return l.toInstOpt(val, SubDeclared)},
       }
+
+      static any(val) {return l.toInstOpt(val, SubUndeclared)}
     }
 
     const type = Tar.getType()
@@ -358,15 +376,14 @@ t.test(function test_Struct() {
 
   /*
   Subclasses of `Struct` inherit exactly two properties: `.constructor` and
-  `.mut`. By default, we don't shadow any inherited properties, in accordance
-  with `patch` semantics. However, we allow to explicitly define fields that
-  override/shadow inherited properties.
+  `.mut`. A spec may explicitly override an inherited method such as `.mut`,
+  and this must not break the built-in behavior of the constructor.
   */
   t.test(function test_opt_in_shadowing() {
     class Tar extends o.Struct {
-      static Spec = class extends super.Spec {
-        mut = l.reqIntPos
-        one = l.reqIntPos
+      static spec = {
+        mut: l.reqIntPos,
+        one: l.reqIntPos,
       }
       two() {}
     }
@@ -377,10 +394,10 @@ t.test(function test_Struct() {
 
   t.test(function test_declared() {
     class Tar extends o.Struct {
-      static Spec = class extends super.Spec {
-        one = l.reqIntPos
-        two = l.laxBool
-        three = l.optStr
+      static spec = {
+        one: l.reqIntPos,
+        two: l.laxBool,
+        three: l.optStr,
       }
     }
 
@@ -388,6 +405,39 @@ t.test(function test_Struct() {
 
     t.own(new Tar({one: 10, undeclared: 20}), {one: 10, two: false, three: undefined})
     t.own(new Tar({one: 10}).mut({one: 20, undeclared: 30}), {one: 20, two: false, three: undefined})
+  })
+
+  t.test(function test_collision_nil() {
+    class Three extends o.Struct {
+      static spec = {one: undefined}
+      get one() {return 10}
+    }
+
+    const tar = new Three({one: 20, undeclared: {two: 30}})
+    t.is(tar.one, 10)
+    t.own(tar, {})
+  })
+
+  t.test(function test_collision_method() {
+    class One extends o.Struct {
+      static spec = {one: l.reqIntPos}
+      one() {}
+    }
+    testStructFieldCollision(One)
+    class Two extends o.Struct {static spec = {one: l.reqIntPos}}
+    class Three extends Two {one() {}}
+    testStructFieldCollision(Three)
+  })
+
+  t.test(function test_collision_getter() {
+    class One extends o.Struct {
+      static spec = {one: l.reqIntPos}
+      get one() {}
+    }
+    testStructFieldCollision(One)
+    class Two extends o.Struct {static spec = {one: l.reqIntPos}}
+    class Three extends Two {get one() {}}
+    testStructFieldCollision(Three)
   })
 })
 
@@ -415,9 +465,9 @@ t.test(function test_StructLax() {
 
   t.test(function test_opt_in_shadowing() {
     class Tar extends o.StructLax {
-      static Spec = class extends super.Spec {
-        mut = l.reqIntPos
-        one = l.reqIntPos
+      static spec = {
+        mut: l.reqIntPos,
+        one: l.reqIntPos,
       }
       two() {}
     }
@@ -428,10 +478,10 @@ t.test(function test_StructLax() {
 
   t.test(function test_declared() {
     class Tar extends o.StructLax {
-      static Spec = class extends super.Spec {
-        one = l.reqIntPos
-        two = l.laxBool
-        three = l.optStr
+      static spec = {
+        one: l.reqIntPos,
+        two: l.laxBool,
+        three: l.optStr,
       }
     }
 
@@ -470,66 +520,72 @@ function testStructDeclaredProperties(Tar) {
   t.own(tar, {one: 20, two: true, three: ``})
 }
 
+function testStructFieldCollision(cls) {
+  t.throws(() => cls.getType(), TypeError, `property collision on "one" in ` + l.show(cls))
+  t.throws(() => new cls({one: 10}), TypeError, `property collision on "one" in ` + l.show(cls))
+}
+
 t.test(function test_StructLax_inheritance() {
   t.test(function test_define_then_instantiate() {
-    class Tar0 extends o.StructLax {
-      static Spec = class extends super.Spec {one = l.reqIntPos}
+    class Super extends o.StructLax {
+      static spec = {one: l.reqIntPos}
     }
 
-    class Tar1 extends Tar0 {
-      static Spec = class extends super.Spec {two = l.reqStr}
+    class Sub extends Super {
+      static spec = {
+        ...super.spec,
+        two: l.reqStr,
+      }
     }
 
-    t.throws(() => new Tar0({one: `10`}), TypeError, `invalid property "one"`)
-    t.own(new Tar0({one: 10, two: 20}), {one: 10, two: 20})
+    t.throws(() => new Super({one: `10`}), TypeError, `invalid property "one"`)
+    t.own(new Super({one: 10, two: 20}), {one: 10, two: 20})
 
-    t.throws(() => new Tar1({one: 10, two: 20}), TypeError, `invalid property "two"`)
-    t.own(new Tar1({one: 10, two: `20`}), {one: 10, two: `20`})
-
-    t.inst(Tar0.getSpec(), Tar0.Spec)
-    t.inst(Tar1.getSpec(), Tar1.Spec)
+    t.throws(() => new Sub({one: 10, two: 20}), TypeError, `invalid property "two"`)
+    t.own(new Sub({one: 10, two: `20`}), {one: 10, two: `20`})
   })
 
   t.test(function test_instantiate_then_define() {
-    class Tar0 extends o.StructLax {
-      static Spec = class extends super.Spec {one = l.reqIntPos}
+    class Super extends o.StructLax {
+      static spec = {one: l.reqIntPos}
     }
 
-    t.throws(() => new Tar0({one: `10`}), TypeError, `invalid property "one"`)
-    t.own(new Tar0({one: 10, two: 20}), {one: 10, two: 20})
+    t.throws(() => new Super({one: `10`}), TypeError, `invalid property "one"`)
+    t.own(new Super({one: 10, two: 20}), {one: 10, two: 20})
 
-    class Tar1 extends Tar0 {
-      static Spec = class extends super.Spec {two = l.reqStr}
+    class Sub extends Super {
+      static spec = {
+        ...super.spec,
+        two: l.reqStr,
+      }
     }
 
-    t.throws(() => new Tar1({one: 10, two: 20}), TypeError, `invalid property "two"`)
-    t.own(new Tar1({one: 10, two: `20`}), {one: 10, two: `20`})
-
-    t.inst(Tar0.getSpec(), Tar0.Spec)
-    t.inst(Tar1.getSpec(), Tar1.Spec)
+    t.throws(() => new Sub({one: 10, two: 20}), TypeError, `invalid property "two"`)
+    t.own(new Sub({one: 10, two: `20`}), {one: 10, two: `20`})
   })
 })
 
 t.test(function test_Struct_inheritance_remove_declared_property() {
-  class Tar0 extends o.Struct {
-    static Spec = class extends super.Spec {
-      one = l.reqIntPos
-      two = l.reqIntPos
+  class Super extends o.Struct {
+    static spec = {
+      one: l.reqIntPos,
+      two: l.reqIntPos,
     }
   }
 
-  class Tar1 extends Tar0 {
-    static Spec = class extends super.Spec {
-      two = undefined
+  class Sub extends Super {
+    static spec = {
+      ...super.spec,
+      two: undefined,
     }
   }
 
-  t.throws(() => new Tar0({one: 10}), TypeError, `invalid property "two"`)
-  t.own(new Tar0({one: 10, two: 20, three: 30}), {one: 10, two: 20})
+  t.throws(() => new Super({one: 10}), TypeError, `invalid property "two"`)
+  t.own(new Super({one: 10, two: 20, three: 30}), {one: 10, two: 20})
 
-  t.own(new Tar1({one: 10}), {one: 10})
-  t.own(new Tar1({one: 10, two: 20}), {one: 10})
-  t.own(new Tar1({one: 10, two: `20`}), {one: 10})
+  t.own(new Sub({one: 10}), {one: 10})
+  t.own(new Sub({one: 10, two: 20}), {one: 10})
+  t.own(new Sub({one: 10, two: `20`}), {one: 10})
 })
 
 t.test(function test_StructLax_recursive_mut() {
@@ -582,22 +638,22 @@ t.test(function test_StructLax_recursive_mut() {
 
   t.test(function test_declared() {
     class Inner extends o.StructLax {
-      static Spec = class extends super.Spec {
-        one = l.reqIntPos
+      static spec = {
+        one: l.reqIntPos,
       }
     }
 
     class Middle extends o.StructLax {
-      static Spec = class extends super.Spec {
-        two = l.reqIntPos
-        inner(val) {return l.toInstOpt(val, Inner)}
+      static spec = {
+        two: l.reqIntPos,
+        inner(val) {return l.toInstOpt(val, Inner)},
       }
     }
 
     class Outer extends o.StructLax {
-      static Spec = class extends super.Spec {
-        three = l.reqIntPos
-        middle(val) {return l.toInstOpt(val, Middle)}
+      static spec = {
+        three: l.reqIntPos,
+        middle(val) {return l.toInstOpt(val, Middle)},
       }
     }
 
@@ -667,12 +723,9 @@ t.test(function test_StructLax_with_mem_getter() {
 
 // Incomplete: tests only `new` but not `.mut`. TODO test `.mut`.
 t.test(function test_StructLax_getters_and_setters() {
-  function testDefault(Tar) {
+  function testFields(Tar) {
     t.own(new Tar({one: 10}), {one: 10})
     t.is(new Tar({one: 10}).inner, `default`)
-  }
-
-  function testNoOverride(Tar) {
     t.own(new Tar({one: 10, inner: 20}), {one: 10})
   }
 
@@ -680,9 +733,7 @@ t.test(function test_StructLax_getters_and_setters() {
     class Tar extends o.StructLax {
       get inner() {return `default`}
     }
-
-    testDefault(Tar)
-    testNoOverride(Tar)
+    testFields(Tar)
   })
 
   t.test(function test_undeclared_getter_setter() {
@@ -690,93 +741,132 @@ t.test(function test_StructLax_getters_and_setters() {
       get inner() {return `default`}
       set inner(_) {throw l.errImpl()}
     }
-
-    testDefault(Tar)
-    testNoOverride(Tar)
+    testFields(Tar)
   })
 
-  /*
-  This behavior is an unintentional side effect of allowing subclasses to
-  declare getters for fields which are also declared in the spec of a
-  superclass. See the subclass test below.
-  */
-  t.test(function test_declared_only_getter() {
-    class Tar extends o.StructLax {
-      static Spec = class extends super.Spec {
-        inner = l.laxFin
-      }
-
-      get inner() {return `default`}
-    }
-
-    testDefault(Tar)
-    testNoOverride(Tar)
-  })
-
-  /*
-  Intended behavior: struct subclasses are allowed to declare getters that
-  conflict with fields declared in a superclass spec, in which case subclass
-  getters take priority.
-  */
-  t.test(function test_declared_only_getter_in_subclass() {
+  t.test(function test_override_getter() {
     class Super extends o.StructLax {
-      static Spec = class extends super.Spec {
-        inner = l.laxFin
+      get inner() {return `default`}
+      get one() {return 123}
+    }
+
+    class Sub extends Super {
+      static spec = {
+        ...super.spec,
+        one: l.reqIntPos,
       }
     }
 
-    t.throws(() => new Super({inner: `10`}), TypeError, `invalid property "inner"`)
-    t.own(new Super(), {inner: 0})
-    t.own(new Super({inner: 10}), {inner: 10})
+    testFields(Sub)
+  })
 
-    class Tar extends Super {
+  t.test(function test_override_setter() {
+    class Super extends o.StructLax {
       get inner() {return `default`}
+      set one(_) {}
     }
 
-    testDefault(Tar)
-    testNoOverride(Tar)
+    class Sub extends Super {
+      static spec = {
+        ...super.spec,
+        one: l.reqIntPos,
+      }
+    }
+
+    testFields(Sub)
+  })
+
+  t.test(function test_override_getter_and_setter() {
+    class Super extends o.StructLax {
+      get inner() {return `default`}
+      get one() {return 123}
+      set one(_) {}
+    }
+
+    class Sub extends Super {
+      static spec = {
+        ...super.spec,
+        one: l.reqIntPos,
+      }
+    }
+
+    t.throws(() => new Sub({}), TypeError, `invalid property "one"`)
+    testFields(Sub)
   })
 
   /*
-  Intended behavior: our machinery should invoke the validate/transform function
-  provided by the spec, then simply assign the resulting value, passing it to
-  the setter.
+  We support overriding an inherited field with an explicitly defined field
+  in a spec, but we don't allow to accidentally override a spec field with
+  a getter or method on the class prototype, even if the spec is inherited.
+  */
+  t.test(function test_declared_getter_in_subclass() {
+    class Super extends o.StructLax {
+      static spec = {one: l.laxFin}
+    }
+
+    t.throws(() => new Super({one: `10`}), TypeError, `invalid property "one"`)
+    t.own(new Super(), {one: 0})
+    t.own(new Super({one: 10}), {one: 10})
+
+    class Sub extends Super {
+      get one() {return `default`}
+    }
+
+    testStructFieldCollision(Sub)
+  })
+
+  /*
+  We support overriding an inherited field with an explicitly defined field
+  in a spec, but we don't allow to accidentally override a spec field with
+  a getter or method on the class prototype, even if the spec is inherited.
   */
   t.test(function test_declared_getter_setter() {
-    class Tar extends o.StructLax {
-      static Spec = class extends super.Spec {
-        inner = l.laxFin
-      }
-
-      get inner() {return this.secondary}
-      set inner(val) {this.secondary = val + 1}
+    class Super extends o.StructLax {
+      static spec = {one: l.laxFin}
     }
 
-    t.throws(() => new Tar({inner: `10`}), TypeError, `invalid property "inner"`)
+    class Sub extends Super {
+      get one() {return this.secondary}
+      set one(val) {this.secondary = val + 1}
+    }
 
-    t.own(new Tar(), {secondary: 1})
-    t.own(new Tar({one: 10}), {one: 10, secondary: 1})
-    t.own(new Tar({one: 10, secondary: 20}), {one: 10, secondary: 20})
-    t.own(new Tar({one: 10, inner: 20}), {one: 10, secondary: 21})
-    t.own(new Tar({one: 10, inner: 20, secondary: 30}), {one: 10, secondary: 30})
+    testStructFieldCollision(Sub)
+  })
+
+  t.test(function test_override_inherited_getter_with_field() {
+    class Super extends o.StructLax {
+      get one() {return 10}
+      get inner() {return `default`}
+    }
+
+    t.own(new Super(), {})
+    t.own(new Super({one: 20}), {})
+
+    class Sub extends Super {
+      static spec = {
+        ...super.spec,
+        one: l.laxFin,
+      }
+    }
+
+    t.throws(() => new Sub({one: `10`}), TypeError, `invalid property "one"`)
+    t.own(new Sub({one: 20}), {one: 20})
+
+    testFields(Sub)
   })
 })
 
 /*
-The current implementation ignores symbol properties. This behavior is
-accidental. We lock it down by a test for API stability, but we may consider
-changing this in the future. Note that if we do change this, we may have to
-modify the implementation of `StructSpec..parentNode` and
-`StructSpec.getParent`.
+The current implementation ignores symbolic properties in the spec.
+This behavior is accidental. We lock it down by a test for API stability.
+Fixing would involve runtime overheads, which seems not worth it.
 */
 t.test(function test_StructLax_symbols() {
   const one = Symbol.for(`one`)
   const two = Symbol.for(`two`)
 
   class Tar extends o.StructLax {
-    static Spec = class extends super.Spec {
-      [one] = l.reqIntPos
-    }
+    static spec = {[one]: l.reqIntPos}
   }
 
   const tar = new Tar({[one]: 10, [two]: 20})

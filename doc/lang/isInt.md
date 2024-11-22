@@ -1,1 +1,1 @@
-True if value is an integer: finite via {{link lang isFin}}, without a fractional part.
+True if the value is an integer: finite via {{link lang isFin}}, without a fractional part.

@@ -1,1 +1,1 @@
-True if value is a natural number: integer >= 0. Also see {{link lang isIntPos}}.
+True if the value is a natural number: integer >= 0. Also see {{link lang isIntPos}}.

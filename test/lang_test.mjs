@@ -491,6 +491,26 @@ t.test(function test_isKey() {
   t.ok(l.isKey(-10n))
 })
 
+t.test(function test_isStructKey() {
+  t.no(l.isStructKey(null))
+  t.no(l.isStructKey(undefined))
+  t.no(l.isStructKey(NaN))
+  t.no(l.isStructKey(Infinity))
+  t.no(l.isStructKey(-Infinity))
+  t.no(l.isStructKey({}))
+  t.no(l.isStructKey([]))
+  t.no(l.isStructKey(0))
+  t.no(l.isStructKey(-10))
+  t.no(l.isStructKey(10))
+  t.no(l.isStructKey(10.20))
+  t.no(l.isStructKey(true))
+  t.no(l.isStructKey(10n))
+  t.no(l.isStructKey(-10n))
+
+  t.ok(l.isStructKey(``))
+  t.ok(l.isStructKey(Symbol(`blah`)))
+})
+
 t.test(function test_isPk() {
   t.no(l.isPk(null))
   t.no(l.isPk(undefined))

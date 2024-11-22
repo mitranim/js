@@ -243,9 +243,24 @@ function testValues(fun, backref) {
   testFunEmptyList(fun)
   testNoAsyncIterator(fun)
 
+  /*
+  In JS arrays, non-enumerable index properties seem to behave like regular
+  enumerable index properties.
+  */
+  const list = [10]
+  Object.defineProperty(list, 1, {value: 20})
+  t.is(list.length, 2)
+
+  /*
+  Non-enumerable properties must be excluded when gathering keys, values, or
+  entries from the dictionary.
+  */
+  const dict = {one: 10, two: 20}
+  Object.defineProperty(dict, `three`, {value: 30})
+
   testColls(
-    [10, 20],
-    {one: 10, two: 20},
+    list,
+    dict,
     function testColl(make) {
       const src = make()
       const out = fun(src)

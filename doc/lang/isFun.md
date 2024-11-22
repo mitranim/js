@@ -1,1 +1,1 @@
-Same as `typeof val === 'function'`. True if value is any function, regardless of its type (arrow, async, generator, etc.).
+Same as `typeof val === 'function'`. True if the value is any function, regardless of its type (arrow, async, generator, etc.).

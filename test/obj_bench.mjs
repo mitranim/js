@@ -83,26 +83,22 @@ const structSrc = {
   six: `60`,
 }
 
+const structSpec = {
+  one: l.reqNum,
+  two: l.reqStr,
+  three: l.reqNum,
+  four: l.reqStr,
+  five: l.reqNum,
+  six: l.reqStr,
+}
+
 t.own(new o.StructLax(structSrc), structSrc)
 
-class StructSpec extends o.StructSpec {
-  one   = l.reqNum
-  two   = l.reqStr
-  three = l.reqNum
-  four  = l.reqStr
-  five  = l.reqNum
-  six   = l.reqStr
-}
-
-class StructDeclaredLax extends o.StructLax {
-  static get Spec() {return StructSpec}
-}
+class StructDeclaredLax extends o.StructLax {static spec = structSpec}
 
 t.own(new StructDeclaredLax(structSrc), structSrc)
 
-class StructDeclared extends o.Struct {
-  static get Spec() {return StructSpec}
-}
+class StructDeclared extends o.Struct {static spec = structSpec}
 
 t.own(new StructDeclared(structSrc), structSrc)
 

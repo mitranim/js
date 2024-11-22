@@ -1,1 +1,1 @@
-True if value is `-Infinity` or `Infinity`.
+True if the value is `-Infinity` or `Infinity`.

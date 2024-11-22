@@ -1,1 +1,1 @@
-True if value qualifies as a dictionary key. True for all primitives excluding garbage values via {{link lang isJunk}}.
+True if the value is primitive and usable as a map key. True for all primitives excluding garbage values via {{link lang isJunk}}.
