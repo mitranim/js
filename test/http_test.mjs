@@ -522,7 +522,9 @@ t.test(function test_Cookies() {
   test(`one=two`, `one=two`)
   test(`one=two; three=four`, `one=two; three=four`)
 
-  // Two cookies have an empty name, one of them is lost.
+  // In case of cookie name collision, the last one is preferred.
+  test(`one=two; one=three`, `one=three`)
+  test(`one=two; one=three; four=five`, `one=three; four=five`)
   test(`one; =two; three=`, `=two; three=`)
 })
 

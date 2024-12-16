@@ -26,7 +26,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.60/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 class Btn extends dr.HTMLButtonElement {
@@ -74,7 +74,7 @@ Registry for custom DOM element classes. Automatically derives tag name from cla
 By default, this registry has **no global side effects**. To enable global registration, provide a "definer" to the registry.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.60/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   // Optional. If omitted, `dr.reg` autogenerates

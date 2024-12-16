@@ -130,8 +130,6 @@ export class Rou extends l.Emp {
     this.groups = undefined
   }
 
-  get pathname() {return l.reqStr(this.url.pathname)}
-
   clear() {this.groups = undefined}
 
   // Short for "pattern".
@@ -145,24 +143,24 @@ export class Rou extends l.Emp {
   // Short for "exact".
   exa(val) {
     this.clear()
-    return l.reqStr(val) === this.pathname
+    return l.reqStr(val) === this.url.pathname
   }
 
   // Short for "regular expression".
   reg(val) {
     this.clear()
-    const mat = this.pathname.match(l.reqReg(val))
+    const mat = this.url.pathname.match(l.reqReg(val))
     this.groups = mat?.groups
     return !!mat
   }
 
   // Short for "prefix".
-  pre(val) {return s.isSubpath(val, this.pathname)}
+  pre(val) {return s.isSubpath(val, this.url.pathname)}
 
   reqGroups() {
     const val = this.groups
     if (val) return val
-    throw Error(`unexpected lack of named captures when routing ${this.pathname}`)
+    throw Error(`unexpected lack of named captures when routing ${this.url.pathname}`)
   }
 
   get Url() {return u.Url}
@@ -212,13 +210,15 @@ export class ReqRou extends Rou {
   empty() {return new Response()}
 
   notFound() {
-    const {pathname: path, method: met} = l.reqInst(this, Rou)
-    return new Response(`not found: ${met} ${path}`, {status: 404})
+    const pat = this.url.pathname
+    const met = this.req.method
+    return new Response(`not found: ${met} ${pat}`, {status: 404})
   }
 
   notAllowed() {
-    const {pathname: path, method: met} = l.reqInst(this, Rou)
-    return new Response(`method not allowed: ${met} ${path}`, {status: 405})
+    const pat = this.url.pathname
+    const met = this.req.method
+    return new Response(`method not allowed: ${met} ${pat}`, {status: 405})
   }
 
   call(fun) {return l.reqFun(fun).call(this, this)}
@@ -408,6 +408,11 @@ export class Cookies extends c.ClsColl {
     return super.mut(src)
   }
 
+  /*
+  When a cookie is repeated, the last value is "accidentally" preferred.
+  This seems consistent with cookie decoding behavior in Go, and possibly
+  in other server-side implementations.
+  */
   mutFromStr(src) {
     for (src of cookieSplitPairs(src)) {
       src = cookieSplitPair(src)
@@ -417,7 +422,6 @@ export class Cookies extends c.ClsColl {
   }
 
   toString() {return this.toArray().join(`; `)}
-
   static native() {return new this(window.document?.cookie)}
 }
 
