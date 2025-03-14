@@ -154,15 +154,23 @@ export function removeEvents(node, names, opt) {
   for (const name of l.reqArr(names)) node.removeEventListener(name, node, opt)
 }
 
-export function clip(val) {
-  if (!(val = l.laxStr(val))) return
+export function copyToClipboard(src) {
+  if (!(src = l.render(src))) return
 
-  const node = document.createElement(`textarea`)
-  node.value = val
+  const prev = document.activeElement
+  const next = document.createElement(`textarea`)
+  next.value = src
+  document.body.append(next)
 
-  document.body.append(node)
-  try {clipNode(node)}
-  finally {node.remove()}
+  try {
+    next.focus()
+    selectText(next)
+    document.execCommand(`copy`)
+  }
+  finally {
+    next.remove()
+    prev?.focus?.()
+  }
 }
 
 export function clipNode(val) {selectText(val), document.execCommand(`copy`)}

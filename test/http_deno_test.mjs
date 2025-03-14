@@ -30,14 +30,14 @@ t.test(function test_DirRelFil() {
   t.is(dir.urlPathToFsPath(`/scripts/../one`), undefined)
 })
 
-t.test(function test_ContentTypeMap() {
-  t.throws(() => hd.ContentTypeMap.main.guess(), TypeError, `unable to convert undefined to string`)
-  t.throws(() => hd.ContentTypeMap.main.guess(10), TypeError, `unable to convert 10 to string`)
-  t.throws(() => hd.ContentTypeMap.main.guess({}), TypeError, `unable to convert {} to string`)
-  t.throws(() => hd.ContentTypeMap.main.guess([]), TypeError, `unable to convert [] to string`)
+t.test(function test_guessContentType() {
+  t.throws(() => hd.guessContentType(), TypeError, `unable to convert undefined to string`)
+  t.throws(() => hd.guessContentType(10), TypeError, `unable to convert 10 to string`)
+  t.throws(() => hd.guessContentType({}), TypeError, `unable to convert {} to string`)
+  t.throws(() => hd.guessContentType([]), TypeError, `unable to convert [] to string`)
 
   function test(src, exp) {
-    t.is(hd.ContentTypeMap.main.guess(src), exp)
+    t.is(hd.guessContentType(src), exp)
   }
 
   test(``, undefined)

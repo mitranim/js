@@ -859,7 +859,7 @@ export class HTMLDocument extends Document {
   }
 
   baseClassByTag(tag) {
-    return global[l.reqStr(dr.TagToCls.main.get(tag) || `HTMLElement`)]
+    return global[l.reqStr(dr.tagToCls[tag] || `HTMLElement`)]
   }
 }
 

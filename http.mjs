@@ -240,7 +240,7 @@ export class Ctx extends AbortController {
   link(sig) {
     this.unlink()
     if (!l.optInst(sig, AbortSignal)) return this
-    if (sig.aborted) return this.deinit(), this
+    if (sig.aborted) return this.deinit(sig.reason), this
 
     this[sigKey] = sig
     sig.addEventListener(`abort`, this, {once: true})
@@ -256,9 +256,9 @@ export class Ctx extends AbortController {
     return this
   }
 
-  handleEvent({type}) {if (type === `abort`) this.deinit()}
+  handleEvent({type}) {if (type === `abort`) this.deinit(type)}
   sub() {return new this.constructor(this.req.signal)}
-  abort() {this.deinit()}
+  abort(...val) {this.deinit(...val)}
 
   deinit(...val) {
     this.unlink()

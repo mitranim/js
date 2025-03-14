@@ -1,45 +1,47 @@
 MAKEFLAGS := --silent --always-make
-MAKE_PAR := $(MAKE) -j 128
-# `--unstable` enables `Deno?.consoleSize` which is used for benchmark printing.
-DENO := deno run -A --no-check --allow-hrtime --unstable
-RUN := $(if $(run),--run="$(run)",)
-FEAT := $(or $(feat),all_deno)
-VERB := $(if $(filter $(verb),true),--verb,)
-PREC := $(if $(filter $(prec),true),--prec,)
-ONCE := $(if $(filter $(once),true),--once,)
-TEST := test/$(FEAT)_test.mjs $(VERB) $(RUN)
-BENCH := test/$(FEAT)_bench.mjs $(VERB) $(PREC) $(ONCE) $(RUN)
-CMD_SRV := test/cmd_srv.mjs
-CMD_DOC := doc/cmd_doc.mjs
-CMD_VER_INC := doc/cmd_ver_inc.mjs
-PKG := package.json
-HOOK_PRE_COMMIT_FILE := .git/hooks/pre-commit
-WATCH := watchexec -r -d=0 -n
-WATCH_SRC := $(WATCH) -e=mjs
+MAKE_CONC := $(MAKE) -j 128 clear=$(or $(clear),false)
+RUN ?= $(if $(run),--run="$(run)",)
+FEAT ?= $(or $(feat),all_deno)
+VERB ?= $(if $(filter true,$(verb)),--verb,)
+PREC ?= $(if $(filter true,$(prec)),--prec,)
+ONCE ?= $(if $(filter true,$(once)),--once,)
+TEST ?= test/$(FEAT)_test.mjs $(VERB) $(RUN)
+BENCH ?= test/$(FEAT)_bench.mjs $(VERB) $(PREC) $(ONCE) $(RUN)
+CMD_SRV ?= test/cmd_srv.mjs
+CMD_DOC ?= doc/cmd_doc.mjs
+CMD_VER_INC ?= doc/cmd_ver_inc.mjs
+PKG ?= package.json
+HOOK_PRE_COMMIT_FILE ?= .git/hooks/pre-commit
+CLEAR ?= $(if $(filter false,$(clear)),, )
+CMD_CLEAR ?= $(and $(CLEAR),--clear)
+DENO_RUN ?= deno run -A --no-check --node-modules-dir=false
+DENO_WATCH ?= $(DENO_RUN) --watch $(if $(CLEAR),,--no-clear-screen)
+WATCH ?= watchexec $(and $(CLEAR),-c) -r -d=1ms -n
+WATCH_SRC ?= $(WATCH) -e=mjs
 
 # This is a "function" that must be defined with "=", not ":=".
 VER = $(shell jq -r '.version' < $(PKG))
 
 test_w:
-	$(DENO) --watch $(TEST) --clear
+	$(DENO_WATCH) $(TEST) $(CMD_CLEAR)
 
 test:
-	$(DENO) $(TEST)
+	$(DENO_RUN) $(TEST)
 
 bench_w:
-	$(DENO) --watch $(BENCH)
+	$(DENO_WATCH) $(BENCH) $(CMD_CLEAR)
 
 bench:
-	$(DENO) $(BENCH)
+	$(DENO_RUN) $(BENCH)
 
 srv_w:
-	$(DENO) --watch $(CMD_SRV)
+	$(DENO_WATCH) $(CMD_SRV)
 
 srv:
-	$(DENO) $(CMD_SRV)
+	$(DENO_RUN) $(CMD_SRV)
 
 lint_w:
-	$(MAKE_PAR) lint_deno_w lint_eslint_w
+	$(MAKE_CONC) lint_deno_w lint_eslint_w
 
 lint: lint_deno lint_eslint
 
@@ -52,17 +54,18 @@ lint_deno:
 lint_eslint_w:
 	$(WATCH_SRC) -- $(MAKE) lint_eslint
 
+# Requires `eslint` to be installed globally.
 lint_eslint:
 	eslint --config=.eslintrc --ext=mjs .
 
 doc_w:
-	$(DENO) --watch $(CMD_DOC) --watch
+	$(DENO_WATCH) $(CMD_DOC) --watch $(CMD_CLEAR)
 
 doc:
-	$(DENO) $(CMD_DOC)
+	$(DENO_RUN) $(CMD_DOC)
 
 watch:
-	$(MAKE_PAR) test_w lint_w doc_w
+	$(MAKE_CONC) test_w lint_w doc_w
 
 prep: test lint doc
 
@@ -80,15 +83,18 @@ push:
 #   * Update the version in `package.json`.
 #   * `make prep`.
 #   * Commit.
-#   * `make release`.
+#   * `make pub`.
 #
 # Note: publishing to NPM is done automatically via GitHub Actions.
-release: tag push
+pub: tag push
 
+# Trims trailing whitespace from all tracked files, then rebuilds the docs.
+# The `-i ''` is required on MacOS, do not remove.
 define HOOK_PRE_COMMIT
 #!/bin/sh
-export NO_COLOR=""
-make doc && git add readme.md docs/*.md
+git ls-files | xargs sed -i '' 's/[[:space:]]*$$//' &&
+NO_COLOR= make doc &&
+git add -u
 endef
 export HOOK_PRE_COMMIT
 

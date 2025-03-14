@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as d from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/dom.mjs'
+import * as d from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom.mjs'
 ```
 
 ## API
@@ -61,17 +61,17 @@ The following APIs are exported but undocumented. Check [dom.mjs](../dom.mjs).
   * [`function isDisconnected`](../dom.mjs#L145)
   * [`function addEvents`](../dom.mjs#L147)
   * [`function removeEvents`](../dom.mjs#L152)
-  * [`function clip`](../dom.mjs#L157)
-  * [`function clipNode`](../dom.mjs#L168)
-  * [`function selectText`](../dom.mjs#L170)
-  * [`function ancestor`](../dom.mjs#L181)
-  * [`function findAncestor`](../dom.mjs#L188)
-  * [`function descendant`](../dom.mjs#L205)
-  * [`function findDescendant`](../dom.mjs#L207)
-  * [`function descendants`](../dom.mjs#L212)
-  * [`function findNextSibling`](../dom.mjs#L225)
-  * [`function nextSibling`](../dom.mjs#L233)
-  * [`function findPrevSibling`](../dom.mjs#L235)
-  * [`function prevSibling`](../dom.mjs#L243)
-  * [`function MixNode`](../dom.mjs#L249)
-  * [`class MixNodeCache`](../dom.mjs#L251)
+  * [`function copyToClipboard`](../dom.mjs#L157)
+  * [`function clipNode`](../dom.mjs#L176)
+  * [`function selectText`](../dom.mjs#L178)
+  * [`function ancestor`](../dom.mjs#L189)
+  * [`function findAncestor`](../dom.mjs#L196)
+  * [`function descendant`](../dom.mjs#L213)
+  * [`function findDescendant`](../dom.mjs#L215)
+  * [`function descendants`](../dom.mjs#L220)
+  * [`function findNextSibling`](../dom.mjs#L233)
+  * [`function nextSibling`](../dom.mjs#L241)
+  * [`function findPrevSibling`](../dom.mjs#L243)
+  * [`function prevSibling`](../dom.mjs#L251)
+  * [`function MixNode`](../dom.mjs#L257)
+  * [`class MixNodeCache`](../dom.mjs#L259)

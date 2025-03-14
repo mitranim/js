@@ -24,7 +24,7 @@ Also see [`http_deno`](http_deno_readme.md) for Deno HTTP servers, [`http_srv`](
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -34,14 +34,14 @@ const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
 
 ### `function resOk`
 
-Links: [source](../http.mjs#L61); [test/example](../test/http_test.mjs#L44).
+Links: [source](../http.mjs#L61); [test/example](../test/http_test.mjs#L49).
 
 Signature: `(res: Response | Promise<Response>) => Promise<Response>`.
 
 Missing feature of the [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API). If the response is OK (HTTP code between 200 and 299, `.ok === true`), the resulting promise resolves to that response as-is. Otherwise the resulting promise is rejected with a descriptive [#`ErrHttp`](#class-errhttp) which includes the response status code, the response body (if any) as the error message, and the response itself for introspection if needed.
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/http.mjs'
 
 // If response is unsuccessful, this will throw `h.ErrHttp`.
 const res = await h.resOk(await fetch(someUrl, someOpt))
@@ -51,19 +51,19 @@ const body = res.json()
 
 ### `function jsonDecode`
 
-Links: [source](../http.mjs#L68); [test/example](../test/http_test.mjs#L68).
+Links: [source](../http.mjs#L68); [test/example](../test/http_test.mjs#L73).
 
 Sanity-checking wrapper for [`JSON.parse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse). If the input is nil or an empty string, returns `null`. Otherwise the input must be a primitive string. Throws on other inputs, without trying to stringify them.
 
 ### `function jsonEncode`
 
-Links: [source](../http.mjs#L69); [test/example](../test/http_test.mjs#L83).
+Links: [source](../http.mjs#L69); [test/example](../test/http_test.mjs#L88).
 
 Sanity-checking wrapper for [`JSON.stringify`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify). Equivalent to `JSON.stringify(val ?? null)`. If the input is `undefined`, returns `'null'` (string) rather than `undefined` (nil). Output is _always_ a valid JSON string.
 
 ### `class ErrHttp`
 
-Links: [source](../http.mjs#L96); [test/example](../test/http_test.mjs#L97).
+Links: [source](../http.mjs#L96); [test/example](../test/http_test.mjs#L102).
 
 Subclass of `Error` for HTTP responses. The error message includes the HTTP status code, if any.
 
@@ -79,7 +79,7 @@ class ErrHttp extends Error {
 
 ### `class Rou`
 
-Links: [source](../http.mjs#L126); [test/example](../test/http_test.mjs#L138).
+Links: [source](../http.mjs#L126); [test/example](../test/http_test.mjs#L143).
 
 Simple router that uses only URL and pathname. Suitable for SPA. For servers, use [#`ReqRou`](#class-reqrou) which supports requests and HTTP methods.
 
@@ -104,8 +104,8 @@ rou.groups // {key: `path`}
 Routing is imperative:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/http.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/lang.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/http.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/lang.mjs'
 
 const nextPage = route(window.location)
 
@@ -126,7 +126,7 @@ function PageArticle(rou) {
 
 ### `class Ctx`
 
-Links: [source](../http.mjs#L233); [test/example](../test/http_test.mjs#L277).
+Links: [source](../http.mjs#L233); [test/example](../test/http_test.mjs#L282).
 
 Subclass of built-in [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController). Features:
 

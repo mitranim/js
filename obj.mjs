@@ -230,16 +230,16 @@ At the time of writing, in V8, the overhead of generating the object descriptor
 is fairly low and eclipsed by the cost of searching the prototype chain
 manually, as opposed to letting the engine do it.
 
-Needs tests. Needs more profiling and tuning.
+Needs tests. Needs more profiling and tuning. But maybe should not be used.
 */
 export class StrictStaticPh extends l.Emp {
   static get(tar, key, pro) {
     if (l.hasOwn(tar, key)) return tar[key]
 
     /*
-    Asinine special case for compatibility with asinine implementations or
-    specification of async/await. JS engines don't seem to check if the object
-    has this property, they just try to get it.
+    Asinine special case for compatibility with asinine implementations
+    or specification of async/await. JS engines don't seem to check if
+    the object has this property, they just try to get it.
     */
     if (key === `then`) return tar[key]
 
@@ -257,8 +257,8 @@ export class MakerPh extends l.Emp {
 }
 
 /*
-Short for "dynamic". Represents a dynamically scoped variable, as opposed to
-regular lexically scoped variables.
+Short for "dynamic". Represents a dynamically scoped variable,
+as opposed to regular lexically scoped variables.
 */
 export class Dyn extends l.Emp {
   constructor(val) {super().set(val)}

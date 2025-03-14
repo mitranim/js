@@ -6,7 +6,7 @@ import * as l from '{{featUrl lang}}'
 l.isFin(1)
 // true
 
-l.isFin('1')
+l.isFin(`1`)
 // false
 
 l.isFin(NaN)

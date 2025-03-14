@@ -22,7 +22,9 @@ t.test(function test_show() {
 
   test(undefined,                                 `undefined`)
   test(null,                                      `null`)
+  test(-0,                                        `-0`)
   test(0,                                         `0`)
+  test(+0,                                        `0`)
   test(NaN,                                       `NaN`)
   test(Infinity,                                  `Infinity`)
   test(-10,                                       `-10`)
@@ -1898,6 +1900,38 @@ t.test(function test_dec() {
   t.is(l.dec(NaN), NaN - 1)
   t.is(l.dec(-2), -2 - 1)
   t.is(l.dec(2), 2 - 1)
+})
+
+t.test(function test_round() {
+  t.is(l.round(-0), -0)
+  t.is(l.round(0), 0)
+
+  t.is(l.round(-0.1), -0)
+  t.is(l.round(0.1), 0)
+
+  t.is(l.round(-0.5), -1)
+  t.is(l.round(0.5), 1)
+
+  t.is(l.round(-0.9), -1)
+  t.is(l.round(0.9), 1)
+
+  t.is(l.round(-1.1), -1)
+  t.is(l.round(1.1), 1)
+
+  t.is(l.round(-1.5), -2)
+  t.is(l.round(1.5), 2)
+
+  t.is(l.round(-1.9), -2)
+  t.is(l.round(1.9), 2)
+
+  t.is(l.round(-12.1), -12)
+  t.is(l.round(12.1), 12)
+
+  t.is(l.round(-12.5), -13)
+  t.is(l.round(12.5), 13)
+
+  t.is(l.round(-12.9), -13)
+  t.is(l.round(12.9), 13)
 })
 
 t.test(function test_vac() {

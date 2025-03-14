@@ -32,6 +32,10 @@ const srv = new class Srv extends hd.Srv {
       this.bro.writeEventJson(val)
     }
   }
+
+  errRes(err) {
+    return new Response(err?.stack || l.show(err), {status: 500})
+  }
 }()
 
 srv.watch()

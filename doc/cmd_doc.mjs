@@ -6,6 +6,7 @@ import * as p from '../path.mjs'
 const VER = (await io.readJson(`package.json`)).version
 const CLI = cl.Flag.os()
 const WATCH = CLI.boolOpt(`watch`)
+const CLEAR = CLI.boolOpt(`clear`)
 const RE_WATCH = /(?:^doc[/](?:\w+[/])*)\w+[.]md|(?:\w+[.]mjs$)/
 const DIR_DOC_SRC = `doc`
 const DIR_DOC_OUT = `docs`
@@ -350,7 +351,7 @@ async function main() {
   await runTimedOpt()
 
   for await (const _ of io.filterWatch(io.watchCwd(), allow)) {
-    cl.emptty()
+    if (CLEAR) cl.emptty()
     await runTimedOpt()
   }
 }

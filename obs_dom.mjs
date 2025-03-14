@@ -12,7 +12,7 @@ export function MixReac(cls) {
   return class MixReac extends cls {
     connectedCallback() {
       super.connectedCallback?.()
-      const reac = this[reacKey] ||= new ElementReac(this)
+      const reac = this[reacKey] ||= new ElemReac(this)
       reac.exec()
     }
 
@@ -43,8 +43,10 @@ export class ReacText extends (globalThis.Text || Object) {
 /*
 Usage:
 
-  new FunText(() => someObservable.someField)
+  funText(() => someObservable.someField)
 */
+export function funText(fun) {return new FunText(fun)}
+
 export class FunText extends ReacText {
   constructor(fun) {
     super()
@@ -89,7 +91,7 @@ export class ReacMoebius extends ob.Moebius {
 /*
 Small adapter that enables implicit reactivity with careful hierarchical
 scheduling. Expects external deinit such as via `.disconnectedCallback`.
-Use `ElementReac` for elements, and `TextReac` for text.
+Use `ElemReac` for elements, and `TextReac` for text.
 */
 export class Reac extends l.Emp {
   constructor(node) {
@@ -99,7 +101,7 @@ export class Reac extends l.Emp {
   }
 
   // Called by `Moebius`.
-  run() {this.node.run()}
+  run() {this.node.run(this.node)}
   trig() {this.sched.push(this.loop)}
 
   // Internal.
@@ -111,7 +113,7 @@ export class Reac extends l.Emp {
   get sched() {return sc.Sched.main}
 }
 
-export class ElementReac extends Reac {
+export class ElemReac extends Reac {
   constructor(node) {super(reqRunnerElement(node))}
 }
 

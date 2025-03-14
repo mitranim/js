@@ -8,6 +8,6 @@ import * as l from '{{featUrl lang}}'
 l.req({one: `two`}, l.isObj)
 // {one: `two`}
 
-l.req('str', l.isFun)
+l.req(`str`, l.isFun)
 // Uncaught TypeError: expected variant of isFun, got "str"
 ```

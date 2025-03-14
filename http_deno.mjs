@@ -9,33 +9,29 @@ import * as io from './io_deno.mjs'
 import * as p from './path.mjs'
 
 // TODO move to a non-Deno-specific file.
-export class ContentTypeMap extends o.MixMain(Map) {
-  guess(val) {return this.get(p.posix.ext(val))}
+export const contentTypes = l.Emp()
+contentTypes[`.css`] = `text/css`
+contentTypes[`.gif`] = `image/gif`
+contentTypes[`.htm`] = `text/html`
+contentTypes[`.html`] = `text/html`
+contentTypes[`.ico`] = `image/x-icon`
+contentTypes[`.jpeg`] = `image/jpeg`
+contentTypes[`.jpg`] = `image/jpeg`
+contentTypes[`.js`] = `application/javascript`
+contentTypes[`.json`] = `application/json`
+contentTypes[`.mjs`] = `application/javascript`
+contentTypes[`.pdf`] = `application/pdf`
+contentTypes[`.png`] = `image/png`
+contentTypes[`.svg`] = `image/svg+xml`
+contentTypes[`.tif`] = `image/tiff`
+contentTypes[`.tiff`] = `image/tiff`
+contentTypes[`.xml`] = `text/xml`
+contentTypes[`.zip`] = `application/zip`
+contentTypes[`.webp`] = `image/webp`
+contentTypes[`.woff`] = `font/woff`
+contentTypes[`.woff2`] = `font/woff2`
 
-  static default() {
-    return new this()
-      .set(`.css`, `text/css`)
-      .set(`.gif`, `image/gif`)
-      .set(`.htm`, `text/html`)
-      .set(`.html`, `text/html`)
-      .set(`.ico`, `image/x-icon`)
-      .set(`.jpeg`, `image/jpeg`)
-      .set(`.jpg`, `image/jpeg`)
-      .set(`.js`, `application/javascript`)
-      .set(`.json`, `application/json`)
-      .set(`.mjs`, `application/javascript`)
-      .set(`.pdf`, `application/pdf`)
-      .set(`.png`, `image/png`)
-      .set(`.svg`, `image/svg+xml`)
-      .set(`.tif`, `image/tiff`)
-      .set(`.tiff`, `image/tiff`)
-      .set(`.xml`, `text/xml`)
-      .set(`.zip`, `application/zip`)
-      .set(`.webp`, `image/webp`)
-      .set(`.woff`, `font/woff`)
-      .set(`.woff2`, `font/woff2`)
-  }
-}
+export function guessContentType(val) {return contentTypes[p.posix.ext(val)]}
 
 export class DirBase extends l.Emp {
   urlPathToFsPath() {return undefined}
@@ -196,7 +192,7 @@ export class HttpFileStream extends io.FileStream {
     }
   }
 
-  type() {return ContentTypeMap.main.guess(this.path)}
+  type() {return guessContentType(this.path)}
 
   setType(head) {
     const val = this.type()

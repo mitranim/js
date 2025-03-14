@@ -31,14 +31,19 @@ export class Ren extends l.Emp {
     this.doc = reqDocument(doc)
   }
 
+  // An all purpose, catch-all rendering function.
+  E(tar, props, ...chi) {
+    if (!l.isObj(tar)) return this.elemHtml(tar, props, ...chi)
+    if (!chi.length) return this.mutProps(tar, props)
+    return this.mut(tar, props, ...chi)
+  }
+
   elemHtml(tag, props, ...chi) {
     if (l.isObj(tag)) return this.mut(tag, props, ...chi)
-    if (l.isStr(tag)) {
-      if (tag === `svg`) return this.elemHtmlSvg(tag, props, ...chi)
-      if (!this.lax && this.isVoid(tag)) return this.elemVoid(tag, props, ...chi)
-      return this.elem(tag, props, ...chi)
-    }
-    throw l.errConv(tag, `HTML element`)
+    if (!l.isStr(tag)) throw l.errConv(tag, `HTML element`)
+    if (tag === `svg`) return this.elemHtmlSvg(tag, props, ...chi)
+    if (!this.lax && this.isVoid(tag)) return this.elemVoid(tag, props, ...chi)
+    return this.elem(tag, props, ...chi)
   }
 
   elemSvg(tag, props, ...chi) {

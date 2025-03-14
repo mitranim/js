@@ -10,129 +10,124 @@ Represents a hidden part of native DOM implementations: mapping from element
 names to class names. The native DOM API doesn't expose such a registry, so we
 have to implement it ourselves.
 */
-export class TagToCls extends o.MixMain(StrMap) {
-  static default() {
-    return new this()
-      .set(`a`, `HTMLAnchorElement`)
-      .set(`area`, `HTMLAreaElement`)
-      .set(`audio`, `HTMLAudioElement`)
-      .set(`base`, `HTMLBaseElement`)
-      .set(`body`, `HTMLBodyElement`)
-      .set(`br`, `HTMLBRElement`)
-      .set(`button`, `HTMLButtonElement`)
-      .set(`canvas`, `HTMLCanvasElement`)
-      .set(`data`, `HTMLDataElement`)
-      .set(`datalist`, `HTMLDataListElement`)
-      .set(`details`, `HTMLDetailsElement`)
-      .set(`dialog`, `HTMLDialogElement`)
-      .set(`div`, `HTMLDivElement`)
-      .set(`dl`, `HTMLDListElement`)
-      .set(`embed`, `HTMLEmbedElement`)
-      .set(`fieldset`, `HTMLFieldSetElement`)
-      .set(`font`, `HTMLFontElement`)
-      .set(`form`, `HTMLFormElement`)
-      .set(`frame`, `HTMLFrameElement`)
-      .set(`frameset`, `HTMLFrameSetElement`)
-      .set(`head`, `HTMLHeadElement`)
-      .set(`h1`, `HTMLHeadingElement`)
-      .set(`h2`, `HTMLHeadingElement`)
-      .set(`h3`, `HTMLHeadingElement`)
-      .set(`h4`, `HTMLHeadingElement`)
-      .set(`h5`, `HTMLHeadingElement`)
-      .set(`h6`, `HTMLHeadingElement`)
-      .set(`hr`, `HTMLHRElement`)
-      .set(`html`, `HTMLHtmlElement`)
-      .set(`iframe`, `HTMLIFrameElement`)
-      .set(`img`, `HTMLImageElement`)
-      .set(`input`, `HTMLInputElement`)
-      .set(`label`, `HTMLLabelElement`)
-      .set(`legend`, `HTMLLegendElement`)
-      .set(`li`, `HTMLLIElement`)
-      .set(`link`, `HTMLLinkElement`)
-      .set(`map`, `HTMLMapElement`)
-      .set(`marquee`, `HTMLMarqueeElement`)
-      .set(`menu`, `HTMLMenuElement`)
-      .set(`meta`, `HTMLMetaElement`)
-      .set(`meter`, `HTMLMeterElement`)
-      .set(`del`, `HTMLModElement`)
-      .set(`ins`, `HTMLModElement`)
-      .set(`object`, `HTMLObjectElement`)
-      .set(`ol`, `HTMLOListElement`)
-      .set(`optgroup`, `HTMLOptGroupElement`)
-      .set(`option`, `HTMLOptionElement`)
-      .set(`output`, `HTMLOutputElement`)
-      .set(`p`, `HTMLParagraphElement`)
-      .set(`param`, `HTMLParamElement`)
-      .set(`picture`, `HTMLPictureElement`)
-      .set(`pre`, `HTMLPreElement`)
-      .set(`progress`, `HTMLProgressElement`)
-      .set(`q`, `HTMLQuoteElement`)
-      .set(`blockquote`, `HTMLQuoteElement`)
-      .set(`script`, `HTMLScriptElement`)
-      .set(`select`, `HTMLSelectElement`)
-      .set(`slot`, `HTMLSlotElement`)
-      .set(`source`, `HTMLSourceElement`)
-      .set(`span`, `HTMLSpanElement`)
-      .set(`style`, `HTMLStyleElement`)
-      .set(`caption`, `HTMLTableCaptionElement`)
-      .set(`th`, `HTMLTableCellElement`)
-      .set(`td`, `HTMLTableCellElement`)
-      .set(`col`, `HTMLTableColElement`)
-      .set(`colgroup`, `HTMLTableColElement`)
-      .set(`table`, `HTMLTableElement`)
-      .set(`tr`, `HTMLTableRowElement`)
-      .set(`tfoot`, `HTMLTableSectionElement`)
-      .set(`thead`, `HTMLTableSectionElement`)
-      .set(`tbody`, `HTMLTableSectionElement`)
-      .set(`template`, `HTMLTemplateElement`)
-      .set(`textarea`, `HTMLTextAreaElement`)
-      .set(`time`, `HTMLTimeElement`)
-      .set(`title`, `HTMLTitleElement`)
-      .set(`track`, `HTMLTrackElement`)
-      .set(`ul`, `HTMLUListElement`)
-      .set(`video`, `HTMLVideoElement`)
-      .set(`svg`, `SVGSvgElement`)
-  }
-}
+export const tagToCls = l.Emp()
+tagToCls[`a`] = `HTMLAnchorElement`
+tagToCls[`area`] = `HTMLAreaElement`
+tagToCls[`audio`] = `HTMLAudioElement`
+tagToCls[`base`] = `HTMLBaseElement`
+tagToCls[`body`] = `HTMLBodyElement`
+tagToCls[`br`] = `HTMLBRElement`
+tagToCls[`button`] = `HTMLButtonElement`
+tagToCls[`canvas`] = `HTMLCanvasElement`
+tagToCls[`data`] = `HTMLDataElement`
+tagToCls[`datalist`] = `HTMLDataListElement`
+tagToCls[`details`] = `HTMLDetailsElement`
+tagToCls[`dialog`] = `HTMLDialogElement`
+tagToCls[`div`] = `HTMLDivElement`
+tagToCls[`dl`] = `HTMLDListElement`
+tagToCls[`embed`] = `HTMLEmbedElement`
+tagToCls[`fieldset`] = `HTMLFieldSetElement`
+tagToCls[`font`] = `HTMLFontElement`
+tagToCls[`form`] = `HTMLFormElement`
+tagToCls[`frame`] = `HTMLFrameElement`
+tagToCls[`frameset`] = `HTMLFrameSetElement`
+tagToCls[`head`] = `HTMLHeadElement`
+tagToCls[`h1`] = `HTMLHeadingElement`
+tagToCls[`h2`] = `HTMLHeadingElement`
+tagToCls[`h3`] = `HTMLHeadingElement`
+tagToCls[`h4`] = `HTMLHeadingElement`
+tagToCls[`h5`] = `HTMLHeadingElement`
+tagToCls[`h6`] = `HTMLHeadingElement`
+tagToCls[`hr`] = `HTMLHRElement`
+tagToCls[`html`] = `HTMLHtmlElement`
+tagToCls[`iframe`] = `HTMLIFrameElement`
+tagToCls[`img`] = `HTMLImageElement`
+tagToCls[`input`] = `HTMLInputElement`
+tagToCls[`label`] = `HTMLLabelElement`
+tagToCls[`legend`] = `HTMLLegendElement`
+tagToCls[`li`] = `HTMLLIElement`
+tagToCls[`link`] = `HTMLLinkElement`
+tagToCls[`map`] = `HTMLMapElement`
+tagToCls[`marquee`] = `HTMLMarqueeElement`
+tagToCls[`menu`] = `HTMLMenuElement`
+tagToCls[`meta`] = `HTMLMetaElement`
+tagToCls[`meter`] = `HTMLMeterElement`
+tagToCls[`del`] = `HTMLModElement`
+tagToCls[`ins`] = `HTMLModElement`
+tagToCls[`object`] = `HTMLObjectElement`
+tagToCls[`ol`] = `HTMLOListElement`
+tagToCls[`optgroup`] = `HTMLOptGroupElement`
+tagToCls[`option`] = `HTMLOptionElement`
+tagToCls[`output`] = `HTMLOutputElement`
+tagToCls[`p`] = `HTMLParagraphElement`
+tagToCls[`param`] = `HTMLParamElement`
+tagToCls[`picture`] = `HTMLPictureElement`
+tagToCls[`pre`] = `HTMLPreElement`
+tagToCls[`progress`] = `HTMLProgressElement`
+tagToCls[`q`] = `HTMLQuoteElement`
+tagToCls[`blockquote`] = `HTMLQuoteElement`
+tagToCls[`script`] = `HTMLScriptElement`
+tagToCls[`select`] = `HTMLSelectElement`
+tagToCls[`slot`] = `HTMLSlotElement`
+tagToCls[`source`] = `HTMLSourceElement`
+tagToCls[`span`] = `HTMLSpanElement`
+tagToCls[`style`] = `HTMLStyleElement`
+tagToCls[`caption`] = `HTMLTableCaptionElement`
+tagToCls[`th`] = `HTMLTableCellElement`
+tagToCls[`td`] = `HTMLTableCellElement`
+tagToCls[`col`] = `HTMLTableColElement`
+tagToCls[`colgroup`] = `HTMLTableColElement`
+tagToCls[`table`] = `HTMLTableElement`
+tagToCls[`tr`] = `HTMLTableRowElement`
+tagToCls[`tfoot`] = `HTMLTableSectionElement`
+tagToCls[`thead`] = `HTMLTableSectionElement`
+tagToCls[`tbody`] = `HTMLTableSectionElement`
+tagToCls[`template`] = `HTMLTemplateElement`
+tagToCls[`textarea`] = `HTMLTextAreaElement`
+tagToCls[`time`] = `HTMLTimeElement`
+tagToCls[`title`] = `HTMLTitleElement`
+tagToCls[`track`] = `HTMLTrackElement`
+tagToCls[`ul`] = `HTMLUListElement`
+tagToCls[`video`] = `HTMLVideoElement`
+tagToCls[`svg`] = `SVGSvgElement`
 
 /*
 Represents a hidden part of native DOM implementations: mapping from class names
 to element names. The native DOM API doesn't expose such a registry, so we have
 to implement it ourselves.
 */
-export class ClsToTag extends o.MixMain(StrMap) {
-  invert(src) {
-    for (const [key, val] of src) this.set(val, this.has(val) ? undefined : key)
-    return this
-  }
+export const clsToTag = l.Emp()
+for (const [tag, cls] of Object.entries(tagToCls)) {
+  clsToTag[cls] = cls in clsToTag ? undefined : tag
+}
 
-  localName(cls) {
-    l.reqCls(cls)
+const RE_ELEM_CLS_NAME = /^(?:HTML|SVG)(\w*)Element$/
 
-    while (l.isFun(cls)) {
-      const {name} = cls
+// Given a DOM element class, returns an HTML `.localName` for its nearest
+// superclass with a known associated `.localName`. Otherwise `undefined`.
+// Uses the registry `clsToTag`.
+export function clsLocalName(cls) {
+  l.reqCls(cls)
 
-      if (name) {
-        if (this.has(name)) return this.get(name)
+  while (l.isFun(cls)) {
+    const {name} = cls
 
-        const mat = name.match(l.reqReg(this.re))
+    if (name) {
+      if (name in clsToTag) return clsToTag[name]
 
-        if (mat) {
-          const val = mat[1].toLowerCase()
-          this.set(name, val)
-          return val
-        }
+      const mat = name.match(RE_ELEM_CLS_NAME)
+
+      if (mat) {
+        const val = mat[1].toLowerCase()
+        clsToTag[name] = val
+        return val
       }
-
-      cls = Object.getPrototypeOf(cls)
     }
 
-    return undefined
+    cls = Object.getPrototypeOf(cls)
   }
 
-  get re() {return /^(?:HTML|SVG)(\w*)Element$/}
-
-  static default() {return new this().invert(TagToCls.main)}
+  return undefined
 }
 
 // Shim/polyfill for the built-in `CustomElementRegistry`.
@@ -173,6 +168,8 @@ export class MixRegCache extends o.DedupMixinCache {
     }
   }
 }
+
+export function setDefiner(def) {return Reg.main.setDefiner(def)}
 
 export function reg(cls) {return Reg.main.reg(cls)}
 
@@ -225,7 +222,7 @@ export class Reg extends o.MixMain(l.Emp) {
 
     const localName = (
       l.getOwn(cls, `localName`) ||
-      ClsToTag.main.localName(cls) ||
+      clsLocalName(cls) ||
       customName
     )
 

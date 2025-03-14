@@ -135,8 +135,8 @@ t.test(function test_Reg() {
       static localName = `td`
     }
 
-    t.is(dr.ClsToTag.main.localName(HeadCell), undefined)
-    t.is(dr.ClsToTag.main.localName(BodyCell), undefined)
+    t.is(dr.clsLocalName(HeadCell), undefined)
+    t.is(dr.clsLocalName(BodyCell), undefined)
 
     reg.reg(HeadCell)
     reg.reg(BodyCell)

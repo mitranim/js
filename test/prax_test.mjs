@@ -8,7 +8,7 @@ import * as ds from '../dom_shim.mjs'
 /* Util */
 
 const ren = new p.Ren(ds.document)
-const E = ren.elemHtml.bind(ren)
+const E = ren.E.bind(ren)
 const F = ren.frag.bind(ren)
 const A = p.PropBui.main
 const Text = ds.Text
@@ -176,37 +176,37 @@ t.test(function test_Ren_elemHtml_invalid() {
     fail(null, `unable to convert null to HTML element`)
     fail(true, `unable to convert true to HTML element`)
     fail(123, `unable to convert 123 to HTML element`)
-    fail(E, `unable to convert [function bound elemHtml] to HTML element`)
+    fail(E, `unable to convert [function bound E] to HTML element`)
     fail({}, `expected variant of isNode, got {}`)
     fail({one: 123}, `expected variant of isNode, got {one: 123}`)
     fail({toString() {return `div`}}, `expected variant of isNode, got {toString: [function toString]}`)
   })
 
   t.test(function test_invalid_props() {
-    t.throws(() => E(`div`, 10),                          TypeError, `expected variant of isObj, got 10`)
-    t.throws(() => E(`div`, `str`),                       TypeError, `expected variant of isObj, got "str"`)
-    t.throws(() => E(`div`, {nop: l.nop}),                TypeError, `unable to convert property "nop" [function nop] to string`)
-    t.throws(() => E(`div`, []),                          TypeError, `expected variant of isStruct, got []`)
-    t.throws(() => E(`div`, E),                           TypeError, `expected variant of isObj, got [function bound elemHtml]`)
-    t.throws(() => E(`div`, new String()),                TypeError, `expected variant of isStruct, got [String: ""]`)
-    t.throws(() => E(`div`, {attributes: 10}),            TypeError, `expected variant of isObj, got 10`)
-    t.throws(() => E(`div`, {attributes: `str`}),         TypeError, `expected variant of isObj, got "str"`)
-    t.throws(() => E(`div`, {attributes: []}),            TypeError, `expected variant of isStruct, got []`)
-    t.throws(() => E(`div`, {class: []}),                 TypeError, `unable to convert property "class" [] to string`)
-    t.throws(() => E(`div`, {className: []}),             TypeError, `unable to convert property "className" [] to string`)
-    t.throws(() => E(`div`, {class: {}}),                 TypeError, `unable to convert property "class" {} to string`)
-    t.throws(() => E(`div`, {className: {}}),             TypeError, `unable to convert property "className" {} to string`)
-    t.throws(() => E(`div`, {class: new class {}()}),     TypeError, `unable to convert property "class" {} to string`)
-    t.throws(() => E(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" {} to string`)
-    t.throws(() => E(`div`, {style: 10}),                 TypeError, `unable to convert 10 to style`)
-    t.throws(() => E(`div`, {style: []}),                 TypeError, `unable to convert [] to style`)
-    t.throws(() => E(`div`, {dataset: 10}),               TypeError, `expected variant of isObj, got 10`)
-    t.throws(() => E(`div`, {dataset: `str`}),            TypeError, `expected variant of isObj, got "str"`)
-    t.throws(() => E(`div`, {dataset: []}),               TypeError, `expected variant of isStruct, got []`)
+    t.throws(() => ren.elemHtml(`div`, 10),                          TypeError, `expected variant of isObj, got 10`)
+    t.throws(() => ren.elemHtml(`div`, `str`),                       TypeError, `expected variant of isObj, got "str"`)
+    t.throws(() => ren.elemHtml(`div`, {nop: l.nop}),                TypeError, `unable to convert property "nop" [function nop] to string`)
+    t.throws(() => ren.elemHtml(`div`, []),                          TypeError, `expected variant of isStruct, got []`)
+    t.throws(() => ren.elemHtml(`div`, E),                           TypeError, `expected variant of isObj, got [function bound E]`)
+    t.throws(() => ren.elemHtml(`div`, new String()),                TypeError, `expected variant of isStruct, got [String: ""]`)
+    t.throws(() => ren.elemHtml(`div`, {attributes: 10}),            TypeError, `expected variant of isObj, got 10`)
+    t.throws(() => ren.elemHtml(`div`, {attributes: `str`}),         TypeError, `expected variant of isObj, got "str"`)
+    t.throws(() => ren.elemHtml(`div`, {attributes: []}),            TypeError, `expected variant of isStruct, got []`)
+    t.throws(() => ren.elemHtml(`div`, {class: []}),                 TypeError, `unable to convert property "class" [] to string`)
+    t.throws(() => ren.elemHtml(`div`, {className: []}),             TypeError, `unable to convert property "className" [] to string`)
+    t.throws(() => ren.elemHtml(`div`, {class: {}}),                 TypeError, `unable to convert property "class" {} to string`)
+    t.throws(() => ren.elemHtml(`div`, {className: {}}),             TypeError, `unable to convert property "className" {} to string`)
+    t.throws(() => ren.elemHtml(`div`, {class: new class {}()}),     TypeError, `unable to convert property "class" {} to string`)
+    t.throws(() => ren.elemHtml(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" {} to string`)
+    t.throws(() => ren.elemHtml(`div`, {style: 10}),                 TypeError, `unable to convert 10 to style`)
+    t.throws(() => ren.elemHtml(`div`, {style: []}),                 TypeError, `unable to convert [] to style`)
+    t.throws(() => ren.elemHtml(`div`, {dataset: 10}),               TypeError, `expected variant of isObj, got 10`)
+    t.throws(() => ren.elemHtml(`div`, {dataset: `str`}),            TypeError, `expected variant of isObj, got "str"`)
+    t.throws(() => ren.elemHtml(`div`, {dataset: []}),               TypeError, `expected variant of isStruct, got []`)
   })
 })
 
-t.test(function test_Ren_elemHtml_basic() {
+t.test(function test_Ren_E_basic() {
   t.test(function test_tag_string() {
     eqm(E(`span`),                        `<span></span>`)
     eqm(E(`span`, null),                  `<span></span>`)
@@ -237,6 +237,29 @@ t.test(function test_Ren_elemHtml_basic() {
       ),
       `<span one="two" three="four">five</span>`,
     )
+  })
+
+  t.test(function test_element_mut_props_or_chi() {
+    const tar = E(`span`, {class: `one`}, `two`)
+    eqm(tar, `<span class="one">two</span>`)
+
+    t.is(E(tar), tar)
+    eqm(tar, `<span class="one">two</span>`)
+
+    t.is(E(tar, {}), tar)
+    eqm(tar, `<span class="one">two</span>`)
+
+    t.is(E(tar, {class: `three`}), tar)
+    eqm(tar, `<span class="three">two</span>`)
+
+    t.is(E(tar, {class: `four`}, undefined), tar)
+    eqm(tar, `<span class="four"></span>`)
+
+    t.is(E(tar, {}, `five`), tar)
+    eqm(tar, `<span class="four">five</span>`)
+
+    t.is(E(tar, {}, undefined), tar)
+    eqm(tar, `<span class="four"></span>`)
   })
 })
 

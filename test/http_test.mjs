@@ -6,7 +6,12 @@ import * as u from '../url.mjs'
 
 /* Util */
 
-const URL_LONG = `scheme://user:pass@host:123/path?key=val#hash`
+/*
+Used to begin with `scheme://user:pass@host:123`, but some newer JS
+environments, including Chrome, refuse to construct a request with
+username and password in the URL, presumably for security reasons.
+*/
+const URL_LONG = `scheme://host:123/path?key=val#hash`
 
 function mockReq() {return new Request(URL_LONG, {method: h.POST})}
 function mockReqRou() {return new h.ReqRou(mockReq())}

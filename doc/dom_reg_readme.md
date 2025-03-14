@@ -26,8 +26,13 @@ Example mockup for a pushstate link.
 ```js
 import * as dr from '{{featUrl dom_reg}}'
 
+// Enables immediate registration.
+// By default, registration is deferred for SSR compatibility.
+dr.Reg.main.setDefiner(customElements)
+
 // Immediately ready for use. Tag is automatically set to `a-btn`.
-class Btn extends dr.HTMLButtonElement {
+// The mixin `MixReg` enables automatic registration on instantiation.
+class Btn extends dr.MixReg(HTMLButtonElement) {
   constructor(text) {
     super()
     this.textContent = text
@@ -37,7 +42,7 @@ class Btn extends dr.HTMLButtonElement {
 document.body.append(new Btn(`click me`))
 
 // Immediately ready for use. Tag is automatically set to `my-link`.
-class MyLink extends dr.HTMLAnchorElement {
+class MyLink extends dr.MixReg(HTMLAnchorElement) {
   constructor(text, href) {
     super()
     this.textContent = text

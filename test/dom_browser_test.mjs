@@ -8,7 +8,7 @@ import * as d from '../dom.mjs'
 import * as ds from '../dom_shim.mjs'
 
 const ren = new p.Ren()
-const E = ren.elemHtml.bind(ren)
+const E = ren.E.bind(ren)
 
 t.test(function test_DocHeadMut() {
   function mutHead(val) {return d.DocHeadMut.main.mut(val)}

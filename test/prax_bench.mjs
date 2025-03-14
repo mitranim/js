@@ -9,7 +9,7 @@ import * as ds from '../dom_shim.mjs'
 /* Util */
 
 const ren = new p.Ren(ds.document)
-const E = ren.elemHtml.bind(ren)
+const E = ren.E.bind(ren)
 const A = p.PropBui.main
 
 function P(val) {return p.PropBui.of(val)}

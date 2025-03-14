@@ -6,7 +6,7 @@ import * as l from '{{featUrl lang}}'
 l.isNum(1)
 // true
 
-l.isNum('1')
+l.isNum(`1`)
 // false
 
 l.isNum(NaN)

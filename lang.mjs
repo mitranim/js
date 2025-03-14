@@ -409,6 +409,7 @@ export function show(val, vis = new Map()) {
   if (isSym(val)) return val.toString()
   if (isFun(val)) return showFun(val)
   if (isObj(val)) return showObj(val, vis)
+  if (Object.is(val, -0)) return `-0`
   return String(val)
 }
 
@@ -460,9 +461,9 @@ export function setProto(tar, cls) {
 export function Emp() {return new.target && new.target !== Emp ? this : Object.create(null)}
 Emp.prototype = null
 
-/* Op */
+/* Math */
 
-// TODO add type checking. `+` must require consistent types.
+// TODO consider type checking. `+` must require consistent types.
 export function add(a, b) {return a + b}
 export function sub(a, b) {return a - b}
 export function mul(a, b) {return a * b}
@@ -475,6 +476,12 @@ export function gte(a, b) {return a >= b}
 export function neg(val) {return -val}
 export function inc(val) {return val + 1}
 export function dec(val) {return val - 1}
+
+// Non-insane variant of `Math.round`. Rounds away from 0, instead of up.
+export function round(val) {
+  reqNum(val)
+  return val < 0 ? -Math.round(-val) : Math.round(val)
+}
 
 /* Internal */
 

@@ -1,7 +1,7 @@
 import * as l from './lang.mjs'
 import * as o from './obj.mjs'
 
-export function deinit(val) {if (isDe(val)) val.deinit()}
+export function deinit(val, ...args) {if (isDe(val)) val.deinit(...args)}
 
 // TODO move to `lang.mjs`.
 export function isDe(val) {return l.isComp(val) && l.hasMeth(val, `deinit`)}
@@ -305,16 +305,16 @@ export class Ph extends l.Emp {
   prototype to make it possible to override in subclasses. The base
   implementation simply tries to invoke the same method on the target.
   */
-  proxyDeinit() {deinit(self(this))}
+  proxyDeinit(...src) {deinit(self(this), ...src)}
 }
 
 export class DeinitPh extends o.MixMain(Ph) {
   drop(val) {deinit(val)}
 
-  proxyDeinit() {
+  proxyDeinit(...src) {
     const val = self(this)
     deinitAll(val)
-    deinit(val)
+    deinit(val, ...src)
   }
 }
 
@@ -341,9 +341,9 @@ export class ObsPh extends Ph {
   `ph(this)` gets the `ObsPh` instance to deinit the observable.
   `self(this)` gets the target to deinit it, if appropriate.
   */
-  proxyDeinit() {
-    ph(this).deinit()
-    deinit(self(this))
+  proxyDeinit(...src) {
+    ph(this).deinit(...src)
+    deinit(self(this), ...src)
   }
 
   deinit() {this.obs.deinit()}
@@ -354,9 +354,9 @@ export class ObsPh extends Ph {
 export class DeObsPh extends ObsPh {
   drop(val) {DeinitPh.prototype.drop.call(this, val)}
 
-  proxyDeinit() {
-    ph(this).deinit()
-    DeinitPh.prototype.proxyDeinit.call(this)
+  proxyDeinit(...src) {
+    ph(this).deinit(...src)
+    DeinitPh.prototype.proxyDeinit.apply(this, src)
   }
 }
 

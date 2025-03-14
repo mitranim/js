@@ -18,9 +18,9 @@ Optionally combine with [`dom_reg`](dom_reg_readme.md) for automatic registratio
 `MixReac` is a "mixin" that adds reactivity to the class:
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/obs.mjs'
-import * as od from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/obs_dom.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.61/dom_reg.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/obs.mjs'
+import * as od from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/obs_dom.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom_reg.mjs'
 
 const obs = o.obs({msg: `hello!`})
 
@@ -63,8 +63,9 @@ The following APIs are exported but undocumented. Check [obs_dom.mjs](../obs_dom
 
   * [`function MixReac`](../obs_dom.mjs#L11)
   * [`class ReacText`](../obs_dom.mjs#L26)
-  * [`class FunText`](../obs_dom.mjs#L48)
-  * [`class ReacMoebius`](../obs_dom.mjs#L65)
-  * [`class Reac`](../obs_dom.mjs#L94)
-  * [`class ElementReac`](../obs_dom.mjs#L114)
-  * [`class TextReac`](../obs_dom.mjs#L128)
+  * [`function funText`](../obs_dom.mjs#L48)
+  * [`class FunText`](../obs_dom.mjs#L50)
+  * [`class ReacMoebius`](../obs_dom.mjs#L67)
+  * [`class Reac`](../obs_dom.mjs#L96)
+  * [`class ElemReac`](../obs_dom.mjs#L116)
+  * [`class TextReac`](../obs_dom.mjs#L130)

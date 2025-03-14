@@ -44,7 +44,7 @@ import * as p from '{{featUrl prax}}'
 import {A} from '{{featUrl prax}}'
 
 const ren = new p.Ren()
-const E = ren.elemHtml.bind(ren)
+const E = ren.E.bind(ren)
 
 const elem = E(`div`, {id: `main`, class: `outer`},
   E(`p`, {class: `inner`},
@@ -79,7 +79,7 @@ import * as p from '{{featUrl prax}}'
 import * as dr from '{{featUrl dom_reg}}'
 
 const ren = new p.Ren()
-const E = ren.elemHtml.bind(ren)
+const E = ren.E.bind(ren)
 
 class SomeLink extends dr.MixReg(HTMLAnchorElement) {
   init(href, text) {
@@ -101,7 +101,7 @@ import * as p from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_global_shim}}'
 
 const ren = new p.Ren(dg.global.document)
-const E = ren.elemHtml.bind(ren)
+const E = ren.E.bind(ren)
 
 const elem = E(`div`, {id: `main`, class: `outer`},
   E(`p`, {class: `inner`}, `hello world!`),
@@ -124,7 +124,7 @@ import * as dg from '{{featUrl dom_global_shim}}'
 import * as dg from '{{featUrl dom_global_native}}'
 
 const ren = new p.Ren(dg.global.document)
-const E = ren.elemHtml.bind(ren)
+const E = ren.E.bind(ren)
 
 // In both environments, this will be a DOM element.
 // In SSR, it will be shimmed.
@@ -140,7 +140,7 @@ import * as p from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_global_shim}}'
 
 const ren = new p.Ren(dg.global.document)
-const E = ren.elemHtml.bind(ren)
+const E = ren.E.bind(ren)
 
 const elem = E(`html`, {lang: `en`},
   E(`head`, null,

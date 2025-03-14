@@ -36,7 +36,7 @@ export function emptty(soft) {
   const Deno = globalThis.Deno
 
   if (Deno?.isatty) {
-    if (Deno.isatty()) {
+    if (Deno.isatty(Deno.stdout.rid)) {
       Deno.stdout.writeSync(soft ? arrClearSoft() : arrClearHard())
       return true
     }
