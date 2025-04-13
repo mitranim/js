@@ -15,16 +15,16 @@ Optionally combine with [`dom_reg`](dom_reg_readme.md) for automatic registratio
 
 ## Usage
 
-`MixReac` is a "mixin" that adds reactivity to the class:
+`MixReacElem` is a "mixin" that adds reactivity to the class:
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/obs.mjs'
-import * as od from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/obs_dom.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom_reg.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/obs.mjs'
+import * as od from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/obs_dom.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/dom_reg.mjs'
 
 const obs = o.obs({msg: `hello!`})
 
-class MyElem extends od.MixReac(dr.HTMLElement) {
+class MyElem extends od.MixReacElem(dr.HTMLElement) {
   // Automatically runs on `.connectedCallback`.
   // Subscribes to observables. Reruns on changes.
   run() {this.textContent = obs.msg}
@@ -40,9 +40,7 @@ Reactivity is also available for `Text`:
 ```js
 const obs = o.obs({msg: `hello!`})
 
-document.body.append(
-  new od.FunText(() => obs.msg)
-)
+document.body.append(od.reacText(() => obs.msg))
 
 obs.msg = `hello world!`
 ```
@@ -61,11 +59,20 @@ However, this hybrid approach forces some limitations. In particular, when custo
 
 The following APIs are exported but undocumented. Check [obs_dom.mjs](../obs_dom.mjs).
 
-  * [`function MixReac`](../obs_dom.mjs#L11)
-  * [`class ReacText`](../obs_dom.mjs#L26)
-  * [`function funText`](../obs_dom.mjs#L48)
-  * [`class FunText`](../obs_dom.mjs#L50)
-  * [`class ReacMoebius`](../obs_dom.mjs#L67)
-  * [`class Reac`](../obs_dom.mjs#L96)
-  * [`class ElemReac`](../obs_dom.mjs#L116)
-  * [`class TextReac`](../obs_dom.mjs#L130)
+  * [`const SYM_REC`](../obs_dom.mjs#L5)
+  * [`function reacText`](../obs_dom.mjs#L12)
+  * [`class ReacText`](../obs_dom.mjs#L14)
+  * [`function MixReacElem`](../obs_dom.mjs#L38)
+  * [`class MixReacElemCache`](../obs_dom.mjs#L40)
+  * [`const SYM_RECS`](../obs_dom.mjs#L59)
+  * [`function MixReacsElem`](../obs_dom.mjs#L68)
+  * [`class MixReacsElemCache`](../obs_dom.mjs#L70)
+  * [`class NodeRecur`](../obs_dom.mjs#L99)
+  * [`class ElemRecur`](../obs_dom.mjs#L116)
+  * [`class FunElemRecur`](../obs_dom.mjs#L125)
+  * [`const REG_DEINIT`](../obs_dom.mjs#L135)
+  * [`function nodeDepth`](../obs_dom.mjs#L139)
+  * [`function isNode`](../obs_dom.mjs#L146)
+  * [`function reqNode`](../obs_dom.mjs#L147)
+  * [`function isElement`](../obs_dom.mjs#L150)
+  * [`function reqElement`](../obs_dom.mjs#L151)

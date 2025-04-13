@@ -383,21 +383,30 @@ t.test(function test_findIndex() {
 
 t.test(function test_includes() {
   function test(src, val, exp) {
-    t.is(i.includes(src, val), exp)
-    t.is(i.includes(args(...(src ?? [])), val), exp)
+    const msg = [`src:`, src, `val:`, val]
+
+    t.is(i.includes(src, val), exp, ...msg)
+    t.is(i.includes(args(...(src ?? [])), val), exp, ...msg)
+    t.is(i.includes(new Set(src), val), exp, ...msg)
+
+    const map = new Map()
+    for (const val of src ?? []) map.set(val, val)
+    t.is(i.includes(map, val), exp, ...msg)
   }
 
   t.no(i.includes(`str`, `s`))
 
-  test(undefined,              undefined, false)
-  test([],                     undefined, false)
-  test([10, NaN, 20, NaN, 30], undefined, false)
-  test([10, NaN, 20, NaN, 30], 0,         false)
-  test([10, NaN, 20, NaN, 30], 10,        true)
-  test([10, NaN, 20, NaN, 30], NaN,       true)
-  test([10, NaN, 20, NaN, 30], 20,        true)
-  test([10, NaN, 20, NaN, 30], 30,        true)
-  test([10, NaN, 20, NaN, 30], 40,        false)
+  test(undefined, undefined, false)
+  test([],        undefined, false)
+
+  const src = [10, NaN, 20, NaN, 30]
+  test(src, undefined, false)
+  test(src, 0,         false)
+  test(src, 10,        true)
+  test(src, NaN,       true)
+  test(src, 20,        true)
+  test(src, 30,        true)
+  test(src, 40,        false)
 })
 
 t.test(function test_append() {

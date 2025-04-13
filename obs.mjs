@@ -1,380 +1,272 @@
 import * as l from './lang.mjs'
 import * as o from './obj.mjs'
 
-export function deinit(val, ...args) {if (isDe(val)) val.deinit(...args)}
+export const TRIG = new o.DynVar()
+export const SYM_PH = Symbol.for(`ph`)
+export const SYM_TAR = Symbol.for(`self`)
 
-// TODO move to `lang.mjs`.
-export function isDe(val) {return l.isComp(val) && l.hasMeth(val, `deinit`)}
-export function reqDe(val) {return l.req(val, isDe)}
+export function isRunner(val) {return l.isComp(val) && l.hasMeth(val, `run`)}
+export function reqRunner(val) {return l.req(val, isRunner)}
 
-export function isObs(val) {return isDe(val) && isTrig(val) && l.hasMeth(val, `sub`) && l.hasMeth(val, `unsub`)}
-export function reqObs(val) {return l.req(val, isObs)}
-
-export function isTrig(val) {return l.isComp(val) && l.hasMeth(val, `trig`)}
+export function isTrig(val) {return l.isComp(val) && l.hasMeth(val, `trigger`)}
 export function reqTrig(val) {return l.req(val, isTrig)}
 
-export function isSub(val) {return l.isFun(val) || isTrig(val)}
-export function reqSub(val) {return l.req(val, isSub)}
-
-export function isSubber(val) {return l.isFun(val) || (l.isComp(val) && l.hasMeth(val, `subTo`))}
-export function reqSubber(val) {return l.req(val, isSubber)}
-
-export function isRunTrig(val) {return l.isComp(val) && l.hasMeth(val, `run`) && isTrig(val)}
-export function reqRunTrig(val) {return l.req(val, isRunTrig)}
-
-export function ph(val) {return l.isComp(val) && keyPh in val ? val[keyPh] : undefined}
-export function self(val) {return l.isComp(val) && keySelf in val ? val[keySelf] : val}
-
-export const keyPh = Symbol.for(`ph`)
-export const keySelf = Symbol.for(`self`)
-
-export function de(val) {return new Proxy(val, DeinitPh.main)}
 export function obs(val) {return new Proxy(val, new ObsPh())}
-export function deObs(val) {return new Proxy(val, new DeObsPh())}
+export function getPh(val) {return val?.[SYM_PH]}
+export function getTar(val) {return val?.[SYM_TAR]}
 
-export class StaticProxied extends l.Emp {
-  constructor() {
-    super()
-    return new Proxy(this, this.ph)
-  }
-}
+// Short for "observable proxy handler".
+export class ObsPh extends l.Emp {
+  get Broad() {return Broad}
 
-export class Proxied extends l.Emp {
-  constructor() {
-    super()
-    return new Proxy(this, new this.Ph())
-  }
-}
-
-export class De extends StaticProxied {get ph() {return DeinitPh.main}}
-export class Obs extends Proxied {get Ph() {return ObsPh}}
-export class DeObs extends Proxied {get Ph() {return DeObsPh}}
-
-export const dyn = new class Dyn extends o.Dyn {
-  sub(obs) {
-    const val = this.$
-    if (l.isFun(val)) val(obs)
-    else if (isSubber(val)) val.subTo(obs)
-  }
-
-  inert(fun, ...val) {
-    const prev = this.swap()
-    try {return fun(...val)}
-    finally {this.swap(prev)}
-  }
-}()
-
-/*
-Extremely simple scheduler for our observables. Provides reentrant pause/resume
-and batch flushing. Note that even in the "unpaused" state, the scheduler
-doesn't immediately run its entries. Our observables simply bypass it when
-unpaused. Also note that this is fully synchronous. Compare the timed scheduler
-in `sched.mjs`.
-*/
-export class Sched extends o.MixMain(Set) {
-  constructor(val) {super(val).p = 0}
-  isPaused() {return this.p > 0}
-  pause() {return this.p++, this}
-
-  resume() {
-    if (!this.p) return this
-    this.p--
-    if (!this.p) this.run()
-    return this
-  }
-
-  run() {
-    for (const val of this) {
-      this.delete(val)
-      val.trig()
-    }
-    return this
-  }
-
-  paused(fun, ...val) {
-    this.pause()
-    try {return fun(...val)}
-    finally {this.resume()}
-  }
-
-  /*
-  Caution: this doesn't reset the `.p` counter because non-buggy callers must
-  always use try/finally for pause/unpause. If some code is calling `.deinit`
-  while the scheduler is paused, it should unpause the scheduler afterwards.
-  Resetting the counter here would be a surprise.
-  */
-  deinit() {this.clear()}
-}
-
-/*
-Extremely simple implementation of an observable in a "traditional" sense.
-Name short for "imperative observable". Maintains and triggers subscribers.
-Satisfies the `isObs` interface. All functionality is imperative, not automatic.
-Not to be confused with `Obs`, which is an "automatically" observable object
-wrapped into a proxy that secretly uses `ImpObs`.
-
-Implicit observation and automatic triggers are provided by other classes using
-this as an inner component. See `Rec` and `ObsPh`.
-*/
-export class ImpObs extends Set {
-  sub(val) {this.add(reqSub(val))}
-  unsub(val) {this.delete(val)}
-
-  trig() {
-    const sch = Sched.main
-    if (sch.isPaused()) sch.add(this)
-    else for (const val of this) subTrig(val)
-  }
-
-  deinit() {for (const val of this) this.unsub(val)}
-}
-
-/*
-Name is short for "reactive" or "recurring", because it's both. Base class for
-implementing automatic subscriptions. Invoking `.run` sets up context via `dyn`
-and calls `.onRun`. During the call, observables may find the `Rec` instance in
-`dyn` and register themselves for future triggers. The link is two-way;
-observables must refer to `Rec` to trigger it, and `Rec` must refer to
-observables to unsubscribe when deinited. Rerunning `.run` clears previous
-observables.
-
-This is half of our "invisible magic" for automatic subscriptions. The other
-half is proxy handlers such as `ObsPh`, which trap property access such as
-`someObs.someField` and secretly use `dyn` to find the current "subber" such as
-`Rec` and establish subscriptions.
-
-`Rec` itself has a nop run. See subclasses.
-*/
-export class Rec extends Set {
-  constructor() {
-    super()
-    this.new = new Set()
-    this.act = false
-  }
-
-  onRun() {}
-
-  /*
-  Language observation. The `try` pyramid demonstrates that `try`/`finally` is
-  inferior to `defer` as seen in Go and Swift, which would simplify our code
-  to the following:
-
-      const subber = dyn.swap(this)
-      defer dyn.swap(subber)
-
-      this.act = true
-      defer this.act = false
-
-      this.new.clear()
-      defer this.delOld()
-
-      sch.pause()
-      defer sch.resume()
-
-      return this.onRun()
-  */
-  run() {
-    if (this.act) throw Error(`unexpected overlapping rec.run`)
-
-    const sch = Sched.main
-    const subber = dyn.swap(this)
-
-    try {
-      this.act = true
-
-      try {
-        this.new.clear()
-
-        try {
-          sch.pause()
-
-          try {return this.onRun()}
-          finally {sch.resume()}
-        }
-        finally {this.delOld()}
-      }
-      finally {this.act = false}
-    }
-    finally {dyn.swap(subber)}
-  }
-
-  trig() {}
-
-  subTo(obs) {
-    reqObs(obs)
-    if (this.new.has(obs)) return
-    this.new.add(obs)
-    this.add(obs)
-    obs.sub(this)
-  }
-
-  del(obs) {this.delete(obs), obs.unsub(this)}
-  delOld() {for (const val of this) if (!this.new.has(val)) this.del(val)}
-  deinit() {for (const val of this) this.del(val)}
-}
-
-export class Moebius extends Rec {
-  constructor(ref) {super().ref = reqRunTrig(ref)}
-  onRun() {return this.ref.run()}
-  trig() {if (!this.act) this.ref.trig()}
-}
-
-export class Loop extends Rec {
-  constructor(ref) {super().ref = reqSub(ref)}
-  onRun() {subTrig(this.ref)}
-  trig() {if (!this.act) this.run()}
-}
-
-// Short for "proxy handler". Base for other handlers.
-export class Ph extends l.Emp {
-  /*
-  Hack/workaround for Chrome. At the time of writing, in recent versions of
-  Chrome, the engine invokes only "own" methods of proxy handlers, ignoring
-  methods on the prototype. TODO remove if they fix this.
-  */
-  constructor() {
-    super()
-    /* eslint-disable no-self-assign */
-    this.has = this.has
-    this.get = this.get
-    this.set = this.set
-    this.deleteProperty = this.deleteProperty
-    /* eslint-enable no-self-assign */
-  }
+  constructor() {super().bro = new this.Broad()}
 
   /* Standard traps */
 
-  has(tar, key) {
-    return (
-      key === keyPh ||
-      key === keySelf ||
-      key === `deinit` ||
-      key in tar
-    )
-  }
+  has(tar, key) {return key === SYM_PH || key === SYM_TAR || key in tar}
 
   get(tar, key) {
-    if (key === keyPh) return this
-    if (key === keySelf) return tar
-    if (key === `deinit`) return this.proxyDeinit
-    return this.getIn(tar, key)
+    if (key === SYM_PH) return this
+    if (key === SYM_TAR) return tar
+
+    const val = tar[key]
+    if (!l.isFun(val) || l.hasOwnEnum(tar, key)) this.monitor()
+    return val
   }
 
   set(tar, key, val) {
-    this.didSet(tar, key, val)
+    const prev = tar[key]
+    tar[key] = val
+    if (!l.is(prev, val)) this.trigger()
     return true
   }
 
   deleteProperty(tar, key) {
-    this.didDel(tar, key)
+    if (delete tar[key]) this.trigger()
     return true
+  }
+
+  ownKeys(tar) {
+    this.monitor()
+    return Reflect.ownKeys(tar)
   }
 
   /* Extensions */
 
   // Allows accidental `ph(ph(val))` to work.
-  get [keyPh]() {return this}
+  get [SYM_PH]() {return this}
 
-  getIn(tar, key) {return tar[key]}
-
-  didSet(tar, key, val) {
-    const had = hasPub(tar, key)
-    const prev = tar[key]
-    tar[key] = val
-    if (l.eq(prev, val)) return false
-    if (had) this.drop(prev)
-    return true
-  }
-
-  didDel(ref, key) {
-    if (!l.hasOwn(ref, key)) return false
-
-    const had = hasPub(ref, key)
-    const val = ref[key]
-    delete ref[key]
-
-    if (had) this.drop(val)
-    return true
-  }
-
-  drop() {}
-
-  /*
-  This method is returned by the "get" trap and invoked on the proxy, not the
-  proxy handler. It assumes that `this` is the proxy. Placed on the handler's
-  prototype to make it possible to override in subclasses. The base
-  implementation simply tries to invoke the same method on the target.
-  */
-  proxyDeinit(...src) {deinit(self(this), ...src)}
+  monitor() {this.bro.monitor()}
+  trigger() {this.bro.trigger()}
+  deinit() {this.bro.deinit()}
 }
 
-export class DeinitPh extends o.MixMain(Ph) {
-  drop(val) {deinit(val)}
+export class Broad extends l.Emp {
+  get reg() {return REG_PAIR}
 
-  proxyDeinit(...src) {
-    const val = self(this)
-    deinitAll(val)
-    deinit(val, ...src)
+  refs = new Set()
+  pairs = new WeakMap()
+  trigs = new Set()
+
+  constructor(src) {
+    super()
+    if (l.isSome(src)) for (src of src) this.add(src)
+  }
+
+  monitor() {
+    const src = TRIG.get()
+    if (isTrig(derefOpt(src))) this.add(src)
+  }
+
+  add(src) {
+    const tar = reqTrig(derefOpt(src))
+    const ref = l.onlyInst(src, WeakRef) ?? new WeakRef(tar)
+    const {reg, refs, pairs} = this
+    let pair = pairs.get(tar)
+
+    if (pair) {
+      refs.delete(pair[1])
+      reg.unregister(pair)
+    }
+
+    pair = [refs, ref]
+    refs.add(ref)
+    pairs.set(tar, pair)
+    reg.register(tar, pair, pair)
+  }
+
+  trigger() {
+    const {refs, trigs} = this
+
+    try {
+      for (const ref of refs) {
+        const tar = ref.deref()
+        if (!tar) {
+          refs.delete(tar)
+          continue
+        }
+
+        if (trigs.has(tar)) continue
+        trigs.add(tar)
+
+        tar.trigger()
+      }
+    }
+    finally {trigs.clear()}
+  }
+
+  depth() {return 0}
+  deinit() {this.refs.clear()}
+}
+
+export const REG_PAIR = new FinalizationRegistry(deinitPair)
+function deinitPair([set, val]) {set.delete(val)}
+function derefOpt(src) {return l.isInst(src, WeakRef) ? src.deref() : src}
+
+/*
+Base class for implementing automatic subscriptions. Invoking `.run` sets up
+context via `TRIG` and calls `.onRun`. During the call, broadcasters may
+find a reference to the `Recur` instance in `TRIG` and register it for
+future triggers.
+
+Uses async scheduling by default. Calling `.trigger` schedules the next run via
+`Shed.main`. Can be overridden in a subclass or by monkey-patching either this
+class, or `Shed.main`, or `Shed.default` before first access to `Shed.main`.
+
+This is half of our "invisible magic" for automatic subscriptions. The other
+half is proxy handlers such as `ObsPh`, which trap property access such as
+`someObs.someField` and secretly use `TRIG` to find the current triggerable,
+such as `Recur`, to register it.
+
+`Recur` itself has a nop run. See subclasses.
+*/
+export class Recur extends l.Emp {
+  get shed() {return Shed.main}
+  weak = undefined
+  active = false
+
+  onRun() {}
+  depth() {return 0}
+  trigger() {this.shed.add(this)}
+
+  run() {
+    if (this.active) return undefined
+    this.deinit()
+    this.weak = new o.WeakerRef(this)
+
+    const prev = TRIG.swap(this.weak)
+    this.active = true
+
+    try {return this.onRun()}
+    finally {
+      this.active = false
+      TRIG.swap(prev)
+    }
+  }
+
+  deinit() {this.weak?.deinit()}
+}
+
+export class FunRecur extends Recur {
+  constructor(fun) {super().fun = l.reqFun(fun)}
+  onRun() {return this.fun()}
+}
+
+export class ObsRef extends l.Emp {
+  get Broad() {return Broad}
+
+  constructor(val) {super().$ = val}
+
+  get() {
+    const bro = this.bro ??= new this.Broad()
+    bro.monitor()
+    return this.$
+  }
+
+  set(val) {
+    if (l.is(val, this.$)) return val
+    this.$ = val
+    this.bro?.trigger()
+    return val
+  }
+
+  deinit() {this.bro?.deinit()}
+}
+
+/*
+Used internally by `Shed`. Updates are scheduled by adding vals to the que, and
+flushed together as a batch by calling `.run()`. Reentrant flush is a nop.
+
+TODO consider preventing exceptions from individual vals from interfering with
+each other.
+*/
+export class Que extends Set {
+  active = false
+
+  reqVal(val) {return reqRunner(val)}
+  runVal(val) {return val.run()}
+  add(val) {return super.add(this.reqVal(val))}
+
+  run() {
+    if (this.active) return
+    this.active = true
+
+    try {
+      for (const val of this) {
+        this.delete(val)
+        this.runVal(val)
+      }
+    }
+    finally {
+      this.active = false
+      this.clear()
+    }
+    return
   }
 }
 
-export class ObsPh extends Ph {
-  constructor() {super().obs = new this.ImpObs()}
+/*
+Short for "scheduler". Tool for scheduling hierarchical runs, from ancestors to
+descendants. Runnables may report their "depth", which allows us to determine
+order. The base runnables in this module are all at depth 0; see the module
+`obs_dom.mjs` which actually uses the depth feature.
+*/
+export class Shed extends o.MixMain(l.Emp) {
+  get Que() {return Que}
 
-  set(tar, key, val) {
-    if (this.didSet(tar, key, val)) this.obs.trig()
-    return true
+  ques = []
+  timer = undefined
+
+  run = this.run.bind(this)
+
+  run() { // eslint-disable-line no-dupe-class-members
+    this.unschedule()
+    for (const que of this.ques) que?.run()
   }
 
-  deleteProperty(tar, key) {
-    if (this.didDel(tar, key)) this.obs.trig()
-    return true
+  add(val) {
+    this.queAt(val.depth()).add(val)
+    this.schedule()
   }
 
-  getIn(tar, key) {
-    if (!hasPriv(tar, key)) dyn.sub(this.obs)
-    return tar[key]
+  queAt(depth) {return this.ques[l.reqNat(depth)] ||= new this.Que()}
+
+  schedule() {
+    this.unschedule()
+    const fun = globalThis.requestAnimationFrame || setTimeout
+    this.timer = fun(this.run)
   }
 
-  /*
-  See comments on `Ph.prototype.proxyDeinit`. "this" is the proxy.
-  `ph(this)` gets the `ObsPh` instance to deinit the observable.
-  `self(this)` gets the target to deinit it, if appropriate.
-  */
-  proxyDeinit(...src) {
-    ph(this).deinit(...src)
-    deinit(self(this), ...src)
+  unschedule() {
+    const {timer} = this
+    this.timer = undefined
+    if (l.isNil(timer)) return
+    const fun = globalThis.cancelAnimationFrame || clearTimeout
+    fun(timer)
   }
 
-  deinit() {this.obs.deinit()}
-
-  get ImpObs() {return ImpObs}
-}
-
-export class DeObsPh extends ObsPh {
-  drop(val) {DeinitPh.prototype.drop.call(this, val)}
-
-  proxyDeinit(...src) {
-    ph(this).deinit(...src)
-    DeinitPh.prototype.proxyDeinit.apply(this, src)
+  deinit() {
+    this.unschedule()
+    for (const que of this.ques) que?.deinit()
   }
-}
-
-/* Internal */
-
-export function deinitAll(val) {
-  for (const key of l.structKeys(val)) deinit(val[key])
-}
-
-function subTrig(val) {
-  if (l.isFun(val)) val()
-  else val.trig()
-}
-
-function hasPriv(tar, key) {
-  return l.isStr(key) && !l.hasOwnEnum(tar, key) && key in tar
-}
-
-function hasPub(tar, key) {
-  return l.isStr(key) && l.hasOwnEnum(tar, key)
 }

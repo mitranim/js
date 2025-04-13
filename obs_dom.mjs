@@ -1,57 +1,24 @@
 import * as l from './lang.mjs'
+import * as o from './obj.mjs'
 import * as ob from './obs.mjs'
-import * as sc from './sched.mjs'
+
+export const SYM_REC = Symbol.for(`recur`)
 
 /*
-Short for "mixin reactive". The output must be subclassed, and the subclass must
-implement method "run" that mutates the instance. It runs when connected to the
-DOM and reruns automatically when triggered by any observables that it uses.
-See the readme.
+Reactive version of a `Text` node. Usage:
+
+  reacText(() => someObservable.someField)
 */
-export function MixReac(cls) {
-  return class MixReac extends cls {
-    connectedCallback() {
-      super.connectedCallback?.()
-      const reac = this[reacKey] ||= new ElemReac(this)
-      reac.exec()
-    }
+export function reacText(fun) {return new ReacText(fun)}
 
-    disconnectedCallback() {
-      this[reacKey]?.deinit()
-      super.disconnectedCallback?.()
-    }
-  }
-}
+export class ReacText extends (l.onlyCls(globalThis.Text) || l.Emp) {
+  get Recur() {return NodeRecur}
 
-export class ReacText extends (globalThis.Text || Object) {
-  constructor(val) {
-    super(l.renderLax(val))
-    this[reacKey] = new TextReac(this)
-  }
-
-  /*
-  Override in subclass. Called by `Reac`. During a run,
-  accessing observables automatically establishes subscriptions.
-  Call `.exec` to perform a reactive run.
-  */
-  run() {}
-
-  // Subclasses may call this to perform a reactive run.
-  exec() {this[reacKey].exec()}
-}
-
-/*
-Usage:
-
-  funText(() => someObservable.someField)
-*/
-export function funText(fun) {return new FunText(fun)}
-
-export class FunText extends ReacText {
   constructor(fun) {
     super()
     this.fun = l.reqFun(fun)
-    this.exec()
+    const rec = this[SYM_REC] = new this.Recur(this)
+    rec.run()
   }
 
   run() {
@@ -61,106 +28,124 @@ export class FunText extends ReacText {
 }
 
 /*
-Used internally by `Reac`. Implements "magic" automatic subscriptions on
-observable access. Implements the interface required by `Sched`.
+Short for "mixin: reactive element". The input must be a subclass of `Element`
+(in a browser) or its shimmed equivalent from `dom_shim.mjs` (in server code).
+The output must be subclassed, and the subclass must implement the method "run"
+which is expected to access arbitrary observables and mutate the receiver. It
+runs when connected to the DOM and reruns automatically when triggered by any
+observables that it uses.
 */
-export class ReacMoebius extends ob.Moebius {
-  depth() {return this.ref.depth()}
+export function MixReacElem(cls) {return MixReacElemCache.goc(cls)}
 
-  /*
-  Called by `Sched`/`Que`.
+export class MixReacElemCache extends o.StaticCache {
+  static make(cls) {
+    return class MixReacElem extends cls {
+      get Recur() {return ElemRecur}
 
-  Explanation. Our scheduler uses async batching. This happens:
+      connectedCallback() {
+        super.connectedCallback?.()
+        const rec = this[SYM_REC] ||= new this.Recur(this)
+        rec.run()
+      }
 
-    obs_trig → sched_delay → DOM rebuild → sched_run
-
-  Between scheduling this instance for a future run, and the actual run, the
-  node may get disconnected. The disconnect calls `.deinit` on this instance,
-  which clears subscriptions, but doesn't remove the instance from the pending
-  que. We could modify the scheduler to support unscheduling, but it seems
-  simpler and more reliable to check node liveness instead. A single node may
-  get disconnected and reconnected multiple times. The next connect will reinit
-  the reactive loop.
-  */
-  run() {
-    if (this.ref.isLive()) super.run()
-    else this.deinit()
+      disconnectedCallback() {
+        this[SYM_REC]?.deinit()
+        super.disconnectedCallback?.()
+      }
+    }
   }
 }
 
+export const SYM_RECS = Symbol.for(`recurs`)
+
 /*
-Small adapter that enables implicit reactivity with careful hierarchical
-scheduling. Expects external deinit such as via `.disconnectedCallback`.
-Use `ElemReac` for elements, and `TextReac` for text.
+Similar to `MixReacElem`, but instead of requiring and using a single method
+called `.run`, expects the subclass or superclass to have a property or
+getter `.runs`, which must be an iterable of functions (usually methods
+from the class's prototype), which are used like `.run`, but separately.
+Allows to trigger different methods on changes in different observables.
 */
-export class Reac extends l.Emp {
+export function MixReacsElem(cls) {return MixReacsElemCache.goc(cls)}
+
+export class MixReacsElemCache extends o.StaticCache {
+  static make(cls) {
+    return class MixReacsElem extends cls {
+      get Recur() {return FunElemRecur}
+
+      connectedCallback() {
+        super.connectedCallback?.()
+
+        const runs = this.runs ?? this.constructor.runs
+        if (l.isNil(runs)) return
+
+        if (!this[SYM_RECS]) {
+          const buf = []
+          for (const fun of runs) buf.push(new this.Recur(this, fun))
+          this[SYM_RECS] = buf
+        }
+
+        for (const rec of this[SYM_RECS]) rec.run()
+      }
+
+      disconnectedCallback() {
+        const recs = this[SYM_RECS]
+        if (recs) for (const rec of recs) rec.deinit()
+        super.disconnectedCallback?.()
+      }
+    }
+  }
+}
+
+export class NodeRecur extends ob.Recur {
+  get Ref() {return WeakRef}
+
   constructor(node) {
     super()
-    this.node = reqRunnerNode(node)
-    this.loop = new ReacMoebius(this)
+    this.ref = new this.Ref(reqNode(node))
+    REG_DEINIT.register(node, this)
   }
 
-  // Called by `Moebius`.
-  run() {this.node.run(this.node)}
-  trig() {this.sched.push(this.loop)}
+  onRun() {
+    const node = this.ref.deref()
+    return node ? node.run() : this.deinit()
+  }
 
-  // Internal.
-  exec() {this.loop.run()}
   depth() {return nodeDepth(this.node)}
-  isLive() {return this.node.isConnected}
-  deinit() {this.loop.deinit()}
-
-  get sched() {return sc.Sched.main}
 }
 
-export class ElemReac extends Reac {
-  constructor(node) {super(reqRunnerElement(node))}
-}
+export class ElemRecur extends NodeRecur {
+  constructor(val) {super(reqElement(val))}
 
-/*
-Implementation note. The DOM API doesn't seem to support `.connectedCallback`
-and `.disconnectedCallback` for subclasses of `Text`. A reactive run that
-updates the node and establishes subscriptions may happen in the constructor or
-at other arbitrary times, and updates may be triggered before the node is
-connected to the DOM, or after it's disconnected from the DOM. Without
-connected/disconnected callbacks, we have to rely on heuristics. The current
-heuristic is to unsubscribe if triggered when disconnected, but we may have to
-revise this in the future.
-*/
-export class TextReac extends Reac {
-  constructor(node) {super(reqRunnerText(node))}
-
-  trig() {
-    if (this.isLive()) super.trig()
-    else this.deinit()
+  onRun() {
+    const node = this.ref.deref()
+    return node?.isConnected ? node.run() : this.deinit()
   }
 }
 
-const reacKey = Symbol.for(`reac`)
+export class FunElemRecur extends ElemRecur {
+  constructor(val, fun) {super(val).fun = l.reqFun(fun)}
 
-// Defined here, rather than `dom.mjs`, to avoid import.
-function nodeDepth(val) {
-  reqNode(val)
+  onRun() {
+    const {ref, fun} = this
+    const node = ref.deref()
+    return node?.isConnected ? fun.call(node, node) : this.deinit()
+  }
+}
+
+export const REG_DEINIT = new FinalizationRegistry(finalizeDeinit)
+function finalizeDeinit(val) {val.deinit()}
+
+// Defined here, rather than `dom.mjs`, to avoid an import.
+export function nodeDepth(val) {
   let out = 0
-  while ((val = val.parentNode)) out++
+  while ((val = val?.parentNode)) out++
   return out
 }
 
 // Dup from `dom.mjs` to avoid import.
-function isNode(val) {return l.isObj(val) && `parentNode` in val && `childNodes` in val}
-function reqNode(val) {return l.req(val, isNode)}
+export function isNode(val) {return l.isObj(val) && `parentNode` in val}
+export function reqNode(val) {return l.req(val, isNode)}
 
 // See `dom_shim.mjs`.
-function isText(val) {return isNode(val) && val.nodeType === 3}
-
-// See `dom_shim.mjs`.
-function isElement(val) {return isNode(val) && val.nodeType === 1}
-
-function isRunnerNode(val) {return isNode(val) && sc.isRunner(val)}
-function reqRunnerNode(val) {return l.req(val, isRunnerNode)}
-
-function isRunnerText(val) {return isText(val) && sc.isRunner(val)}
-function reqRunnerText(val) {return l.req(val, isRunnerText)}
-
-function isRunnerElement(val) {return isElement(val) && sc.isRunner(val)}
-function reqRunnerElement(val) {return l.req(val, isRunnerElement)}
+export function isElement(val) {return isNode(val) && val.nodeType === 1}
+export function reqElement(val) {return l.req(val, isElement)}

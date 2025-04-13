@@ -498,49 +498,4 @@ t.test(function test_ClsVec() {
   for (const one of vecs) for (const two of vecs) t.eq(one, two)
 })
 
-t.test(function test_Que() {
-  let count = 0
-  function effect0() {count++}
-  function effect1() {count++}
-
-  t.test(function test_reject_invalid_inputs() {
-    t.throws(() => new c.Que().add(),      TypeError, `expected variant of isFun, got undefined`)
-    t.throws(() => new c.Que().add(null),  TypeError, `expected variant of isFun, got null`)
-    t.throws(() => new c.Que().add(`one`), TypeError, `expected variant of isFun, got "one"`)
-    t.throws(() => new c.Que().add(10),    TypeError, `expected variant of isFun, got 10`)
-    t.throws(() => new c.Que().add([]),    TypeError, `expected variant of isFun, got []`)
-    t.throws(() => new c.Que().add({}),    TypeError, `expected variant of isFun, got {}`)
-  })
-
-  const que = new c.Que()
-  que.add(effect0)
-  que.add(effect0)
-  que.add(effect0)
-  que.add(effect1)
-  que.add(effect1)
-  que.add(effect1)
-
-  t.is(que.size, 2)
-  t.is(count, 0)
-
-  que.open()
-  t.is(que.size, 0)
-  t.is(count, 2)
-
-  que.add(effect0)
-  que.add(effect1)
-  t.is(que.size, 0)
-  t.is(count, 4)
-
-  que.close()
-  que.add(effect0)
-  que.add(effect1)
-  t.is(que.size, 2)
-  t.is(count, 4)
-
-  que.open()
-  t.is(que.size, 0)
-  t.is(count, 6)
-})
-
 if (import.meta.main) console.log(`[test] ok!`)

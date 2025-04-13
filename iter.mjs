@@ -19,20 +19,21 @@ export function arrCopy(val) {
   if (l.isNil(val)) return []
   if (l.isTrueArr(val)) return val.slice()
   if (l.isArr(val)) return [].concat(val)
-  if (l.isArrble(val)) return arrFromList(toArray(val))
-  if (l.isSeq(val)) return arrFromIter(val)
+  if (l.isArrble(val)) return listToArr(toArray(val))
+  if (l.isSet(val)) return [...val]
+  if (l.isSeq(val)) return iterToArr(val)
   throw l.errConv(val, `array`)
 }
 
 function toArray(val) {return l.reqArr(val.toArray())}
 
-function arrFromList(val) {
+function listToArr(val) {
   if (l.isTrueArr(val)) return val.slice()
   if (l.isArr(val)) return [].concat(val)
   return Array.prototype.slice.call(val)
 }
 
-function arrFromIter(val) {
+function iterToArr(val) {
   const out = []
   for (val of val) out.push(val)
   return out
@@ -45,7 +46,9 @@ export function slice(val, start, next) {
 export function keys(val) {
   if (!l.isObj(val)) return []
   if (l.isList(val)) return span(val.length)
-  if (l.isIter(val) && l.hasMeth(val, `keys`)) return arrFromIter(val.keys())
+  if (l.isSet(val)) return [...val]
+  if (l.isMap(val)) return [...val.keys()]
+  if (l.isIter(val) && l.hasMeth(val, `keys`)) return iterToArr(val.keys())
   if (l.isIterator(val)) return span(iterLen(val))
   if (l.isArrble(val)) return span(l.onlyNat(getSize(val)) ?? toArray(val).length)
   if (isStructSync(val)) return Object.keys(val)
@@ -60,19 +63,15 @@ export function values(val) {
 
 export function valuesCopy(val) {
   if (!l.isObj(val)) return []
-  if (l.isArrble(val)) return arrFromList(toArray(val))
-  if (l.isList(val)) return arrFromList(val)
-  if (l.isSet(val)) return withBuf(val, copySet)
-  if (l.isMap(val)) return withBuf(val, copyMap)
-  if (l.isIter(val) && l.hasMeth(val, `values`)) return arrFromIter(val.values())
-  if (l.isIterator(val)) return arrFromIter(val)
+  if (l.isArrble(val)) return listToArr(toArray(val))
+  if (l.isList(val)) return listToArr(val)
+  if (l.isSet(val)) return [...val]
+  if (l.isMap(val)) return [...val.values()]
+  if (l.isIter(val) && l.hasMeth(val, `values`)) return iterToArr(val.values())
+  if (l.isIterator(val)) return iterToArr(val)
   if (isStructSync(val)) return valuesFromStruct(val)
   throw l.errConv(val, `values`)
 }
-
-function withBuf(src, fun) {const out = []; fun(src, out); return out}
-function copySet(val, out) {for (val of l.reqSet(val).values()) out.push(val)}
-function copyMap(val, out) {for (val of l.reqMap(val).values()) out.push(val)}
 
 function valuesFromStruct(src) {
   const out = Object.keys(src)
@@ -85,8 +84,8 @@ function valuesFromStruct(src) {
 export function entries(val) {
   if (!l.isObj(val)) return []
   if (l.isList(val)) return entriesFromList(val)
-  if (l.isIter(val) && l.hasMeth(val, `entries`)) return arrFromIter(val.entries())
-  if (l.isIterator(val)) return arrFromIter(val)
+  if (l.isIter(val) && l.hasMeth(val, `entries`)) return iterToArr(val.entries())
+  if (l.isIterator(val)) return iterToArr(val)
   if (l.isArrble(val)) return entriesFromList(toArray(val))
   if (isStructSync(val)) return structEntries(val)
   throw l.errConv(val, `entries`)
@@ -134,7 +133,7 @@ export function findIndex(src, fun) {
 }
 
 export function includes(src, val) {
-  return l.isSet(src) ? src.has(val) : values(src).includes(val)
+  return l.hasMeth(src, `has`) ? src.has(val) : values(src).includes(val)
 }
 
 export function append(src, val) {
@@ -335,6 +334,7 @@ export function compare(one, two) {
   return 0
 }
 
+// Similar to sorting by `l.sub`, but more stringent with its inputs.
 export function compareFin(one, two) {
   one = l.laxFin(one)
   two = l.laxFin(two)

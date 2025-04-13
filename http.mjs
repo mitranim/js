@@ -45,9 +45,7 @@ export const HEADER_JSON_ACCEPT = tuple(HEADER_NAME_ACCEPT, MIME_TYPE_JSON)
 export const HEADERS_JSON_INOUT = tuple(HEADER_JSON, HEADER_JSON_ACCEPT)
 
 export const HEADERS_CORS_PROMISCUOUS = tuple(
-  tuple(HEADER_NAME_CORS_CREDENTIALS, `true`),
-  tuple(HEADER_NAME_CORS_HEADERS, HEADER_NAME_CONTENT_TYPE),
-  tuple(HEADER_NAME_CORS_HEADERS, HEADER_NAME_CACHE_CONTROL),
+  tuple(HEADER_NAME_CORS_ORIGIN, `*`),
   tuple(HEADER_NAME_CORS_METHODS, GET),
   tuple(HEADER_NAME_CORS_METHODS, HEAD),
   tuple(HEADER_NAME_CORS_METHODS, OPTIONS),
@@ -55,18 +53,24 @@ export const HEADERS_CORS_PROMISCUOUS = tuple(
   tuple(HEADER_NAME_CORS_METHODS, PUT),
   tuple(HEADER_NAME_CORS_METHODS, PATCH),
   tuple(HEADER_NAME_CORS_METHODS, DELETE),
-  tuple(HEADER_NAME_CORS_ORIGIN, `*`),
+  tuple(HEADER_NAME_CORS_CREDENTIALS, `true`),
+  tuple(HEADER_NAME_CORS_HEADERS, HEADER_NAME_CONTENT_TYPE),
+  tuple(HEADER_NAME_CORS_HEADERS, HEADER_NAME_CACHE_CONTROL),
 )
 
 export async function resOk(res) {
   if (l.isPromise(res)) res = await res
+  l.reqInst(res, Response)
   if (res.ok) return res
   const text = await res.text()
   throw new ErrHttp((text || `unknown fetch error`), res.status, res)
 }
 
-export function jsonDecode(val) {return l.optStr(val) ? JSON.parse(val) : undefined}
-export function jsonEncode(val) {return l.isSome(val) ? JSON.stringify(val) : `null`}
+export function jsonDecode(...src) {
+  return l.optStr(src[0]) ? JSON.parse(...src) : undefined
+}
+
+export function jsonEncode(...src) {return JSON.stringify(...src) ?? `null`}
 
 // True if given HTTP status code is between 100 and 199 inclusive.
 export function isStatusInfo(val) {return l.isNat(val) && val >= 100 && val <= 199}
@@ -179,7 +183,9 @@ export class ReqRou extends Rou {
   /*
   Example (depends on app semantics):
 
-    if (rou.preflight()) return h.resBui().corsAll().res()
+    if (rou.preflight()) {
+      return new Response(undefined, {headers: h.HEADERS_CORS_PROMISCUOUS})
+    }
   */
   preflight() {return this.someMethod(HEAD, OPTIONS)}
 
@@ -386,7 +392,7 @@ export class Cookie extends l.Emp {
 
   // TODO browser test.
   static delete(key) {
-    const domain = window.location?.hostname
+    const domain = globalThis.location?.hostname
 
     return this.expired(key)
       .install()
@@ -422,7 +428,7 @@ export class Cookies extends c.ClsColl {
   }
 
   toString() {return this.toArray().join(`; `)}
-  static native() {return new this(window.document?.cookie)}
+  static native() {return new this(globalThis.document?.cookie)}
 }
 
 /* Internal */

@@ -107,7 +107,7 @@ export class Arr extends Array {
   add(val) {return this.push(val), this}
 
   setLen(val) {
-    val = l.reqNum(val)
+    l.reqNum(val)
     if (this.length !== val) this.length = val
     return this
   }

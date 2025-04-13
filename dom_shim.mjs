@@ -7,24 +7,24 @@ import * as c from './coll.mjs'
 
 /* Vars */
 
-export const refKey = Symbol.for(`ref`)
-export const dataKey = Symbol.for(`data`)
-export const nameKey = Symbol.for(`name`)
-export const valueKey = Symbol.for(`value`)
-export const styleKey = Symbol.for(`style`)
-export const doctypeKey = Symbol.for(`doctype`)
-export const datasetKey = Symbol.for(`dataset`)
-export const publicIdKey = Symbol.for(`publicId`)
-export const systemIdKey = Symbol.for(`systemId`)
-export const classListKey = Symbol.for(`classList`)
-export const localNameKey = Symbol.for(`localName`)
-export const attributesKey = Symbol.for(`attributes`)
-export const parentNodeKey = Symbol.for(`parentNode`)
-export const childNodesKey = Symbol.for(`childNodes`)
-export const namespaceURIKey = Symbol.for(`namespaceURI`)
-export const ownerDocumentKey = Symbol.for(`ownerDocument`)
-export const implementationKey = Symbol.for(`implementation`)
-export const documentElementKey = Symbol.for(`documentElement`)
+export const SYM_REF = Symbol.for(`ref`)
+export const SYM_DATA = Symbol.for(`data`)
+export const SYM_NAME = Symbol.for(`name`)
+export const SYM_VALUE = Symbol.for(`value`)
+export const SYM_STYLE = Symbol.for(`style`)
+export const SYM_DOCTYPE = Symbol.for(`doctype`)
+export const SYM_DATASET = Symbol.for(`dataset`)
+export const SYM_PUBLIC_ID = Symbol.for(`publicId`)
+export const SYM_SYSTEM_ID = Symbol.for(`systemId`)
+export const SYM_CLASS_LIST = Symbol.for(`classList`)
+export const SYM_LOCAL_NAME = Symbol.for(`localName`)
+export const SYM_ATTRIBUTES = Symbol.for(`attributes`)
+export const SYM_PARENT_NODE = Symbol.for(`parentNode`)
+export const SYM_CHILD_NODES = Symbol.for(`childNodes`)
+export const SYM_NAMESPACE_URI = Symbol.for(`namespaceURI`)
+export const SYM_OWNER_DOCUMENT = Symbol.for(`ownerDocument`)
+export const SYM_IMPLEMENTATION = Symbol.for(`implementation`)
+export const SYM_DOCUMENT_ELEMENT = Symbol.for(`documentElement`)
 
 /* Interfaces */
 
@@ -101,19 +101,19 @@ export class Node extends l.Emp {
   get [Symbol.toStringTag]() {return this.constructor.name}
   get isConnected() {return isDocument(this.getRootNode())}
   get parentElement() {return norm(l.only(this.parentNode, isElement))}
-  get childNodes() {return this[childNodesKey] ||= this.NodeList()}
-  set childNodes(val) {this[childNodesKey] = l.reqArr(val)}
-  get firstChild() {return norm(head(this[childNodesKey]))}
-  get lastChild() {return norm(last(this[childNodesKey]))}
+  get childNodes() {return this[SYM_CHILD_NODES] ||= this.NodeList()}
+  set childNodes(val) {this[SYM_CHILD_NODES] = l.reqArr(val)}
+  get firstChild() {return norm(head(this[SYM_CHILD_NODES]))}
+  get lastChild() {return norm(last(this[SYM_CHILD_NODES]))}
   get previousSibling() {return this.siblingAt(-1)}
   get nextSibling() {return this.siblingAt(1)}
-  get ownerDocument() {return norm(this[ownerDocumentKey])}
-  set ownerDocument(val) {this[ownerDocumentKey] = optDocument(val)}
+  get ownerDocument() {return norm(this[SYM_OWNER_DOCUMENT])}
+  set ownerDocument(val) {this[SYM_OWNER_DOCUMENT] = optDocument(val)}
   get nodeName() {return null}
   get nodeType() {return null}
   get nodeValue() {return null}
-  get parentNode() {return norm(this[parentNodeKey])}
-  set parentNode(val) {this[parentNodeKey] = val}
+  get parentNode() {return norm(this[SYM_PARENT_NODE])}
+  set parentNode(val) {this[SYM_PARENT_NODE] = val}
 
   getRootNode() {
     const val = this.parentNode
@@ -122,9 +122,9 @@ export class Node extends l.Emp {
     return val
   }
 
-  hasChildNodes() {return !!this[childNodesKey]?.length}
+  hasChildNodes() {return !!this[SYM_CHILD_NODES]?.length}
 
-  contains(val) {return !!this[childNodesKey]?.includes(val)}
+  contains(val) {return !!this[SYM_CHILD_NODES]?.includes(val)}
 
   /*
   Intentional deviation: we append fragments like they were normal nodes,
@@ -201,7 +201,7 @@ export class Node extends l.Emp {
   remove() {
     const par = this.parentNode
     if (l.isObj(par) && `removeChild` in par) par.removeChild(this)
-    if (this[parentNodeKey]) this.parentNode = null
+    if (this[SYM_PARENT_NODE]) this.parentNode = null
   }
 
   /* Non-standard extensions. */
@@ -225,12 +225,12 @@ export class Node extends l.Emp {
     return ind >= 0 ? norm(nodes[ind + shift]) : null
   }
 
-  owned(doc) {return this[ownerDocumentKey] = doc, this}
+  owned(doc) {return this[SYM_OWNER_DOCUMENT] = doc, this}
 }
 
 // Non-standard intermediary class for internal use.
 export class Textable extends Node {
-  get textContent() {return this.foldTextContent(``, this[childNodesKey])}
+  get textContent() {return this.foldTextContent(``, this[SYM_CHILD_NODES])}
 
   set textContent(val) {
     val = l.renderLax(val)
@@ -252,10 +252,10 @@ export class Textable extends Node {
 
 // Non-standard intermediary class for internal use.
 export class TextableElementParent extends Textable {
-  get children() {return this[childNodesKey]?.filter(isElement) ?? []}
-  get childElementCount() {return count(this[childNodesKey], isElement)}
-  get firstElementChild() {return norm(this[childNodesKey]?.find(isElement))}
-  get lastElementChild() {return norm(this[childNodesKey]?.findLast(isElement))}
+  get children() {return this[SYM_CHILD_NODES]?.filter(isElement) ?? []}
+  get childElementCount() {return count(this[SYM_CHILD_NODES], isElement)}
+  get firstElementChild() {return norm(this[SYM_CHILD_NODES]?.find(isElement))}
+  get lastElementChild() {return norm(this[SYM_CHILD_NODES]?.findLast(isElement))}
 }
 
 export class DocumentFragment extends TextableElementParent {
@@ -275,8 +275,8 @@ export class Void extends Node {
 // Non-standard intermediary class for internal use.
 export class Data extends Void {
   constructor(val) {super().data = val}
-  get data() {return l.laxStr(this[dataKey])}
-  set data(val) {this[dataKey] = l.renderLax(val)}
+  get data() {return l.laxStr(this[SYM_DATA])}
+  set data(val) {this[SYM_DATA] = l.renderLax(val)}
 }
 
 export class CharacterData extends Data {
@@ -313,9 +313,9 @@ value doesn't work. As a result, `document.createAttribute` is currently not
 fully implemented because the resulting attribute is not linked to a map.
 */
 export class Attr extends Node {
-  constructor(key) {super()[nameKey] = l.reqStr(key)}
+  constructor(key) {super()[SYM_NAME] = l.reqStr(key)}
 
-  get name() {return this[nameKey]}
+  get name() {return this[SYM_NAME]}
   get value() {return l.laxStr(this.parentNode.get(this.name))}
   set value(val) {this.parentNode.set(this.name, l.render(val))}
   get nodeName() {return this.name}
@@ -387,13 +387,13 @@ export class Element extends TextableElementParent {
   Our `dom_reg` assigns `localName` and `customName` to each registered class, as
   static properties. Our shim classes rely on these properties.
   */
-  get localName() {return norm(this[localNameKey] ?? this.constructor.localName)}
-  set localName(val) {this[localNameKey] = l.optStr(val)}
+  get localName() {return norm(this[SYM_LOCAL_NAME] ?? this.constructor.localName)}
+  set localName(val) {this[SYM_LOCAL_NAME] = l.optStr(val)}
 
   get tagName() {return norm(this.localName?.toUpperCase())}
 
-  get namespaceURI() {return norm(this[namespaceURIKey])}
-  set namespaceURI(val) {this[namespaceURIKey] = l.optStr(val)}
+  get namespaceURI() {return norm(this[SYM_NAMESPACE_URI])}
+  set namespaceURI(val) {this[SYM_NAMESPACE_URI] = l.optStr(val)}
 
   get parentNode() {return super.parentNode}
 
@@ -412,12 +412,12 @@ export class Element extends TextableElementParent {
     else if (was && dis && !this.isConnected) this.disconnectedCallback()
   }
 
-  get attributes() {return this[attributesKey] ||= this.Attributes()}
+  get attributes() {return this[SYM_ATTRIBUTES] ||= this.Attributes()}
 
   get id() {return l.laxStr(this.getAttribute(`id`))}
   set id(val) {this.setAttribute(`id`, val)}
 
-  get style() {return (this[styleKey] ||= this.Style()).pro}
+  get style() {return (this[SYM_STYLE] ||= this.Style()).pro}
 
   set style(val) {
     if (l.isNil(val)) {
@@ -431,7 +431,7 @@ export class Element extends TextableElementParent {
     }
 
     if (l.isStruct(val)) {
-      this[styleKey] = val
+      this[SYM_STYLE] = val
       this.removeAttribute(`style`)
       return
     }
@@ -439,10 +439,10 @@ export class Element extends TextableElementParent {
     this.style = l.render(val)
   }
 
-  get dataset() {return (this[datasetKey] ||= this.Dataset()).pro}
+  get dataset() {return (this[SYM_DATASET] ||= this.Dataset()).pro}
   get className() {return l.laxStr(this.getAttribute(`class`))}
   set className(val) {this.setAttribute(`class`, val)}
-  get classList() {return this[classListKey] ||= this.ClassList()}
+  get classList() {return this[SYM_CLASS_LIST] ||= this.ClassList()}
 
   get hidden() {return this.hasAttribute(`hidden`)}
   set hidden(val) {this.toggleAttribute(`hidden`, l.laxBool(val))}
@@ -454,7 +454,7 @@ export class Element extends TextableElementParent {
     this.setAttribute(`tabindex`, (l.isNum(val) ? val : l.render(val)) | 0)
   }
 
-  get innerHTML() {return this.foldInnerHTML(``, this[childNodesKey])}
+  get innerHTML() {return this.foldInnerHTML(``, this[SYM_CHILD_NODES])}
 
   /*
   Known limitation: the resulting element has incorrect `.textContent` because
@@ -468,23 +468,23 @@ export class Element extends TextableElementParent {
   }
 
   get outerHTML() {
-    if (outerHtmlDyn.has()) return this.outerHtml()
-    outerHtmlDyn.set(this)
+    const prev = OUTER_HTML.get()
+    if (l.isNil(prev)) OUTER_HTML.set(this)
     try {return this.outerHtml()}
-    finally {outerHtmlDyn.set()}
+    finally {OUTER_HTML.set(prev)}
   }
 
-  hasAttribute(key) {return !!this[attributesKey]?.has(key)}
-  getAttribute(key) {return norm(this[attributesKey]?.get(key))}
+  hasAttribute(key) {return !!this[SYM_ATTRIBUTES]?.has(key)}
+  getAttribute(key) {return norm(this[SYM_ATTRIBUTES]?.get(key))}
 
   removeAttribute(key) {
-    this[attributesKey]?.delete(key)
+    this[SYM_ATTRIBUTES]?.delete(key)
 
     if (this.isStyleChange(key)) {
-      this[styleKey] = undefined
+      this[SYM_STYLE] = undefined
     }
     else if (this.isDatasetChange(key)) {
-      this[datasetKey]?.attrDel(key)
+      this[SYM_DATASET]?.attrDel(key)
     }
   }
 
@@ -493,10 +493,10 @@ export class Element extends TextableElementParent {
     this.attributes.set(key, val)
 
     if (this.isStyleChange(key)) {
-      this[styleKey]?.dec()
+      this[SYM_STYLE]?.dec()
     }
     else if (this.isDatasetChange(key)) {
-      this[datasetKey]?.attrSet(key, val)
+      this[SYM_DATASET]?.attrSet(key, val)
     }
   }
 
@@ -526,9 +526,9 @@ export class Element extends TextableElementParent {
     else this.setAttribute(key, val)
   }
 
-  isStyleChange(key) {return key === `style` && styleKey in this}
+  isStyleChange(key) {return key === `style` && SYM_STYLE in this}
 
-  isDatasetChange(key) {return key.startsWith(`data-`) && datasetKey in this}
+  isDatasetChange(key) {return key.startsWith(`data-`) && SYM_DATASET in this}
 
   outerHtml() {
     const tag = this.tagString()
@@ -552,28 +552,28 @@ export class Element extends TextableElementParent {
 
   isVoid() {return p.VOID.has(this.localName)}
   tagString() {return l.laxStr(this.localName)}
-  attrString() {return l.laxStr(this[attributesKey]?.toString())}
+  attrString() {return l.laxStr(this[SYM_ATTRIBUTES]?.toString())}
   attrPrefix() {return this.attrIs() + this.attrXmlns()}
 
   attrIs() {
     const is = this.customName
-    if (!is || is === this.localName || this[attributesKey]?.has(`is`)) return ``
+    if (!is || is === this.localName || this[SYM_ATTRIBUTES]?.has(`is`)) return ``
     return NamedNodeMap.attr(`is`, is)
   }
 
   attrXmlns() {
-    if (this[attributesKey]?.has(`xmlns`)) return ``
+    if (this[SYM_ATTRIBUTES]?.has(`xmlns`)) return ``
 
-    const chiNs = this[namespaceURIKey]
+    const chiNs = this[SYM_NAMESPACE_URI]
     if (!chiNs) return ``
 
-    const doc = this[ownerDocumentKey]
+    const doc = this[SYM_OWNER_DOCUMENT]
     if (isHtmlDoc(doc)) return ``
 
     const parNs = l.get(this.parentNode, `namespaceURI`)
     if (parNs && parNs !== chiNs) return NamedNodeMap.attr(`xmlns`, chiNs)
 
-    if (outerHtmlDyn.get() !== this) return ``
+    if (OUTER_HTML.get() !== this) return ``
     return NamedNodeMap.attr(`xmlns`, chiNs)
   }
 }
@@ -742,14 +742,14 @@ export class DocumentType extends Node {
   get nodeType() {return Node.DOCUMENT_TYPE_NODE}
   get nodeName() {return this.name}
 
-  get name() {return this[nameKey]}
-  set name(val) {this[nameKey] = l.optStr(val)}
+  get name() {return this[SYM_NAME]}
+  set name(val) {this[SYM_NAME] = l.optStr(val)}
 
-  get publicId() {return l.laxStr(this[publicIdKey])}
-  set publicId(val) {this[publicIdKey] = l.optStr(val)}
+  get publicId() {return l.laxStr(this[SYM_PUBLIC_ID])}
+  set publicId(val) {this[SYM_PUBLIC_ID] = l.optStr(val)}
 
-  get systemId() {return l.laxStr(this[systemIdKey])}
-  set systemId(val) {this[systemIdKey] = l.optStr(val)}
+  get systemId() {return l.laxStr(this[SYM_SYSTEM_ID])}
+  set systemId(val) {this[SYM_SYSTEM_ID] = l.optStr(val)}
 
   // Non-standard.
   get outerHTML() {return `<!doctype ${l.reqStr(this.name)}>`}
@@ -761,25 +761,25 @@ export class Document extends Node {
   get nodeType() {return Node.DOCUMENT_NODE}
   get nodeName() {return `#document`}
 
-  get implementation() {return this[implementationKey]}
-  set implementation(val) {this[implementationKey] = optDomImpl(val)}
+  get implementation() {return this[SYM_IMPLEMENTATION]}
+  set implementation(val) {this[SYM_IMPLEMENTATION] = optDomImpl(val)}
 
   get childNodes() {return [this.doctype, this.documentElement].filter(l.id)}
 
-  get doctype() {return norm(this[doctypeKey])}
+  get doctype() {return norm(this[SYM_DOCTYPE])}
 
   set doctype(val) {
-    if ((this[doctypeKey] = optDocumentType(val))) {
+    if ((this[SYM_DOCTYPE] = optDocumentType(val))) {
       remove(val)
       adopt(val, this)
       val.ownerDocument = this
     }
   }
 
-  get documentElement() {return norm(this[documentElementKey])}
+  get documentElement() {return norm(this[SYM_DOCUMENT_ELEMENT])}
 
   set documentElement(val) {
-    if ((this[documentElementKey] = optElement(val))) {
+    if ((this[SYM_DOCUMENT_ELEMENT] = optElement(val))) {
       remove(val)
       adopt(val, this)
       val.ownerDocument = this
@@ -859,7 +859,7 @@ export class HTMLDocument extends Document {
   }
 
   baseClassByTag(tag) {
-    return global[l.reqStr(dr.tagToCls[tag] || `HTMLElement`)]
+    return global[l.reqStr(dr.TAG_TO_CLS[tag] || `HTMLElement`)]
   }
 }
 
@@ -892,7 +892,32 @@ export class DOMImplementation extends l.Emp {
 
   get Document() {return Document}
   get HTMLDocument() {return HTMLDocument}
-  get customElements() {return dr.CustomElementRegistry.main}
+  get customElements() {return CustomElementRegistry.main}
+}
+
+export class CustomElementRegistry extends o.MixMain(l.Emp) {
+  constructor() {
+    super()
+    this.set = new Set()
+    this.map = new Map()
+  }
+
+  get(val) {return this.map.get(val)}
+
+  define(tag, cls, opt) {
+    dr.reqCustomName(tag)
+    l.reqCls(cls)
+    l.optStruct(opt)
+
+    if (this.map.has(tag)) {
+      throw Error(`redundant registration of ${l.show(tag)}`)
+    }
+    if (this.set.has(cls)) {
+      throw Error(`redundant registration of ${l.show(cls)}`)
+    }
+    this.set.add(cls)
+    this.map.set(tag, cls)
+  }
 }
 
 /* Non-standard classes */
@@ -944,7 +969,7 @@ export class StylePh extends DictPh {
   enc() {this.attrSet(this.encode())}
   clear() {for (const key of l.structKeys(this.buf)) delete this.buf[key]}
 
-  attrGet() {return this.tar[attributesKey]?.get(`style`)}
+  attrGet() {return this.tar[SYM_ATTRIBUTES]?.get(`style`)}
 
   attrSet(val) {
     if (!val && !this.tar.attributes.has(`style`)) return
@@ -1004,7 +1029,7 @@ class DatasetPh extends DictPh {
   /* Non-traps. */
 
   dec() {
-    const src = this.tar[attributesKey]
+    const src = this.tar[SYM_ATTRIBUTES]
     if (!src) return
     for (const [key, val] of src.entries()) this.attrSet(key, val)
   }
@@ -1094,8 +1119,8 @@ export class ClassList extends l.Emp {
 
   /* Non-standard extensions. */
 
-  get ref() {return this[refKey]}
-  set ref(val) {this[refKey] = reqElement(val)}
+  get ref() {return this[SYM_REF]}
+  set ref(val) {this[SYM_REF] = reqElement(val)}
   toArray() {return split(this.value.trim(), /\s+/g)}
 }
 
@@ -1309,7 +1334,7 @@ export const dataToCamelCache = new class DataKeys extends o.Cache {
 }()
 
 // Hidden context that allows to automatically set `xmlns` on XML elements.
-export const outerHtmlDyn = new o.Dyn()
+export const OUTER_HTML = new o.DynVar()
 
 /* Internal */
 

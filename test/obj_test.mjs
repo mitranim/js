@@ -154,7 +154,7 @@ t.test(function test_patch() {
 
       mutate(tar, {constructor: 30, toString: 40, two: 50, three: 60})
 
-      t.eq(Object.getOwnPropertyNames(tar), [`one`, `two`, `three`])
+    t.eq(Object.getOwnPropertyNames(tar), [`one`, `two`, `three`])
       t.eq(tar, {one: 10, two: 50, three: 60})
 
       t.is(tar.constructor, Object)

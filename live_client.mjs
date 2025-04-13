@@ -70,7 +70,7 @@ export function main() {
       const ext = extName(msg.path)
       if (ext === `.map`) return
       if (ext === `.css`) {this.onCssChange(msg); return}
-      window.location.reload()
+      globalThis.location.reload()
     }
 
     /*

@@ -397,7 +397,7 @@ function afterSig(ms, sig) {
   if (sig.aborted) return Promise.resolve(false)
 
   return new Promise(function init(done) {
-    sig.addEventListener(`abort`, aborted)
+    sig.addEventListener(`abort`, aborted, {once: true})
     const id = setTimeout(reached, ms)
 
     function reached() {deinit(), done(true)}

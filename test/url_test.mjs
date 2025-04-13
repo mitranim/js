@@ -638,8 +638,8 @@ t.test(function test_Url() {
     t.throws(() => u.url().search = `#`, SyntaxError, `unable to convert "#" to Query`)
     t.throws(() => u.url().search = `one#two`, SyntaxError, `unable to convert "one#two" to Query`)
     t.throws(() => u.url().search = 10, TypeError, `expected variant of isStr, got 10`)
-    t.throws(() => u.url().search = u.query(), TypeError, `expected variant of isStr, got [object Query]`)
-    t.throws(() => u.url().search = u.url(), TypeError, `expected variant of isStr, got [object Url`)
+    t.throws(() => u.url().search = u.query(), TypeError, `expected variant of isStr, got [object Query ""]`)
+    t.throws(() => u.url().search = u.url(), TypeError, `expected variant of isStr, got [object Url ""]`)
     t.throws(() => u.url().search = {key: `val`}, TypeError, `expected variant of isStr, got {key: "val"}`)
 
     function test(src, exp) {t.is(u.url(src).search, exp)}
@@ -654,7 +654,7 @@ t.test(function test_Url() {
 
   t.test(function test_setSearch() {
     t.throws(() => u.url().setSearch(10), TypeError, `expected variant of isStr, got 10`)
-    t.throws(() => u.url().setSearch(u.query()), TypeError, `expected variant of isStr, got [object Query]`)
+    t.throws(() => u.url().setSearch(u.query()), TypeError, `expected variant of isStr, got [object Query ""]`)
     t.throws(() => u.url().setSearch({key: `val`}), TypeError, `expected variant of isStr, got {key: "val"}`)
 
     testUrlSearchSet(function test(src, val, exp) {

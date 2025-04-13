@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/url.mjs'
 ```
 
 Example parsing:

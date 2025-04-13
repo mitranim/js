@@ -135,7 +135,7 @@ export class Paths extends l.Emp {
 
   // Missing feature: `..` flattening.
   join(base, ...vals) {
-    base = this.clean(base)
+    base = this.clean(l.laxStr(base))
 
     for (const src of vals) {
       const val = this.clean(src)

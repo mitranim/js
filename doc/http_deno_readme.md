@@ -21,21 +21,19 @@ Simple example of a server that serves files from the current directory, automat
 ```js
 import * as hd from '{{featUrl http_deno}}'
 
-const srv = new class Srv extends hd.Srv {
-  // Serves files from the current folder, with no filtering.
-  dirs = hd.Dirs.of(hd.dirRel(`.`))
+// Finds files in the current folder, with no filtering.
+const DIRS = hd.Dirs.of(hd.dirRel(`.`))
 
-  async res(req) {
-    const rou = new h.ReqRou(req)
+async function handler(req) {
+  const rou = new h.ReqRou(req)
 
-    return (
-      (await this.dirs.resolveSiteFileWithNotFound(req.url))?.res() ||
-      rou.notFound()
-    )
-  }
-}()
+  return (
+    (await this.dirs.resolveSiteFileWithNotFound(req.url))?.res() ||
+    rou.notFound()
+  )
+}
 
-await srv.listen({port: somePort})
+Deno.serve({handler})
 ```
 
 ## API

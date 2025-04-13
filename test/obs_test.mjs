@@ -1,306 +1,549 @@
-/* eslint-disable no-self-assign */
-// deno-lint-ignore-file no-self-assign
-
-/*
-The test is incomplete and being written gradually.
-*/
-
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
+import * as o from '../obj.mjs'
 import * as ob from '../obs.mjs'
 
 /* Util */
 
-class Track extends l.Emp {
-  constructor({tr = 0, de = 0} = {}) {
+class Trig extends l.Emp {
+  constructor({trigs = 0} = {}) {
     super()
-
-    // Counts trigger calls.
-    this.tr = l.reqInt(tr)
-
-    // Counts deinit calls.
-    this.de = l.reqInt(de)
+    this.trigs = trigs
   }
 
-  trig() {this.tr++}
-  deinit() {this.de++}
-  toString() {return `new Track({tr: ${this.tr}, de: ${this.de}})`}
+  trigger() {this.trigs++}
+}
+
+class Runner extends l.Emp {
+  constructor({runs = 0, dep = 0} = {}) {
+    super()
+    this.runs = runs
+    this.dep = dep
+  }
+
+  run() {this.runs++}
+  depth() {return this.dep}
+}
+
+class TestRecur extends ob.Recur {
+  // Override super getter.
+  shed = undefined
+
+  constructor({trigs = 0, runs = 0, dep = 0, shed} = {}) {
+    super()
+    this.trigs = trigs
+    this.runs = runs
+    this.dep = dep
+    this.shed = shed
+  }
+
+  trigger() {
+    this.trigs++
+    return super.trigger()
+  }
+
+  run() {
+    this.runs++
+    return super.run()
+  }
+
+  depth() {return this.dep}
+}
+
+/*
+Modified version: lets us easily wait until the scheduled broadcast. By default
+we prefer `requestAnimationFrame`, with a fallback on `setTimeout`, because the
+main use case for observables is UI updates.
+*/
+class TestShed extends ob.Shed {
+  schedule() {return Promise.resolve().then(this.run)}
+  unschedule() {}
+}
+
+function head(src) {return [...src][0]}
+function get(src, ind) {return [...src][ind]}
+
+function after(ms) {
+  return new Promise(function init(done) {setTimeout(done, ms, true)})
 }
 
 /* Test */
 
-t.test(function test_isDe() {
-  t.no(ob.isDe())
-  t.no(ob.isDe({}))
+t.test(function test_Broad() {
+  t.test(function test_monitor() {
+    const bro = new ob.Broad()
 
-  t.ok(ob.isDe(new Track()))
-  t.ok(ob.isDe(Object.create(new Track())))
-  t.ok(ob.isDe(Object.assign(deinit, {deinit})))
+    ob.TRIG.set(123)
+    bro.monitor()
+    t.eq(bro, new ob.Broad())
 
-  function deinit() {}
-})
+    ob.TRIG.set(new Runner())
+    bro.monitor()
+    t.eq(bro, new ob.Broad())
 
-t.test(function test_deinit() {
-  ob.deinit()
-  ob.deinit({})
+    const trig = new Trig()
+    ob.TRIG.set(trig)
 
-  const counter = new Track()
-  t.is(ob.deinit(counter), undefined)
-  t.eq(counter, new Track({de: 1}))
-})
+    bro.monitor()
+    t.eq(bro, new ob.Broad([new WeakRef(trig)]), `added and referenced weakly`)
 
-t.test(function test_isObs() {
-  t.no(ob.isObs())
-  t.no(ob.isObs({}))
-  t.no(ob.isObs(new Track()))
+    bro.monitor()
+    t.eq(bro, new ob.Broad([new WeakRef(trig)]), `no redundant addition`)
 
-  t.ok(ob.isObs({
-    sub() {},
-    unsub() {},
-    trig() {},
-    deinit() {},
-  }))
-})
+    bro.deinit()
+    t.eq(bro, new ob.Broad())
 
-t.test(function test_isTrig() {
-  t.no(ob.isTrig())
-  t.no(ob.isTrig({}))
-  t.no(ob.isTrig(l.nop))
+    const weak = new WeakRef(trig)
+    ob.TRIG.set(weak)
 
-  t.ok(ob.isTrig(new Track()))
-  t.ok(ob.isTrig({trig() {}}))
-  t.ok(ob.isTrig(Object.create({trig() {}})))
-})
+    bro.monitor()
+    t.eq(bro, new ob.Broad([weak]))
+    testWeak(bro, weak)
 
-t.test(function test_isSub() {
-  t.no(ob.isSub())
-  t.no(ob.isSub({}))
-
-  t.ok(ob.isSub(l.nop))
-  t.ok(ob.isSub(new Track()))
-  t.ok(ob.isSub({trig() {}}))
-  t.ok(ob.isSub(Object.create({trig() {}})))
-})
-
-t.test(function test_Sched() {
-  const sch = new ob.Sched()
-
-  t.test(function test_isPaused_resume_depth_1() {
-    t.no(sch.isPaused())
-
-    sch.pause()
-    t.ok(sch.isPaused())
-
-    sch.resume()
-    t.no(sch.isPaused())
-
-    sch.resume()
-    sch.resume()
-    sch.resume()
-    t.no(sch.isPaused())
+    ob.TRIG.set()
   })
 
-  t.test(function test_isPaused_resume_depth_2() {
-    t.no(sch.isPaused())
+  t.test(function test_add() {
+    const bro = new ob.Broad()
+    t.eq(bro, new ob.Broad())
 
-    sch.pause()
-    t.ok(sch.isPaused())
+    t.throws(() => bro.add(new Runner()), TypeError, `expected variant of isTrig, got [object Runner {runs: 0, dep: 0}]`)
+    t.eq(bro, new ob.Broad())
 
-    sch.pause()
-    t.ok(sch.isPaused())
+    const trig = new Trig()
+    bro.add(trig)
+    t.eq(bro, new ob.Broad([new WeakRef(trig)]), `added and referenced weakly`)
 
-    sch.resume()
-    t.ok(sch.isPaused())
+    bro.add(trig)
+    t.eq(bro, new ob.Broad([new WeakRef(trig)]), `no redundant addition`)
 
-    sch.resume()
-    t.no(sch.isPaused())
+    bro.deinit()
+    t.eq(bro, new ob.Broad())
 
-    sch.resume()
-    sch.resume()
-    sch.resume()
-    t.no(sch.isPaused())
+    const weak = new WeakRef(trig)
+    bro.add(weak)
+    t.eq(bro, new ob.Broad([weak]))
+    testWeak(bro, weak)
+
+    bro.add(weak)
+    t.eq(bro, new ob.Broad([weak]), `no redundant addition`)
+    testWeak(bro, weak)
+
+    // Internal stuff.
+    t.ok(bro.pairs.has(trig))
+    t.eq(bro.pairs.get(trig), [bro.refs, weak])
+    t.is(bro.trigs.size, 0)
+
+    bro.deinit()
+    t.eq(bro, new ob.Broad())
+
+    bro.add(weak)
+    t.eq(bro, new ob.Broad([weak]))
+    testWeak(bro, weak)
+
+    bro.deinit()
+    t.eq(bro, new ob.Broad())
+    t.no(bro.refs.has(trig))
+
+    t.eq(trig, new Trig())
   })
 
-  // Our observables don't actually use this mode.
-  // When scheduler is unpaused, they bypass it.
-  t.test(function test_unpaused() {
-    t.eq(sch, new ob.Sched())
+  t.test(function test_trigger() {
+    const bro = new ob.Broad()
+    bro.trigger()
+    bro.trigger()
+    bro.trigger()
 
-    const track = new Track()
-    sch.add(track)
+    const tri0 = new Trig()
+    bro.add(tri0)
+    t.eq(tri0, new Trig())
 
-    t.eq(sch, new ob.Sched([track]))
-    t.eq(track, new Track())
+    bro.trigger()
+    t.eq(tri0, new Trig({trigs: 1}))
 
-    sch.run()
+    bro.trigger()
+    t.eq(tri0, new Trig({trigs: 2}))
 
-    t.eq(sch, new ob.Sched())
-    t.eq(track, new Track({tr: 1}))
-  })
+    const tri1 = new Trig()
+    bro.add(tri1)
 
-  t.test(function test_pause_resume() {
-    t.eq(sch, new ob.Sched())
-    sch.pause()
-    sch.pause()
-    t.ok(sch.isPaused())
+    bro.trigger()
+    t.eq(tri0, new Trig({trigs: 3}))
+    t.eq(tri1, new Trig({trigs: 1}))
 
-    const track = new Track()
-    sch.add(track)
+    bro.trigger()
+    t.eq(tri0, new Trig({trigs: 4}))
+    t.eq(tri1, new Trig({trigs: 2}))
 
-    sch.resume()
-    t.eq(sch, new ob.Sched([track]).pause())
-    t.eq(track, new Track())
-
-    sch.resume()
-    t.eq(sch, new ob.Sched())
-    t.eq(track, new Track({tr: 1}))
+    bro.deinit()
+    t.eq(bro, new ob.Broad())
+    t.eq(tri0, new Trig({trigs: 4}))
+    t.eq(tri1, new Trig({trigs: 2}))
   })
 })
 
-t.test(function test_ImpObs() {
-  const obs = new ob.ImpObs()
-  const sub0 = new Track()
-  const sub1 = new Track()
+function testWeak(bro, ref) {
+  t.eq(bro, new ob.Broad([ref]))
+  t.is(head(bro.refs), ref, `uses the exact provided weak reference`)
+}
 
-  t.test(function test_unpaused() {
-    obs.sub(sub0)
-    t.eq(obs, new ob.ImpObs([sub0]))
-    t.eq(sub0, new Track())
+await t.test(async function test_Shed() {
+  const shed = new TestShed()
+  const run0 = new Runner()
+  const run1 = new Runner()
 
-    obs.sub(sub0)
-    t.eq(obs, new ob.ImpObs([sub0]))
+  shed.add(run0)
+  shed.add(run0)
+  shed.add(run0)
 
-    obs.trig()
-    t.eq(obs, new ob.ImpObs([sub0]))
-    t.eq(sub0, new Track({tr: 1}))
+  t.eq(shed.ques, [new ob.Que([run0])])
+  t.eq(run0, new Runner())
 
-    obs.add(sub1)
-    t.eq(obs, new ob.ImpObs([sub0, sub1]))
-    t.eq(sub0, new Track({tr: 1}))
-    t.eq(sub1, new Track())
+  await shed.timer
 
-    obs.trig()
-    t.eq(obs, new ob.ImpObs([sub0, sub1]))
-    t.eq(sub0, new Track({tr: 2}))
-    t.eq(sub1, new Track({tr: 1}))
-  })
+  t.eq(shed.ques, [new ob.Que()])
+  t.eq(run0, new Runner({runs: 1}))
 
-  t.test(function test_paused() {
-    const sch = ob.Sched.main
-    sch.pause()
+  shed.add(run1)
+  shed.add(run0)
 
-    function testPaused() {
-      obs.trig()
-      t.eq(sub0, new Track({tr: 2}))
-      t.eq(sub1, new Track({tr: 1}))
+  t.eq(shed.ques, [new ob.Que([run1, run0])])
+  t.eq(run0, new Runner({runs: 1}))
+  t.eq(run1, new Runner())
+
+  await shed.timer
+
+  t.eq(shed.ques, [new ob.Que()])
+  t.eq(run0, new Runner({runs: 2}))
+  t.eq(run1, new Runner({runs: 1}))
+
+  run0.dep = 3
+  run1.dep = 2
+
+  shed.add(run0)
+  shed.add(run1)
+
+  t.eq(shed.ques, [new ob.Que(), undefined, new ob.Que([run1]), new ob.Que([run0])])
+
+  await shed.timer
+
+  t.eq(shed.ques, [new ob.Que(), undefined, new ob.Que(), new ob.Que()])
+  t.eq(run0, new Runner({runs: 3, dep: 3}))
+  t.eq(run1, new Runner({runs: 2, dep: 2}))
+})
+
+t.test(function test_Recur() {
+  const rec = new TestRecur()
+  t.is(rec.weak, undefined)
+  t.no(rec.active)
+  t.is(rec.depth(), 0)
+  t.is(ob.TRIG.get(), undefined)
+
+  rec.onRun = function onRun() {
+    return {
+      weak: this.weak,
+      active: this.active,
+      trig: ob.TRIG.get(),
     }
+  }
 
-    testPaused()
-    testPaused()
-    testPaused()
+  function testRunOut(run) {
+    t.inst(run.weak, o.WeakerRef)
+    t.is(run.weak, rec.weak)
+    testWeakUnexpired(run.weak, rec)
 
-    function testUnpaused() {
-      sch.resume()
-      t.eq(sub0, new Track({tr: 3}))
-      t.eq(sub1, new Track({tr: 2}))
-    }
+    t.ok(run.active)
+    t.no(rec.active)
 
-    testUnpaused()
-    testUnpaused()
-    testUnpaused()
-  })
+    t.is(run.trig, run.weak)
+  }
 
-  t.test(function test_deinit() {
-    t.is(obs.size, 2)
-    obs.deinit()
-    t.is(obs.size, 0)
+  const run0 = rec.run()
+  testRunOut(run0)
+  t.is(rec.runs, 1)
+  t.is(rec.trigs, 0)
 
-    t.eq(sub0, new Track({tr: 3}))
-    t.eq(sub1, new Track({tr: 2}))
-  })
+  const run1 = rec.run()
+  testRunOut(run1)
+  t.is(rec.runs, 2)
+  t.is(rec.trigs, 0)
+
+  t.isnt(run0.weak, run1.weak)
+  t.is(run1.weak, rec.weak)
+
+  testWeakExpired(run0.weak)
+  testWeakUnexpired(run1.weak, rec)
 })
 
-t.test(function test_de() {
-  const ref    = ob.de({})
-  const first  = new Track()
-  const second = new Track()
-  const third  = new Track()
+await t.test(async function test_Recur_scheduling() {
+  t.is(new ob.Recur().shed, ob.Shed.main)
 
-  Object.defineProperty(ref, `nonEnum`, {value: third, enumerable: false})
+  const shed = new TestShed()
+  const rec = new TestRecur({shed})
+  t.is(rec.shed, shed)
 
-  ref.val = first
-  t.is(ref.val, first)
-  t.own(ref, {val: new Track(), nonEnum: third})
+  shed.add(rec)
 
-  ref.val = ref.val
-  t.is(ref.val, first)
-  t.own(ref, {val: new Track(), nonEnum: third})
+  t.eq(rec, new TestRecur({shed}))
+  t.is(rec.runs, 0)
+  t.is(rec.trigs, 0)
+  t.is(rec.weak, undefined)
+  t.no(rec.active)
 
-  ref.val = second
-  t.is(ref.val, second)
-  t.own(ref, {val: new Track(), nonEnum: third})
-  t.eq(first, new Track({de: 1}))
+  t.eq(shed.ques, [new ob.Que([rec])])
+  await shed.timer
+  t.eq(shed.ques, [new ob.Que()])
 
-  ref.deinit()
-  t.is(ref.val, second)
-  t.own(ref, {val: new Track({de: 1}), nonEnum: third})
+  t.is(rec.runs, 1)
+  t.is(rec.trigs, 0)
+  t.eq(rec.weak, new o.WeakerRef(rec))
+  t.no(rec.active)
 
-  delete ref.val
-  t.is(ref.val, undefined)
-  t.is(l.hasOwn(ref, `val`), false)
-  t.eq(second, new Track({de: 2}))
+  rec.dep = 1
+  shed.add(rec)
+  shed.add(rec)
+  shed.add(rec)
 
-  t.is(ref.nonEnum, third)
-  t.eq(third, new Track())
+  t.is(rec.runs, 1)
+  t.is(rec.trigs, 0)
+
+  t.eq(shed.ques, [new ob.Que(), new ob.Que([rec])])
+  await shed.timer
+  t.eq(shed.ques, [new ob.Que(), new ob.Que()])
+
+  t.is(rec.runs, 2)
+  t.is(rec.trigs, 0)
 })
 
-// The test is rudimentary, maybe about 5% complete.
-t.test(function test_obs() {
-  t.test(function test_imperative() {
-    const ref = ob.obs({})
-    const obs = ob.ph(ref).obs
-    const first = new Track()
-    const second = new Track()
+await t.test(async function test_obs() {
+  const shed = new TestShed()
 
-    function firstTrig() {return first.trig()}
-    function secondTrig() {return second.trig()}
+  const tar0 = l.Emp()
+  const obs0 = ob.obs(tar0)
+  const bro0 = ob.getPh(obs0).bro
 
-    obs.sub(firstTrig)
-    obs.sub(secondTrig)
-    t.eq(first, new Track())
-    t.eq(second, new Track())
+  t.is(ob.getTar(obs0), tar0)
+  t.inst(ob.getPh(obs0), ob.ObsPh)
 
-    obs.trig()
-    t.eq(first, new Track({tr: 1}))
-    t.eq(second, new Track({tr: 1}))
+  const tar1 = l.Emp()
+  const obs1 = ob.obs(tar1)
+  const bro1 = ob.getPh(obs1).bro
 
-    // Implicit trigger.
-    ref.val = 10
-    t.eq(first, new Track({tr: 2}))
-    t.eq(second, new Track({tr: 2}))
+  t.is(ob.getTar(obs1), tar1)
+  t.inst(ob.getPh(obs1), ob.ObsPh)
 
-    // Rudimentary change detection prevents another trigger.
-    ref.val = 10
-    t.eq(first, new Track({tr: 2}))
-    t.eq(second, new Track({tr: 2}))
+  let rec0 = new TestRecur({shed})
+  rec0.onRun = function onRun() {return obs0.val}
+  t.is(rec0.runs, 0)
+  t.is(rec0.trigs, 0)
 
-    obs.unsub(firstTrig)
-    t.eq(first, new Track({tr: 2}))
-    t.eq(second, new Track({tr: 2}))
+  rec0.run()
+  t.is(rec0.runs, 1)
+  t.is(rec0.trigs, 0)
+  t.eq(bro0, new ob.Broad([rec0.weak]))
 
-    ref.val = 20
-    t.eq(first, new Track({tr: 2}))
-    t.eq(second, new Track({tr: 3}))
+  obs0.val = 10
+  t.is(rec0.runs, 1)
+  t.is(rec0.trigs, 1)
+  t.eq(bro0, new ob.Broad([rec0.weak]))
 
-    ref.deinit()
-    t.eq(first, new Track({tr: 2}))
-    t.eq(second, new Track({tr: 3}))
+  await shedWait(shed, rec0)
+  t.is(rec0.runs, 2)
+  t.is(rec0.trigs, 1)
+  t.eq(bro0, new ob.Broad([rec0.weak]))
 
-    obs.trig()
-    t.eq(first, new Track({tr: 2}))
-    t.eq(second, new Track({tr: 3}))
-  })
+  // No change, no trigger.
+  obs0.val = 10
+  await shed.timer
+  t.is(rec0.runs, 2)
+  t.is(rec0.trigs, 1)
+
+  // Not monitored, no trigger.
+  obs1.val = 20
+  await shed.timer
+  t.is(rec0.runs, 2)
+  t.is(rec0.trigs, 1)
+
+  /*
+  We switch from one observable to another. On the next run, the broadcaster of
+  the previous observable must forget about this triggerable, while the broad
+  of the next observable must learn about it.
+  */
+  rec0.onRun = function onRun() {return obs1.val}
+
+  obs0.val = 30
+  t.is(rec0.runs, 2)
+  t.is(rec0.trigs, 2)
+
+  await shedWait(shed, rec0)
+  t.is(rec0.runs, 3)
+  t.is(rec0.trigs, 2)
+
+  testWeakExpired(head(bro0.refs))
+
+  /*
+  Since the reference held by `bro0` is expired, changes should no longer
+  affect this triggerable.
+  */
+  obs0.val = 40
+  t.is(rec0.runs, 3)
+  t.is(rec0.trigs, 2)
+
+  bro0.trigger()
+  t.is(rec0.runs, 3)
+  t.is(rec0.trigs, 2)
+
+  t.eq(bro1, new ob.Broad([rec0.weak]))
+
+  obs1.val = 50
+  t.is(rec0.runs, 3)
+  t.is(rec0.trigs, 3)
+
+  await shedWait(shed, rec0)
+  t.is(rec0.runs, 4)
+  t.is(rec0.trigs, 3)
+
+  // Monitor both observables.
+  rec0.onRun = function onRun() {return obs0.val + obs1.val}
+
+  obs1.val = 60
+  t.is(rec0.runs, 4)
+  t.is(rec0.trigs, 4)
+  testWeakExpired(head(bro0.refs))
+  testWeakUnexpired(head(bro1.refs), rec0)
+
+  await shedWait(shed, rec0)
+  t.is(rec0.runs, 5)
+  t.is(rec0.trigs, 4)
+  testWeakUnexpired(head(bro0.refs), rec0)
+  testWeakUnexpired(head(bro1.refs), rec0)
+
+  let rec1 = new TestRecur({shed})
+  rec1.onRun = function onRun() {return obs1.val}
+  t.is(rec1.runs, 0)
+  t.is(rec1.trigs, 0)
+
+  rec1.run()
+  t.is(rec1.runs, 1)
+  t.is(rec1.trigs, 0)
+
+  t.eq(bro0, new ob.Broad([rec0.weak]))
+  t.eq(bro1, new ob.Broad([rec0.weak, rec1.weak]))
+
+  obs0.val = obs0.val // eslint-disable-line no-self-assign
+  obs1.val = obs1.val // eslint-disable-line no-self-assign
+  t.is(rec0.runs, 5)
+  t.is(rec0.trigs, 4)
+  t.is(rec1.runs, 1)
+  t.is(rec1.trigs, 0)
+
+  obs1.val = 70
+  t.is(rec0.runs, 5)
+  t.is(rec0.trigs, 5)
+  t.is(rec1.runs, 1)
+  t.is(rec1.trigs, 1)
+
+  t.eq(shed.ques, [new ob.Que([rec0, rec1])])
+  await shed.timer
+  t.eq(shed.ques, [new ob.Que()])
+
+  t.is(rec0.runs, 6)
+  t.is(rec0.trigs, 5)
+  t.is(rec1.runs, 2)
+  t.is(rec1.trigs, 1)
+
+  t.eq(bro0, new ob.Broad([rec0.weak]))
+  t.eq(bro1, new ob.Broad([rec0.weak, rec1.weak]))
+
+  rec0.deinit()
+  testWeakExpired(rec0.weak)
+  testWeakExpired(head(bro0.refs))
+  testWeakExpired(head(bro1.refs))
+  testWeakUnexpired(get(bro1.refs, 1), rec1)
+
+  obs0.val = 80
+  obs1.val = 90
+  t.is(rec0.runs, 6)
+  t.is(rec0.trigs, 5)
+  t.is(rec1.runs, 2)
+  t.is(rec1.trigs, 2)
+
+  await shedWait(shed, rec1)
+  t.is(rec0.runs, 6)
+  t.is(rec0.trigs, 5)
+  t.is(rec1.runs, 3)
+  t.is(rec1.trigs, 2)
+
+  /*
+  Verify that our `Recur` instances are reusable.
+  It should be possible to `.deinit` one, and then use it again.
+  */
+
+  rec0.run()
+  t.is(rec0.runs, 7)
+  t.is(rec0.trigs, 5)
+  t.is(rec1.runs, 3)
+  t.is(rec1.trigs, 2)
+
+  obs0.val = 90
+  t.is(rec0.runs, 7)
+  t.is(rec0.trigs, 6)
+  t.is(rec1.runs, 3)
+  t.is(rec1.trigs, 2)
+
+  await shedWait(shed, rec0)
+  t.is(rec0.runs, 8)
+  t.is(rec0.trigs, 6)
+  t.is(rec1.runs, 3)
+  t.is(rec1.trigs, 2)
+
+  /*
+  The function `globalThis.gc` is available with `--v8-flags=--expose_gc`.
+  The following test verifies that we use a `FinalizationRegistry` to evict
+  expired broadcaster entries.
+  */
+  if (!l.isFun(globalThis.gc)) return
+
+  t.is(bro0.refs.size, 1)
+  t.is(bro1.refs.size, 2)
+
+  testWeakUnexpired(head(bro0.refs), rec0)
+  testWeakUnexpired(head(bro1.refs), rec1)
+  testWeakUnexpired(get(bro1.refs, 1), rec0)
+
+  rec0 = undefined
+  rec1 = undefined
+
+  // Very unreliable. This will need adjustments in the future.
+  globalThis.gc()
+  await after(1)
+  globalThis.gc()
+  await after(1)
+
+  t.is(bro0.refs.size, 0)
+  t.is(bro1.refs.size, 0)
+
+  t.eq(bro0, new ob.Broad())
+  t.eq(bro1, new ob.Broad())
 })
+
+function testWeakUnexpired(ref, val) {
+  t.inst(ref, o.WeakerRef)
+  t.is(ref.deref(), val)
+  t.no(ref.expired)
+}
+
+function testWeakExpired(ref) {
+  t.inst(ref, o.WeakerRef)
+  t.is(ref.deref(), undefined)
+  t.ok(ref.expired)
+}
+
+async function shedWait(shed, val) {
+  t.eq(shed.ques, [new ob.Que([val])])
+  await shed.timer
+  t.eq(shed.ques, [new ob.Que()])
+}
 
 if (import.meta.main) console.log(`[test] ok!`)

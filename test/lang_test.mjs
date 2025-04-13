@@ -29,13 +29,16 @@ t.test(function test_show() {
   test(Infinity,                                  `Infinity`)
   test(-10,                                       `-10`)
   test(10,                                        `10`)
+  test(0n,                                        `0n`)
+  test(-10n,                                      `-10n`)
+  test(10n,                                       `10n`)
   test(``,                                        `""`)
   test(`str`,                                     `"str"`)
   test(Symbol(`str`),                             `Symbol(str)`)
   test({},                                        `{}`)
   test(inherit(null),                             `{}`)
-  test(inherit(inherit(null)),                    `{}`)
-  test(inherit({one: `two`}),                     `{}`)
+  test(inherit(inherit(null)),                    `[object]`)
+  test(inherit({one: `two`}),                     `[object Object]`)
   test({one: `two`, three: `four`},               `{one: "two", three: "four"}`)
   test([],                                        `[]`)
   test([10, `str`],                               `[10, "str"]`)
@@ -45,32 +48,56 @@ t.test(function test_show() {
   test(new Set(),                                 `[object Set]`)
   test(new Map(),                                 `[object Map]`)
   test(class Cls {},                              `[function Cls]`)
-  test(new class {}(),                            `{}`)
+  test(new class {}(),                            `[object]`)
   test(new class extends Array {}(),              `[]`)
   test(new class extends Array {}(10, `str`),     `[10, "str"]`)
   test(new class Cls extends Array {}(),          `[]`)
   test(new class Cls extends Array {}(10, `str`), `[10, "str"]`)
-  test(Error(`msg`),                              `Error: msg`)
-  test(TypeError(`msg`),                          `TypeError: msg`)
-  test(SyntaxError(`msg`),                        `SyntaxError: msg`)
 
-  function testCls(cls) {test(new cls(), `[object Cls]`)}
+  test(Error(`msg`),       `Error: msg`)
+  test(TypeError(`msg`),   `TypeError: msg`)
+  test(SyntaxError(`msg`), `SyntaxError: msg`)
 
-  testCls(class Cls {})
-  testCls(class Cls extends Set {})
-  testCls(class Cls extends Map {})
+  test(Object.assign(Error(`msg`), {val: 123}),       `[Error {val: 123}: msg]`)
+  test(Object.assign(TypeError(`msg`), {val: 123}),   `[TypeError {val: 123}: msg]`)
+  test(Object.assign(SyntaxError(`msg`), {val: 123}), `[SyntaxError {val: 123}: msg]`)
 
-  testCls(class Cls               {get [Symbol.toStringTag]() {return this.constructor.name}})
-  testCls(class Cls extends Set   {get [Symbol.toStringTag]() {return this.constructor.name}})
-  testCls(class Cls extends Map   {get [Symbol.toStringTag]() {return this.constructor.name}})
+  test(new URL(`https://example.com`), `[object URL "https://example.com/"]`)
 
-  testCls(class Cls               {toString() {unreachable()}})
-  testCls(class Cls extends Set   {toString() {unreachable()}})
-  testCls(class Cls extends Map   {toString() {unreachable()}})
+  test(new class Cls {}(), `[object Cls]`)
 
-  testCls(class Cls               {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
-  testCls(class Cls extends Set   {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
-  testCls(class Cls extends Map   {toString() {unreachable()} get [Symbol.toStringTag]() {return this.constructor.name}})
+  test(
+    new class Cls {get [Symbol.toStringTag]() {return `MyCls`}}(),
+    `[object Cls]`,
+  )
+
+  test(
+    new class Cls extends Set {get [Symbol.toStringTag]() {return `MyCls`}}(),
+    `[object Cls]`,
+  )
+
+  test(
+    new class Cls extends Map {get [Symbol.toStringTag]() {return `MyCls`}}(),
+    `[object Cls]`,
+  )
+
+  test(
+    new class extends Map {get [Symbol.toStringTag]() {return `MyCls`}}(),
+    `[object MyCls]`,
+  )
+
+  function testClsScalar(cls) {test(new cls(), `[object Cls "some_str"]`)}
+
+  testClsScalar(class Cls               {toString() {return `some_str`}})
+  testClsScalar(class Cls extends Set   {toString() {return `some_str`}})
+  testClsScalar(class Cls extends Map   {toString() {return `some_str`}})
+
+  test(new class Cls extends Set {}(), `[object Cls]`)
+  test(new class Cls extends Set {}([10]), `[object Cls [10]]`)
+  test(new class Cls extends Set {}([10, 20]), `[object Cls [10, 20]]`)
+
+  test(new class Cls extends Map {}(), `[object Cls]`)
+  test(new class Cls extends Map {}([[10, 20], [30, 40]]), `[object Cls [[10, 20], [30, 40]]]`)
 
   {
     const one = Object.create(null)
@@ -142,7 +169,7 @@ function testRenderInvalid(fun) {
   t.throws(() => fun(Symbol(`str`)), TypeError, `unable to convert Symbol(str) to string`)
   t.throws(() => fun({}), TypeError, `unable to convert {} to string`)
   t.throws(() => fun(inherit(null)), TypeError, `unable to convert {} to string`)
-  t.throws(() => fun(inherit(inherit(null))), TypeError, `unable to convert {} to string`)
+  t.throws(() => fun(inherit(inherit(null))), TypeError, `unable to convert [object] to string`)
   t.throws(() => fun({one: `two`, three: `four`}), TypeError, `unable to convert {one: "two", three: "four"} to string`)
   t.throws(() => fun([]), TypeError, `unable to convert [] to string`)
   t.throws(() => fun([10, `str`]), TypeError, `unable to convert [10, "str"] to string`)
@@ -150,7 +177,7 @@ function testRenderInvalid(fun) {
   t.throws(() => fun(gen()), TypeError, `unable to convert [object Generator] to string`)
   t.throws(() => fun(agen()), TypeError, `unable to convert [object AsyncGenerator] to string`)
   t.throws(() => fun(class Cls {}), TypeError, `unable to convert [function Cls] to string`)
-  t.throws(() => fun(new class {}), TypeError, `unable to convert {} to string`)
+  t.throws(() => fun(new class {}), TypeError, `unable to convert [object] to string`)
   t.throws(() => fun(new class Cls {}), TypeError, `unable to convert [object Cls] to string`)
   t.throws(() => fun(new class Cls extends Array {}), TypeError, `unable to convert [] to string`)
 }
@@ -1113,10 +1140,10 @@ t.test(function test_isEqable() {
 })
 
 t.test(function test_isArrOf() {
-  t.throws(() => l.isArrOf(),          TypeError, `expected variant of isFun, got undefined`)
-  t.throws(() => l.isArrOf([]),        TypeError, `expected variant of isFun, got undefined`)
-  t.throws(() => l.isArrOf([], 10),    TypeError, `expected variant of isFun, got 10`)
-  t.throws(() => l.isArrOf([], `str`), TypeError, `expected variant of isFun, got "str"`)
+  t.throws(() => l.isArrOf(),          TypeError, `expected validator function, got undefined`)
+  t.throws(() => l.isArrOf([]),        TypeError, `expected validator function, got undefined`)
+  t.throws(() => l.isArrOf([], 10),    TypeError, `expected validator function, got 10`)
+  t.throws(() => l.isArrOf([], `str`), TypeError, `expected validator function, got "str"`)
 
   t.no(l.isArrOf(10,             l.isStr))
   t.no(l.isArrOf(null,           l.isStr))

@@ -98,6 +98,8 @@ const isSafeInteger = Number.isSafeInteger
 
 function isPromiseInst(val) {return l.isInst(val, Promise)}
 
+function getPrototype(val) {return Object.getPrototypeOf(val)}
+
 const miscVals = [
   emptyStr,
   emptyArr,
@@ -165,6 +167,13 @@ function hasIn(val, key) {return l.isComp(val) && key in val}
 t.bench(function bench_is_Object_is() {l.nop(Object.is(123, 456))})
 t.bench(function bench_is_globalThis_Object_is() {l.nop(globalThis.Object.is(123, 456))})
 t.bench(function bench_is_our_is() {l.nop(l.is(123, 456))})
+
+miscVals.forEach(getPrototype)
+t.bench(function bench_getPrototypeOf_arr() {l.nop(getPrototype(emptyArr))})
+t.bench(function bench_getPrototypeOf_dict() {l.nop(getPrototype(emptyDict))})
+t.bench(function bench_getPrototypeOf_npo() {l.nop(getPrototype(emptyNpo))})
+t.bench(function bench_getPrototypeOf_prom_custom() {l.nop(getPrototype(somePromCustom))})
+t.bench(function bench_getPrototypeOf_prom_native() {l.nop(getPrototype(somePromNative))})
 
 t.bench(function bench_isInst_inline_nil() {l.nop(undefined instanceof Promise)})
 t.bench(function bench_isInst_inline_miss() {l.nop(somePromNative instanceof Array)})
@@ -301,9 +310,9 @@ t.bench(function bench_isDict_miss_prim() {l.nop(l.isDict(`str`))})
 t.bench(function bench_isDict_miss_fun() {l.nop(l.isDict(l.isDict))})
 t.bench(function bench_isDict_miss_arr() {l.nop(l.isDict(emptyArr))})
 t.bench(function bench_isDict_miss_obj() {l.nop(l.isDict(shallow))})
+t.bench(function bench_isDict_miss_emp_sub() {l.nop(l.isDict(emptyEmpSub))})
 t.bench(function bench_isDict_hit_dict() {l.nop(l.isDict(emptyDict))})
 t.bench(function bench_isDict_hit_npo() {l.nop(l.isDict(emptyNpo))})
-t.bench(function bench_isDict_hit_emp_sub() {l.nop(l.isDict(emptyEmpSub))})
 
 miscVals.forEach(l.isStruct)
 t.bench(function bench_isStruct_nil() {l.nop(l.isStruct())})
@@ -322,6 +331,7 @@ t.bench(function bench_isPromise_inst_nil() {l.nop(isPromiseInst())})
 t.bench(function bench_isPromise_inst_miss_prim() {l.nop(isPromiseInst(someStr))})
 t.bench(function bench_isPromise_inst_miss_arr() {l.nop(isPromiseInst(emptyArr))})
 t.bench(function bench_isPromise_inst_miss_dict() {l.nop(isPromiseInst(emptyDict))})
+t.bench(function bench_isPromise_inst_miss_npo() {l.nop(isPromiseInst(emptyNpo))})
 t.bench(function bench_isPromise_inst_miss_custom() {l.nop(isPromiseInst(somePromCustom))})
 t.bench(function bench_isPromise_inst_hit_native() {l.nop(isPromiseInst(somePromNative))})
 
@@ -330,6 +340,7 @@ t.bench(function bench_isPromise_asm_nil() {l.nop(isPromiseAsm())})
 t.bench(function bench_isPromise_asm_miss_prim() {l.nop(isPromiseAsm(someStr))})
 t.bench(function bench_isPromise_asm_miss_arr() {l.nop(isPromiseAsm(emptyArr))})
 t.bench(function bench_isPromise_asm_miss_dict() {l.nop(isPromiseAsm(emptyDict))})
+t.bench(function bench_isPromise_asm_miss_npo() {l.nop(isPromiseAsm(emptyNpo))})
 t.bench(function bench_isPromise_asm_hit_custom() {l.nop(isPromiseAsm(somePromCustom))})
 t.bench(function bench_isPromise_asm_hit_native() {l.nop(isPromiseAsm(somePromNative))})
 
@@ -338,6 +349,7 @@ t.bench(function bench_isPromise_nil() {l.nop(l.isPromise())})
 t.bench(function bench_isPromise_miss_prim() {l.nop(l.isPromise(someStr))})
 t.bench(function bench_isPromise_miss_arr() {l.nop(l.isPromise(emptyArr))})
 t.bench(function bench_isPromise_miss_dict() {l.nop(l.isPromise(emptyDict))})
+t.bench(function bench_isPromise_miss_npo() {l.nop(l.isPromise(emptyNpo))})
 t.bench(function bench_isPromise_hit_custom() {l.nop(l.isPromise(somePromCustom))})
 t.bench(function bench_isPromise_hit_native() {l.nop(l.isPromise(somePromNative))})
 

@@ -5,12 +5,12 @@ import * as t from '../test.mjs'
 Error.stackTraceLimit = Infinity
 
 export const cli = cl.Flag.os()
-export const run = cli.get(`run`)
-export const verb = cli.boolOpt(`verb`)
-export const more = cli.boolOpt(`more`)
-export const prec = cli.boolOpt(`prec`)
-export const once = cli.boolOpt(`once`)
-export const clear = cli.boolOpt(`clear`)
+export const run = cli.get(`--run`)
+export const verb = cli.boolOpt(`--verb`)
+export const more = cli.boolOpt(`--more`)
+export const prec = cli.boolOpt(`--prec`)
+export const once = cli.boolOpt(`--once`)
+export const clear = cli.boolOpt(`--clear`)
 
 if (clear) cl.emptty()
 

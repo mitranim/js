@@ -8,7 +8,7 @@ import * as ds from '../dom_shim.mjs'
 /* Util */
 
 const ren = new p.Ren(ds.document)
-const E = ren.E.bind(ren)
+const E = ren.E
 const F = ren.frag.bind(ren)
 const A = p.PropBui.main
 const Text = ds.Text
@@ -188,7 +188,7 @@ t.test(function test_Ren_elemHtml_invalid() {
     t.throws(() => ren.elemHtml(`div`, {nop: l.nop}),                TypeError, `unable to convert property "nop" [function nop] to string`)
     t.throws(() => ren.elemHtml(`div`, []),                          TypeError, `expected variant of isStruct, got []`)
     t.throws(() => ren.elemHtml(`div`, E),                           TypeError, `expected variant of isObj, got [function bound E]`)
-    t.throws(() => ren.elemHtml(`div`, new String()),                TypeError, `expected variant of isStruct, got [String: ""]`)
+    t.throws(() => ren.elemHtml(`div`, new String()),                TypeError, `expected variant of isStruct, got [object String ""]`)
     t.throws(() => ren.elemHtml(`div`, {attributes: 10}),            TypeError, `expected variant of isObj, got 10`)
     t.throws(() => ren.elemHtml(`div`, {attributes: `str`}),         TypeError, `expected variant of isObj, got "str"`)
     t.throws(() => ren.elemHtml(`div`, {attributes: []}),            TypeError, `expected variant of isStruct, got []`)
@@ -196,8 +196,8 @@ t.test(function test_Ren_elemHtml_invalid() {
     t.throws(() => ren.elemHtml(`div`, {className: []}),             TypeError, `unable to convert property "className" [] to string`)
     t.throws(() => ren.elemHtml(`div`, {class: {}}),                 TypeError, `unable to convert property "class" {} to string`)
     t.throws(() => ren.elemHtml(`div`, {className: {}}),             TypeError, `unable to convert property "className" {} to string`)
-    t.throws(() => ren.elemHtml(`div`, {class: new class {}()}),     TypeError, `unable to convert property "class" {} to string`)
-    t.throws(() => ren.elemHtml(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" {} to string`)
+    t.throws(() => ren.elemHtml(`div`, {class: new class {}()}),     TypeError, `unable to convert property "class" [object] to string`)
+    t.throws(() => ren.elemHtml(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" [object] to string`)
     t.throws(() => ren.elemHtml(`div`, {style: 10}),                 TypeError, `unable to convert 10 to style`)
     t.throws(() => ren.elemHtml(`div`, {style: []}),                 TypeError, `unable to convert [] to style`)
     t.throws(() => ren.elemHtml(`div`, {dataset: 10}),               TypeError, `expected variant of isObj, got 10`)
@@ -784,7 +784,7 @@ function testNonScalarChiStrict(E) {
   t.throws(() => E(`div`, {}, Symbol(`str`)),       TypeError, `unable to convert Symbol(str) to string`)
   t.throws(() => E(`div`, {}, {}),                  TypeError, `unable to convert {} to string`)
   t.throws(() => E(`div`, {}, Object.create(null)),             TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {}, new class {}()),      TypeError, `unable to convert {} to string`)
+  t.throws(() => E(`div`, {}, new class {}()),      TypeError, `unable to convert [object] to string`)
   t.throws(() => E(`div`, {}, () => {}),            TypeError, `unable to convert [function () => {}] to string`)
   t.throws(() => E(`div`, {}, function fun() {}),   TypeError, `unable to convert [function fun] to string`)
   t.throws(() => E(`div`, {}, Promise.resolve()),   TypeError, `unable to convert [object Promise] to string`)
@@ -804,7 +804,7 @@ function testNonScalarPropStrict(E) {
   t.throws(() => E(`div`, {one: Symbol(`str`)}),       TypeError, `unable to convert property "one" Symbol(str) to string`)
   t.throws(() => E(`div`, {one: {}}),                  TypeError, `unable to convert property "one" {} to string`)
   t.throws(() => E(`div`, {one: l.Emp()}),             TypeError, `unable to convert property "one" {} to string`)
-  t.throws(() => E(`div`, {one: new class {}()}),      TypeError, `unable to convert property "one" {} to string`)
+  t.throws(() => E(`div`, {one: new class {}()}),      TypeError, `unable to convert property "one" [object] to string`)
   t.throws(() => E(`div`, {}, () => {}),               TypeError, `unable to convert [function () => {}] to string`)
   t.throws(() => E(`div`, {}, function fun() {}),      TypeError, `unable to convert [function fun] to string`)
   t.throws(() => E(`div`, {}, Promise.resolve()),      TypeError, `unable to convert [object Promise] to string`)
@@ -917,7 +917,7 @@ t.test(function test_Ren_dom_behaviors() {
 
     t.throws(() => ren.mutText(node, {}), TypeError, `unable to convert {} to string`)
     t.throws(() => ren.mutText(node, []), TypeError, `unable to convert [] to string`)
-    t.throws(() => ren.mutText(node, new p.Raw()), TypeError, `unable to convert [object Raw: {outerHTML: ""}] to string`)
+    t.throws(() => ren.mutText(node, new p.Raw()), TypeError, `unable to convert [object Raw {outerHTML: ""}] to string`)
 
     t.is(ren.mutText(node), node)
     eqm(node, `<div class="one"></div>`)

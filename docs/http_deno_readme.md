@@ -19,23 +19,21 @@ Also see [`http`](http_readme.md) for routing and cookies, and [`live_deno`](liv
 Simple example of a server that serves files from the current directory, automatically matching URL paths to HTML files:
 
 ```js
-import * as hd from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/http_deno.mjs'
+import * as hd from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/http_deno.mjs'
 
-const srv = new class Srv extends hd.Srv {
-  // Serves files from the current folder, with no filtering.
-  dirs = hd.Dirs.of(hd.dirRel(`.`))
+// Finds files in the current folder, with no filtering.
+const DIRS = hd.Dirs.of(hd.dirRel(`.`))
 
-  async res(req) {
-    const rou = new h.ReqRou(req)
+async function handler(req) {
+  const rou = new h.ReqRou(req)
 
-    return (
-      (await this.dirs.resolveSiteFileWithNotFound(req.url))?.res() ||
-      rou.notFound()
-    )
-  }
-}()
+  return (
+    (await this.dirs.resolveSiteFileWithNotFound(req.url))?.res() ||
+    rou.notFound()
+  )
+}
 
-await srv.listen({port: somePort})
+Deno.serve({handler})
 ```
 
 ## API
@@ -44,18 +42,16 @@ await srv.listen({port: somePort})
 
 The following APIs are exported but undocumented. Check [http_deno.mjs](../http_deno.mjs).
 
-  * [`const contentTypes`](../http_deno.mjs#L12)
-  * [`function guessContentType`](../http_deno.mjs#L34)
-  * [`class DirBase`](../http_deno.mjs#L36)
-  * [`function dirAbs`](../http_deno.mjs#L71)
-  * [`class DirAbs`](../http_deno.mjs#L73)
-  * [`class DirRel`](../http_deno.mjs#L86)
-  * [`function dirRel`](../http_deno.mjs#L105)
-  * [`class DirRelFil`](../http_deno.mjs#L108)
-  * [`class Dirs`](../http_deno.mjs#L120)
-  * [`class HttpFileInfo`](../http_deno.mjs#L165)
-  * [`class HttpFileStream`](../http_deno.mjs#L182)
-  * [`class Srv`](../http_deno.mjs#L215)
-  * [`function errRes`](../http_deno.mjs#L288)
-  * [`class Fil`](../http_deno.mjs#L291)
-  * [`function isErrCancel`](../http_deno.mjs#L301)
+  * [`const EXT_TO_MIME_TYPE`](../http_deno.mjs#L11)
+  * [`function guessContentType`](../http_deno.mjs#L33)
+  * [`class DirBase`](../http_deno.mjs#L35)
+  * [`function dirAbs`](../http_deno.mjs#L70)
+  * [`class DirAbs`](../http_deno.mjs#L72)
+  * [`class DirRel`](../http_deno.mjs#L85)
+  * [`function dirRel`](../http_deno.mjs#L104)
+  * [`class DirRelFil`](../http_deno.mjs#L107)
+  * [`class Dirs`](../http_deno.mjs#L119)
+  * [`class HttpFileInfo`](../http_deno.mjs#L164)
+  * [`class HttpFileStream`](../http_deno.mjs#L180)
+  * [`class Fil`](../http_deno.mjs#L212)
+  * [`function isErrCancel`](../http_deno.mjs#L222)

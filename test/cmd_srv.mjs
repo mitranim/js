@@ -3,40 +3,51 @@ Tiny server for running tests in the browser.
 Serves files and performs live reloading.
 */
 
-import * as l from '../lang.mjs'
+/* global Deno */
+
 import * as h from '../http.mjs'
 import * as hd from '../http_deno.mjs'
 import * as ld from '../live_deno.mjs'
 
-const srv = new class Srv extends hd.Srv {
-  bro = new ld.LiveBroad()
-  dirs = ld.LiveDirs.of(hd.dirRel(`.`))
+const BRO = new ld.LiveBroad()
+const DIRS = ld.LiveDirs.of(hd.dirRel(`.`))
 
-  onListen() {
-    const port = l.reqNat(this.lis.addr.port)
-    console.log(`[srv] listening on http://localhost:${port}/test/test.html`)
-  }
+function serve() {
+  Deno.serve({
+    port: 37285,
+    handler: respond,
+    onListen({port, hostname}) {
+      if (hostname === `0.0.0.0`) hostname = `localhost`
+      console.log(`[srv] listening on http://${hostname}:${port}/test/test.html`)
+    },
+    onError: respondErr,
+  })
+}
 
-  async res(req) {
-    const rou = new h.ReqRou(req)
+async function respond(req) {
+  const rou = new h.ReqRou(req)
 
-    return ld.withLiveClient(this.bro.clientPath, await (
-      (await this.bro.res(rou)) ||
-      (await this.dirs.resolveSiteFileWithNotFound(req.url))?.res() ||
-      rou.notFound()
-    ))
-  }
+  return ld.withLiveClient(BRO.clientPath, await (
+    (await BRO.res(rou)) ||
+    (await DIRS.resolveSiteFileWithNotFound(req.url))?.res() ||
+    rou.notFound()
+  ))
+}
 
-  async watch() {
-    for await (const val of this.dirs.watchLive()) {
-      this.bro.writeEventJson(val)
-    }
-  }
+function respondErr(err) {
+  if (h.isErrAbort(err)) return new Response()
+  console.error(err)
 
-  errRes(err) {
-    return new Response(err?.stack || l.show(err), {status: 500})
-  }
-}()
+  const msg = err?.stack || String(err)
+  const status = err?.status || 500
+  return new Response(msg, {status})
+}
 
-srv.watch()
-await srv.listen({port: 37285})
+async function watch() {
+  for await (const val of DIRS.watchLive()) BRO.writeEventJson(val)
+}
+
+if (import.meta.main) {
+  serve()
+  watch()
+}

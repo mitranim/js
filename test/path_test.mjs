@@ -425,9 +425,7 @@ t.test(function test_Paths() {
       function fun(...val) {return p.posix.join(...val)}
 
       t.test(function test_invalid() {
-        t.throws(() => fun(), TypeError, `unable to convert undefined to string`)
-        t.throws(() => fun(10), TypeError, `unable to convert 10 to string`)
-
+        t.throws(() => fun(10), TypeError, `expected variant of isStr, got 10`)
         t.throws(() => fun(``, `/`), Error, `unable to append absolute path "/" to ""`)
         t.throws(() => fun(``, `/two`), Error, `unable to append absolute path "/two" to ""`)
         t.throws(() => fun(`.`, `/two`), Error, `unable to append absolute path "/two" to ""`)
@@ -435,6 +433,7 @@ t.test(function test_Paths() {
         t.throws(() => fun(`one`, `/two`), Error, `unable to append absolute path "/two" to "one"`)
       })
 
+      t.is(fun(), ``)
       t.is(fun(``), ``)
       t.is(fun(`.`), ``)
       t.is(fun(`./`), ``)
@@ -492,9 +491,7 @@ t.test(function test_Paths() {
       function fun(...val) {return p.windows.join(...val)}
 
       t.test(function test_invalid() {
-        t.throws(() => fun(), TypeError, `unable to convert undefined to string`)
-        t.throws(() => fun(10), TypeError, `unable to convert 10 to string`)
-
+        t.throws(() => fun(10), TypeError, `expected variant of isStr, got 10`)
         t.throws(() => fun(``, `\\`), Error, `unable to append absolute path "\\\\" to ""`)
         t.throws(() => fun(``, `\\two`), Error, `unable to append absolute path "\\\\two" to ""`)
         t.throws(() => fun(`.`, `\\two`), Error, `unable to append absolute path "\\\\two" to ""`)
@@ -504,6 +501,7 @@ t.test(function test_Paths() {
         t.throws(() => fun(`one`, `C:\\`), Error, `unable to append absolute path "C:\\\\" to "one"`)
       })
 
+      t.is(fun(), ``)
       t.is(fun(``), ``)
       t.is(fun(`.`), ``)
       t.is(fun(`.\\`), ``)

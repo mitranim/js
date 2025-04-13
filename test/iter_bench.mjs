@@ -86,10 +86,12 @@ t.bench(function bench_values_dict_our_values() {l.reqArr(i.values(itc.numDict))
 
 t.bench(function bench_values_set_native() {i.arr(itc.numSet.values())})
 t.bench(function bench_values_set_specialized() {l.reqArr(valuesFromSetSpecialized(itc.numSet))})
+t.bench(function bench_values_set_spread() {l.reqArr([...itc.numSet])})
 t.bench(function bench_values_set_our_values() {l.reqArr(i.values(itc.numSet))})
 
 t.bench(function bench_values_map_native() {i.arr(itc.numMap.values())})
 t.bench(function bench_values_map_specialized() {l.reqArr(valuesFromMapSpecialized(itc.numMap))})
+t.bench(function bench_values_map_spread_values() {l.reqArr([...itc.numMap.values()])})
 t.bench(function bench_values_map_our_values() {l.reqArr(i.values(itc.numMap))})
 
 // Must avoid allocations/copying. The entire cost must be in type checks.
@@ -699,7 +701,7 @@ function structEntriesDumb(src) {
 }
 
 function spanDumb(len) {
-  len = l.reqNat(len)
+  l.reqNat(len)
   const out = Array(len)
   let ind = -1
   while (++ind < len) out[ind] = ind

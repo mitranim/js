@@ -54,7 +54,7 @@ export function ell(src, len) {return trunc(src, len, `…`)}
 
 export function trunc(src, len, suf) {
   src = l.laxStr(src)
-  len = l.reqNat(len)
+  l.reqNat(len)
   suf = l.laxStr(suf)
 
   if (!len) return ``
@@ -599,8 +599,8 @@ export function sanLax(str, ...inp) {return interpolate(str, inp, l.renderLax)}
 
 // Internal tool for "tag functions" for template strings.
 export function interpolate(src, inp, fun) {
-  src = l.reqArr(src)
-  inp = l.reqArr(inp)
+  l.reqArr(src)
+  l.reqArr(inp)
 
   let out = ``
   let ind = -1
@@ -648,8 +648,8 @@ export function replaceAll(src, pat, rep) {
 }
 
 export function commonPrefixLen(one, two) {
-  one = l.reqStr(one)
-  two = l.reqStr(two)
+  l.reqStr(one)
+  l.reqStr(two)
 
   let ind = 0
   while (ind < one.length && ind < two.length) {

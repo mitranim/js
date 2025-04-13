@@ -1,7 +1,7 @@
 {
 	"name": "@mitranim/js",
 	"description": "Something like a missing standard library for JS",
-	"version": "0.1.62",
+	"version": "0.1.63",
 	"type": "module",
 	"repository": {"type": "git", "url": "https://github.com/mitranim/js.git"},
 	"license": "Unlicense"

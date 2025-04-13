@@ -14,7 +14,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/obj.mjs'
 ```
 
 ## API
@@ -82,8 +82,8 @@ Performance characteristics:
   * When the number of declared properties is significantly smaller than the number of provided properties, this tends to be faster than the aforementioned assignment functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/obj.mjs'
 
 class Person extends o.Struct {
   static spec = {
@@ -126,8 +126,8 @@ Differences from [#`Struct`](#class-struct):
   * Measurably worse performance.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/obj.mjs'
 
 class Person extends o.StructLax {
   static spec = {
@@ -155,12 +155,12 @@ new Person({id: 10, name: `Mira`, slug: `mira`, gender: `female`})
 
 ### `function memGet`
 
-Links: [source](../obj.mjs#L290); [test/example](../test/obj_test.mjs#L876).
+Links: [source](../obj.mjs#L310); [test/example](../test/obj_test.mjs#L876).
 
 Takes a class and hacks its prototype, converting all non-inherited getters to lazy/memoizing versions of themselves that only execute _once_. The resulting value replaces the getter. Inherited getters are unaffected.
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/obj.mjs'
 
 class Bucket {
   static {o.memGet(this)}
@@ -191,28 +191,29 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
   * [`class StructType`](../obj.mjs#L47)
   * [`class StructTypeLax`](../obj.mjs#L131)
   * [`function MixMain`](../obj.mjs#L176)
-  * [`class Strict`](../obj.mjs#L188)
-  * [`class BlankStaticPh`](../obj.mjs#L201)
-  * [`class StrictStaticPh`](../obj.mjs#L235)
-  * [`class MakerPh`](../obj.mjs#L254)
-  * [`class Dyn`](../obj.mjs#L263)
-  * [`class TypedDyn`](../obj.mjs#L271)
-  * [`class WeakTag`](../obj.mjs#L276)
-  * [`class MemTag`](../obj.mjs#L292)
-  * [`class Cache`](../obj.mjs#L297)
-  * [`class WeakCache`](../obj.mjs#L303)
-  * [`class StaticCache`](../obj.mjs#L309)
-  * [`class StaticWeakCache`](../obj.mjs#L317)
-  * [`class MixinCache`](../obj.mjs#L321)
-  * [`class DedupMixinCache`](../obj.mjs#L326)
-  * [`const parentNodeKey`](../obj.mjs#L346)
-  * [`function MixChild`](../obj.mjs#L362)
-  * [`class MixChildCache`](../obj.mjs#L364)
-  * [`function MixChildCon`](../obj.mjs#L418)
-  * [`class MixChildConCache`](../obj.mjs#L420)
-  * [`function pub`](../obj.mjs#L431)
-  * [`function priv`](../obj.mjs#L441)
-  * [`function final`](../obj.mjs#L451)
-  * [`function getter`](../obj.mjs#L461)
-  * [`function setter`](../obj.mjs#L463)
-  * [`function getSet`](../obj.mjs#L465)
+  * [`class Strict`](../obj.mjs#L187)
+  * [`class BlankStaticPh`](../obj.mjs#L200)
+  * [`class StrictStaticPh`](../obj.mjs#L234)
+  * [`class MakerPh`](../obj.mjs#L253)
+  * [`class DynVar`](../obj.mjs#L267)
+  * [`class TypedDynVar`](../obj.mjs#L285)
+  * [`class WeakTag`](../obj.mjs#L290)
+  * [`class WeakerRef`](../obj.mjs#L304)
+  * [`class MemTag`](../obj.mjs#L312)
+  * [`class Cache`](../obj.mjs#L317)
+  * [`class WeakCache`](../obj.mjs#L323)
+  * [`class StaticCache`](../obj.mjs#L329)
+  * [`class StaticWeakCache`](../obj.mjs#L337)
+  * [`class MixinCache`](../obj.mjs#L341)
+  * [`class DedupMixinCache`](../obj.mjs#L346)
+  * [`const parentNodeKey`](../obj.mjs#L366)
+  * [`function MixChild`](../obj.mjs#L382)
+  * [`class MixChildCache`](../obj.mjs#L384)
+  * [`function MixChildCon`](../obj.mjs#L438)
+  * [`class MixChildConCache`](../obj.mjs#L440)
+  * [`function pub`](../obj.mjs#L451)
+  * [`function priv`](../obj.mjs#L461)
+  * [`function final`](../obj.mjs#L471)
+  * [`function getter`](../obj.mjs#L481)
+  * [`function setter`](../obj.mjs#L483)
+  * [`function getSet`](../obj.mjs#L485)

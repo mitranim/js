@@ -11,10 +11,13 @@ export function args() {
 export function arg(ind) {return args()[l.reqNat(ind)]}
 
 export function consoleCols() {
-  return (
-    globalThis.Deno?.consoleSize?.()?.columns ??
-    globalThis.process?.stdout?.columns
-  ) | 0
+  const {Deno, process} = globalThis
+  let out
+  if (Deno) {
+    const {stdout} = Deno
+    if (stdout?.isTerminal?.()) out = Deno.consoleSize(stdout).columns
+  }
+  return (out ?? process?.stdout?.columns) | 0
 }
 
 /*
@@ -118,11 +121,11 @@ export class Flag extends s.StrMap {
 
       const ind = val.indexOf(`=`)
       if (ind >= 0) {
-        this.append(unFlag(val.slice(0, ind)), val.slice(ind+1))
+        this.append(val.slice(0, ind), val.slice(ind+1))
         continue
       }
 
-      flag = unFlag(val)
+      flag = val
     }
 
     if (flag) this.set(flag, ``)
@@ -225,4 +228,3 @@ export async function timed(tag, fun) {
 /* Internal */
 
 function isFlag(str) {return str.startsWith(`-`)}
-function unFlag(str) {return s.stripPreAll(str, `-`)}

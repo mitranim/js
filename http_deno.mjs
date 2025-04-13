@@ -1,7 +1,6 @@
 /* global Deno */
 
 import * as l from './lang.mjs'
-import * as o from './obj.mjs'
 import * as s from './str.mjs'
 import * as u from './url.mjs'
 import * as h from './http.mjs'
@@ -9,29 +8,29 @@ import * as io from './io_deno.mjs'
 import * as p from './path.mjs'
 
 // TODO move to a non-Deno-specific file.
-export const contentTypes = l.Emp()
-contentTypes[`.css`] = `text/css`
-contentTypes[`.gif`] = `image/gif`
-contentTypes[`.htm`] = `text/html`
-contentTypes[`.html`] = `text/html`
-contentTypes[`.ico`] = `image/x-icon`
-contentTypes[`.jpeg`] = `image/jpeg`
-contentTypes[`.jpg`] = `image/jpeg`
-contentTypes[`.js`] = `application/javascript`
-contentTypes[`.json`] = `application/json`
-contentTypes[`.mjs`] = `application/javascript`
-contentTypes[`.pdf`] = `application/pdf`
-contentTypes[`.png`] = `image/png`
-contentTypes[`.svg`] = `image/svg+xml`
-contentTypes[`.tif`] = `image/tiff`
-contentTypes[`.tiff`] = `image/tiff`
-contentTypes[`.xml`] = `text/xml`
-contentTypes[`.zip`] = `application/zip`
-contentTypes[`.webp`] = `image/webp`
-contentTypes[`.woff`] = `font/woff`
-contentTypes[`.woff2`] = `font/woff2`
+export const EXT_TO_MIME_TYPE = l.Emp()
+EXT_TO_MIME_TYPE[`.css`] = `text/css`
+EXT_TO_MIME_TYPE[`.gif`] = `image/gif`
+EXT_TO_MIME_TYPE[`.htm`] = `text/html`
+EXT_TO_MIME_TYPE[`.html`] = `text/html`
+EXT_TO_MIME_TYPE[`.ico`] = `image/x-icon`
+EXT_TO_MIME_TYPE[`.jpeg`] = `image/jpeg`
+EXT_TO_MIME_TYPE[`.jpg`] = `image/jpeg`
+EXT_TO_MIME_TYPE[`.js`] = `application/javascript`
+EXT_TO_MIME_TYPE[`.json`] = `application/json`
+EXT_TO_MIME_TYPE[`.mjs`] = `application/javascript`
+EXT_TO_MIME_TYPE[`.pdf`] = `application/pdf`
+EXT_TO_MIME_TYPE[`.png`] = `image/png`
+EXT_TO_MIME_TYPE[`.svg`] = `image/svg+xml`
+EXT_TO_MIME_TYPE[`.tif`] = `image/tiff`
+EXT_TO_MIME_TYPE[`.tiff`] = `image/tiff`
+EXT_TO_MIME_TYPE[`.xml`] = `text/xml`
+EXT_TO_MIME_TYPE[`.zip`] = `application/zip`
+EXT_TO_MIME_TYPE[`.webp`] = `image/webp`
+EXT_TO_MIME_TYPE[`.woff`] = `font/woff`
+EXT_TO_MIME_TYPE[`.woff2`] = `font/woff2`
 
-export function guessContentType(val) {return contentTypes[p.posix.ext(val)]}
+export function guessContentType(val) {return EXT_TO_MIME_TYPE[p.posix.ext(val)]}
 
 export class DirBase extends l.Emp {
   urlPathToFsPath() {return undefined}
@@ -164,7 +163,6 @@ export class Dirs extends Array {
 
 export class HttpFileInfo extends io.FileInfo {
   res(opt) {return this.HttpFileStream.res(this.path, opt)}
-
   stream() {return this.HttpFileStream.open(this.path)}
 
   // Not used automatically. May be used by user code.
@@ -209,83 +207,6 @@ export class HttpFileStream extends io.FileStream {
 
   get Res() {return Response}
 }
-
-// TODO ability to store multiple listeners.
-// TODO convert to `Deno.serve` API.
-export class Srv extends l.Emp {
-  lis = undefined
-
-  listen(opt) {
-    this.deinit()
-    this.lis = this.listener(opt)
-    this.onListen(opt)
-    return this.serve(this.lis)
-  }
-
-  listener(opt) {
-    if (opt?.certFile || opt?.keyFile) return Deno.listenTls(opt)
-    return Deno.listen(opt)
-  }
-
-  async serve(lis) {
-    for await (const conn of lis) {
-      const onConnErr = err => this.onConnErr(err, conn)
-      this.serveConn(conn).catch(onConnErr)
-    }
-  }
-
-  async serveConn(conn) {
-    for await (const event of Deno.serveHttp(conn)) {
-      const onEventErr = err => this.onEventErr(err, event)
-      event.respondWith(l.reqPromise(this.response(event.request))).catch(onEventErr)
-    }
-  }
-
-  /*
-  To minimize error potential, subclasses should override `.res` and `.errRes`
-  rather than this.
-
-  This method must ALWAYS be async. Our error handling assumes that we can pass
-  the resulting promise to `event.respondWith` without having to handle
-  synchronous exceptions resulting from the call in cases where the response
-  might be malformed.
-  */
-  async response(req) {
-    try {return await this.res(req)}
-    catch (err) {
-      try {return await this.errRes(err, req)}
-      catch (err) {
-        try {
-          this.onReqErr(err, req)
-          return errRes(err, req)
-        }
-        catch (err) {
-          console.error(err)
-          return new Response(`unknown error`, {status: 500})
-        }
-      }
-    }
-  }
-
-  // Subclasses should override this.
-  res() {return new Response()}
-  onErr(err) {if (!isErrCancel(err)) console.error(err)}
-  onConnErr(err, conn) {this.onErr(err, conn)}
-  onEventErr(err, event) {this.onErr(err, event)}
-  onReqErr(err, req) {this.onErr(err, req)}
-  errRes(err, req) {return errRes(err, req)}
-
-  onListen(opt) {
-    console.log(`[${this.constructor.name}] listening on http://${opt.hostname || `localhost`}:${opt.port}`)
-  }
-
-  deinit() {
-    try {this.lis?.close()}
-    finally {this.lis = undefined}
-  }
-}
-
-export function errRes(err) {return new Response(l.show(err), {status: 500})}
 
 // Short for "filter".
 export class Fil extends l.Emp {

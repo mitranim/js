@@ -75,7 +75,7 @@ export function isBigInt(val) {return typeof val === `bigint`}
 export function reqBigInt(val) {return isBigInt(val) ? val : throwErrFun(val, isBigInt)}
 export function optBigInt(val) {return isNil(val) ? val : reqBigInt(val)}
 export function onlyBigInt(val) {return isBigInt(val) ? val : undefined}
-export function laxBigInt(val) {return isNil(val) ? BigInt(0) : reqBigInt(val)}
+export function laxBigInt(val) {return isNil(val) ? 0n : reqBigInt(val)}
 
 export function isStr(val) {return typeof val === `string`}
 export function reqStr(val) {return isStr(val) ? val : throwErrFun(val, isStr)}
@@ -228,7 +228,7 @@ export function optMap(val) {return isNil(val) ? val : reqMap(val)}
 export function onlyMap(val) {return isMap(val) ? val : undefined}
 export function laxMap(val) {return isNil(val) ? new Map() : reqMap(val)}
 
-export function isPromise(val) {return isComp(val) && `then` in val && isFun(val.then)}
+export function isPromise(val) {return isComp(val) && isFun(val.then)}
 export function reqPromise(val) {return isPromise(val) ? val : throwErrFun(val, isPromise)}
 export function optPromise(val) {return isNil(val) ? val : reqPromise(val)}
 export function onlyPromise(val) {return isPromise(val) ? val : undefined}
@@ -273,7 +273,7 @@ export function reqSubCls(sub, sup) {
   throw TypeError(`expected subclass of ${show(sup)}, found ${show(sub)}`)
 }
 
-export function isList(val) {return isSome(val) && (isArr(val) || (isIter(val) && isNat(getLength(val))))}
+export function isList(val) {return isSome(val) && (isArr(val) || (isIter(val) && isNat(val.length)))}
 export function reqList(val) {return isList(val) ? val : throwErrFun(val, isList)}
 export function optList(val) {return isNil(val) ? val : reqList(val)}
 export function onlyList(val) {return isList(val) ? val : undefined}
@@ -305,17 +305,17 @@ export function reqScalarOpt(val) {return isScalarOpt(val) ? val : throwErrFun(v
 export function optScalarOpt(val) {return isNil(val) ? val : reqScalarOpt(val)}
 export function onlyScalarOpt(val) {return isScalarOpt(val) ? val : undefined}
 
-export function isArrble(val) {return isIter(val) && `toArray` in val && isFun(val.toArray)}
+export function isArrble(val) {return isIter(val) && isFun(val.toArray)}
 export function reqArrble(val) {return isArrble(val) ? val : throwErrFun(val, isArrble)}
 export function optArrble(val) {return isNil(val) ? val : reqArrble(val)}
 export function onlyArrble(val) {return isArrble(val) ? val : undefined}
 
-export function isEqable(val) {return isObj(val) && `eq` in val && isFun(val.eq)}
+export function isEqable(val) {return isObj(val) && isFun(val.eq)}
 export function reqEqable(val) {return isEqable(val) ? val : throwErrFun(val, isEqable)}
 export function optEqable(val) {return isNil(val) ? val : reqEqable(val)}
 export function onlyEqable(val) {return isEqable(val) ? val : undefined}
 
-export function isClearable(val) {return isObj(val) && `clear` in val && isFun(val.clear)}
+export function isClearable(val) {return isObj(val) && isFun(val.clear)}
 export function reqClearable(val) {return isClearable(val) ? val : throwErrFun(val, isClearable)}
 export function optClearable(val) {return isNil(val) ? val : reqClearable(val)}
 export function onlyClearable(val) {return isClearable(val) ? val : undefined}
@@ -326,24 +326,28 @@ export function optErr(val) {return isNil(val) ? val : reqErr(val)}
 export function onlyErr(val) {return isErr(val) ? val : undefined}
 
 export function isArrOf(val, fun) {
-  reqFun(fun)
+  reqValidator(fun)
   return isArr(val) && val.every(fun)
 }
 
 // TODO improve error message.
 export function reqArrOf(val, fun) {
+  reqValidator(fun)
   for (const elem of reqArr(val)) req(elem, fun)
   return val
 }
 
-export function optArrOf(val, fun) {return isNil(val) ? val : reqArrOf(val, fun)}
+export function optArrOf(val, fun) {
+  reqValidator(fun)
+  return isNil(val) ? val : reqArrOf(val, fun)
+}
 
 // TODO consolidate with `hasLen`.
 // The two functions must be exactly inverse.
 export function isEmpty(val) {
   if (!isObj(val)) return true
   if (isList(val)) return val.length === 0
-  if (isIter(val)) return getSize(val) === 0
+  if (isIter(val)) return val.size === 0
   return false
 }
 
@@ -404,15 +408,6 @@ export function renderOpt(val) {
 
 export function renderLax(val) {return isNil(val) ? `` : render(val)}
 
-export function show(val, vis = new Map()) {
-  if (isStr(val)) return JSON.stringify(val)
-  if (isSym(val)) return val.toString()
-  if (isFun(val)) return showFun(val)
-  if (isObj(val)) return showObj(val, vis)
-  if (Object.is(val, -0)) return `-0`
-  return String(val)
-}
-
 export function toTrueArr(val) {
   if (isNil(val)) return []
   if (isTrueArr(val)) return val
@@ -450,8 +445,6 @@ export function eq(one, two) {
   return !!con && (con === getCon(one)) && one.eq(two)
 }
 
-/* Cls */
-
 export function setProto(tar, cls) {
   if (Object.getPrototypeOf(tar) !== cls.prototype) {
     Object.setPrototypeOf(tar, cls.prototype)
@@ -460,6 +453,123 @@ export function setProto(tar, cls) {
 
 export function Emp() {return new.target && new.target !== Emp ? this : Object.create(null)}
 Emp.prototype = null
+
+export function show(val) {return new Show().any(val)}
+
+export class Show extends Emp {
+  any(src) {
+    if (Object.is(src, -0)) return `-0`
+    if (isStr(src)) return this.str(src)
+    if (isSym(src)) return this.sym(src)
+    if (isBigInt(src)) return this.bigInt(src)
+    if (isFun(src)) return this.fun(src)
+    if (!isObj(src)) return String(src)
+
+    const out = this.cyclicOpt(src)
+    if (out) return out
+
+    if (isErr(src)) return this.err(src)
+    if (isArr(src)) return this.arr(src)
+    if (isDict(src)) return this.dict(src)
+    if (isInst(src, WeakRef)) return this.ref(src, WeakRef.name)
+    if (isInst(src, Boolean)) return this.obj(src, Boolean.name)
+    if (isInst(src, Number)) return this.obj(src, Number.name)
+    if (isInst(src, String)) return this.obj(src, String.name)
+    if (isSet(src)) return this.obj(src, Set.name)
+    if (isMap(src)) return this.obj(src, Map.name)
+    return this.obj(src)
+  }
+
+  str(src) {return JSON.stringify(src)}
+  sym(src) {return src.toString()}
+  bigInt(src) {return src.toString() + `n`}
+  fun(src) {return showFun(src)}
+  arr(src) {return `[` + this.seq(src) + `]`}
+  dict(src) {return `{` + this.fields(src) + `}`}
+
+  obj(src, name, ...extra) {
+    let out = `[object`
+    out = spaced(out, this.name(src) || laxStr(name))
+    for (const val of extra) out = spaced(out, val)
+    out = spaced(out, this.scalarOpt(src))
+    out = spaced(out, this.dictOpt(src))
+    out = spaced(out, this.arrOpt(src))
+    out += `]`
+    return out
+  }
+
+  err(src) {
+    const dict = this.dictOpt(src)
+    if (!dict) return String(src)
+
+    let out = `[` + this.name(src) || Error.name
+    out = spaced(out, dict)
+    out = inf(out, `: `, src.message)
+    out += `]`
+    return out
+  }
+
+  ref(src, name) {
+    const val = src.deref()
+    if (isNil(val)) return this.obj(src, name)
+    return this.obj(src, name, this.any(val))
+  }
+
+  scalarOpt(src) {return isScalar(src) ? this.any(src.toString()) : ``}
+
+  dictOpt(src) {
+    src = this.fieldsOpt(src)
+    return src && `{` + src + `}`
+  }
+
+  fieldsOpt(src) {return this.fields(src)}
+
+  fields(src) {
+    const buf = []
+    for (const key of Object.keys(src)) {
+      buf.push(this.field(key, src[key]))
+    }
+    return buf.join(`, `)
+  }
+
+  field(key, val) {return this.key(key) + `: ` + this.any(val)}
+
+  key(src) {
+    if (isSym(src)) return `[` + this.sym(src) + `]`
+    if (/^(?:\d+|\d+\.\d+|\d+n|[A-Za-z_$][\w$]*)$/.test(reqStr(src))) {
+      return src
+    }
+    return this.str(src)
+  }
+
+  arrOpt(src) {
+    src = this.seqOpt(src)
+    return src && `[` + src + `]`
+  }
+
+  seqOpt(src) {return isIter(src) && !isIterator(src) ? this.seq(src) : ``}
+
+  seq(src) {
+    const buf = []
+    for (src of src) buf.push(this.any(src))
+    return buf.join(`, `)
+  }
+
+  con(src) {return getCon(src)}
+  name(src) {return this.con(src)?.name || src?.[Symbol.toStringTag]}
+  cyclic(ind) {return `[cyclic ` + ind + `]`}
+
+  cyclicOpt(val) {
+    const vis = this.vis()
+    const ind = vis.get(val)
+    if (ind) return this.cyclic(ind)
+    vis.set(val, vis.size + 1)
+    return ``
+  }
+
+  #vis = undefined
+  vis() {return this.#vis ??= new Map()}
+}
 
 /* Math */
 
@@ -490,7 +600,7 @@ const enu = Object.prototype.propertyIsEnumerable
 
 function isFunType(val, name) {return isFun(val) && val.constructor.name === name}
 function instDesc(val) {return isFun(val) ? `instance of ${showFunName(val)} ` : ``}
-function hasNext(val) {return `next` in val && isFun(val.next)}
+function hasNext(val) {return isFun(val.next)}
 
 function reqValidator(fun) {
   if (!isFun(fun)) {
@@ -567,57 +677,13 @@ function showFun(val) {return `[function ${val.name || val}]`}
 function showFuns(funs) {return funs.map(showFunName).join(`, `)}
 export function showFunName(fun) {return fun.name || showFun(fun)}
 
-function showObj(src, vis) {
-  const ind = vis?.get(src)
-  if (ind) return `[cyclic ` + ind + `]`
-  vis?.set(src, vis.size + 1)
+function spaced(one, two) {return inf(one, ` `, two)}
 
-  if (isErr(src)) return String(src)
-  if (isArr(src)) return showArr(src, vis)
-
-  const con = getCon(src)
-  if (!con || con === Object) return showDictOpt(src, vis) || `{}`
-
-  const name = getName(con) || getTag(src)
-  if (isInst(src, Boolean)) return `[${name || `Boolean`}: ${show(src.valueOf())}]`
-  if (isInst(src, Number)) return `[${name || `Number`}: ${show(src.valueOf())}]`
-  if (isInst(src, BigInt)) return `[${name || `BigInt`}: ${show(src.valueOf())}n]`
-  if (isInst(src, String)) return `[${name || `String`}: ${show(src.valueOf())}]`
-  if (isInst(src, Symbol)) return `[${name || `Symbol`}: ${show(src.valueOf())}]`
-
-  const dict = showDictOpt(src, vis)
-  if (!name) return dict || `{}`
-  return `[object ${name}${dict && `: `}${dict}]`
-}
-
-function showArr(src, vis) {
-  const tar = []
-  for (src of src) tar.push(show(src, vis))
-  return `[` + tar.join(`, `) + `]`
-}
-
-function showDictOpt(src, vis) {
-  const buf = []
-  for (const key of Object.getOwnPropertySymbols(src)) {
-    buf.push(showDictEntry(key, src[key], vis))
-  }
-  for (const key of Object.getOwnPropertyNames(src)) {
-    buf.push(showDictEntry(key, src[key], vis))
-  }
-  const out = buf.join(`, `)
-  return out && (`{` + out + `}`)
-}
-
-function showDictEntry(key, val, vis) {
-  return showDictKey(key, vis) + `: ` + show(val, vis)
-}
-
-function showDictKey(val, vis) {
-  if (isSym(val)) return `[` + show(val, vis) + `]`
-  if (/^(?:\d+|\d+\.\d+|\d+n|[A-Za-z_$][\w$]*)$/.test(reqStr(val))) {
-    return val
-  }
-  return show(val, vis)
+function inf(one, inf, two) {
+  optStr(one)
+  reqStr(inf)
+  optStr(two)
+  return one && two ? (one + inf + two) : (one || two)
 }
 
 /*
@@ -635,11 +701,7 @@ export function reqGet(val, key) {
   throw errIn(val, key)
 }
 
-function getName(val) {return get(val, `name`)}
-function getLength(val) {return get(val, `length`)}
-function getSize(val) {return get(val, `size`)}
-function getCon(val) {return get(val, `constructor`)}
-function getTag(val) {return get(val, Symbol.toStringTag)}
+function getCon(val) {return isComp(val) ? val.constructor : undefined}
 
 // This is actually faster than default rendering.
 function renderDate(val) {

@@ -221,17 +221,18 @@ export class ConcatStreamSource extends l.Emp {
   constructor(...src) {
     super()
     this.src = src.map(this.usable, this).filter(l.id)
+    CancelRegistry.register(this, this.src)
   }
 
   async pull(ctr) {
-    try {await this.pullUnchecked(ctr)}
+    try {await this.pullInternal(ctr)}
     catch (err) {
       this.deinit(err)
       ctr.error(err)
     }
   }
 
-  async pullUnchecked(ctr) {
+  async pullInternal(ctr) {
     while (this.src.length) {
       const src = this.src[0]
       if (l.isNil(src)) {
@@ -275,6 +276,10 @@ export class ConcatStreamSource extends l.Emp {
   static stream(...val) {return new this.Stream(new this(...val))}
   static get Stream() {return ReadableStream}
 }
+
+const CancelRegistry = new FinalizationRegistry(cancelMany)
+
+function cancelMany(src) {for (src of src) deinit(src)}
 
 // Readers implement only `.cancel`. However, as a policy, we always support
 // `.deinit` which is our "standard" deinitialization interface.

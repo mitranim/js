@@ -26,7 +26,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/dom_reg.mjs'
 
 // Enables immediate registration.
 // By default, registration is deferred for SSR compatibility.
@@ -66,20 +66,20 @@ document.body.append(new MyLink(`click me`, `/some-link`))
 
 ### `function reg`
 
-Links: [source](../dom_reg.mjs#L174); [test/example](../test/dom_reg_test.mjs#L18).
+Links: [source](../dom_reg.mjs#L144); [test/example](../test/dom_reg_test.mjs#L16).
 
 Shortcut for calling `Reg.main.reg`. Takes a custom element class and idempotently registers it, automatically deriving the custom element tag name _and_ the base tag for `extends`.
 
 ### `class Reg`
 
-Links: [source](../dom_reg.mjs#L176); [test/example](../test/dom_reg_test.mjs#L45).
+Links: [source](../dom_reg.mjs#L146); [test/example](../test/dom_reg_test.mjs#L22).
 
 Registry for custom DOM element classes. Automatically derives tag name from class name, using salting when necessary to avoid collisions. Supports idempotent registration which can be safely called in an element constructor. Allows immediate registration, deferred registration, or a mix of those.
 
 By default, this registry has **no global side effects**. To enable global registration, provide a "definer" to the registry.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   // Optional. If omitted, `dr.reg` autogenerates
@@ -102,14 +102,13 @@ dr.Reg.main.setDefiner(customElements)
 
 The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg.mjs).
 
-  * [`const tagToCls`](../dom_reg.mjs#L13)
-  * [`const clsToTag`](../dom_reg.mjs#L99)
-  * [`function clsLocalName`](../dom_reg.mjs#L109)
-  * [`class CustomElementRegistry`](../dom_reg.mjs#L134)
-  * [`function MixReg`](../dom_reg.mjs#L159)
-  * [`class MixRegCache`](../dom_reg.mjs#L161)
-  * [`function setDefiner`](../dom_reg.mjs#L172)
-  * [`function isDefiner`](../dom_reg.mjs#L282)
-  * [`function optDefiner`](../dom_reg.mjs#L283)
-  * [`function isCustomName`](../dom_reg.mjs#L286)
-  * [`function reqCustomName`](../dom_reg.mjs#L290)
+  * [`const TAG_TO_CLS`](../dom_reg.mjs#L9)
+  * [`const CLS_TO_TAG`](../dom_reg.mjs#L95)
+  * [`function clsLocalName`](../dom_reg.mjs#L105)
+  * [`function MixReg`](../dom_reg.mjs#L129)
+  * [`class MixRegCache`](../dom_reg.mjs#L131)
+  * [`function setDefiner`](../dom_reg.mjs#L142)
+  * [`function isDefiner`](../dom_reg.mjs#L252)
+  * [`function optDefiner`](../dom_reg.mjs#L253)
+  * [`function isCustomName`](../dom_reg.mjs#L256)
+  * [`function reqCustomName`](../dom_reg.mjs#L260)

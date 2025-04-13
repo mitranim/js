@@ -225,25 +225,3 @@ export class ClsVec extends TypedVec {
   add(val) {return super.add(this.make(val))}
   make(val) {return l.toInst(val, this.cls)}
 }
-
-export class Que extends Set {
-  constructor(val) {
-    super(val)
-    this.flushing = false
-  }
-
-  add(fun) {
-    l.reqFun(fun)
-    if (this.flushing) fun()
-    else super.add(fun)
-    return this
-  }
-
-  open() {return this.flushing = true, this.run()}
-  close() {return this.flushing = false, this}
-
-  run() {
-    if (this.size) for (const fun of this.values()) this.delete(fun), fun()
-    return this
-  }
-}

@@ -15,7 +15,7 @@ Optionally combine with {{featLink dom_reg}} for automatic registration of eleme
 
 ## Usage
 
-`MixReac` is a "mixin" that adds reactivity to the class:
+`MixReacElem` is a "mixin" that adds reactivity to the class:
 
 ```js
 import * as o from '{{featUrl obs}}'
@@ -24,7 +24,7 @@ import * as dr from '{{featUrl dom_reg}}'
 
 const obs = o.obs({msg: `hello!`})
 
-class MyElem extends od.MixReac(dr.HTMLElement) {
+class MyElem extends od.MixReacElem(dr.HTMLElement) {
   // Automatically runs on `.connectedCallback`.
   // Subscribes to observables. Reruns on changes.
   run() {this.textContent = obs.msg}
@@ -40,9 +40,7 @@ Reactivity is also available for `Text`:
 ```js
 const obs = o.obs({msg: `hello!`})
 
-document.body.append(
-  new od.FunText(() => obs.msg)
-)
+document.body.append(od.reacText(() => obs.msg))
 
 obs.msg = `hello world!`
 ```

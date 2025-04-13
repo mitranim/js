@@ -14,10 +14,11 @@ PKG ?= package.json
 HOOK_PRE_COMMIT_FILE ?= .git/hooks/pre-commit
 CLEAR ?= $(if $(filter false,$(clear)),, )
 CMD_CLEAR ?= $(and $(CLEAR),--clear)
-DENO_RUN ?= deno run -A --no-check --node-modules-dir=false
+DENO_RUN ?= deno run -A --no-check --node-modules-dir=false --v8-flags=--expose_gc
 DENO_WATCH ?= $(DENO_RUN) --watch $(if $(CLEAR),,--no-clear-screen)
 WATCH ?= watchexec $(and $(CLEAR),-c) -r -d=1ms -n
 WATCH_SRC ?= $(WATCH) -e=mjs
+ESLINT ?= $(DENO_RUN) npm:eslint@8.47.0 --config .eslintrc --ext mjs .
 
 # This is a "function" that must be defined with "=", not ":=".
 VER = $(shell jq -r '.version' < $(PKG))
@@ -54,9 +55,8 @@ lint_deno:
 lint_eslint_w:
 	$(WATCH_SRC) -- $(MAKE) lint_eslint
 
-# Requires `eslint` to be installed globally.
 lint_eslint:
-	eslint --config=.eslintrc --ext=mjs .
+	$(ESLINT)
 
 doc_w:
 	$(DENO_WATCH) $(CMD_DOC) --watch $(CMD_CLEAR)

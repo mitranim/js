@@ -17,7 +17,7 @@ export function patch(tar, src) {
   return tar
 }
 
-export function isMut(val) {return l.isObj(val) && `mut` in val && l.isFun(val.mut)}
+export function isMut(val) {return l.isObj(val) && l.isFun(val.mut)}
 export function reqMut(val) {return isMut(val) ? val : l.throwErrFun(val, isMut)}
 
 export class Struct extends l.Emp {
@@ -175,7 +175,6 @@ Subclasses may override `static default()` to customize.
 */
 export function MixMain(cls) {
   return class MixMainCls extends cls {
-    // TODO convert from getter to method.
     static get main() {
       const key = Symbol.for(`main`)
       return l.hasOwn(this, key) ? this[key] : this[key] = this.default()
@@ -258,17 +257,32 @@ export class MakerPh extends l.Emp {
 
 /*
 Short for "dynamic". Represents a dynamically scoped variable,
-as opposed to regular lexically scoped variables.
+in contrast to regular lexically scoped variables.
+
+Somewhat comparable to the Async Context proposal.
+But our version is synchronous-only. Reference:
+
+  https://tc39.es/proposal-async-context/
 */
-export class Dyn extends l.Emp {
+export class DynVar extends l.Emp {
   constructor(val) {super().set(val)}
-  get() {return this.$}
   set(val) {this.$ = val}
-  has() {return l.isSome(this.get())}
-  swap(val) {try {return this.get()} finally {this.set(val)}}
+  get() {return this.$}
+
+  swap(next) {
+    const prev = this.get()
+    this.set(next)
+    return prev
+  }
+
+  run(val, fun, ...src) {
+    const prev = this.swap(val)
+    try {return fun(...src)}
+    finally {this.swap(prev)}
+  }
 }
 
-export class TypedDyn extends Dyn {
+export class TypedDynVar extends DynVar {
   reqVal() {throw l.errImpl()}
   set(val) {return super.set(this.reqVal(val))}
 }
@@ -285,6 +299,12 @@ export class WeakTag extends WeakSet {
   // TODO better name.
   // Some subclasses may want a more general term.
   tag() {}
+}
+
+export class WeakerRef extends WeakRef {
+  expired = false
+  deref() {return this.expired ? undefined : super.deref()}
+  deinit() {this.expired = true}
 }
 
 export function memGet(cls) {return MemTag.goc(cls)}

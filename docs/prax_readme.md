@@ -40,8 +40,8 @@ Rendering is done via `Ren`. You must create an instance, which should be a sing
 Browser example:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/prax.mjs'
-import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/prax.mjs'
+import {A} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/prax.mjs'
 
 const ren = new p.Ren()
 const E = ren.E.bind(ren)
@@ -75,8 +75,8 @@ console.log(elem.outerHTML)
 Usage with custom elements:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/prax.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom_reg.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/prax.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/dom_reg.mjs'
 
 const ren = new p.Ren()
 const E = ren.E.bind(ren)
@@ -97,8 +97,8 @@ document.body.append(
 For SSR (server-side rendering), Prax needs our lightweight DOM shim:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/dom_global_shim.mjs'
 
 const ren = new p.Ren(dg.global.document)
 const E = ren.E.bind(ren)
@@ -117,11 +117,11 @@ console.log(elem.outerHTML)
 For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global `document` and pass it to `Ren`. The rest will just work.
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/prax.mjs'
 
 // Your bundler or importmap should choose the right one.
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom_global_shim.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom_global_native.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/dom_global_shim.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/dom_global_native.mjs'
 
 const ren = new p.Ren(dg.global.document)
 const E = ren.E.bind(ren)
@@ -136,8 +136,8 @@ const elem = E(`div`, {id: `main`, class: `outer`},
 Rendering a complete document with doctype:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.62/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/dom_global_shim.mjs'
 
 const ren = new p.Ren(dg.global.document)
 const E = ren.E.bind(ren)
@@ -182,18 +182,18 @@ The following APIs are exported but undocumented. Check [prax.mjs](../prax.mjs).
   * [`const BOOL`](../prax.mjs#L13)
   * [`const VOID`](../prax.mjs#L21)
   * [`class Ren`](../prax.mjs#L27)
-  * [`class Raw`](../prax.mjs#L337)
-  * [`class PropBui`](../prax.mjs#L384)
-  * [`const DOCTYPE_HTML`](../prax.mjs#L531)
-  * [`function isSeq`](../prax.mjs#L537)
-  * [`function isNodable`](../prax.mjs#L541)
-  * [`function reqNodable`](../prax.mjs#L542)
-  * [`function isRaw`](../prax.mjs#L544)
-  * [`function reqRaw`](../prax.mjs#L545)
-  * [`function isNode`](../prax.mjs#L547)
-  * [`function reqNode`](../prax.mjs#L548)
-  * [`function isDocument`](../prax.mjs#L550)
-  * [`function optDocument`](../prax.mjs#L558)
-  * [`function reqDocument`](../prax.mjs#L559)
-  * [`function isNamespaced`](../prax.mjs#L561)
-  * [`function deref`](../prax.mjs#L564)
+  * [`class Raw`](../prax.mjs#L359)
+  * [`class PropBui`](../prax.mjs#L406)
+  * [`const DOCTYPE_HTML`](../prax.mjs#L553)
+  * [`function isSeq`](../prax.mjs#L559)
+  * [`function isNodable`](../prax.mjs#L563)
+  * [`function reqNodable`](../prax.mjs#L564)
+  * [`function isRaw`](../prax.mjs#L566)
+  * [`function reqRaw`](../prax.mjs#L567)
+  * [`function isNode`](../prax.mjs#L569)
+  * [`function reqNode`](../prax.mjs#L570)
+  * [`function isDocument`](../prax.mjs#L572)
+  * [`function optDocument`](../prax.mjs#L580)
+  * [`function reqDocument`](../prax.mjs#L581)
+  * [`function isNamespaced`](../prax.mjs#L583)
+  * [`function deref`](../prax.mjs#L586)

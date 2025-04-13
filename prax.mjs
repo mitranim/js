@@ -29,11 +29,20 @@ export class Ren extends l.Emp {
     super()
     this.lax = false
     this.doc = reqDocument(doc)
+    this.E = this.E.bind(this)
+    this.S = this.S.bind(this)
   }
 
-  // An all purpose, catch-all rendering function.
+  // All-purpose rendering function for HTML elements.
   E(tar, props, ...chi) {
     if (!l.isObj(tar)) return this.elemHtml(tar, props, ...chi)
+    if (!chi.length) return this.mutProps(tar, props)
+    return this.mut(tar, props, ...chi)
+  }
+
+  // All-purpose rendering function for SVG elements.
+  S(tar, props, ...chi) {
+    if (!l.isObj(tar)) return this.elemSvg(tar, props, ...chi)
     if (!chi.length) return this.mutProps(tar, props)
     return this.mut(tar, props, ...chi)
   }
@@ -144,7 +153,14 @@ export class Ren extends l.Emp {
   }
 
   mutStyleProp(tar, key, val) {
-    tar[key] = l.laxStr(optAt(key, val, l.isStr))
+    val = l.laxStr(optAt(key, val, l.isStr))
+    if (key.startsWith(`--`)) {
+      if (l.isNil(val)) tar.removeProperty(key)
+      else tar.setProperty(key, val)
+    }
+    else {
+      tar[key] = l.laxStr(optAt(key, val, l.isStr))
+    }
   }
 
   mutDataset(tar, val) {
@@ -214,6 +230,12 @@ export class Ren extends l.Emp {
     return this.appendChi(tar, this.renderOpt(src)), tar
   }
 
+  /*
+  This strange-looking code implements support for passing an element's
+  `.childNodes` to a rendering call where that same element is the target
+  of mutation, and having it work correctly, when using our DOM shim,
+  where `.childNodes` is just a simple array internally.
+  */
   appendList(tar, src) {
     let ind = 0
 
@@ -538,7 +560,7 @@ export function isSeq(val) {
   return l.isObj(val) && !l.isScalar(val) && (l.isList(val) || l.isIterator(val))
 }
 
-export function isNodable(val) {return l.isComp(val) && `toNode` in val && l.isFun(val)}
+export function isNodable(val) {return l.isComp(val) && l.isFun(val.toNode)}
 export function reqNodable(val) {return l.req(val, isNodable)}
 
 export function isRaw(val) {return l.isObj(val) && `outerHTML` in val}

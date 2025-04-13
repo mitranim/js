@@ -31,7 +31,6 @@ t.test(function test_test() {
     t.throws(() => t.test(), TypeError, `expected variant of isFun, got undefined`)
     t.throws(() => t.test(`str`), TypeError, `expected variant of isFun, got "str"`)
     t.throws(() => t.test(l.nop), SyntaxError, `names of test functions must begin with "test"`)
-
     track.dec().req(0)
   })
   track.req(0)
