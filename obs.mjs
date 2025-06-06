@@ -178,18 +178,23 @@ export class ObsRef extends l.Emp {
   constructor(val) {super().$ = val}
 
   get() {
-    const bro = this.bro ??= new this.Broad()
-    bro.monitor()
+    this.monitor()
     return this.$
   }
 
   set(val) {
     if (l.is(val, this.$)) return val
     this.$ = val
-    this.bro?.trigger()
+    this.trigger()
     return val
   }
 
+  monitor() {
+    const bro = this.bro ??= new this.Broad()
+    bro.monitor()
+  }
+
+  trigger() {this.bro?.trigger()}
   deinit() {this.bro?.deinit()}
 }
 
@@ -236,7 +241,7 @@ export class Shed extends o.MixMain(l.Emp) {
 
   ques = []
   timer = undefined
-
+  scheduled = false
   run = this.run.bind(this)
 
   run() { // eslint-disable-line no-dupe-class-members
@@ -252,17 +257,26 @@ export class Shed extends o.MixMain(l.Emp) {
   queAt(depth) {return this.ques[l.reqNat(depth)] ||= new this.Que()}
 
   schedule() {
-    this.unschedule()
-    const fun = globalThis.requestAnimationFrame || setTimeout
-    this.timer = fun(this.run)
+    if (this.scheduled) return
+    this.scheduled = true
+    this.timer = this.timerInit(this.run)
   }
 
   unschedule() {
     const {timer} = this
     this.timer = undefined
-    if (l.isNil(timer)) return
+    this.scheduled = false
+    if (l.isSome(timer)) this.timerDeinit(timer)
+  }
+
+  timerInit(run) {
+    const fun = globalThis.requestAnimationFrame || setTimeout
+    return fun(this.run)
+  }
+
+  timerDeinit(val) {
     const fun = globalThis.cancelAnimationFrame || clearTimeout
-    fun(timer)
+    fun(val)
   }
 
   deinit() {

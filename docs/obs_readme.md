@@ -45,5 +45,5 @@ The following APIs are exported but undocumented. Check [obs.mjs](../obs.mjs).
   * [`class Recur`](../obs.mjs#L143)
   * [`class FunRecur`](../obs.mjs#L170)
   * [`class ObsRef`](../obs.mjs#L175)
-  * [`class Que`](../obs.mjs#L203)
-  * [`class Shed`](../obs.mjs#L234)
+  * [`class Que`](../obs.mjs#L208)
+  * [`class Shed`](../obs.mjs#L239)

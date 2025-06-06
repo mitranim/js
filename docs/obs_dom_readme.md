@@ -18,9 +18,9 @@ Optionally combine with [`dom_reg`](dom_reg_readme.md) for automatic registratio
 `MixReacElem` is a "mixin" that adds reactivity to the class:
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/obs.mjs'
-import * as od from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/obs_dom.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/dom_reg.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/obs.mjs'
+import * as od from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/obs_dom.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/dom_reg.mjs'
 
 const obs = o.obs({msg: `hello!`})
 
@@ -71,8 +71,8 @@ The following APIs are exported but undocumented. Check [obs_dom.mjs](../obs_dom
   * [`class ElemRecur`](../obs_dom.mjs#L116)
   * [`class FunElemRecur`](../obs_dom.mjs#L125)
   * [`const REG_DEINIT`](../obs_dom.mjs#L135)
-  * [`function nodeDepth`](../obs_dom.mjs#L139)
-  * [`function isNode`](../obs_dom.mjs#L146)
-  * [`function reqNode`](../obs_dom.mjs#L147)
-  * [`function isElement`](../obs_dom.mjs#L150)
-  * [`function reqElement`](../obs_dom.mjs#L151)
+  * [`function nodeDepth`](../obs_dom.mjs#L138)
+  * [`function isNode`](../obs_dom.mjs#L145)
+  * [`function reqNode`](../obs_dom.mjs#L146)
+  * [`function isElement`](../obs_dom.mjs#L149)
+  * [`function reqElement`](../obs_dom.mjs#L150)

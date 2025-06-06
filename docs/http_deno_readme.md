@@ -19,7 +19,7 @@ Also see [`http`](http_readme.md) for routing and cookies, and [`live_deno`](liv
 Simple example of a server that serves files from the current directory, automatically matching URL paths to HTML files:
 
 ```js
-import * as hd from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/http_deno.mjs'
+import * as hd from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/http_deno.mjs'
 
 // Finds files in the current folder, with no filtering.
 const DIRS = hd.Dirs.of(hd.dirRel(`.`))

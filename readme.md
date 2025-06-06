@@ -45,14 +45,14 @@ Alternatives that suck:
 Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import many core modules at once:
 
 ```js
-import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/all.mjs'
+import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/all.mjs'
 ```
 
 Otherwise, import specific modules you need. See the list below. Example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/str.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/str.mjs'
 ```
 
 Also available on NPM:

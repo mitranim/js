@@ -110,7 +110,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 ```
 
 ## API
@@ -122,7 +122,7 @@ Links: [source](../lang.mjs#L3); [test/example](../test/lang_test.mjs#L261).
 True for `null` and `undefined`. Same as `value == null`. Incidentally, these are the only values that produce an exception when attempting to read a property: `null.someProperty`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 // Definition
 function isNil(value) {return value == null}
@@ -156,7 +156,7 @@ Links: [source](../lang.mjs#L19); [test/example](../test/lang_test.mjs#L286).
 Same as `typeof val === 'number'`. True if the value is a primitive number, _including_ `NaN` and `±Infinity`. In most cases you should use [#`isFin`](#function-isfin) instead.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 l.isNum(1)
 // true
@@ -175,7 +175,7 @@ Links: [source](../lang.mjs#L25); [test/example](../test/lang_test.mjs#L298).
 Same as ES2015's [`Number.isFinite`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isFinite). True if `val` is a primitive number and is _not_ `NaN` or `±Infinity`. In most cases you should prefer `isFin` over `isNum`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 l.isFin(1)
 // true
@@ -509,7 +509,7 @@ Signature: `(val, test) => val` where `test: val => bool`.
 Short for "require". Minification-friendly assertion. If `!test(val)`, throws an informative `TypeError`. Otherwise, returns `val` as-is.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 l.req({one: `two`}, l.isObj)
 // {one: `two`}
@@ -593,7 +593,7 @@ Identity test: same as `===`, but considers `NaN` equal to `NaN`. Equivalent to 
 Note that [`Object.is`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) implements [_SameValue_](https://www.ecma-international.org/ecma-262/6.0/#sec-samevalue), which treats `-0` and `+0` as _distinct values_. This is typically undesirable. As a result, you should prefer `l.is` over `===` or `Object.is` unless you _know_ you intend to differentiate `-0` and `+0`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 l.is(1, '1')
 // false
@@ -633,7 +633,7 @@ Links: [source](../lang.mjs#L424); [test/example](../test/lang_test.mjs#L1771).
 Takes a value and creates a function that always returns that value. Sometimes useful with higher order functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 const constant = l.val(1)
 
@@ -651,7 +651,7 @@ Links: [source](../lang.mjs#L425); [test/example](../test/lang_test.mjs#L1785).
 Same as `throw` but an expression rather than a statement. Also sometimes useful with higher-order functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 const x = someTest ? someValue : l.panic(Error(`unreachable`))
 ```
@@ -671,7 +671,7 @@ Like [`Function.prototype.bind`](https://developer.mozilla.org/en-US/docs/Web/Ja
 Returns a new function that represents [partial application](https://en.wikipedia.org/wiki/Partial_application) of the given function, a common tool in functional programming. When called, it joins arguments from both calls and invokes the original function. Think of it like splitting a function call in two, or more. Performance is inferior to closures; avoid in hotspots.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 const inc = l.bind(l.add, 1)
 
@@ -688,7 +688,7 @@ Links: [source](../lang.mjs#L431); [test/example](../test/lang_test.mjs#L1748).
 Returns a new function that negates the result of the given function, like a delayed `!`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 function eq(a, b) {return a === b}
 
@@ -720,7 +720,7 @@ Links: [source](../lang.mjs#L438); [test/example](../test/lang_test.mjs#L1207).
 Returns `true` if the target is [#non-primitive](#function-iscomp) and has the given property on its prototype. As a consequence, this returns `false` if the target is a primitive, or has the given property as an "own" property, either enumerable or not.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 l.hasInherited([10, 20, 30], `length`)
 // false
@@ -888,7 +888,7 @@ Rounding half away from zero. Has one difference from [`Math.round`](https://dev
 Examples:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.63/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
 
 l.round(-12.5) // -13
 l.round(12.5) // 13

@@ -135,7 +135,6 @@ export class FunElemRecur extends ElemRecur {
 export const REG_DEINIT = new FinalizationRegistry(finalizeDeinit)
 function finalizeDeinit(val) {val.deinit()}
 
-// Defined here, rather than `dom.mjs`, to avoid an import.
 export function nodeDepth(val) {
   let out = 0
   while ((val = val?.parentNode)) out++
