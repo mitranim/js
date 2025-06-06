@@ -321,17 +321,27 @@ await t.test(async function test_obs() {
 
   const tar0 = l.Emp()
   const obs0 = ob.obs(tar0)
-  const bro0 = ob.getPh(obs0).bro
-
   t.is(ob.getTar(obs0), tar0)
-  t.inst(ob.getPh(obs0), ob.ObsPh)
+
+  const ph0 = ob.getPh(obs0)
+  t.inst(ph0, ob.ObsPh)
+  t.is(ph0.bro, undefined)
+
+  ph0.monitor()
+  const bro0 = ph0.bro
+  t.inst(bro0, ob.Broad)
 
   const tar1 = l.Emp()
   const obs1 = ob.obs(tar1)
-  const bro1 = ob.getPh(obs1).bro
-
   t.is(ob.getTar(obs1), tar1)
-  t.inst(ob.getPh(obs1), ob.ObsPh)
+
+  const ph1 = ob.getPh(obs1)
+  t.inst(ph1, ob.ObsPh)
+  t.is(ph1.bro, undefined)
+
+  ph1.monitor()
+  const bro1 = ph1.bro
+  t.inst(bro1, ob.Broad)
 
   let rec0 = new TestRecur({shed})
   rec0.onRun = function onRun() {return obs0.val}

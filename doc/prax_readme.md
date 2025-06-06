@@ -23,7 +23,7 @@ Complemented by:
 
   * {{featLink dom_shim}} for SSR.
   * {{featLink dom_reg}} for registering custom elements in SSR.
-  * {{featLink obs_dom}} for making custom elements automatically react to {{featLink obs observables}}.
+  * {{featLink obs}} for observables and implicit reactivity for elements.
 
 ## TOC
 

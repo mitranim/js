@@ -45,14 +45,14 @@ Alternatives that suck:
 Uses native JS modules, which can be imported by URL in browsers and Deno. The truly lazy can import many core modules at once:
 
 ```js
-import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/all.mjs'
+import * as a from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/all.mjs'
 ```
 
 Otherwise, import specific modules you need. See the list below. Example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/lang.mjs'
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.64/str.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/lang.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/str.mjs'
 ```
 
 Also available on NPM:
@@ -77,8 +77,7 @@ npm i -E @mitranim/js
   * [`dom_global_native`](docs/dom_global_native_readme.md): native DOM globals, interchangeable with `dom_global_shim`
   * [`dom_reg`](docs/dom_reg_readme.md): shortcuts for registering custom DOM elements.
   * [`prax`](docs/prax_readme.md): simple system for rendering DOM elements. React-inspired syntax, better semantics and performance.
-  * [`obs`](docs/obs_readme.md): observables via proxies.
-  * [`obs_dom`](docs/obs_dom_readme.md): automatic reactivity for custom DOM elements.
+  * [`obs`](docs/obs_readme.md): observables and reactivity.
   * [`http`](docs/http_readme.md): shortcuts for the fetch/Response APIs, URL routing, cookie decoding/encoding.
   * [`http_deno`](docs/http_deno_readme.md): tools for HTTP servers running in Deno.
   * [`http_srv`](docs/http_srv_readme.md): streaming and broadcasting tools for generic HTTP servers.
