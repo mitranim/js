@@ -304,6 +304,7 @@ export class WeakTag extends WeakSet {
 export class WeakerRef extends WeakRef {
   expired = false
   deref() {return this.expired ? undefined : super.deref()}
+  init() {return this.expired = false, this}
   deinit() {this.expired = true}
 }
 

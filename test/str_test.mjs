@@ -182,24 +182,29 @@ t.test(function test_words() {
   test(`ONE12-TWO34-THREE56`, [`ONE12`, `TWO34`, `THREE56`])
 })
 
-// TODO test Unicode.
+/*
+TODO:
+- Fuller test coverage for non-English alphabets.
+- Add each transformed result to the set of sources, and test all further
+  transformations with all previously found sources.
+*/
 t.test(function test_Words() {
   function src() {return s.words(`one two three`)}
 
-  t.eq(s.words(`one two`).lower(), s.Words.from([`one`, `two`]))
-  t.eq(s.words(`One Two`).lower(), s.Words.from([`one`, `two`]))
-  t.eq(s.words(`ONE TWO`).lower(), s.Words.from([`one`, `two`]))
+  t.eq(s.words(`one two`).lower(), s.Words.of(`one`, `two`))
+  t.eq(s.words(`One Two`).lower(), s.Words.of(`one`, `two`))
+  t.eq(s.words(`ONE TWO`).lower(), s.Words.of(`one`, `two`))
 
   t.is(src().spaced(), `one two three`)
   t.is(src().snake(), `one_two_three`)
   t.is(src().kebab(), `one-two-three`)
   t.is(src().solid(), `onetwothree`)
 
-  t.eq(src().lower(), s.Words.from([`one`, `two`, `three`]))
-  t.eq(src().upper(), s.Words.from([`ONE`, `TWO`, `THREE`]))
-  t.eq(src().title(), s.Words.from([`One`, `Two`, `Three`]))
-  t.eq(src().sentence(), s.Words.from([`One`, `two`, `three`]))
-  t.eq(src().camel(), s.Words.from([`one`, `Two`, `Three`]))
+  t.eq(src().lower(), s.Words.of(`one`, `two`, `three`))
+  t.eq(src().upper(), s.Words.of(`ONE`, `TWO`, `THREE`))
+  t.eq(src().title(), s.Words.of(`One`, `Two`, `Three`))
+  t.eq(src().sentence(), s.Words.of(`One`, `two`, `three`))
+  t.eq(src().camel(), s.Words.of(`one`, `Two`, `Three`))
 
   t.is(src().lower().spaced(), `one two three`)
   t.is(src().lower().snake(), `one_two_three`)
@@ -246,6 +251,23 @@ t.test(function test_Words() {
 
   t.is(src().lowerCamel(), `oneTwoThree`)
   t.is(src().titleCamel(), `OneTwoThree`)
+
+  t.eq(s.words(`12a33fe0-4b4a-48e5-bb90-53a068ad376b`), s.Words.of(`12a33fe0`, `4b4a`, `48e5`, `bb90`, `53a068ad376b`))
+  t.eq(s.words(`2af310ac-f7b8-470d-b04c-98a286b8bf3f`), s.Words.of(`2af310ac`, `f7b8`, `470d`, `b04c`, `98a286b8bf3f`))
+  t.eq(s.words(`154cd2d1-fade-4cab-ab01-a7df8b760569`), s.Words.of(`154cd2d1`, `fade`, `4cab`, `ab01`, `a7df8b760569`))
+  t.eq(s.words(`c7ddacf8-4117-49c3-8a7e-a3c9627dc199`), s.Words.of(`c7ddacf8`, `4117`, `49c3`, `8a7e`, `a3c9627dc199`))
+  t.eq(s.words(`cf1a86ed-6db7-4c6f-aad3-c8e6cb1cb2f2`), s.Words.of(`cf1a86ed`, `6db7`, `4c6f`, `aad3`, `c8e6cb1cb2f2`))
+  t.eq(s.words(`78437a9e-45fd-4007-8a04-bace0147df30`), s.Words.of(`78437a9e`, `45fd`, `4007`, `8a04`, `bace0147df30`))
+
+  t.is(s.words(`ενα δυο τρια`).title().spaced(), `Ενα Δυο Τρια`)
+  t.is(s.words(`ενα δυο τρια`).title().snake(), `Ενα_Δυο_Τρια`)
+  t.is(s.words(`ενα δυο τρια`).title().kebab(), `Ενα-Δυο-Τρια`)
+  t.is(s.words(`ενα δυο τρια`).title().solid(), `ΕναΔυοΤρια`)
+
+  t.is(s.words(`раз два три`).title().spaced(), `Раз Два Три`)
+  t.is(s.words(`раз два три`).title().snake(), `Раз_Два_Три`)
+  t.is(s.words(`раз два три`).title().kebab(), `Раз-Два-Три`)
+  t.is(s.words(`раз два три`).title().solid(), `РазДваТри`)
 })
 
 t.test(function test_lower() {

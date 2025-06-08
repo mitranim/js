@@ -14,7 +14,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.66/obj.mjs'
 ```
 
 ## API
@@ -82,8 +82,8 @@ Performance characteristics:
   * When the number of declared properties is significantly smaller than the number of provided properties, this tends to be faster than the aforementioned assignment functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.66/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.66/obj.mjs'
 
 class Person extends o.Struct {
   static spec = {
@@ -126,8 +126,8 @@ Differences from [#`Struct`](#class-struct):
   * Measurably worse performance.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.66/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.66/obj.mjs'
 
 class Person extends o.StructLax {
   static spec = {
@@ -155,12 +155,12 @@ new Person({id: 10, name: `Mira`, slug: `mira`, gender: `female`})
 
 ### `function memGet`
 
-Links: [source](../obj.mjs#L310); [test/example](../test/obj_test.mjs#L876).
+Links: [source](../obj.mjs#L311); [test/example](../test/obj_test.mjs#L876).
 
 Takes a class and hacks its prototype, converting all non-inherited getters to lazy/memoizing versions of themselves that only execute _once_. The resulting value replaces the getter. Inherited getters are unaffected.
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.66/obj.mjs'
 
 class Bucket {
   static {o.memGet(this)}
@@ -199,21 +199,21 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
   * [`class TypedDynVar`](../obj.mjs#L285)
   * [`class WeakTag`](../obj.mjs#L290)
   * [`class WeakerRef`](../obj.mjs#L304)
-  * [`class MemTag`](../obj.mjs#L312)
-  * [`class Cache`](../obj.mjs#L317)
-  * [`class WeakCache`](../obj.mjs#L323)
-  * [`class StaticCache`](../obj.mjs#L329)
-  * [`class StaticWeakCache`](../obj.mjs#L337)
-  * [`class MixinCache`](../obj.mjs#L341)
-  * [`class DedupMixinCache`](../obj.mjs#L346)
-  * [`const parentNodeKey`](../obj.mjs#L366)
-  * [`function MixChild`](../obj.mjs#L382)
-  * [`class MixChildCache`](../obj.mjs#L384)
-  * [`function MixChildCon`](../obj.mjs#L438)
-  * [`class MixChildConCache`](../obj.mjs#L440)
-  * [`function pub`](../obj.mjs#L451)
-  * [`function priv`](../obj.mjs#L461)
-  * [`function final`](../obj.mjs#L471)
-  * [`function getter`](../obj.mjs#L481)
-  * [`function setter`](../obj.mjs#L483)
-  * [`function getSet`](../obj.mjs#L485)
+  * [`class MemTag`](../obj.mjs#L313)
+  * [`class Cache`](../obj.mjs#L318)
+  * [`class WeakCache`](../obj.mjs#L324)
+  * [`class StaticCache`](../obj.mjs#L330)
+  * [`class StaticWeakCache`](../obj.mjs#L338)
+  * [`class MixinCache`](../obj.mjs#L342)
+  * [`class DedupMixinCache`](../obj.mjs#L347)
+  * [`const parentNodeKey`](../obj.mjs#L367)
+  * [`function MixChild`](../obj.mjs#L383)
+  * [`class MixChildCache`](../obj.mjs#L385)
+  * [`function MixChildCon`](../obj.mjs#L439)
+  * [`class MixChildConCache`](../obj.mjs#L441)
+  * [`function pub`](../obj.mjs#L452)
+  * [`function priv`](../obj.mjs#L462)
+  * [`function final`](../obj.mjs#L472)
+  * [`function getter`](../obj.mjs#L482)
+  * [`function setter`](../obj.mjs#L484)
+  * [`function getSet`](../obj.mjs#L486)

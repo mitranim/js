@@ -10,18 +10,12 @@ export const SYM_RECS = Symbol.for(`recurs`)
 export function isRunner(val) {return l.isComp(val) && l.hasMeth(val, `run`)}
 export function reqRunner(val) {return l.req(val, isRunner)}
 
-export function isTrig(val) {return l.isComp(val) && l.hasMeth(val, `trigger`)}
-export function reqTrig(val) {return l.req(val, isTrig)}
+export function isTrigger(val) {return l.isComp(val) && l.hasMeth(val, `trigger`)}
+export function reqTrigger(val) {return l.req(val, isTrigger)}
 
 export function obs(val) {return new Proxy(val, new ObsPh())}
 export function getPh(val) {return val?.[SYM_PH]}
 export function getTar(val) {return val?.[SYM_TAR]}
-
-export const REG_DELETE = new FinalizationRegistry(finalizeDelete)
-
-function finalizeDelete([set, val]) {set.delete(val)}
-
-export const REG_DEINIT = new FinalizationRegistry(finalizeDeinit)
 
 function finalizeDeinit(val) {
   if (l.isFun(val)) val()
@@ -29,174 +23,242 @@ function finalizeDeinit(val) {
 }
 
 /*
-Short for "scheduler". Tool for scheduling hierarchical runs, from ancestors to
-descendants. Runnables may report their "depth", which allows us to determine
-order.
-
-Note that scheduling is opt-in at the level of triggerables, not at the level of
-observables. Our observables and broadcasters always monitor and trigger
-synchronously. `Recur` uses scheduling by default, but subclasses can override
-this behavior.
-*/
-export class Shed extends o.MixMain(l.Emp) {
-  get Que() {return Que}
-
-  ques = []
-  timer = undefined
-  scheduled = false
-  run = this.run.bind(this)
-
-  run() { // eslint-disable-line no-dupe-class-members
-    this.unschedule()
-    for (const que of this.ques) que?.run()
-  }
-
-  add(val) {
-    this.queAt(val.depth()).add(val)
-    this.schedule()
-  }
-
-  queAt(depth) {return this.ques[l.reqNat(depth)] ||= new this.Que()}
-
-  schedule() {
-    if (this.scheduled) return
-    this.scheduled = true
-    this.timer = this.timerInit(this.run)
-  }
-
-  unschedule() {
-    const {timer} = this
-    this.timer = undefined
-    this.scheduled = false
-    if (l.isSome(timer)) this.timerDeinit(timer)
-  }
-
-  timerInit(run) {
-    const fun = globalThis.requestAnimationFrame || setTimeout
-    return fun(run)
-  }
-
-  timerDeinit(val) {
-    if (l.isNil(val)) return
-    const fun = globalThis.cancelAnimationFrame || clearTimeout
-    fun(val)
-  }
-
-  deinit() {
-    this.unschedule()
-    for (const que of this.ques) que?.deinit()
-  }
-}
-
-/*
-Used internally by `Shed`. Updates are scheduled by adding vals to the que, and
-flushed together as a batch by calling `.run()`. Reentrant flush is a nop.
+Used internally by schedulers. Pending values are added to a queue, and ran as a
+batch by calling `.flush`. Re-adding the same value during a flush queues it up
+for the next flush, not for the current one. Reentrant flush is a nop.
 
 TODO consider preventing exceptions from individual vals from interfering with
 each other.
 */
-export class Que extends Set {
+export class Que extends l.Emp {
   active = false
+  prev = new Set()
+  next = new Set()
 
-  reqVal(val) {return reqRunner(val)}
-  runVal(val) {return val.run()}
-  add(val) {return super.add(this.reqVal(val))}
+  constructor(src) {
+    super()
+    if (l.isNil(src)) return
+    for (src of src) this.next.add(src)
+  }
 
-  run() {
-    if (this.active) return
+  add(val) {this.next.add(val)}
+
+  delete(val) {
+    this.prev.delete(val)
+    this.next.delete(val)
+  }
+
+  flushVal() {}
+
+  flush() {
+    const {active, prev, next} = this
+    if (active || !next) return
+
+    this.prev = next
+    this.next = prev
     this.active = true
 
     try {
-      for (const val of this) {
-        this.delete(val)
-        this.runVal(val)
+      for (const val of next) {
+        next.delete(val)
+        this.flushVal(val)
       }
     }
     finally {
       this.active = false
-      this.clear()
+      next.clear()
     }
-    return
+  }
+
+  deinit() {
+    this.prev.clear()
+    this.next.clear()
   }
 }
 
 /*
-Broadcaster used by observables. Supports implicit monitoring via the dynamic
-variable `TRIG` which may hold a triggerable. Holds triggerables weakly.
+Sharding can be used to run ancestors before descendants, which may allow more
+accurate UI updates. Values report their "depth", which allows us to determine
+order.
 */
-export class Broad extends l.Emp {
-  get reg() {return REG_DELETE}
+export class ShardedQue extends l.Emp {
+  get Que() {return Que}
+  ques = []
 
-  refs = new Set()
-  pairs = new WeakMap()
-  trigs = new Set()
+  add(val) {this.queAt(val.depth()).add(val)}
+  queAt(depth) {return this.ques[l.reqNat(depth)] ||= new this.Que()}
+  flush() {for (const que of this.ques) que?.flush()}
+
+  deinit() {
+    const {ques} = this
+    for (const que of ques) que?.deinit()
+    ques.length = 0
+  }
+}
+
+export class RunQue extends Que {flushVal(val) {val.run()}}
+export class ShardedRunQue extends ShardedQue {get Que() {return RunQue}}
+
+/*
+Short for "scheduler synchronous".
+
+Scheduling is opt-in at the level of triggerables. Our observables, when
+triggered, flush their que of triggerables (which corresponds to "subscribers"
+in other systems) synchronously. The "final" triggerables such as `Recur`
+choose whether to use a sheduler, and which one.
+
+We understand and support 3 timing concepts:
+
+- Synchronous (`ShedSync`): run immediately by default; optionally pause and
+  resume (for batching / deduplication).
+
+- Microtask (`ShedMicro`): runs after `ShedSync` but before `ShedMacro`. Useful
+  for consumers which want automatic batching / deduplication without requiring
+  user code to pause and resume a scheduler, but want to guarantee running
+  before UI updates. One such example is derived / computed / calculated
+  observables.
+
+- Macrotask (`ShedMacro`): runs after `SchedMicro`. For UI-updating code.
+*/
+export class ShedSync extends o.MixMain(RunQue) {
+  paused = false
+
+  add(val) {
+    if (this.paused) super.add(val)
+    else val.run()
+  }
+
+  pause() {this.paused = true}
+
+  resume() {
+    if (!this.paused) return
+    this.paused = false
+    this.flush()
+  }
+}
+
+// Short for "scheduler asynchronous". See subclasses.
+export class ShedAsync extends ShardedRunQue {
+  scheduled = false
+  timer = undefined
+  flush = this.flush.bind(this)
+
+  timerInit() {}
+  timerDeinit() {}
+
+  flush() { // eslint-disable-line no-dupe-class-members
+    this.unschedule()
+    super.flush()
+  }
+
+  add(val) {
+    super.add(val)
+    this.schedule()
+  }
+
+  schedule() {
+    if (this.scheduled) return
+    this.scheduled = true
+    this.timer = this.timerInit(this.flush)
+  }
+
+  unschedule() {
+    const {timer} = this
+    this.scheduled = false
+    this.timer = undefined
+    if (l.isSome(timer)) this.timerDeinit(timer)
+  }
+
+  deinit() {
+    this.unschedule()
+    super.deinit()
+  }
+}
+
+export class ShedMicro extends o.MixMain(ShedAsync) {
+  timerInit(fun) {queueMicrotask(fun)}
+}
+
+export class ShedMacro extends o.MixMain(ShedAsync) {
+  timerInit(flush) {
+    const fun = globalThis.requestAnimationFrame ?? setTimeout
+    return fun(flush)
+  }
+
+  timerDeinit(val) {
+    if (l.isNil(val)) return
+    const fun = globalThis.cancelAnimationFrame ?? clearTimeout
+    fun(val)
+  }
+}
+
+export class WeakQue extends Que {
+  reg = new FinalizationRegistry(this.delete.bind(this))
+  refs = new WeakMap()
 
   constructor(src) {
     super()
-    if (l.isSome(src)) for (src of src) this.add(src)
-  }
-
-  monitor() {
-    const src = TRIG.get()
-    if (isTrig(derefOpt(src))) this.add(src)
+    if (l.isNil(src)) return
+    for (src of src) this.add(src)
   }
 
   add(src) {
-    const tar = reqTrig(derefOpt(src))
-    const ref = l.onlyInst(src, WeakRef) ?? new WeakRef(tar)
-    const {reg, refs, pairs} = this
-    let pair = pairs.get(tar)
+    const tar = derefOpt(src)
+    if (l.isNil(tar)) return
 
-    if (pair) {
-      refs.delete(pair[1])
-      reg.unregister(pair)
+    const {reg, refs} = this
+    const next = l.onlyInst(src, WeakRef) ?? new WeakRef(tar)
+    const prev = refs.get(tar)
+
+    if (prev && prev !== next) {
+      this.delete(prev)
+      reg.unregister(prev)
     }
 
-    pair = [refs, ref]
-    refs.add(ref)
-    pairs.set(tar, pair)
-    reg.register(tar, pair, pair)
+    refs.set(tar, next)
+    reg.register(tar, next, next)
+    super.add(next)
   }
 
-  trigger() {
-    const {refs, trigs} = this
-
-    try {
-      for (const ref of refs) {
-        const tar = ref.deref()
-        if (!tar) {
-          refs.delete(tar)
-          continue
-        }
-
-        if (trigs.has(tar)) continue
-
-        trigs.add(tar)
-        tar.trigger()
-      }
-    }
-    finally {trigs.clear()}
+  delete(val) {
+    super.delete(val)
+    this.refs.delete(val)
   }
-
-  depth() {return 0}
-  deinit() {this.refs.clear()}
 }
 
 function derefOpt(src) {return l.isInst(src, WeakRef) ? src.deref() : src}
+
+/*
+Triggering que used by observables. Supports implicit monitoring via the dynamic
+variable `TRIG`, where tools such as `Recur`, `FunRecur`, `MethRecur` place
+themselves for the duration of reactive callbacks. Holds triggerables weakly.
+*/
+export class TriggerWeakQue extends WeakQue {
+  get trig() {return TRIG}
+
+  monitor() {
+    const val = this.trig.get()
+    if (l.isSome(val)) this.add(val)
+  }
+
+  flushVal(val) {val.deref()?.trigger()}
+}
 
 export function obsRef(val) {return new ObsRef(val)}
 
 /*
 Atomic observable with a single value. Compare `obs`, which creates a proxy
 which implicitly observes all fields of the target. Unlike `obs`, this one
-doesn't have proxy overheads.
+doesn't have proxy overheads (which are small to begin with).
 */
 export class ObsRef extends l.Emp {
-  get Broad() {return Broad}
+  get Que() {return TriggerWeakQue}
 
-  bro = undefined
-
-  constructor(val) {super().$ = val}
+  constructor(val) {
+    super()
+    this.$ = val
+    this.que = new this.Que()
+  }
 
   get val() {
     this.monitor()
@@ -211,14 +273,9 @@ export class ObsRef extends l.Emp {
 
   get() {return this.$}
   set(val) {this.$ = val}
-
-  monitor() {
-    const bro = this.bro ??= new this.Broad()
-    bro.monitor()
-  }
-
-  trigger() {this.bro?.trigger()}
-  deinit() {this.bro?.deinit()}
+  monitor() {this.que.monitor()}
+  trigger() {this.que.flush()}
+  deinit() {this.que.deinit()}
 }
 
 export class TypedObsRef extends ObsRef {
@@ -229,14 +286,14 @@ export class TypedObsRef extends ObsRef {
 
 // Short for "observable proxy handler". Used via `obs`.
 export class ObsPh extends l.Emp {
-  get Broad() {return Broad}
+  get Que() {return TriggerWeakQue}
 
   /*
-  This declaration is not cosmetic. At the time of writing, V8 seems to ignore
-  proxy handlers which don't have at least one own key at the time of proxy
-  construction.
+  Caution: at the time of writing, V8 seems to ignore proxy handlers which don't
+  have at least one own property at the time of proxy construction. We must
+  assign at least one own property, doesn't matter which.
   */
-  bro = undefined
+  que = new this.Que()
 
   /* Standard traps */
 
@@ -273,24 +330,29 @@ export class ObsPh extends l.Emp {
   // Allows accidental `ph(ph(val))` to work.
   get [SYM_PH]() {return this}
 
-  monitor() {
-    const bro = this.bro ??= new this.Broad()
-    bro.monitor()
-  }
+  monitor() {this.que.monitor()}
+  trigger() {this.que.flush()}
+  deinit() {this.que.deinit()}
+}
 
-  trigger() {this.bro?.trigger()}
-  deinit() {this.bro?.deinit()}
+export class RecurRef extends o.WeakerRef {
+  run() {this.deref()?.run()}
+  trigger() {this.deref()?.trigger()}
+  depth() {return this.deref()?.depth() ?? 0}
+  getShed() {return this.deref()?.getShed()}
+  setShed(val) {this.deref()?.setShed(val)}
 }
 
 /*
 Base class for implementing implicit monitoring. Invoking `.run` sets up
-context via `TRIG` and calls `.onRun`. During the call, broadcasters may
-find a reference to the `Recur` instance in `TRIG` and register it for
-future triggers.
+context via `TRIG` and calls `.onRun`. During the call, triggerable ques
+used by observables may find a reference to the `Recur` instance in `TRIG`
+and register it for future triggers.
 
-Uses async scheduling by default. Calling `.trigger` schedules the next run via
-`Shed.main`. Can be overridden in a subclass or by monkey-patching either this
-class, or `Shed.main`, or `Shed.default` before first access to `Shed.main`.
+Calling `.trigger` schedules the next run. Uses sync scheduling by default,
+which runs immediately by default unless `ShedSync.main` is temporarily paused.
+Subclasses override the `.shed` getter to choose scheduling modes appropriate
+for their use case.
 
 This is half of our "invisible magic" for implicit monitoring. The other
 half is proxy handlers such as `ObsPh`, which trap property access such as
@@ -300,30 +362,34 @@ such as `Recur`, to register it.
 `Recur` itself has a nop run. See subclasses.
 */
 export class Recur extends l.Emp {
-  get shed() {return Shed.main}
-  weak = undefined
+  get Ref() {return RecurRef}
+  get shed() {return ShedSync.main}
+  get trig() {return TRIG}
+
   active = false
+  weak = new this.Ref(this)
+  #shed = undefined
 
   onRun() {}
-  depth() {return 0}
-  trigger() {this.shed.add(this)}
+  trigger() {this.getShed().add(this.weak.init())}
 
   run() {
-    if (this.active) return undefined
-    this.deinit()
-    this.weak = new o.WeakerRef(this)
+    const {active, trig, weak} = this
+    if (active) return undefined
 
-    const prev = TRIG.swap(this.weak)
+    const prev = trig.swap(weak.init())
     this.active = true
-
     try {return this.onRun()}
     finally {
       this.active = false
-      TRIG.swap(prev)
+      trig.swap(prev)
     }
   }
 
-  deinit() {this.weak?.deinit()}
+  setShed(val) {this.#shed = val}
+  getShed() {return this.#shed ?? this.shed}
+  depth() {return 0}
+  deinit() {this.weak.deinit()}
 }
 
 export class FunRecur extends Recur {
@@ -332,13 +398,12 @@ export class FunRecur extends Recur {
 }
 
 export class MethRecur extends Recur {
-  get Ref() {return WeakRef}
+  get shed() {return ShedMicro.main}
 
   constructor(tar, fun) {
     super()
     this.ref = new this.Ref(tar)
     this.fun = l.reqFun(fun)
-    REG_DEINIT.register(tar, this)
   }
 
   onRun() {
@@ -349,7 +414,8 @@ export class MethRecur extends Recur {
 
 // Variant of `MethRecur` for DOM nodes.
 export class NodeMethRecur extends MethRecur {
-  depth() {return nodeDepth(this.tar)}
+  get shed() {return ShedMacro.main}
+  depth() {return nodeDepth(this.ref.deref())}
 }
 
 export function nodeDepth(val) {
@@ -368,7 +434,10 @@ export class MethRecurs extends Map {
     rec.run()
   }
 
-  deinit() {for (const val of this.values()) val.deinit()}
+  deinit() {
+    for (const val of this.values()) val.deinit()
+    this.clear()
+  }
 
   static init(tar, ...funs) {
     l.reqObj(tar)
@@ -392,6 +461,11 @@ and the methods are re-invoked when the observables trigger.
 */
 export function reac(tar, ...vals) {return MethRecurs.init(tar, ...vals)}
 export function unreac(tar) {return MethRecurs.deinit(tar)}
+
+export function preferShed(val) {TRIG.get()?.setShed?.(val)}
+export function preferSync() {TRIG.get()?.setShed?.(ShedSync.main)}
+export function preferMicro() {TRIG.get()?.setShed?.(ShedMicro.main)}
+export function preferMacro() {TRIG.get()?.setShed?.(ShedMacro.main)}
 
 /*
 Reactive version of a `Text` DOM node. Usage:

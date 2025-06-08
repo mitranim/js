@@ -1,19 +1,11 @@
 import * as l from './lang.mjs'
 import * as c from './coll.mjs'
 
-/*
-TODO try the following regex. May require a different split algo.
-See `github.com/mitranim/gg/text.go`.
-
-  \p{Lu}+[\p{Ll}\d]*|[\p{Ll}\d]+
-*/
-export const RE_WORD = /[\p{Lu}\d]+(?=\W|_|$)|[\p{Lu}\d]+(?=\p{Lu}\p{Ll}|\W|_|$)|\p{Lu}[\p{Ll}\d]*(?=\p{Lu}|\W|_|$)|[\p{Ll}\d]+(?=\p{Lu}|\W|_|$)|[\p{Lu}\d]+(?=\p{Ll}|\W|_|$)|[\p{L}\d]+(?=\W|_|$)/gu
+export const RE_WORD = /\p{Lu}+[\p{Ll}\d]*|[\p{Ll}\d]+/gu
 export const RE_EMBED = /{{([^{}]*)}}/g
 
-export function isBlank(val) {return /^\s*$/.test(l.reqStr(val))}
-
+export function isBlank(val) {return l.reqStr(val) !== val.trim()}
 export function isAscii(val) {return isEveryCharCode(val, isCodeAscii)}
-
 export function isAsciiPrint(val) {return isEveryCharCode(val, isCodeAsciiPrint)}
 
 export function isNarrow(val) {

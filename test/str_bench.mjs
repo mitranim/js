@@ -52,6 +52,9 @@ function draftRenderSimple(src, ctx) {
   })
 }
 
+function isBlankRegex(val) {return /^\s*$/.test(l.reqStr(val))}
+function isBlankTrim(val) {return l.reqStr(val) !== val.trim()}
+
 function joinDumb(val, sep) {
   l.reqStr(sep)
   if (l.isNil(val)) return ``
@@ -94,6 +97,12 @@ const uuidArr = s.uuidArr()
 /* Bench */
 
 t.bench(function bench_walk() {for (const val of LONG_NARROW) l.nop(val)})
+
+t.bench(function bench_isBlank_regex_miss() {l.nop(isBlankRegex(LONG_NARROW))})
+t.bench(function bench_isBlank_regex_hit() {l.nop(isBlankRegex(LONG_BLANK))})
+
+t.bench(function bench_isBlank_trim_miss() {l.nop(isBlankTrim(LONG_NARROW))})
+t.bench(function bench_isBlank_trim_hit() {l.nop(isBlankTrim(LONG_BLANK))})
 
 t.bench(function bench_isBlank_miss() {l.nop(s.isBlank(LONG_NARROW))})
 t.bench(function bench_isBlank_hit() {l.nop(s.isBlank(LONG_BLANK))})

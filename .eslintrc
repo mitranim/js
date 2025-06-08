@@ -12,6 +12,7 @@
     "AbortController": "readonly",
     "AbortSignal": "readonly",
     "Intl": "readonly",
+    "queueMicrotask": "readonly",
     "setTimeout": "readonly",
     "clearTimeout": "readonly",
     "TextDecoder": "readonly",

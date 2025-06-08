@@ -28,7 +28,7 @@ Known limitations:
 Using a specific implementation:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/path.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.66/path.mjs'
 
 console.log(p.posix.join(`one`, `two`))
 // 'one/two'
@@ -40,7 +40,7 @@ console.log(p.windows.join(`one`, `two`))
 Using the default implementation for the current OS:
 
 ```js
-import {paths as p} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/io_deno.mjs'
+import {paths as p} from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.66/io_deno.mjs'
 
 console.log(p.join(`one`, `two`))
 // 'one/two' or 'one\\two' depending on your OS
@@ -55,7 +55,7 @@ Links: [source](../path.mjs#L33); [test/example](../test/path_test.mjs#L17).
 Idempotently converts a path from Windows-style to Posix-style. Useful in some edge case scenarios.
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.65/path.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.66/path.mjs'
 
 console.log(p.toPosix(`one\\two\\three`))
 // 'one/two/three'

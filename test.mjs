@@ -408,20 +408,18 @@ export function test(fun) {
   conf.testRep?.reportStart(run)
   run.start = now()
 
-  if (l.isFunAsync(fun)) return testAsync(run, fun)
-
   let out
   conf.run = run
-  try {out = fun(run)}
-  finally {conf.run = run.parent}
-  testDone(run)
-  return out
-}
+  try {
+    out = fun(run)
 
-async function testAsync(run, fun) {
-  let out
-  conf.run = run
-  try {out = await fun(run)}
+    if (l.isPromise(out)) {
+      return out.finally(function onTestDone() {
+        conf.run = run.parent
+        testDone(run)
+      })
+    }
+  }
   finally {conf.run = run.parent}
   testDone(run)
   return out
@@ -755,12 +753,13 @@ API, because deeply traversing and comparing data structures is a popular JS
 antipattern that should be discouraged, not encouraged. The existence of this
 function proves the occasional need, but live apps should avoid wasting
 performance on this.
-*/
-export function equal(one, two) {
-  return new Eq().equal(one, two)
-}
 
-export class Eq extends WeakSet {
+Known issue: produces a false negative when comparing two structurally equal
+objects which both contain cyclic references to themselves.
+*/
+export function equal(one, two) {return new Eq().equal(one, two)}
+
+export class Eq extends Set {
   equal(one, two) {
     if (Object.is(one, two)) return true
     if (!(l.isObj(one) && l.isObj(two))) return false
