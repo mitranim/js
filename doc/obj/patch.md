@@ -5,8 +5,8 @@ Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaSc
   * Much faster.
   * Takes only two args.
   * Sanity-checked:
-    * Target must be a {{link lang isStruct struct}}.
-    * Source must be nil or a {{link lang isStruct struct}}.
+    * Target must be a {{link lang isRec record}}.
+    * Source must be nil or a {{link lang isRec record}}.
     * Throws on invalid inputs.
     * Does not override inherited properties.
     * Does not override own non-enumerable properties.

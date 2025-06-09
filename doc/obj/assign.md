@@ -5,8 +5,8 @@ Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaSc
   * Much faster.
   * Exactly two parameters, not variadic.
   * Sanity-checked:
-    * Target must be a {{link lang isStruct struct}}.
-    * Source must be nil or a {{link lang isStruct struct}}.
+    * Target must be a {{link lang isRec record}}.
+    * Source must be nil or a {{link lang isRec record}}.
     * Throws on invalid inputs.
 
 Similar to {{link obj patch}} but doesn't check for inherited and non-enumerable properties. Simpler, dumber, faster.

@@ -60,11 +60,11 @@ t.bench(function bench_keys_array_our_keys() {l.reqArr(i.keys(itc.numArr))})
 
 t.bench(function bench_keys_dict_native() {l.reqArr(Object.keys(itc.numDict))})
 t.bench(function bench_keys_dict_lodash() {l.reqArr(lo.keys(itc.numDict))})
-t.bench(function bench_keys_dict_by_for_in() {l.reqArr(structKeysByForIn(itc.numDict))})
+t.bench(function bench_keys_dict_by_for_in() {l.reqArr(recKeysByForIn(itc.numDict))})
 t.bench(function bench_keys_dict_our_keys() {l.reqArr(i.keys(itc.numDict))})
 
 t.bench(function bench_keys_dict_empty_native() {l.reqArr(Object.keys({}))})
-t.bench(function bench_keys_dict_empty_lang_structKeys() {l.reqArr(l.structKeys({}))})
+t.bench(function bench_keys_dict_empty_lang_recKeys() {l.reqArr(l.recKeys({}))})
 t.bench(function bench_keys_dict_empty_iter_keys() {l.reqArr(i.keys({}))})
 
 t.bench(function bench_keys_set_native() {l.reqArr([...itc.numSet.keys()])})
@@ -79,8 +79,8 @@ t.bench(function bench_values_array_lodash() {l.reqArr(lo.values(itc.numArr))})
 t.bench(function bench_values_array_our_values() {l.reqArr(i.values(itc.numArr))})
 
 t.bench(function bench_values_dict_native() {l.reqArr(Object.values(itc.numDict))})
-t.bench(function bench_values_dict_by_for_in() {l.reqArr(structValuesByForIn(itc.numDict))})
-t.bench(function bench_values_dict_by_key_list() {l.reqArr(structValuesByKeyList(itc.numDict))})
+t.bench(function bench_values_dict_by_for_in() {l.reqArr(recValuesByForIn(itc.numDict))})
+t.bench(function bench_values_dict_by_key_list() {l.reqArr(recValuesByKeyList(itc.numDict))})
 t.bench(function bench_values_dict_lodash() {l.reqArr(lo.values(itc.numDict))})
 t.bench(function bench_values_dict_our_values() {l.reqArr(i.values(itc.numDict))})
 
@@ -114,7 +114,7 @@ t.bench(function bench_entries_array_our_entries() {l.reqArr(i.entries(itc.numAr
 
 t.bench(function bench_entries_dict_native() {l.reqArr(Object.entries(itc.numDict))})
 t.bench(function bench_entries_dict_lodash() {l.reqArr(lo.entries(itc.numDict))})
-t.bench(function bench_entries_dict_dumb() {l.reqArr(structEntriesDumb(itc.numDict))})
+t.bench(function bench_entries_dict_dumb() {l.reqArr(recEntriesDumb(itc.numDict))})
 t.bench(function bench_entries_dict_our_entries() {l.reqArr(i.entries(itc.numDict))})
 
 t.bench(function bench_entries_set_native() {i.arr(itc.numSet.entries())})
@@ -422,13 +422,13 @@ t.bench(function bench_reverse_using_ours() {l.nop(reverseUsingOurs(itc.numArr))
 
 itc.deoptSeqHof(lo.groupBy)
 itc.deoptCollHof(i.group)
-t.bench(function bench_group_with_lodash_groupBy() {l.reqStruct(lo.groupBy(itc.numArr, l.id))})
-t.bench(function bench_group_with_our_group() {l.reqStruct(i.group(itc.numArr, l.id))})
+t.bench(function bench_group_with_lodash_groupBy() {l.reqRec(lo.groupBy(itc.numArr, l.id))})
+t.bench(function bench_group_with_our_group() {l.reqRec(i.group(itc.numArr, l.id))})
 
 itc.deoptSeqHof(lo.keyBy)
 itc.deoptCollHof(i.index)
-t.bench(function bench_index_with_lodash_keyBy() {l.reqStruct(lo.keyBy(itc.numArr, l.id))})
-t.bench(function bench_index_with_our_index() {l.reqStruct(i.index(itc.numArr, l.id))})
+t.bench(function bench_index_with_lodash_keyBy() {l.reqRec(lo.keyBy(itc.numArr, l.id))})
+t.bench(function bench_index_with_our_index() {l.reqRec(i.index(itc.numArr, l.id))})
 
 t.bench(function bench_long_transform0_with_native() {
   l.reqArr(itc.numArr.map(l.inc).map(l.dec).map(double).filter(l.id))
@@ -477,10 +477,10 @@ t.bench(function bench_count_loop_span_dumb() {for (const val of spanDumb(itc.si
 t.bench(function bench_count_loop_span_iter() {for (const val of new SpanIter(itc.size)) l.nop(val)})
 t.bench(function bench_count_loop_span_our_span() {for (const val of i.span(itc.size)) l.nop(val)})
 
-t.bench(function bench_zip_with_native() {l.reqStruct(Object.fromEntries(itc.numEntries))})
-t.bench(function bench_zip_with_ours() {l.reqStruct(i.zip(itc.numEntries))})
+t.bench(function bench_zip_with_native() {l.reqRec(Object.fromEntries(itc.numEntries))})
+t.bench(function bench_zip_with_ours() {l.reqRec(i.zip(itc.numEntries))})
 
-// Stupidly expensive on structs. May consider not supporting.
+// Stupidly expensive on records. May consider not supporting.
 itc.deoptCollFun(headFromValues)
 itc.deoptCollFun(i.head)
 t.bench(function bench_head_arr_from_values() {l.nop(headFromValues(itc.numArr))})
@@ -535,24 +535,24 @@ t.bench(function bench_flat_arr_long_nested_ours() {l.nop(i.flat(itc.numArrNeste
 
 itc.deoptDictHof(lo.mapValues)
 itc.deoptDictHof(i.mapDict)
-t.bench(function bench_map_dict_lodash_mapValues() {l.reqStruct(lo.mapValues(itc.numDict, l.inc))})
-t.bench(function bench_map_dict_our_mapDict() {l.reqStruct(i.mapDict(itc.numDict, l.inc))})
+t.bench(function bench_map_dict_lodash_mapValues() {l.reqRec(lo.mapValues(itc.numDict, l.inc))})
+t.bench(function bench_map_dict_our_mapDict() {l.reqRec(i.mapDict(itc.numDict, l.inc))})
 
 itc.deoptDictHof(lo.pickBy)
 itc.deoptDictHof(i.pick)
-t.bench(function bench_pick_lodash_pickBy() {l.reqStruct(lo.pickBy(itc.numDict, isEven))})
-t.bench(function bench_pick_our_pick() {l.reqStruct(i.pick(itc.numDict, isEven))})
+t.bench(function bench_pick_lodash_pickBy() {l.reqRec(lo.pickBy(itc.numDict, isEven))})
+t.bench(function bench_pick_our_pick() {l.reqRec(i.pick(itc.numDict, isEven))})
 
 itc.deoptDictHof(lo.omitBy)
 itc.deoptDictHof(i.omit)
-t.bench(function bench_omit_lodash_omitBy() {l.reqStruct(lo.omitBy(itc.numDict, isEven))})
-t.bench(function bench_omit_our_omit() {l.reqStruct(i.omit(itc.numDict, isEven))})
+t.bench(function bench_omit_lodash_omitBy() {l.reqRec(lo.omitBy(itc.numDict, isEven))})
+t.bench(function bench_omit_our_omit() {l.reqRec(i.omit(itc.numDict, isEven))})
 
-t.bench(function bench_pickKeys_lodash_pick() {l.reqStruct(lo.pick(itc.numDict, itc.knownKeys))})
-t.bench(function bench_pickKeys_our_pickKeys() {l.reqStruct(i.pickKeys(itc.numDict, itc.knownKeys))})
+t.bench(function bench_pickKeys_lodash_pick() {l.reqRec(lo.pick(itc.numDict, itc.knownKeys))})
+t.bench(function bench_pickKeys_our_pickKeys() {l.reqRec(i.pickKeys(itc.numDict, itc.knownKeys))})
 
-t.bench(function bench_omitKeys_lodash_omit() {l.reqStruct(lo.omit(itc.numDict, itc.knownKeys))})
-t.bench(function bench_omitKeys_our_omitKeys() {l.reqStruct(i.omitKeys(itc.numDict, itc.knownKeys))})
+t.bench(function bench_omitKeys_lodash_omit() {l.reqRec(lo.omit(itc.numDict, itc.knownKeys))})
+t.bench(function bench_omitKeys_our_omitKeys() {l.reqRec(i.omitKeys(itc.numDict, itc.knownKeys))})
 
 if (import.meta.main) t.deopt(), t.benches()
 
@@ -671,26 +671,26 @@ function compactDumb(val) {
 
 function includesWithIndexOf(val, elem) {return i.indexOf(val, elem) >= 0}
 
-function structKeysByForIn(src) {
+function recKeysByForIn(src) {
   const out = []
   for (const key in src) out.push(key)
   return out
 }
 
-function structValuesByKeyList(src) {
+function recValuesByKeyList(src) {
   const buf = Object.keys(src)
   let ind = -1
   while (++ind < buf.length) buf[ind] = src[buf[ind]]
   return buf
 }
 
-function structValuesByForIn(src) {
+function recValuesByForIn(src) {
   const out = []
   for (const key in src) out.push(src[key])
   return out
 }
 
-function structEntriesDumb(src) {
+function recEntriesDumb(src) {
   const buf = Object.keys(src)
   let ind = -1
   while (++ind < buf.length) {

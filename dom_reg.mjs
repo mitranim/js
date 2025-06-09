@@ -126,11 +126,11 @@ export function clsLocalName(cls) {
   return undefined
 }
 
-export function MixReg(val) {return MixRegCache.goc(val)}
+export function MixReg(val) {return MixinReg.get(val)}
 
-export class MixRegCache extends o.DedupMixinCache {
+export class MixinReg extends o.Mixin {
   static make(cls) {
-    return class MixRegCls extends cls {
+    return class MixinReg extends cls {
       constructor(...val) {
         reg(new.target)
         super(...val)

@@ -149,8 +149,8 @@ function isPromiseAsm(val) {
 function reqStrDirect(val) {return l.isStr(val) ? val : l.throwErrFun(val, l.isStr)}
 function reqStrIndirect(val) {return l.req(val, l.isStr)}
 
-function keysDumb(val) {return Object.keys(l.laxStruct(val))}
-function keysTricky(val) {return l.isNil(val) ? [] : Object.keys(l.reqStruct(val))}
+function keysDumb(val) {return Object.keys(l.laxRec(val))}
+function keysTricky(val) {return l.isNil(val) ? [] : Object.keys(l.reqRec(val))}
 
 /*
 This function has been removed from the API and forbidden because in some cases
@@ -161,6 +161,23 @@ varied inputs here. Which makes it harder to demonstrate the issue or detect
 if it's gone in future JS engines.
 */
 function hasIn(val, key) {return l.isComp(val) && key in val}
+
+// We're interested in how well JS engines optimize `[...] = [...]`.
+function swapperInline(tar, fun) {
+  if (l.isFun(tar)) [tar, fun] = [fun, tar]
+  l.reqSome(tar)
+  l.reqFun(fun)
+}
+
+function swapperReceiving(tar, fun) {
+  [tar, fun] = swapperReturning(tar, fun)
+  l.reqSome(tar)
+  l.reqFun(fun)
+}
+
+function swapperReturning(tar, fun) {
+  return l.isFun(fun) ? [tar, fun] : [fun, tar]
+}
 
 /* Bench */
 
@@ -314,10 +331,10 @@ t.bench(function bench_isDict_miss_emp_sub() {l.nop(l.isDict(emptyEmpSub))})
 t.bench(function bench_isDict_hit_dict() {l.nop(l.isDict(emptyDict))})
 t.bench(function bench_isDict_hit_npo() {l.nop(l.isDict(emptyNpo))})
 
-miscVals.forEach(l.isStruct)
-t.bench(function bench_isStruct_nil() {l.nop(l.isStruct())})
-t.bench(function bench_isStruct_miss() {l.nop(l.isStruct(emptyArr))})
-t.bench(function bench_isStruct_hit() {l.nop(l.isStruct(someDate))})
+miscVals.forEach(l.isRec)
+t.bench(function bench_isRec_nil() {l.nop(l.isRec())})
+t.bench(function bench_isRec_miss() {l.nop(l.isRec(emptyArr))})
+t.bench(function bench_isRec_hit() {l.nop(l.isRec(someDate))})
 
 miscVals.forEach(l.isSeq)
 t.bench(function bench_isSeq_nil() {l.nop(l.isSeq())})
@@ -537,5 +554,19 @@ t.bench(function bench_delete_checked_hit_emp_sub_new() {
   tar.one = 10
   if (`one` in tar) delete tar.one
 })
+
+// At the time of writing, the benchmark indicates no measurable cost in V8.
+for (const val of miscVals) swapperInline(val, l.nop)
+for (const val of miscVals) swapperInline(l.nop, val)
+t.bench(function bench_swapper_inline_obj_fun() {swapperInline(emptyNpo, l.nop)})
+t.bench(function bench_swapper_inline_fun_obj() {swapperInline(l.nop, emptyNpo)})
+t.bench(function bench_swapper_inline_fun_fun() {swapperInline(l.nop, l.nop)})
+
+// At the time of writing, the benchmark indicates a tiny measurable cost in V8.
+for (const val of miscVals) swapperReceiving(val, l.nop)
+for (const val of miscVals) swapperReceiving(l.nop, val)
+t.bench(function bench_swapper_receiving_obj_fun() {swapperReceiving(emptyNpo, l.nop)})
+t.bench(function bench_swapper_receiving_fun_obj() {swapperReceiving(l.nop, emptyNpo)})
+t.bench(function bench_swapper_receiving_fun_fun() {swapperReceiving(l.nop, l.nop)})
 
 if (import.meta.main) t.deopt(), t.benches()

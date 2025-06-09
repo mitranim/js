@@ -775,10 +775,10 @@ export class Eq extends Set {
     if (l.isMap(one)) return equalCons(one, two) && this.equalMap(one, two)
     if (l.isInst(one, URL)) return equalCons(one, two) && one.href === two.href
     if (l.isInst(one, Date)) return equalCons(one, two) && one.valueOf() === two.valueOf()
-    if (l.isDict(one)) return l.isDict(two) && this.equalStruct(one, two)
-    if (l.isDict(two)) return l.isDict(one) && this.equalStruct(one, two)
+    if (l.isDict(one)) return l.isDict(two) && this.equalRec(one, two)
+    if (l.isDict(two)) return l.isDict(one) && this.equalRec(one, two)
     if (l.isInst(one, WeakRef)) return equalCons(one, two) && this.equalRef(one, two)
-    return equalCons(one, two) && this.equalStruct(one, two)
+    return equalCons(one, two) && this.equalRec(one, two)
   }
 
   equalList(one, two) {
@@ -810,7 +810,7 @@ export class Eq extends Set {
     return true
   }
 
-  equalStruct(one, two) {
+  equalRec(one, two) {
     // Takes care of primitive wrapper objects such as `new Number`,
     // as well as arbitrary classes with a custom `.valueOf`.
     const oneVal = maybeValueOf(one)
@@ -843,7 +843,7 @@ export class Eq extends Set {
   }
 
   equalRef(one, two) {
-    return this.equalStruct(one, two) && this.equal(one.deref(), two.deref())
+    return this.equalRec(one, two) && this.equal(one.deref(), two.deref())
   }
 }
 

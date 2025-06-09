@@ -26,7 +26,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.67/coll.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/coll.mjs'
 ```
 
 ## API
@@ -101,8 +101,8 @@ Links: [source](../coll.mjs#L100); [test/example](../test/coll_test.mjs#L218).
 Variant of [#`Bmap`](#class-bmap) with support for key and value checks. Subclasses must override methods `.reqKey` and `.reqVal`. These methods are automatically called by `.set`. Method `.reqKey` must validate and return the given key, and method `.reqVal` must validate and return the given value. Use type assertions provided by [`lang`](lang_readme.md).
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.67/lang.mjs'
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.67/coll.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/lang.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/coll.mjs'
 
 class StrNatMap extends c.TypedMap {
   reqKey(key) {return l.reqStr(key)}
@@ -188,7 +188,7 @@ console.log([...coll])
 
 ### `class ClsColl`
 
-Links: [source](../coll.mjs#L158); [test/example](../test/coll_test.mjs#L325).
+Links: [source](../coll.mjs#L159); [test/example](../test/coll_test.mjs#L325).
 
 Variant of [#`Coll`](#class-coll) where values must belong to a specific class, determined by its getter `cls`. The default element class is `Object`. Override it when subclassing. Elements added with `.add` are idempotently instantiated.
 
@@ -220,7 +220,7 @@ Persons {
 
 ### `class Vec`
 
-Links: [source](../coll.mjs#L167); [test/example](../test/coll_test.mjs#L334).
+Links: [source](../coll.mjs#L168); [test/example](../test/coll_test.mjs#L334).
 
 Short for "vector". Thin wrapper around a plain array. Features:
 
@@ -242,19 +242,19 @@ Differences and advantages over `Array`:
 The overhead of the wrapper is insignificant.
 
 ```js
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.67/coll.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/coll.mjs'
 
 console.log(new c.Vec())
-// Vec{$: []}
+// Vec{Symbol(val): []}
 
 console.log(new c.Vec([10, 20, 30]))
-// Vec{$: [10, 20, 30]}
+// Vec{Symbol(val): [10, 20, 30]}
 
 console.log(c.Vec.of(10, 20, 30))
-// Vec{$: [10, 20, 30]}
+// Vec{Symbol(val): [10, 20, 30]}
 
 console.log(c.Vec.from(new Set([10, 20, 30])))
-// Vec{$: [10, 20, 30]}
+// Vec{Symbol(val): [10, 20, 30]}
 
 for (const val of c.Vec.of(10, 20, 30)) console.log(val)
 // 10 20 30
@@ -286,9 +286,9 @@ console.log(coll)
 
 /*
 Persons {
-  "$": [
-    Person { name: "Mira" },
-    Person { name: "Kara" },
+  Symbol(val): [
+    Person {name: "Mira"},
+    Person {name: "Kara"},
   ]
 }
 */

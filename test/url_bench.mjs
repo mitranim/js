@@ -10,7 +10,7 @@ const {freeze} = Object
 const searchLong = `one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven`
 const searchEncLong = `one=two+three&four=five?six&seven=eight%20nine`
 
-const queryStructLong = freeze({one: [`two`, `three`], four: `five`, five: `six`, seven: `eight`, nine: [`ten`, `eleven`]})
+const queryRecLong = freeze({one: [`two`, `three`], four: `five`, five: `six`, seven: `eight`, nine: [`ten`, `eleven`]})
 
 const urlLong = `https://user:pass@one.two.three/four/five/six?one=two&one=three&four=five&five=six&seven=eight&nine=ten&nine=eleven#hash`
 const urlShort = `https://example.com`
@@ -69,12 +69,12 @@ t.bench(function bench_new_empty_Url() {l.nop(u.url())})
 t.bench(function bench_Query_reset_str() {l.nop(mutQuery.reset(searchLong))})
 t.bench(function bench_Query_reset_Params() {l.nop(mutQuery.reset(decParamsLong))})
 t.bench(function bench_Query_reset_Query() {l.nop(mutQuery.reset(decQueryLong))})
-t.bench(function bench_Query_reset_struct() {l.nop(mutQuery.reset(queryStructLong))})
+t.bench(function bench_Query_reset_rec() {l.nop(mutQuery.reset(queryRecLong))})
 
 t.bench(function bench_Query_mut_str() {l.nop(mutQuery.mut(searchLong))})
 t.bench(function bench_Query_mut_Params() {l.nop(mutQuery.mut(decParamsLong))})
 t.bench(function bench_Query_mut_Query() {l.nop(mutQuery.mut(decQueryLong))})
-t.bench(function bench_Query_mut_struct() {l.nop(mutQuery.mut(queryStructLong))})
+t.bench(function bench_Query_mut_rec() {l.nop(mutQuery.mut(queryRecLong))})
 
 t.bench(function bench_query_decode_Params() {l.nop(new URLSearchParams(searchLong))})
 t.bench(function bench_query_decode_Query() {l.nop(u.query(searchLong))})

@@ -51,7 +51,7 @@ export function keys(val) {
   if (l.isIter(val) && l.hasMeth(val, `keys`)) return iterToArr(val.keys())
   if (l.isIterator(val)) return span(iterLen(val))
   if (l.isArrble(val)) return span(l.onlyNat(getSize(val)) ?? toArray(val).length)
-  if (isStructSync(val)) return Object.keys(val)
+  if (isRecSync(val)) return Object.keys(val)
   throw l.errConv(val, `keys`)
 }
 
@@ -69,7 +69,7 @@ export function valuesCopy(val) {
   if (l.isMap(val)) return [...val.values()]
   if (l.isIter(val) && l.hasMeth(val, `values`)) return iterToArr(val.values())
   if (l.isIterator(val)) return iterToArr(val)
-  if (isStructSync(val)) return valuesFromStruct(val)
+  if (isRecSync(val)) return valuesFromStruct(val)
   throw l.errConv(val, `values`)
 }
 
@@ -87,7 +87,7 @@ export function entries(val) {
   if (l.isIter(val) && l.hasMeth(val, `entries`)) return iterToArr(val.entries())
   if (l.isIterator(val)) return iterToArr(val)
   if (l.isArrble(val)) return entriesFromList(toArray(val))
-  if (isStructSync(val)) return structEntries(val)
+  if (isRecSync(val)) return recEntries(val)
   throw l.errConv(val, `entries`)
 }
 
@@ -100,7 +100,7 @@ function entriesFromList(val) {
 }
 
 // Like `Object.entries` but much faster.
-function structEntries(src) {
+function recEntries(src) {
   const out = Object.keys(src)
   const len = out.length
   let ind = -1
@@ -162,7 +162,7 @@ export function len(val) {
     return iterLen(iter(val))
   }
 
-  if (isStructSync(val)) return Object.keys(val).length
+  if (isRecSync(val)) return Object.keys(val).length
   throw TypeError(`unable to measure length of ${l.show(val)}`)
 }
 
@@ -430,7 +430,7 @@ export function repeat(len, val) {return alloc(l.laxNat(len)).fill(val)}
 export function mapDict(val, fun) {
   l.reqFun(fun)
   const out = l.Emp()
-  for (const key of l.structKeys(val)) out[key] = fun(val[key])
+  for (const key of l.recKeys(val)) out[key] = fun(val[key])
   return out
 }
 
@@ -438,7 +438,7 @@ export function mapDict(val, fun) {
 export function pick(val, fun) {
   l.reqFun(fun)
   const out = l.Emp()
-  for (const key of l.structKeys(val)) {
+  for (const key of l.recKeys(val)) {
     const elem = val[key]
     if (fun(elem)) out[key] = elem
   }
@@ -450,7 +450,7 @@ export function omit(val, fun) {return pick(val, l.not(fun))}
 
 // Antipattern, should probably remove.
 export function pickKeys(val, keys) {
-  val = l.laxStruct(val)
+  val = l.laxRec(val)
   const out = l.Emp()
   for (const key of values(keys)) if (l.hasOwnEnum(val, key)) out[key] = val[key]
   return out
@@ -458,10 +458,10 @@ export function pickKeys(val, keys) {
 
 // Antipattern, should probably remove.
 export function omitKeys(val, keys) {
-  val = l.laxStruct(val)
+  val = l.laxRec(val)
   keys = setFrom(keys)
   const out = l.Emp()
-  for (const key of l.structKeys(val)) if (!keys.has(key)) out[key] = val[key]
+  for (const key of l.recKeys(val)) if (!keys.has(key)) out[key] = val[key]
   return out
 }
 
@@ -471,4 +471,4 @@ export function compactDict(val) {return pick(val, l.id)}
 
 function getLength(val) {return l.get(val, `length`)}
 function getSize(val) {return l.get(val, `size`)}
-function isStructSync(val) {return l.isStruct(val) && !(Symbol.asyncIterator in val)}
+function isRecSync(val) {return l.isRec(val) && !(Symbol.asyncIterator in val)}

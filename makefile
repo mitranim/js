@@ -93,7 +93,7 @@ pub: prep tag push
 define HOOK_PRE_COMMIT
 #!/bin/sh
 git ls-files | xargs sed -i '' 's/[[:space:]]*$$//' &&
-NO_COLOR= make doc &&
+NO_COLOR=true make doc &&
 git add -u
 endef
 export HOOK_PRE_COMMIT

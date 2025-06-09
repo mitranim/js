@@ -4,27 +4,28 @@ import * as dr from './dom_reg.mjs'
 import * as p from './prax.mjs'
 import * as u from './url.mjs'
 import * as c from './coll.mjs'
+import * as ds from './dom_shim.mjs'
 
 /* Vars */
 
-export const SYM_REF = Symbol.for(`ref`)
-export const SYM_DATA = Symbol.for(`data`)
-export const SYM_NAME = Symbol.for(`name`)
-export const SYM_VALUE = Symbol.for(`value`)
-export const SYM_STYLE = Symbol.for(`style`)
-export const SYM_DOCTYPE = Symbol.for(`doctype`)
-export const SYM_DATASET = Symbol.for(`dataset`)
-export const SYM_PUBLIC_ID = Symbol.for(`publicId`)
-export const SYM_SYSTEM_ID = Symbol.for(`systemId`)
-export const SYM_CLASS_LIST = Symbol.for(`classList`)
-export const SYM_LOCAL_NAME = Symbol.for(`localName`)
-export const SYM_ATTRIBUTES = Symbol.for(`attributes`)
-export const SYM_PARENT_NODE = Symbol.for(`parentNode`)
-export const SYM_CHILD_NODES = Symbol.for(`childNodes`)
-export const SYM_NAMESPACE_URI = Symbol.for(`namespaceURI`)
-export const SYM_OWNER_DOCUMENT = Symbol.for(`ownerDocument`)
-export const SYM_IMPLEMENTATION = Symbol.for(`implementation`)
-export const SYM_DOCUMENT_ELEMENT = Symbol.for(`documentElement`)
+export const REF = Symbol.for(`ref`)
+export const DATA = Symbol.for(`data`)
+export const NAME = Symbol.for(`name`)
+export const VALUE = Symbol.for(`value`)
+export const STYLE = Symbol.for(`style`)
+export const DOCTYPE = Symbol.for(`doctype`)
+export const DATASET = Symbol.for(`dataset`)
+export const PUBLIC_ID = Symbol.for(`publicId`)
+export const SYSTEM_ID = Symbol.for(`systemId`)
+export const CLASS_LIST = Symbol.for(`classList`)
+export const LOCAL_NAME = Symbol.for(`localName`)
+export const ATTRIBUTES = Symbol.for(`attributes`)
+export const PARENT_NODE = Symbol.for(`parentNode`)
+export const CHILD_NODES = Symbol.for(`childNodes`)
+export const NAMESPACE_URI = Symbol.for(`namespaceURI`)
+export const OWNER_DOCUMENT = Symbol.for(`ownerDocument`)
+export const IMPLEMENTATION = Symbol.for(`implementation`)
+export const DOCUMENT_ELEMENT = Symbol.for(`documentElement`)
 
 /* Interfaces */
 
@@ -101,19 +102,19 @@ export class Node extends l.Emp {
   get [Symbol.toStringTag]() {return this.constructor.name}
   get isConnected() {return isDocument(this.getRootNode())}
   get parentElement() {return norm(l.only(this.parentNode, isElement))}
-  get childNodes() {return this[SYM_CHILD_NODES] ||= this.NodeList()}
-  set childNodes(val) {this[SYM_CHILD_NODES] = l.reqArr(val)}
-  get firstChild() {return norm(head(this[SYM_CHILD_NODES]))}
-  get lastChild() {return norm(last(this[SYM_CHILD_NODES]))}
+  get childNodes() {return this[CHILD_NODES] ||= this.NodeList()}
+  set childNodes(val) {this[CHILD_NODES] = l.reqArr(val)}
+  get firstChild() {return norm(head(this[CHILD_NODES]))}
+  get lastChild() {return norm(last(this[CHILD_NODES]))}
   get previousSibling() {return this.siblingAt(-1)}
   get nextSibling() {return this.siblingAt(1)}
-  get ownerDocument() {return norm(this[SYM_OWNER_DOCUMENT])}
-  set ownerDocument(val) {this[SYM_OWNER_DOCUMENT] = optDocument(val)}
+  get ownerDocument() {return norm(this[OWNER_DOCUMENT])}
+  set ownerDocument(val) {this[OWNER_DOCUMENT] = optDocument(val)}
   get nodeName() {return null}
   get nodeType() {return null}
   get nodeValue() {return null}
-  get parentNode() {return norm(this[SYM_PARENT_NODE])}
-  set parentNode(val) {this[SYM_PARENT_NODE] = val}
+  get parentNode() {return norm(this[PARENT_NODE])}
+  set parentNode(val) {this[PARENT_NODE] = val}
 
   getRootNode() {
     const val = this.parentNode
@@ -122,9 +123,9 @@ export class Node extends l.Emp {
     return val
   }
 
-  hasChildNodes() {return !!this[SYM_CHILD_NODES]?.length}
+  hasChildNodes() {return !!this[CHILD_NODES]?.length}
 
-  contains(val) {return !!this[SYM_CHILD_NODES]?.includes(val)}
+  contains(val) {return !!this[CHILD_NODES]?.includes(val)}
 
   /*
   Intentional deviation: we append fragments like they were normal nodes,
@@ -201,7 +202,7 @@ export class Node extends l.Emp {
   remove() {
     const par = this.parentNode
     if (l.isObj(par) && `removeChild` in par) par.removeChild(this)
-    if (this[SYM_PARENT_NODE]) this.parentNode = null
+    if (this[PARENT_NODE]) this.parentNode = null
   }
 
   /* Non-standard extensions. */
@@ -225,12 +226,12 @@ export class Node extends l.Emp {
     return ind >= 0 ? norm(nodes[ind + shift]) : null
   }
 
-  owned(doc) {return this[SYM_OWNER_DOCUMENT] = doc, this}
+  owned(doc) {return this[OWNER_DOCUMENT] = doc, this}
 }
 
 // Non-standard intermediary class for internal use.
 export class Textable extends Node {
-  get textContent() {return this.foldTextContent(``, this[SYM_CHILD_NODES])}
+  get textContent() {return this.foldTextContent(``, this[CHILD_NODES])}
 
   set textContent(val) {
     val = l.renderLax(val)
@@ -252,10 +253,10 @@ export class Textable extends Node {
 
 // Non-standard intermediary class for internal use.
 export class TextableElementParent extends Textable {
-  get children() {return this[SYM_CHILD_NODES]?.filter(isElement) ?? []}
-  get childElementCount() {return count(this[SYM_CHILD_NODES], isElement)}
-  get firstElementChild() {return norm(this[SYM_CHILD_NODES]?.find(isElement))}
-  get lastElementChild() {return norm(this[SYM_CHILD_NODES]?.findLast(isElement))}
+  get children() {return this[CHILD_NODES]?.filter(isElement) ?? []}
+  get childElementCount() {return count(this[CHILD_NODES], isElement)}
+  get firstElementChild() {return norm(this[CHILD_NODES]?.find(isElement))}
+  get lastElementChild() {return norm(this[CHILD_NODES]?.findLast(isElement))}
 }
 
 export class DocumentFragment extends TextableElementParent {
@@ -275,8 +276,8 @@ export class Void extends Node {
 // Non-standard intermediary class for internal use.
 export class Data extends Void {
   constructor(val) {super().data = val}
-  get data() {return l.laxStr(this[SYM_DATA])}
-  set data(val) {this[SYM_DATA] = l.renderLax(val)}
+  get data() {return l.laxStr(this[DATA])}
+  set data(val) {this[DATA] = l.renderLax(val)}
 }
 
 export class CharacterData extends Data {
@@ -313,9 +314,9 @@ value doesn't work. As a result, `document.createAttribute` is currently not
 fully implemented because the resulting attribute is not linked to a map.
 */
 export class Attr extends Node {
-  constructor(key) {super()[SYM_NAME] = l.reqStr(key)}
+  constructor(key) {super()[NAME] = l.reqStr(key)}
 
-  get name() {return this[SYM_NAME]}
+  get name() {return this[NAME]}
   get value() {return l.laxStr(this.parentNode.get(this.name))}
   set value(val) {this.parentNode.set(this.name, l.render(val))}
   get nodeName() {return this.name}
@@ -387,13 +388,13 @@ export class Element extends TextableElementParent {
   Our `dom_reg` assigns `localName` and `customName` to each registered class, as
   static properties. Our shim classes rely on these properties.
   */
-  get localName() {return norm(this[SYM_LOCAL_NAME] ?? this.constructor.localName)}
-  set localName(val) {this[SYM_LOCAL_NAME] = l.optStr(val)}
+  get localName() {return norm(this[LOCAL_NAME] ?? this.constructor.localName)}
+  set localName(val) {this[LOCAL_NAME] = l.optStr(val)}
 
   get tagName() {return norm(this.localName?.toUpperCase())}
 
-  get namespaceURI() {return norm(this[SYM_NAMESPACE_URI])}
-  set namespaceURI(val) {this[SYM_NAMESPACE_URI] = l.optStr(val)}
+  get namespaceURI() {return norm(this[NAMESPACE_URI])}
+  set namespaceURI(val) {this[NAMESPACE_URI] = l.optStr(val)}
 
   get parentNode() {return super.parentNode}
 
@@ -412,12 +413,12 @@ export class Element extends TextableElementParent {
     else if (was && dis && !this.isConnected) this.disconnectedCallback()
   }
 
-  get attributes() {return this[SYM_ATTRIBUTES] ||= this.Attributes()}
+  get attributes() {return this[ATTRIBUTES] ||= this.Attributes()}
 
   get id() {return l.laxStr(this.getAttribute(`id`))}
   set id(val) {this.setAttribute(`id`, val)}
 
-  get style() {return (this[SYM_STYLE] ||= this.Style()).pro}
+  get style() {return (this[STYLE] ||= this.Style()).pro}
 
   set style(val) {
     if (l.isNil(val)) {
@@ -430,8 +431,8 @@ export class Element extends TextableElementParent {
       return
     }
 
-    if (l.isStruct(val)) {
-      this[SYM_STYLE] = val
+    if (l.isRec(val)) {
+      this[STYLE] = val
       this.removeAttribute(`style`)
       return
     }
@@ -439,10 +440,10 @@ export class Element extends TextableElementParent {
     this.style = l.render(val)
   }
 
-  get dataset() {return (this[SYM_DATASET] ||= this.Dataset()).pro}
+  get dataset() {return (this[DATASET] ||= this.Dataset()).pro}
   get className() {return l.laxStr(this.getAttribute(`class`))}
   set className(val) {this.setAttribute(`class`, val)}
-  get classList() {return this[SYM_CLASS_LIST] ||= this.ClassList()}
+  get classList() {return this[CLASS_LIST] ||= this.ClassList()}
 
   get hidden() {return this.hasAttribute(`hidden`)}
   set hidden(val) {this.toggleAttribute(`hidden`, l.laxBool(val))}
@@ -454,7 +455,7 @@ export class Element extends TextableElementParent {
     this.setAttribute(`tabindex`, (l.isNum(val) ? val : l.render(val)) | 0)
   }
 
-  get innerHTML() {return this.foldInnerHTML(``, this[SYM_CHILD_NODES])}
+  get innerHTML() {return this.foldInnerHTML(``, this[CHILD_NODES])}
 
   /*
   Known limitation: the resulting element has incorrect `.textContent` because
@@ -474,17 +475,17 @@ export class Element extends TextableElementParent {
     finally {OUTER_HTML.set(prev)}
   }
 
-  hasAttribute(key) {return !!this[SYM_ATTRIBUTES]?.has(key)}
-  getAttribute(key) {return norm(this[SYM_ATTRIBUTES]?.get(key))}
+  hasAttribute(key) {return !!this[ATTRIBUTES]?.has(key)}
+  getAttribute(key) {return norm(this[ATTRIBUTES]?.get(key))}
 
   removeAttribute(key) {
-    this[SYM_ATTRIBUTES]?.delete(key)
+    this[ATTRIBUTES]?.delete(key)
 
     if (this.isStyleChange(key)) {
-      this[SYM_STYLE] = undefined
+      this[STYLE] = undefined
     }
     else if (this.isDatasetChange(key)) {
-      this[SYM_DATASET]?.attrDel(key)
+      this[DATASET]?.attrDel(key)
     }
   }
 
@@ -493,10 +494,10 @@ export class Element extends TextableElementParent {
     this.attributes.set(key, val)
 
     if (this.isStyleChange(key)) {
-      this[SYM_STYLE]?.dec()
+      this[STYLE]?.dec()
     }
     else if (this.isDatasetChange(key)) {
-      this[SYM_DATASET]?.attrSet(key, val)
+      this[DATASET]?.attrSet(key, val)
     }
   }
 
@@ -526,9 +527,9 @@ export class Element extends TextableElementParent {
     else this.setAttribute(key, val)
   }
 
-  isStyleChange(key) {return key === `style` && SYM_STYLE in this}
+  isStyleChange(key) {return key === `style` && STYLE in this}
 
-  isDatasetChange(key) {return key.startsWith(`data-`) && SYM_DATASET in this}
+  isDatasetChange(key) {return key.startsWith(`data-`) && DATASET in this}
 
   outerHtml() {
     const tag = this.tagString()
@@ -552,22 +553,22 @@ export class Element extends TextableElementParent {
 
   isVoid() {return p.VOID.has(this.localName)}
   tagString() {return l.laxStr(this.localName)}
-  attrString() {return l.laxStr(this[SYM_ATTRIBUTES]?.toString())}
+  attrString() {return l.laxStr(this[ATTRIBUTES]?.toString())}
   attrPrefix() {return this.attrIs() + this.attrXmlns()}
 
   attrIs() {
     const is = this.customName
-    if (!is || is === this.localName || this[SYM_ATTRIBUTES]?.has(`is`)) return ``
+    if (!is || is === this.localName || this[ATTRIBUTES]?.has(`is`)) return ``
     return NamedNodeMap.attr(`is`, is)
   }
 
   attrXmlns() {
-    if (this[SYM_ATTRIBUTES]?.has(`xmlns`)) return ``
+    if (this[ATTRIBUTES]?.has(`xmlns`)) return ``
 
-    const chiNs = this[SYM_NAMESPACE_URI]
+    const chiNs = this[NAMESPACE_URI]
     if (!chiNs) return ``
 
-    const doc = this[SYM_OWNER_DOCUMENT]
+    const doc = this[OWNER_DOCUMENT]
     if (isHtmlDoc(doc)) return ``
 
     const parNs = l.get(this.parentNode, `namespaceURI`)
@@ -579,7 +580,7 @@ export class Element extends TextableElementParent {
 }
 
 export class HTMLElement extends Element {
-  get namespaceURI() {return super.namespaceURI || p.nsHtml}
+  get namespaceURI() {return super.namespaceURI || p.NS_HTML}
   set namespaceURI(val) {super.namespaceURI = val}
 
   outerHtml() {
@@ -727,7 +728,7 @@ Has various deviations from the standard. For example, in a standard
 Our implementation doesn't support any of that for now.
 */
 export class SVGElement extends Element {
-  get namespaceURI() {return super.namespaceURI || p.nsSvg}
+  get namespaceURI() {return super.namespaceURI || p.NS_SVG}
   set namespaceURI(val) {super.namespaceURI = val}
 }
 
@@ -742,14 +743,14 @@ export class DocumentType extends Node {
   get nodeType() {return Node.DOCUMENT_TYPE_NODE}
   get nodeName() {return this.name}
 
-  get name() {return this[SYM_NAME]}
-  set name(val) {this[SYM_NAME] = l.optStr(val)}
+  get name() {return this[NAME]}
+  set name(val) {this[NAME] = l.optStr(val)}
 
-  get publicId() {return l.laxStr(this[SYM_PUBLIC_ID])}
-  set publicId(val) {this[SYM_PUBLIC_ID] = l.optStr(val)}
+  get publicId() {return l.laxStr(this[PUBLIC_ID])}
+  set publicId(val) {this[PUBLIC_ID] = l.optStr(val)}
 
-  get systemId() {return l.laxStr(this[SYM_SYSTEM_ID])}
-  set systemId(val) {this[SYM_SYSTEM_ID] = l.optStr(val)}
+  get systemId() {return l.laxStr(this[SYSTEM_ID])}
+  set systemId(val) {this[SYSTEM_ID] = l.optStr(val)}
 
   // Non-standard.
   get outerHTML() {return `<!doctype ${l.reqStr(this.name)}>`}
@@ -761,25 +762,25 @@ export class Document extends Node {
   get nodeType() {return Node.DOCUMENT_NODE}
   get nodeName() {return `#document`}
 
-  get implementation() {return this[SYM_IMPLEMENTATION]}
-  set implementation(val) {this[SYM_IMPLEMENTATION] = optDomImpl(val)}
+  get implementation() {return this[IMPLEMENTATION]}
+  set implementation(val) {this[IMPLEMENTATION] = optDomImpl(val)}
 
   get childNodes() {return [this.doctype, this.documentElement].filter(l.id)}
 
-  get doctype() {return norm(this[SYM_DOCTYPE])}
+  get doctype() {return norm(this[DOCTYPE])}
 
   set doctype(val) {
-    if ((this[SYM_DOCTYPE] = optDocumentType(val))) {
+    if ((this[DOCTYPE] = optDocumentType(val))) {
       remove(val)
       adopt(val, this)
       val.ownerDocument = this
     }
   }
 
-  get documentElement() {return norm(this[SYM_DOCUMENT_ELEMENT])}
+  get documentElement() {return norm(this[DOCUMENT_ELEMENT])}
 
   set documentElement(val) {
-    if ((this[SYM_DOCUMENT_ELEMENT] = optElement(val))) {
+    if ((this[DOCUMENT_ELEMENT] = optElement(val))) {
       remove(val)
       adopt(val, this)
       val.ownerDocument = this
@@ -815,7 +816,7 @@ export class Document extends Node {
   createElement(localName, opt) {
     l.reqStr(localName)
 
-    const is = l.optStr(l.get(opt, `is`))
+    const is = l.onlyStr(l.get(opt, `is`))
     const cls = this.customElements.get(is || localName) || this.baseClassByTag(localName)
     const tar = new cls()
 
@@ -849,12 +850,12 @@ export class Document extends Node {
 export class HTMLDocument extends Document {
   createElement(localName, opt) {
     const tar = super.createElement(localName, opt)
-    tar.namespaceURI = p.nsHtml
+    tar.namespaceURI = p.NS_HTML
     return tar
   }
 
   createElementNS(ns, localName, opt) {
-    if (ns === p.nsHtml) return this.createElement(localName, opt)
+    if (ns === p.NS_HTML) return this.createElement(localName, opt)
     return super.createElementNS(ns, localName, opt)
   }
 
@@ -907,7 +908,7 @@ export class CustomElementRegistry extends o.MixMain(l.Emp) {
   define(tag, cls, opt) {
     dr.reqCustomName(tag)
     l.reqCls(cls)
-    l.optStruct(opt)
+    l.optRec(opt)
 
     if (this.map.has(tag)) {
       throw Error(`redundant registration of ${l.show(tag)}`)
@@ -967,9 +968,9 @@ export class StylePh extends DictPh {
 
   dec() {this.decode(this.attrGet())}
   enc() {this.attrSet(this.encode())}
-  clear() {for (const key of l.structKeys(this.buf)) delete this.buf[key]}
+  clear() {for (const key of l.recKeys(this.buf)) delete this.buf[key]}
 
-  attrGet() {return this.tar[SYM_ATTRIBUTES]?.get(`style`)}
+  attrGet() {return this.tar[ATTRIBUTES]?.get(`style`)}
 
   attrSet(val) {
     if (!val && !this.tar.attributes.has(`style`)) return
@@ -994,7 +995,7 @@ export class StylePh extends DictPh {
   encode() {
     const {buf} = this
     let out = ``
-    for (const key of l.structKeys(buf)) out += this.encodePair(key, buf[key])
+    for (const key of l.recKeys(buf)) out += this.encodePair(key, buf[key])
     return out.trim()
   }
 
@@ -1003,7 +1004,7 @@ export class StylePh extends DictPh {
     return ` ` + l.reqStr(key) + `: ` + l.reqStr(val) + `;`
   }
 
-  styleToCss(key) {return styleToCssCache.goc(key)}
+  styleToCss(key) {return STYLE_TO_CSS.get(key)}
 }
 
 class DatasetPh extends DictPh {
@@ -1029,7 +1030,7 @@ class DatasetPh extends DictPh {
   /* Non-traps. */
 
   dec() {
-    const src = this.tar[SYM_ATTRIBUTES]
+    const src = this.tar[ATTRIBUTES]
     if (!src) return
     for (const [key, val] of src.entries()) this.attrSet(key, val)
   }
@@ -1044,8 +1045,8 @@ class DatasetPh extends DictPh {
     if (key) delete this.buf[key]
   }
 
-  camelToData(key) {return camelToDataCache.goc(key)}
-  dataToCamel(key) {return dataToCamelCache.goc(key)}
+  camelToData(key) {return CAMEL_TO_DATA.get(key)}
+  dataToCamel(key) {return DATA_TO_CAMEL.get(key)}
 }
 
 /*
@@ -1119,8 +1120,8 @@ export class ClassList extends l.Emp {
 
   /* Non-standard extensions. */
 
-  get ref() {return this[SYM_REF]}
-  set ref(val) {this[SYM_REF] = reqElement(val)}
+  get ref() {return this[REF]}
+  set ref(val) {this[REF] = reqElement(val)}
   toArray() {return split(this.value.trim(), /\s+/g)}
 }
 
@@ -1240,28 +1241,27 @@ export class RadioNodeList extends Array {}
 
 /* Namespaces */
 
-import * as self from './dom_shim.mjs'
+const PH_GLOB = l.Emp()
 
-export class GlobPh extends o.MakerPh {
-  make(key) {
-    if (!l.isStr(key)) return undefined
-    if (key in self) return self[key]
+PH_GLOB.get = function get(tar, key) {
+  if (key in tar) return tar[key]
+  if (key in ds) return ds[key]
+  if (!l.isStr(key)) return undefined
 
-    const cls = this.base(key)
-    if (!cls) return undefined
+  const cls = (
+    !key.endsWith(`Element`)
+    ? undefined
+    : key.startsWith(`HTML`)
+    ? HTMLElement
+    : key.startsWith(`SVG`)
+    ? SVGElement
+    : Element
+  )
 
-    return class Element extends cls {static get name() {return key}}
-  }
-
-  base(key) {
-    if (!key.endsWith(`Element`)) return undefined
-    if (key.startsWith(`HTML`)) return HTMLElement
-    if (key.startsWith(`SVG`)) return SVGElement
-    return Element
-  }
+  return cls && class Element extends cls {static get name() {return key}}
 }
 
-export const global = new Proxy(l.Emp(), new GlobPh())
+export const global = new Proxy(l.Emp(), PH_GLOB)
 export const document = new DOMImplementation().createHTMLDocument()
 export const customElements = document.customElements
 
@@ -1321,17 +1321,17 @@ export function unescapeMatch(str, dec, hex, exa) {
   return str
 }
 
-export const styleToCssCache = new class StyleKeys extends o.Cache {
-  make(val) {return camelToKebab(val)}
-}()
+export class STYLE_TO_CSS extends o.Cache {
+  static make(val) {return camelToKebab(val)}
+}
 
-export const camelToDataCache = new class DataKeys extends o.Cache {
-  make(val) {return camelToData(val)}
-}()
+export class CAMEL_TO_DATA extends o.Cache {
+  static make(val) {return camelToData(val)}
+}
 
-export const dataToCamelCache = new class DataKeys extends o.Cache {
-  make(val) {return dataToCamel(val)}
-}()
+export class DATA_TO_CAMEL extends o.Cache {
+  static make(val) {return dataToCamel(val)}
+}
 
 // Hidden context that allows to automatically set `xmlns` on XML elements.
 export const OUTER_HTML = new o.DynVar()

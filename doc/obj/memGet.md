@@ -3,10 +3,12 @@ Takes a class and hacks its prototype, converting all non-inherited getters to l
 ```js
 import * as o from '{{featUrl obj}}'
 
+class StructLax extends o.MixStruct(l.Emp) {}
+
 class Bucket {
   static {o.memGet(this)}
-  get one() {return new o.StructLax()}
-  get two() {return new o.StructLax()}
+  get one() {return new StructLax()}
+  get two() {return new StructLax()}
 }
 
 const ref = new Bucket()

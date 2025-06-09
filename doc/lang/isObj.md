@@ -2,4 +2,4 @@ Same as `typeof val === 'object' && val !== null`. True for any JS object: plain
 
 * Compare {{link lang isComp}} which returns true for objects _and_ functions.
 * For plain objects used as dictionaries, see {{link lang isDict}}.
-* For fancy non-list objects, see {{link lang isStruct}}.
+* For fancy non-list objects, see {{link lang isRec}}.

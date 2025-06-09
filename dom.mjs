@@ -186,6 +186,11 @@ export function selectText(val) {
   }
 }
 
+export function setText(tar, src) {
+  reqNode(tar).textContent = l.renderLax(src)
+  return tar
+}
+
 export function ancestor(tar, cls) {return findAncestor(tar, clsTest(cls))}
 
 function clsTest(cls) {
@@ -254,11 +259,11 @@ export function prevSibling(tar, cls) {return findPrevSibling(tar, clsTest(cls))
 Takes a DOM node class and returns a subclass with various shortcuts for DOM
 inspection and manipulation.
 */
-export function MixNode(val) {return MixNodeCache.goc(val)}
+export function MixNode(val) {return MixinNode.get(val)}
 
-export class MixNodeCache extends o.DedupMixinCache {
+export class MixinNode extends o.Mixin {
   static make(cls) {
-    return class MixNodeCls extends cls {
+    return class MixinNode extends cls {
       anc(cls) {return ancestor(this, cls)}
       findAnc(fun) {return findAncestor(this, fun)}
 
@@ -267,12 +272,92 @@ export class MixNodeCache extends o.DedupMixinCache {
 
       descs(cls) {return descendants(this, cls)}
       findDescs(fun) {return findDescendants(this, fun)}
+    }
+  }
+}
 
-      setText(src) {
-        const prev = this.textContent
-        const next = l.renderLax(src)
-        if (prev !== next) this.textContent = next
-        return this
+// Should match `dom_shim.mjs`.
+export const PARENT_NODE = Symbol.for(`parentNode`)
+
+/*
+Short for "mixin: child". Supports establishing child-to-parent relations.
+
+Implementation note. This uses the `get parentNode` and `set parentNode`
+properties for compatibility with native DOM classes and our own DOM shim.
+In addition to properties, we provide methods, because:
+
+- Methods are easier to override. Subclasses may override `.setParent` to add a
+  type assertion. To correctly override `set parentNode`, a subclass must also
+  explicitly define `get parentNode`, which takes more code and ends up more
+  error-prone.
+
+- Methods may return `this`, which is convenient for chaining.
+*/
+export function MixChild(val) {return MixinChild.get(val)}
+
+export class MixinChild extends o.Mixin {
+  static make(cls) {
+    const desc = o.descIn(cls.prototype, `parentNode`)
+
+    if (!desc || !desc.get) {
+      return class MixChildClsBase extends cls {
+        get parentNode() {return this[PARENT_NODE]}
+        set parentNode(val) {this[PARENT_NODE] = val}
+
+        getParent() {return this.parentNode}
+        setParent(val) {return this.parentNode = val, this}
+      }
+    }
+
+    if (desc.set) {
+      return class MixChildClsOnlyMethods extends cls {
+        getParent() {return this.parentNode}
+        setParent(val) {return this.parentNode = val, this}
+      }
+    }
+
+    /**
+    Native DOM classes operate in this mode. They define `.parentNode` getter
+    without setter. DOM tree operations set this property magically, bypassing
+    JS operations. We must prioritize the native getter over our property to
+    ensure that when the element is attached to the DOM, the native parent
+    takes priority over the grafted one.
+    */
+    return class MixChildClsCompat extends cls {
+      get parentNode() {return super.parentNode ?? this[PARENT_NODE]}
+      set parentNode(val) {this[PARENT_NODE] = val}
+
+      getParent() {return this.parentNode}
+      setParent(val) {return this.parentNode = val, this}
+    }
+  }
+}
+
+/*
+Short for "mixin: child with constructor". Variant of `MixChild` that
+automatically calls `.setParent` in the constructor if at least one argument
+was provided. Convenient for code that heavily relies on child-to-parent
+relations, which are particularly important when working with custom DOM
+elements and using our `prax.mjs` and/or `dom_shim.mjs`.
+
+Important note. Normally, DOM nodes establish child-to-parent relations when
+children are attached to parents. With this mixin, the child-to-parent
+relationship is established at construction time, via the first argument
+provided to the constructor, and before the child is attached to the parent.
+This allows children to immediately traverse the ancestor chain to
+access "contextual" data available on ancestors. Note that this establishes
+only child-to-parent relations, not parent-to-child. The latter become
+available only after attaching the newly initialized children to the parent,
+which is out of scope for this mixin.
+*/
+export function MixChildCon(val) {return MixinChildCon.get(val)}
+
+export class MixinChildCon extends o.Mixin {
+  static make(cls) {
+    return class MixinChildCon extends MixChild(cls) {
+      constructor(...val) {
+        super()
+        if (val.length) this.setParent(...val)
       }
     }
   }

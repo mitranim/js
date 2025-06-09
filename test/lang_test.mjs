@@ -520,24 +520,24 @@ t.test(function test_isKey() {
   t.ok(l.isKey(-10n))
 })
 
-t.test(function test_isStructKey() {
-  t.no(l.isStructKey(null))
-  t.no(l.isStructKey(undefined))
-  t.no(l.isStructKey(NaN))
-  t.no(l.isStructKey(Infinity))
-  t.no(l.isStructKey(-Infinity))
-  t.no(l.isStructKey({}))
-  t.no(l.isStructKey([]))
-  t.no(l.isStructKey(0))
-  t.no(l.isStructKey(-10))
-  t.no(l.isStructKey(10))
-  t.no(l.isStructKey(10.20))
-  t.no(l.isStructKey(true))
-  t.no(l.isStructKey(10n))
-  t.no(l.isStructKey(-10n))
+t.test(function test_isRecKey() {
+  t.no(l.isRecKey(null))
+  t.no(l.isRecKey(undefined))
+  t.no(l.isRecKey(NaN))
+  t.no(l.isRecKey(Infinity))
+  t.no(l.isRecKey(-Infinity))
+  t.no(l.isRecKey({}))
+  t.no(l.isRecKey([]))
+  t.no(l.isRecKey(0))
+  t.no(l.isRecKey(-10))
+  t.no(l.isRecKey(10))
+  t.no(l.isRecKey(10.20))
+  t.no(l.isRecKey(true))
+  t.no(l.isRecKey(10n))
+  t.no(l.isRecKey(-10n))
 
-  t.ok(l.isStructKey(``))
-  t.ok(l.isStructKey(Symbol(`blah`)))
+  t.ok(l.isRecKey(``))
+  t.ok(l.isRecKey(Symbol(`blah`)))
 })
 
 t.test(function test_isPk() {
@@ -718,30 +718,30 @@ t.test(function test_isDict() {
   t.ok(l.isDict({constructor: undefined}))
 })
 
-t.test(function test_isStruct() {
-  t.no(l.isStruct())
-  t.no(l.isStruct(null))
-  t.no(l.isStruct(``))
-  t.no(l.isStruct(l.nop))
-  t.no(l.isStruct([]))
-  t.no(l.isStruct(new String()))
-  t.no(l.isStruct(gen()))
+t.test(function test_isRec() {
+  t.no(l.isRec())
+  t.no(l.isRec(null))
+  t.no(l.isRec(``))
+  t.no(l.isRec(l.nop))
+  t.no(l.isRec([]))
+  t.no(l.isRec(new String()))
+  t.no(l.isRec(gen()))
 
-  t.ok(l.isStruct(/_/))
-  t.ok(l.isStruct({}))
-  t.ok(l.isStruct(inherit({})))
-  t.ok(l.isStruct(inherit(inherit({}))))
-  t.ok(l.isStruct(inherit(inherit(null))))
-  t.ok(l.isStruct(new Number()))
-  t.ok(l.isStruct(new Boolean()))
-  t.ok(l.isStruct(l.isStruct.prototype))
-  t.ok(l.isStruct(l.nop.prototype))
+  t.ok(l.isRec(/_/))
+  t.ok(l.isRec({}))
+  t.ok(l.isRec(inherit({})))
+  t.ok(l.isRec(inherit(inherit({}))))
+  t.ok(l.isRec(inherit(inherit(null))))
+  t.ok(l.isRec(new Number()))
+  t.ok(l.isRec(new Boolean()))
+  t.ok(l.isRec(l.isRec.prototype))
+  t.ok(l.isRec(l.nop.prototype))
 
   /*
-  Most of the code using `isStruct` doesn't care about this,
+  Most of the code using `isRec` doesn't care about this,
   and would be slowed down. Code that does care has to opt in.
   */
-  t.ok(l.isStruct(agen()))
+  t.ok(l.isRec(agen()))
 })
 
 t.test(function test_isArr() {
@@ -1269,7 +1269,7 @@ t.test(function test_eq() {
   expensive and often incorrect. It uses referential equality via `l.is`,
   falling back on custom `.eq()` in classes that implement this interface.
   This approach is not universal, but avoids: ludicrous inefficienties
-  such as walking arbitrarily large structs; semantic errors such as
+  such as walking arbitrarily large records; semantic errors such as
   considering all promises to be equal.
   */
   t.test(function test_different() {
@@ -1697,21 +1697,21 @@ t.test(function test_laxDict() {
   t.is(l.laxDict(ref), ref)
 })
 
-t.test(function test_laxStruct() {
-  t.throws(() => l.laxStruct([]),           TypeError, `expected variant of isStruct`)
-  t.throws(() => l.laxStruct(true),         TypeError, `expected variant of isStruct`)
-  t.throws(() => l.laxStruct(10),           TypeError, `expected variant of isStruct`)
-  t.throws(() => l.laxStruct(`str`),        TypeError, `expected variant of isStruct`)
-  t.throws(() => l.laxStruct(new String()), TypeError, `expected variant of isStruct`)
+t.test(function test_laxRec() {
+  t.throws(() => l.laxRec([]),           TypeError, `expected variant of isRec`)
+  t.throws(() => l.laxRec(true),         TypeError, `expected variant of isRec`)
+  t.throws(() => l.laxRec(10),           TypeError, `expected variant of isRec`)
+  t.throws(() => l.laxRec(`str`),        TypeError, `expected variant of isRec`)
+  t.throws(() => l.laxRec(new String()), TypeError, `expected variant of isRec`)
 
-  t.is(Object.getPrototypeOf(l.laxStruct()), null)
-  t.eq(l.laxStruct(), {})
-  t.eq(l.laxStruct(null), {})
-  t.eq(l.laxStruct(inherit(null)), {})
-  t.eq(l.laxStruct({one: 10}), {one: 10})
+  t.is(Object.getPrototypeOf(l.laxRec()), null)
+  t.eq(l.laxRec(), {})
+  t.eq(l.laxRec(null), {})
+  t.eq(l.laxRec(inherit(null)), {})
+  t.eq(l.laxRec({one: 10}), {one: 10})
 
   const ref = inherit(inherit({one: 10}))
-  t.is(l.laxStruct(ref), ref)
+  t.is(l.laxRec(ref), ref)
 })
 
 t.test(function test_reqScalar() {

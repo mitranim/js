@@ -1,5 +1,9 @@
 /* eslint-env browser */
 
+/*
+TODO: get testing and benching options from URL query parameters.
+*/
+
 const msgOk = `[test] ok!`
 const msgFail = `[test] fail`
 

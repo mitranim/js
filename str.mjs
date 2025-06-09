@@ -113,7 +113,7 @@ export class Words extends c.Vec {
   // Same as `iter.mjs` → `mapMut`. Avoiding import.
   mapMut(fun) {
     l.reqFun(fun)
-    const arr = this.$
+    const arr = this[l.VAL]
     let ind = -1
     while (++ind < arr.length) arr[ind] = fun(arr[ind])
     return this
@@ -121,12 +121,12 @@ export class Words extends c.Vec {
 
   mapHead(fun) {
     l.reqFun(fun)
-    const arr = this.$
+    const arr = this[l.VAL]
     if (arr.length) arr[0] = fun(arr[0])
     return this
   }
 
-  join(val) {return this.$.join(val)}
+  join(val) {return this[l.VAL].join(val)}
   str() {return this.toString()}
   toString() {return this.spaced()}
 
@@ -232,8 +232,8 @@ export class StrMap extends c.TypedMap {
     return this
   }
 
-  mutFromStruct(val) {
-    for (const key of l.structKeys(val)) this.setAny(key, val[key])
+  mutFromRec(val) {
+    for (const key of l.recKeys(val)) this.setAny(key, val[key])
     return this
   }
 
@@ -510,7 +510,7 @@ export class Draft extends c.Vec {
   // promises when the first promise is detected. Might be tricky.
   render(ctx) {
     let out = ``
-    for (const val of this.$) {
+    for (const val of this[l.VAL]) {
       out += l.renderLax(isRen(val) ? val.render(ctx) : val)
     }
     return out
@@ -518,11 +518,11 @@ export class Draft extends c.Vec {
 
   renderAsync(ctx) {
     const segment = val => isRen(val) ? val.render(ctx) : val
-    return Promise.all(this.$.map(segment)).then(strConcatLax)
+    return Promise.all(this[l.VAL].map(segment)).then(strConcatLax)
   }
 
   parse(src, reg) {
-    this.$.push(...splitMap.call(this, src, reg, this.embed))
+    this[l.VAL].push(...splitMap.call(this, src, reg, this.embed))
     return this
   }
 

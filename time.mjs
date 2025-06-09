@@ -59,11 +59,11 @@ export class Dur extends l.Emp {
   hasTime() {return !!(this.hours || this.minutes || this.seconds)}
 
   // Perf note: specialized `.setDur` would be several times faster than
-  // `.resetFromStruct`, but the costs are minor and not worth the lines.
+  // `.resetFromRec`, but the costs are minor and not worth the lines.
   reset(val) {
     if (l.isNil(val)) return this.clear()
     if (l.isStr(val)) return this.resetFromStr(val)
-    if (l.isStruct(val)) return this.resetFromStruct(val)
+    if (l.isRec(val)) return this.resetFromRec(val)
     throw l.errConvInst(val, this)
   }
 
@@ -79,8 +79,8 @@ export class Dur extends l.Emp {
     return this
   }
 
-  resetFromStruct(val) {
-    l.reqStruct(val)
+  resetFromRec(val) {
+    l.reqRec(val)
     this.setYears(val.years)
     this.setMonths(val.months)
     this.setDays(val.days)
@@ -111,10 +111,10 @@ export class Dur extends l.Emp {
     return this
   }
 
-  mut(val) {return l.isNil(val) ? this : this.mutFromStruct(val)}
+  mut(val) {return l.isNil(val) ? this : this.mutFromRec(val)}
 
-  mutFromStruct(val) {
-    for (const key of l.structKeys(val)) {
+  mutFromRec(val) {
+    for (const key of l.recKeys(val)) {
       if (l.hasOwn(this, key)) this[key] = l.laxInt(val[key])
     }
     return this

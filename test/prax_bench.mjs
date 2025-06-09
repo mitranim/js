@@ -8,9 +8,9 @@ import * as ds from '../dom_shim.mjs'
 
 /* Util */
 
-const ren = new p.Ren(ds.document)
+const ren = new p.Ren({env: ds.global})
 const E = ren.E.bind(ren)
-const A = p.PropBui.main
+const A = new p.PropBui().frozen()
 
 function P(val) {return p.PropBui.of(val)}
 
@@ -60,11 +60,11 @@ t.bench(function bench_props_make_PropBui_build_partial() {l.nop(makePropBuiBuil
 t.bench(function bench_props_make_PropBui_build_full() {l.nop(makePropBuiBuildFull())})
 
 t.bench(function bench_props_walk_static_empty_dict() {each(empty, l.nop)})
-t.bench(function bench_props_walk_static_empty_PropBui() {each(emptyPropBui.$, l.nop)})
+t.bench(function bench_props_walk_static_empty_PropBui() {each(emptyPropBui[l.VAL], l.nop)})
 t.bench(function bench_props_walk_static_dict() {each(longDict, l.nop)})
-t.bench(function bench_props_walk_static_PropBui() {each(longPropBui.$, l.nop)})
+t.bench(function bench_props_walk_static_PropBui() {each(longPropBui[l.VAL], l.nop)})
 t.bench(function bench_props_walk_dynamic_dict() {each(makeDictSpread(), l.nop)})
-t.bench(function bench_props_walk_dynamic_PropBui() {each(makePropBuiBuildFull().$, l.nop)})
+t.bench(function bench_props_walk_dynamic_PropBui() {each(makePropBuiBuildFull()[l.VAL], l.nop)})
 
 /*
 The following code allows an alternative syntax for constructing and mutating
@@ -73,17 +73,16 @@ as a "namespace" where accessing any property creates an element with that tag
 name. Patching the element prototype allows to mutate props / attrs and
 children on any element by calling methods `.props` and `.chi`, chainable.
 
-This approach has been removed from the Prax module because it provides little
-value over `ren.elem` and similar methods, creates learning barriers due to
-being very magical, and pollutes native prototypes, creating dangers of
-collisions in the future.
+This approach has been removed from the Prax module because it provides
+no advantage over the `E` function, impedes learning due to being magical,
+and requires method chaining, which requires adding methods to native
+prototypes, creating dangers of collisions in the future.
 */
 
-class Ph_Ren_makeElemHtml extends o.BlankStaticPh {
-  static get(ren, key) {return ren.makeElem(key)}
-}
+const PH_REN_makeElemHtml = l.Emp()
+PH_REN_makeElemHtml.get = function get(ren, key) {return ren.makeElem(key)}
 
-const EP = new Proxy(ren, Ph_Ren_makeElemHtml)
+const EP = new Proxy(ren, PH_REN_makeElemHtml)
 
 o.priv(ds.Element.prototype, `ren`, ren)
 

@@ -6,4 +6,4 @@ Takes an arbitrary input and returns an array of its values:
   * For {{link lang isIter iterables}} with `.values()`: equivalent to converting the output of `.values()` to an array. Implementation varies for performance.
     * Examples: `Set`, `Map`, and more.
   * For {{link lang isIterator iterators}}: equivalent to `[...iterator]`.
-  * For {{link lang isStruct structs}}: equivalent to [`Object.values`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/values).
+  * For {{link lang isRec records}}: equivalent to [`Object.values`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/values).

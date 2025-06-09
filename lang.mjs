@@ -1,4 +1,6 @@
-/* Type */
+export const VAL = Symbol.for(`val`)
+
+/* Typing */
 
 export function isNil(val) {return val == null}
 export function reqNil(val) {return isNil(val) ? val : throwErrFun(val, isNil)}
@@ -100,10 +102,10 @@ export function reqKey(val) {return isKey(val) ? val : throwErrFun(val, isKey)}
 export function optKey(val) {return isNil(val) ? val : reqKey(val)}
 export function onlyKey(val) {return isKey(val) ? val : undefined}
 
-export function isStructKey(val) {return isStr(val) || isSym(val)}
-export function reqStructKey(val) {return isStructKey(val) ? val : throwErrFun(val, isKey)}
-export function optStructKey(val) {return isNil(val) ? val : reqStructKey(val)}
-export function onlyStructKey(val) {return isStructKey(val) ? val : undefined}
+export function isRecKey(val) {return isStr(val) || isSym(val)}
+export function reqRecKey(val) {return isRecKey(val) ? val : throwErrFun(val, isKey)}
+export function optRecKey(val) {return isNil(val) ? val : reqRecKey(val)}
+export function onlyRecKey(val) {return isRecKey(val) ? val : undefined}
 
 export function isPk(val) {return isValidStr(val) || isIntPos(val)}
 export function reqPk(val) {return isPk(val) ? val : throwErrFun(val, isPk)}
@@ -174,11 +176,11 @@ export function optDict(val) {return isNil(val) ? val : reqDict(val)}
 export function onlyDict(val) {return isDict(val) ? val : undefined}
 export function laxDict(val) {return isNil(val) ? Emp() : reqDict(val)}
 
-export function isStruct(val) {return isObj(val) && !(Symbol.iterator in val)}
-export function reqStruct(val) {return isStruct(val) ? val : throwErrFun(val, isStruct)}
-export function optStruct(val) {return isNil(val) ? val : reqStruct(val)}
-export function onlyStruct(val) {return isStruct(val) ? val : undefined}
-export function laxStruct(val) {return isNil(val) ? Emp() : reqStruct(val)}
+export function isRec(val) {return isObj(val) && !(Symbol.iterator in val)}
+export function reqRec(val) {return isRec(val) ? val : throwErrFun(val, isRec)}
+export function optRec(val) {return isNil(val) ? val : reqRec(val)}
+export function onlyRec(val) {return isRec(val) ? val : undefined}
+export function laxRec(val) {return isNil(val) ? Emp() : reqRec(val)}
 
 export function isArr(val) {return Array.isArray(val)}
 export function reqArr(val) {return isArr(val) ? val : throwErrFun(val, isArr)}
@@ -265,7 +267,11 @@ export function optCls(val) {return isNil(val) ? val : reqCls(val)}
 export function onlyCls(val) {return isCls(val) ? val : undefined}
 
 // TODO tests.
-export function isSubCls(sub, sup) {return isCls(sub) && (sub === sup || isInst(sub.prototype, sup))}
+// export function isSubCls(sub, sup) {return isCls(sub) && (sub === sup || isInst(sub.prototype, sup))}
+
+export function isSubCls(sub, sup) {
+  return isFun(sub) && (sub === sup || Object.prototype.isPrototypeOf.call(sup, sub))
+}
 
 // TODO tests.
 export function reqSubCls(sub, sup) {
@@ -325,6 +331,11 @@ export function reqErr(val) {return isErr(val) ? val : throwErrFun(val, isErr)}
 export function optErr(val) {return isNil(val) ? val : reqErr(val)}
 export function onlyErr(val) {return isErr(val) ? val : undefined}
 
+export function isRef(val) {return isObj(val) && VAL in val}
+export function optRef(val) {return opt(val, isRef)}
+export function onlyRef(val) {return only(val, isRef)}
+export function reqRef(val) {return req(val, isRef)}
+
 export function isArrOf(val, fun) {
   reqValidator(fun)
   return isArr(val) && val.every(fun)
@@ -353,7 +364,7 @@ export function isEmpty(val) {
 
 export function isInst(val, cls) {return isObj(val) && val instanceof cls}
 
-/* Assert */
+/* Assertions */
 
 export function req(val, fun) {
   if (reqValidator(fun)(val)) return val
@@ -388,7 +399,10 @@ export function only(val, fun) {return reqValidator(fun)(val) ? val : undefined}
 
 export function onlyInst(val, cls) {return isInst(val, cls) ? val : undefined}
 
-/* Cast */
+/* Conversions */
+
+export function deref(val) {return isRef(val) ? val[VAL] : val}
+export function derefAll(val) {while (val !== (val = deref(val))); return val}
 
 export function toInst(val, cls) {return isInst(val, cls) ? val : new cls(val)}
 export function toInstOpt(val, cls) {return isNil(val) ? val : toInst(val, cls)}
@@ -471,7 +485,7 @@ export class Show extends Emp {
     if (isErr(src)) return this.err(src)
     if (isArr(src)) return this.arr(src)
     if (isDict(src)) return this.dict(src)
-    if (isInst(src, WeakRef)) return this.ref(src, WeakRef.name)
+    if (isInst(src, WeakRef)) return this.weakRef(src, WeakRef.name)
     if (isInst(src, Boolean)) return this.obj(src, Boolean.name)
     if (isInst(src, Number)) return this.obj(src, Number.name)
     if (isInst(src, String)) return this.obj(src, String.name)
@@ -509,7 +523,7 @@ export class Show extends Emp {
     return out
   }
 
-  ref(src, name) {
+  weakRef(src, name) {
     const val = src.deref()
     if (isNil(val)) return this.obj(src, name)
     return this.obj(src, name, this.any(val))
@@ -709,6 +723,6 @@ function renderDate(val) {
   return val.toString()
 }
 
-export function structKeys(val) {
-  return isNil(val) ? [] : Object.keys(reqStruct(val))
+export function recKeys(val) {
+  return isNil(val) ? [] : Object.keys(reqRec(val))
 }

@@ -2,6 +2,7 @@ import * as a from '../all.mjs'
 import * as io from '../io_deno.mjs'
 import * as cl from '../cli.mjs'
 import * as p from '../path.mjs'
+import * as u from './cmd_doc_util.mjs'
 
 const VER = (await io.readJson(`package.json`)).version
 const CLI = cl.Flag.os()
@@ -37,7 +38,7 @@ const FEATS = [
   [`test`, `tools for testing and benchmarking.`],
 ]
 
-class Pkg extends a.Strict {
+class Pkg extends u.Strict {
   constructor(feats) {
     super()
     this.feats = new a.Coll()
@@ -72,7 +73,7 @@ class Pkg extends a.Strict {
   featUrl(name) {return this.feat(name).selfUrl}
 }
 
-class Feat extends a.Strict {
+class Feat extends u.Strict {
   constructor(pkg, name, desc) {
     super()
     this.pkg = a.reqInst(pkg, Pkg)
@@ -216,7 +217,7 @@ ${a.joinLines(a.map(idents, toUndocBullet))}
   featUrl(name) {return this.pkg.featUrl(name)}
 }
 
-class Ident extends a.Strict {
+class Ident extends u.Strict {
   constructor(feat, line, type, name) {
     super()
     this.feat = a.reqInst(feat, Feat)

@@ -2,6 +2,7 @@ import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
+import * as c from '../coll.mjs'
 
 /* Util */
 
@@ -13,14 +14,6 @@ async function* agen() {unreachable()}
 function* copygen(val) {for (val of val) yield val}
 function fail() {unreachable()}
 class Arr extends Array {}
-
-// Adapted from `coll.mjs` to avoid dependency.
-class Vec {
-  constructor(val) {this.$ = l.reqTrueArr(val)}
-  toArray() {return this.$}
-  get size() {return this.$.length}
-  [Symbol.iterator]() {return this.$.values()}
-}
 
 function testSeqs(src, fun) {
   t.ok(Array.isArray(src))
@@ -48,20 +41,20 @@ function testDictHofBasics(fun) {
 }
 
 function testDictFunBasics(fun) {
-  t.throws(() => fun([]), TypeError, `expected variant of isStruct, got []`)
-  t.throws(() => fun(`str`), TypeError, `expected variant of isStruct, got "str"`)
+  t.throws(() => fun([]), TypeError, `expected variant of isRec, got []`)
+  t.throws(() => fun(`str`), TypeError, `expected variant of isRec, got "str"`)
   t.is(Object.getPrototypeOf(fun()), null)
 }
 
 /*
-Similar to `Vec` but more limited, lacking `.values`. Should still be considered
+Similar to `Vec` but more limited, lacking `.values`. Must still be considered
 a sequence.
 */
 class Seq extends l.Emp {
-  constructor(src) {super().$ = l.laxTrueArr(src)}
-  get size() {return this.$.length}
-  [Symbol.iterator]() {return this.$[Symbol.iterator]()}
-  toArray() {return this.$}
+  constructor(src) {super()[l.VAL] = l.laxTrueArr(src)}
+  get size() {return this[l.VAL].length}
+  [Symbol.iterator]() {return this[l.VAL][Symbol.iterator]()}
+  toArray() {return this[l.VAL]}
 }
 
 /* Test */
@@ -200,10 +193,10 @@ t.test(function test_keys() {
   function test(src, exp) {t.eq(i.keys(src), exp)}
 
   function testList(src, exp) {
-    test(src,          exp)
-    test(args(...src), exp)
-    test(copygen(src), exp)
-    test(new Vec(src), exp)
+    test(src,            exp)
+    test(args(...src),   exp)
+    test(copygen(src),   exp)
+    test(new c.Vec(src), exp)
   }
 
   testList([],           [])
@@ -300,7 +293,7 @@ t.test(function test_entries() {
 
   test([10, 20],                      [[0, 10], [1, 20]])
   test(args(10, 20),                  [[0, 10], [1, 20]])
-  test(new Vec([10, 20]),             [[0, 10], [1, 20]])
+  test(new c.Vec([10, 20]),           [[0, 10], [1, 20]])
   test(copygen([10, 20]),             [10, 20])
   test(new Set([10, 20]),             [[10, 10], [20, 20]])
   test({one: 10, two: 20},            [[`one`, 10], [`two`, 20]])
@@ -1279,8 +1272,8 @@ t.test(function test_omit() {
 })
 
 t.test(function test_pickKeys() {
-  t.throws(() => i.pickKeys([]),    TypeError, `expected variant of isStruct, got []`)
-  t.throws(() => i.pickKeys(`str`), TypeError, `expected variant of isStruct, got "str"`)
+  t.throws(() => i.pickKeys([]),    TypeError, `expected variant of isRec, got []`)
+  t.throws(() => i.pickKeys(`str`), TypeError, `expected variant of isRec, got "str"`)
 
   t.is(Object.getPrototypeOf(i.pickKeys()), null)
 
@@ -1297,8 +1290,8 @@ t.test(function test_pickKeys() {
 })
 
 t.test(function test_omitKeys() {
-  t.throws(() => i.omitKeys([]),    TypeError, `expected variant of isStruct, got []`)
-  t.throws(() => i.omitKeys(`str`), TypeError, `expected variant of isStruct, got "str"`)
+  t.throws(() => i.omitKeys([]),    TypeError, `expected variant of isRec, got []`)
+  t.throws(() => i.omitKeys(`str`), TypeError, `expected variant of isRec, got "str"`)
 
   t.is(Object.getPrototypeOf(i.omitKeys()), null)
 
@@ -1315,8 +1308,8 @@ t.test(function test_omitKeys() {
 })
 
 t.test(function test_compactDict() {
-  t.throws(() => i.omitKeys([]),    TypeError, `expected variant of isStruct, got []`)
-  t.throws(() => i.omitKeys(`str`), TypeError, `expected variant of isStruct, got "str"`)
+  t.throws(() => i.omitKeys([]),    TypeError, `expected variant of isRec, got []`)
+  t.throws(() => i.omitKeys(`str`), TypeError, `expected variant of isRec, got "str"`)
 
   t.is(Object.getPrototypeOf(i.omitKeys()), null)
 

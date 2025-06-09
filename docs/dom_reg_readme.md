@@ -26,7 +26,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.67/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/dom_reg.mjs'
 
 // Enables immediate registration.
 // By default, registration is deferred for SSR compatibility.
@@ -79,7 +79,7 @@ Registry for custom DOM element classes. Automatically derives tag name from cla
 By default, this registry has **no global side effects**. To enable global registration, provide a "definer" to the registry.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.67/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   // Optional. If omitted, `dr.reg` autogenerates
@@ -106,7 +106,7 @@ The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg
   * [`const CLS_TO_TAG`](../dom_reg.mjs#L95)
   * [`function clsLocalName`](../dom_reg.mjs#L105)
   * [`function MixReg`](../dom_reg.mjs#L129)
-  * [`class MixRegCache`](../dom_reg.mjs#L131)
+  * [`class MixinReg`](../dom_reg.mjs#L131)
   * [`function setDefiner`](../dom_reg.mjs#L142)
   * [`function isDefiner`](../dom_reg.mjs#L252)
   * [`function optDefiner`](../dom_reg.mjs#L253)

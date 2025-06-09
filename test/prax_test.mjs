@@ -4,18 +4,19 @@ import * as l from '../lang.mjs'
 import * as p from '../prax.mjs'
 import * as dr from '../dom_reg.mjs'
 import * as ds from '../dom_shim.mjs'
+import * as ob from '../obs.mjs'
 
 /* Util */
 
-const ren = new p.Ren(ds.document)
+const env = ob.HAS_DOM ? globalThis : ds.global
+const ren = new p.Ren({env})
 const E = ren.E
 const F = ren.frag.bind(ren)
-const A = p.PropBui.main
-const Text = ds.Text
-const NATIVE = ren.doc === globalThis.document
+const A = new p.PropBui().frozen()
+const {Text, Comment} = env
 
 function* gen(...vals) {for (const val of vals) yield val}
-function testDerefOwn(src, exp) {t.own(src.$, exp)}
+function testDerefOwn(src, exp) {t.own(src[l.VAL], exp)}
 
 // Short for "equal markup".
 export function eqm(val, exp) {
@@ -29,7 +30,7 @@ export function eqm2(val, native, shimmed) {
   l.reqStr(native)
   l.reqStr(shimmed)
 
-  if (NATIVE) {
+  if (ob.HAS_DOM) {
     t.is(val.outerHTML, native)
   }
   else {
@@ -79,7 +80,7 @@ t.test(function test_PropBui() {
   t.test(function test_cls() {
     t.throws(() => new p.PropBui().cls(10), TypeError, `expected variant of isStr, got 10`)
 
-    t.is(new p.PropBui().cls().$, undefined)
+    t.is(new p.PropBui().cls()[l.VAL], undefined)
 
     testDerefOwn(new p.PropBui().cls(`one`), {class: `one`})
     testDerefOwn(new p.PropBui().cls(``).cls(`one`), {class: `one`})
@@ -103,7 +104,7 @@ function testPropBuiConstructor(fun) {
     t.inst(out, p.PropBui)
     t.isnt(out, src)
 
-    t.own(out, {[Symbol.for(`$`)]: src, [Symbol.for(`frozen`)]: false})
+    t.own(out, {[l.VAL]: src, [Symbol.for(`frozen`)]: false})
     testDerefOwn(out, src)
   }
 
@@ -149,7 +150,7 @@ t.test(function test_PropBui_A() {
     function none(src) {
       const out = A.mut(src)
       t.is(out, A)
-      t.is(out.$, undefined)
+      t.is(out[l.VAL], undefined)
     }
 
     none()
@@ -183,15 +184,14 @@ t.test(function test_Ren_elemHtml_invalid() {
   })
 
   t.test(function test_invalid_props() {
-    t.throws(() => ren.elemHtml(`div`, 10),                          TypeError, `expected variant of isObj, got 10`)
-    t.throws(() => ren.elemHtml(`div`, `str`),                       TypeError, `expected variant of isObj, got "str"`)
+    t.throws(() => ren.elemHtml(`div`, 10),                          TypeError, `expected variant of isRec, got 10`)
+    t.throws(() => ren.elemHtml(`div`, `str`),                       TypeError, `expected variant of isRec, got "str"`)
     t.throws(() => ren.elemHtml(`div`, {nop: l.nop}),                TypeError, `unable to convert property "nop" [function nop] to string`)
-    t.throws(() => ren.elemHtml(`div`, []),                          TypeError, `expected variant of isStruct, got []`)
-    t.throws(() => ren.elemHtml(`div`, E),                           TypeError, `expected variant of isObj, got [function bound E]`)
-    t.throws(() => ren.elemHtml(`div`, new String()),                TypeError, `expected variant of isStruct, got [object String ""]`)
-    t.throws(() => ren.elemHtml(`div`, {attributes: 10}),            TypeError, `expected variant of isObj, got 10`)
-    t.throws(() => ren.elemHtml(`div`, {attributes: `str`}),         TypeError, `expected variant of isObj, got "str"`)
-    t.throws(() => ren.elemHtml(`div`, {attributes: []}),            TypeError, `expected variant of isStruct, got []`)
+    t.throws(() => ren.elemHtml(`div`, []),                          TypeError, `expected variant of isRec, got []`)
+    t.throws(() => ren.elemHtml(`div`, new String()),                TypeError, `expected variant of isRec, got [object String ""]`)
+    t.throws(() => ren.elemHtml(`div`, {attributes: 10}),            TypeError, `expected variant of isRec, got 10`)
+    t.throws(() => ren.elemHtml(`div`, {attributes: `str`}),         TypeError, `expected variant of isRec, got "str"`)
+    t.throws(() => ren.elemHtml(`div`, {attributes: []}),            TypeError, `expected variant of isRec, got []`)
     t.throws(() => ren.elemHtml(`div`, {class: []}),                 TypeError, `unable to convert property "class" [] to string`)
     t.throws(() => ren.elemHtml(`div`, {className: []}),             TypeError, `unable to convert property "className" [] to string`)
     t.throws(() => ren.elemHtml(`div`, {class: {}}),                 TypeError, `unable to convert property "class" {} to string`)
@@ -200,9 +200,9 @@ t.test(function test_Ren_elemHtml_invalid() {
     t.throws(() => ren.elemHtml(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" [object] to string`)
     t.throws(() => ren.elemHtml(`div`, {style: 10}),                 TypeError, `unable to convert 10 to style`)
     t.throws(() => ren.elemHtml(`div`, {style: []}),                 TypeError, `unable to convert [] to style`)
-    t.throws(() => ren.elemHtml(`div`, {dataset: 10}),               TypeError, `expected variant of isObj, got 10`)
-    t.throws(() => ren.elemHtml(`div`, {dataset: `str`}),            TypeError, `expected variant of isObj, got "str"`)
-    t.throws(() => ren.elemHtml(`div`, {dataset: []}),               TypeError, `expected variant of isStruct, got []`)
+    t.throws(() => ren.elemHtml(`div`, {dataset: 10}),               TypeError, `expected variant of isRec, got 10`)
+    t.throws(() => ren.elemHtml(`div`, {dataset: `str`}),            TypeError, `expected variant of isRec, got "str"`)
+    t.throws(() => ren.elemHtml(`div`, {dataset: []}),               TypeError, `expected variant of isRec, got []`)
   })
 })
 
@@ -218,48 +218,40 @@ t.test(function test_Ren_E_basic() {
     eqm(E(`span`, {one: `two`}, `three`), `<span one="two">three</span>`)
   })
 
-  t.test(function test_tag_element() {
+  t.test(function test_element_mut_props_or_chi() {
     eqm(E(E(`span`)), `<span></span>`)
 
     eqm(E(E(E(`span`))), `<span></span>`)
 
-    eqm(
-      E(
-        E(
-          E(
-            E(`span`),
-            {one: `two`},
-          ),
-          {three: `four`},
-        ),
-        undefined,
-        `five`,
-      ),
-      `<span one="two" three="four">five</span>`,
-    )
-  })
+    const node = E(`span`)
+    eqm(node, `<span></span>`)
 
-  t.test(function test_element_mut_props_or_chi() {
-    const tar = E(`span`, {class: `one`}, `two`)
-    eqm(tar, `<span class="one">two</span>`)
+    t.is(E(node, {one: `two`}), node)
+    eqm(node, `<span one="two"></span>`)
 
-    t.is(E(tar), tar)
-    eqm(tar, `<span class="one">two</span>`)
+    t.is(E(node, {three: `four`}), node)
+    eqm(node, `<span three="four"></span>`)
 
-    t.is(E(tar, {}), tar)
-    eqm(tar, `<span class="one">two</span>`)
+    t.is(E(node, {one: `two`, three: `four`}), node)
+    eqm(node, `<span three="four" one="two"></span>`)
 
-    t.is(E(tar, {class: `three`}), tar)
-    eqm(tar, `<span class="three">two</span>`)
+    t.is(E(node, undefined), node)
+    eqm(node, `<span three="four" one="two"></span>`)
 
-    t.is(E(tar, {class: `four`}, undefined), tar)
-    eqm(tar, `<span class="four"></span>`)
+    t.is(E(node, undefined, `five`), node)
+    eqm(node, `<span three="four" one="two">five</span>`)
 
-    t.is(E(tar, {}, `five`), tar)
-    eqm(tar, `<span class="four">five</span>`)
+    t.is(E(node, {six: `seven`}), node)
+    eqm(node, `<span six="seven">five</span>`)
 
-    t.is(E(tar, {}, undefined), tar)
-    eqm(tar, `<span class="four"></span>`)
+    t.is(E(node, undefined, undefined), node)
+    eqm(node, `<span six="seven"></span>`)
+
+    t.is(E(node, null, `eight`), node)
+    eqm(node, `<span six="seven">eight</span>`)
+
+    t.is(E(node, {}, undefined), node)
+    eqm(node, `<span></span>`)
   })
 })
 
@@ -382,6 +374,13 @@ t.test(function test_Ren_serialization() {
         eqm(
           E(`div`, {class: `<one>&"</one>`}),
           `<div class="<one>&amp;&quot;</one>"></div>`,
+        )
+      })
+
+      t.test(function test_class_PropBui() {
+        eqm(
+          E(`div`, A.cls(`one`).cls(`two`)),
+          `<div class="one two"></div>`,
         )
       })
     })
@@ -749,7 +748,7 @@ t.test(function test_Ren_serialization() {
   // TODO better tests.
   t.test(function test_custom_elements() {
     t.test(function test_simple() {
-      class SomeElem extends ds.global.HTMLElement {
+      class SomeElem extends env.HTMLElement {
         static customName = `elem-35e92d`
         static {dr.reg(this)}
         init() {return E(this, A.cls(`theme-prim`), `some text`)}
@@ -764,7 +763,7 @@ t.test(function test_Ren_serialization() {
     })
 
     t.test(function test_extended() {
-      class TestBtn extends ds.global.HTMLButtonElement {
+      class TestBtn extends env.HTMLButtonElement {
         static customName = `elem-4873e3`
         static {dr.reg(this)}
         init() {return E(this, A.cls(`theme-prim`), `click me`)}
@@ -784,9 +783,6 @@ function testNonScalarChiStrict(E) {
   t.throws(() => E(`div`, {}, Symbol(`str`)),       TypeError, `unable to convert Symbol(str) to string`)
   t.throws(() => E(`div`, {}, {}),                  TypeError, `unable to convert {} to string`)
   t.throws(() => E(`div`, {}, Object.create(null)),             TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {}, new class {}()),      TypeError, `unable to convert [object] to string`)
-  t.throws(() => E(`div`, {}, () => {}),            TypeError, `unable to convert [function () => {}] to string`)
-  t.throws(() => E(`div`, {}, function fun() {}),   TypeError, `unable to convert [function fun] to string`)
   t.throws(() => E(`div`, {}, Promise.resolve()),   TypeError, `unable to convert [object Promise] to string`)
 }
 
@@ -805,9 +801,8 @@ function testNonScalarPropStrict(E) {
   t.throws(() => E(`div`, {one: {}}),                  TypeError, `unable to convert property "one" {} to string`)
   t.throws(() => E(`div`, {one: l.Emp()}),             TypeError, `unable to convert property "one" {} to string`)
   t.throws(() => E(`div`, {one: new class {}()}),      TypeError, `unable to convert property "one" [object] to string`)
-  t.throws(() => E(`div`, {}, () => {}),               TypeError, `unable to convert [function () => {}] to string`)
-  t.throws(() => E(`div`, {}, function fun() {}),      TypeError, `unable to convert [function fun] to string`)
-  t.throws(() => E(`div`, {}, Promise.resolve()),      TypeError, `unable to convert [object Promise] to string`)
+  t.throws(() => E(`div`, {one() {}}),                 TypeError, `unable to convert property "one" [function one] to string`)
+  t.throws(() => E(`div`, {one: Promise.resolve()}),   TypeError, `unable to convert property "one" [object Promise] to string`)
 
   // Banned specifically in attrs, but allowed in children.
   t.throws(() => E(`div`, {one: []}), TypeError, `unable to convert property "one" [] to string`)
@@ -819,43 +814,105 @@ function testNonScalarPropLax(E, eqm) {
   eqm(E(`div`, {one: {}}), `<div></div>`)
   eqm(E(`div`, {one: l.Emp()}), `<div></div>`)
   eqm(E(`div`, {one: new class {}()}), `<div></div>`)
-  eqm(E(`div`, {}, () => {}), `<div></div>`)
-  eqm(E(`div`, {}, function fun() {}), `<div></div>`)
-  eqm(E(`div`, {}, Promise.resolve()), `<div></div>`)
+  eqm(E(`div`, {one: () => {}}), `<div></div>`)
+  eqm(E(`div`, {one: function fun() {}}), `<div></div>`)
+  eqm(E(`div`, {one: Promise.resolve()}), `<div></div>`)
   eqm(E(`div`, {one: [10, 20]}), `<div></div>`)
   eqm(E(`div`, {one: new class extends Array {}(10, 20)}), `<div></div>`)
 }
 
 t.test(function test_Ren_dom_behaviors() {
   t.test(function test_fragment() {
-    t.inst(F(), ds.DocumentFragment)
+    t.inst(F(), env.DocumentFragment)
 
     t.is(
-      F(`one`, [10], E(`div`, {}, `two`, new ds.Comment(`three`))).textContent,
+      F(`one`, [10], E(`div`, {}, `two`, new Comment(`three`))).textContent,
       `one10two`,
     )
   })
 
   // Parts of this function are tested elsewhere.
   // We only need a sanity check here.
-  t.test(function test_mutProps() {
-    t.throws(() => ren.mutProps(), TypeError, `expected variant of isObj, got undefined`)
+  t.test(function test_mutProps_basic() {
+    t.throws(() => ren.mutProps(), TypeError, `expected variant of isRec, got undefined`)
 
     t.test(function test_identity() {
       const node = E(`div`)
       t.is(ren.mutProps(node), node)
     })
 
-    eqm(
-      ren.mutProps(E(`div`, {class: `one`}, `two`), {class: `three`}),
-      `<div class="three">two</div>`,
-    )
+    const node = E(`div`, {class: `one`}, `two`)
+    eqm(node, `<div class="one">two</div>`)
+
+    t.is(ren.mutProps(node, {class: `three`}), node)
+    eqm(node, `<div class="three">two</div>`)
+  })
+
+  t.test(function test_mutProps_fun() {
+    const obs = ob.obsRef(`one`)
+
+    ren.shed = undefined
+
+    {
+      const node = E(`div`, () => ({class: obs.val}), `two`)
+      eqm(node, `<div class="one">two</div>`)
+      obs.val = `three`
+      eqm(node, `<div class="one">two</div>`)
+    }
+
+    ren.shed = ob.ShedSync.main
+
+    {
+      const node = E(`div`, () => ({class: obs.val}), `two`)
+      eqm(node, `<div class="three">two</div>`)
+      obs.val = `four`
+      eqm(node, `<div class="four">two</div>`)
+    }
+
+    ren.shed = ob.getUiShed()
+  })
+
+  t.test(function test_mutProps_obs() {
+    ren.shed = undefined
+
+    {
+      const obs = ob.obsRef({class: `one`})
+      const node = E(`div`, obs, `two`)
+      eqm(node, `<div class="one">two</div>`)
+      obs.val = {class: `three`}
+      eqm(node, `<div class="one">two</div>`)
+    }
+
+    ren.shed = ob.ShedSync.main
+
+    {
+      const obs = ob.obsRef({class: `one`})
+      const node = E(`div`, obs, `two`)
+      eqm(node, `<div class="one">two</div>`)
+      obs.val = {class: `three`, style: `display: flex`}
+      eqm(node, `<div class="three" style="display: flex">two</div>`)
+    }
+
+    {
+      const obs = ob.obs({class: `one`})
+      const node = E(`div`, obs, `two`)
+      eqm(node, `<div class="one">two</div>`)
+      ren.shed.pause()
+      try {
+        obs.class = `three`
+        obs.style = `display: flex`
+      }
+      finally {ren.shed.flush()}
+      eqm(node, `<div class="three" style="display: flex">two</div>`)
+    }
+
+    ren.shed = ob.getUiShed()
   })
 
   // Parts of this function are tested elsewhere.
   // We only need a sanity check here.
   t.test(function test_mut() {
-    t.throws(() => ren.mut(), TypeError, `expected variant of isObj, got undefined`)
+    t.throws(() => ren.mut(), TypeError, `expected variant of isRec, got undefined`)
 
     t.test(function test_mut_identity() {
       const node = E(`div`)
@@ -988,10 +1045,105 @@ t.test(function test_Ren_dom_behaviors() {
       eqm(tar, `<div><one></one>fourfive<three></three></div>`)
     }
   })
+
+  t.test(function test_chi_fun_obs() {
+    const obs0 = ob.obsRef()
+
+    t.test(function test_fun_non_reactive() {
+      ren.shed = undefined
+
+      const tar = E(`div`, {}, () => obs0.val)
+      eqm(tar, `<div></div>`)
+      obs0.val = 10
+      eqm(tar, `<div></div>`)
+
+      ren.shed = ob.getUiShed()
+    })
+
+    t.test(function test_obs_non_reactive() {
+      ren.shed = undefined
+
+      const tar = E(`div`, {}, obs0)
+      eqm(tar, `<div></div>`)
+      obs0.val = 10
+      eqm(tar, `<div></div>`)
+
+      ren.shed = ob.getUiShed()
+    })
+
+    t.test(function test_reactive() {
+      ren.shed = ob.ShedSync.main
+      obs0.val = undefined
+
+      const tar = E(`div`, {}, () => obs0.val)
+      eqm(tar, `<div></div>`)
+
+      t.inst(tar.childNodes[0], ren.RecNodeFun)
+      t.is(tar.childNodes.length, 1)
+
+      obs0.val = 10
+      eqm(tar, `<div>10</div>`)
+
+      t.inst(tar.childNodes[0], ren.RecNodeFun)
+      t.is(tar.childNodes.length, 1)
+
+      obs0.val = `str`
+      eqm(tar, `<div>str</div>`)
+
+      t.inst(tar.childNodes[0], ren.RecNodeFun)
+      t.is(tar.childNodes.length, 1)
+
+      obs0.val = [10]
+      eqm(tar, `<div>10</div>`)
+
+      obs0.val = [10, `_`, 20]
+      eqm(tar, `<div>10_20</div>`)
+
+      obs0.val = [10, `_`, 20, `_`, 30]
+      eqm(tar, `<div>10_20_30</div>`)
+
+      const obs1 = ob.obs({val: [`_`, 40, `_`, 50]})
+
+      E(tar, {}, obs0, () => obs1.val)
+      eqm(tar, `<div>10_20_30_40_50</div>`)
+
+      obs1.val = undefined
+      eqm(tar, `<div>10_20_30</div>`)
+
+      obs1.val = [`_`, 60, `_`, 70]
+      eqm(tar, `<div>10_20_30_60_70</div>`)
+
+      obs0.val = ``
+      eqm(tar, `<div>_60_70</div>`)
+
+      obs0.val = [10, `_`, 20, `_`, 30]
+      eqm(tar, `<div>10_20_30_60_70</div>`)
+
+      t.ok(ob.isObsRef(obs0))
+      t.ok(ob.isObsRef(obs1))
+
+      obs0.val = [10, `_`]
+      obs1.toNode = () => [`_`, 20]
+
+      E(tar, {}, obs0, obs1)
+
+      eqm(tar, `<div>10__20</div>`)
+
+      ren.shed.pause()
+      try {
+        obs0.val = [30, `_`]
+        obs1.toNode = () => [`_`, 40]
+      }
+      finally {ren.shed.flush()}
+      eqm(tar, `<div>30__40</div>`)
+
+      ren.shed = ob.getUiShed()
+    })
+  })
 })
 
 t.test(function test_Ren_custom_element() {
-  class SomeElem extends ds.global.HTMLElement {
+  class SomeElem extends env.HTMLElement {
     static customName = `elem-a5425a`
     static {dr.reg(this)}
     init() {return E(this, {id: `one`, class: `two`}, `three`)}
@@ -1011,14 +1163,14 @@ t.test(function test_Ren_node() {
     t.isnt(ren.node(val, val), val)
   }
 
-  same(new ds.Text(`one`))
-  same(new ds.Comment(`one`))
+  same(new Text(`one`))
+  same(new Comment(`one`))
   same(ren.elemHtml(`span`))
   same(ren.frag())
 
   function frag(src, exp) {
     const tar = ren.node(...src)
-    t.inst(tar, ds.DocumentFragment)
+    t.inst(tar, env.DocumentFragment)
     t.is(tar.textContent, exp)
   }
 

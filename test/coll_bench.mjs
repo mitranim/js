@@ -125,10 +125,10 @@ t.bench(function bench_vec_from_set_Vec() {l.nop(c.Vec.from(itc.numSet))})
 t.bench(function bench_vec_walk_Array() {for (const val of itc.numArr) l.nop(val)})
 t.bench(function bench_vec_walk_Vec() {for (const val of numVec) l.nop(val)})
 
-t.bench(function bench_vec_map_inner_native() {l.nop(numVec.$.map(l.inc))})
+t.bench(function bench_vec_map_inner_native() {l.nop(numVec[l.VAL].map(l.inc))})
 t.bench(function bench_vec_map_our_iter() {l.nop(i.map(numVec, l.inc))})
 
-t.bench(function bench_vec_filter_inner_native() {l.nop(numVec.$.filter(l.id))})
+t.bench(function bench_vec_filter_inner_native() {l.nop(numVec[l.VAL].filter(l.id))})
 t.bench(function bench_vec_filter_our_iter() {l.nop(i.filter(numVec, l.id))})
 
 t.bench(function bench_vec_clear_empty() {l.nop(vecEmpty.clear())})

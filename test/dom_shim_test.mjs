@@ -652,7 +652,7 @@ t.test(function test_Element_namespaceURI() {
   tar.ownerDocument = ds.document
   t.is(tar.namespaceURI, null)
 
-  tar.namespaceURI = p.nsSvg
+  tar.namespaceURI = p.NS_SVG
   t.is(tar.namespaceURI, `http://www.w3.org/2000/svg`)
 })
 
@@ -1378,7 +1378,7 @@ t.test(function test_xmlns_standalone() {
 
 t.test(function test_xmlns_inside_Document() {
   const tar = new ds.Element()
-  tar.ownerDocument = dom.createDocument(p.nsHtml, null, null)
+  tar.ownerDocument = dom.createDocument(p.NS_HTML, null, null)
   testNsExisting(tar)
 })
 
@@ -1395,26 +1395,26 @@ t.test(function test_xmlns_inside_HTMLDocument() {
 function testNsExisting(tar) {
   tar.localName = `one`
 
-  tar.namespaceURI = p.nsHtml
+  tar.namespaceURI = p.NS_HTML
   eqm(tar, `<one xmlns="http://www.w3.org/1999/xhtml"></one>`)
 
-  tar.namespaceURI = p.nsSvg
+  tar.namespaceURI = p.NS_SVG
   eqm(tar, `<one xmlns="http://www.w3.org/2000/svg"></one>`)
 
-  tar.namespaceURI = p.nsMathMl
+  tar.namespaceURI = p.NS_MATH_ML
   eqm(tar, `<one xmlns="http://www.w3.org/1998/Math/MathML"></one>`)
 }
 
 function testNsMissing(tar) {
   tar.localName = `one`
 
-  tar.namespaceURI = p.nsHtml
+  tar.namespaceURI = p.NS_HTML
   eqm(tar, `<one></one>`)
 
-  tar.namespaceURI = p.nsSvg
+  tar.namespaceURI = p.NS_SVG
   eqm(tar, `<one></one>`)
 
-  tar.namespaceURI = p.nsMathMl
+  tar.namespaceURI = p.NS_MATH_ML
   eqm(tar, `<one></one>`)
 }
 
@@ -1427,20 +1427,20 @@ t.test(function test_xmlns_inside_parent() {
 
   par.appendChild(chi)
 
-  par.namespaceURI = p.nsHtml
-  chi.namespaceURI = p.nsHtml
+  par.namespaceURI = p.NS_HTML
+  chi.namespaceURI = p.NS_HTML
   eqm(par, `<parent xmlns="http://www.w3.org/1999/xhtml"><child></child></parent>`)
 
-  par.namespaceURI = p.nsHtml
-  chi.namespaceURI = p.nsSvg
+  par.namespaceURI = p.NS_HTML
+  chi.namespaceURI = p.NS_SVG
   eqm(par, `<parent xmlns="http://www.w3.org/1999/xhtml"><child xmlns="http://www.w3.org/2000/svg"></child></parent>`)
 
-  par.namespaceURI = p.nsSvg
-  chi.namespaceURI = p.nsHtml
+  par.namespaceURI = p.NS_SVG
+  chi.namespaceURI = p.NS_HTML
   eqm(par, `<parent xmlns="http://www.w3.org/2000/svg"><child xmlns="http://www.w3.org/1999/xhtml"></child></parent>`)
 
-  par.namespaceURI = p.nsSvg
-  chi.namespaceURI = p.nsSvg
+  par.namespaceURI = p.NS_SVG
+  chi.namespaceURI = p.NS_SVG
   eqm(par, `<parent xmlns="http://www.w3.org/2000/svg"><child></child></parent>`)
 })
 
@@ -1456,9 +1456,9 @@ Namespaces are supported only through special-cased tags such as `svg`.
 */
 t.test(function test_xmlns_svg_inside_html_inside_HTMLDocument() {
   const one = ds.document.createElement(`one`)
-  const two = ds.document.createElementNS(p.nsSvg, `two`)
-  const three = ds.document.createElementNS(p.nsSvg, `three`)
-  const four = ds.document.createElementNS(p.nsHtml, `four`)
+  const two = ds.document.createElementNS(p.NS_SVG, `two`)
+  const three = ds.document.createElementNS(p.NS_SVG, `three`)
+  const four = ds.document.createElementNS(p.NS_HTML, `four`)
 
   one.appendChild(two)
   two.appendChild(three)
@@ -1468,21 +1468,21 @@ t.test(function test_xmlns_svg_inside_html_inside_HTMLDocument() {
 })
 
 t.test(function test_xmlns_several_layers() {
-  const doc = dom.createDocument(p.nsHtml, null, null)
+  const doc = dom.createDocument(p.NS_HTML, null, null)
 
-  const one = doc.createElementNS(p.nsHtml, `one`)
-  const two = doc.createElementNS(p.nsHtml, `two`)
-  const three = doc.createElementNS(p.nsSvg, `three`)
-  const four = doc.createElementNS(p.nsSvg, `four`)
-  const five = doc.createElementNS(p.nsHtml, `five`)
-  const six = doc.createElementNS(p.nsHtml, `six`)
+  const one = doc.createElementNS(p.NS_HTML, `one`)
+  const two = doc.createElementNS(p.NS_HTML, `two`)
+  const three = doc.createElementNS(p.NS_SVG, `three`)
+  const four = doc.createElementNS(p.NS_SVG, `four`)
+  const five = doc.createElementNS(p.NS_HTML, `five`)
+  const six = doc.createElementNS(p.NS_HTML, `six`)
 
-  t.is(one.namespaceURI, p.nsHtml)
-  t.is(two.namespaceURI, p.nsHtml)
-  t.is(three.namespaceURI, p.nsSvg)
-  t.is(four.namespaceURI, p.nsSvg)
-  t.is(five.namespaceURI, p.nsHtml)
-  t.is(six.namespaceURI, p.nsHtml)
+  t.is(one.namespaceURI, p.NS_HTML)
+  t.is(two.namespaceURI, p.NS_HTML)
+  t.is(three.namespaceURI, p.NS_SVG)
+  t.is(four.namespaceURI, p.NS_SVG)
+  t.is(five.namespaceURI, p.NS_HTML)
+  t.is(six.namespaceURI, p.NS_HTML)
 
   eqm(one, `<one xmlns="http://www.w3.org/1999/xhtml"></one>`)
   eqm(two, `<two xmlns="http://www.w3.org/1999/xhtml"></two>`)
@@ -1511,19 +1511,19 @@ explanation why `xmlns` is not rendered here.
 */
 t.test(function test_xmlns_several_layers_inside_HTMLDocument() {
   const doc = ds.document
-  const one = doc.createElementNS(p.nsHtml, `one`)
-  const two = doc.createElementNS(p.nsHtml, `two`)
-  const three = doc.createElementNS(p.nsSvg, `three`)
-  const four = doc.createElementNS(p.nsSvg, `four`)
-  const five = doc.createElementNS(p.nsHtml, `five`)
-  const six = doc.createElementNS(p.nsHtml, `six`)
+  const one = doc.createElementNS(p.NS_HTML, `one`)
+  const two = doc.createElementNS(p.NS_HTML, `two`)
+  const three = doc.createElementNS(p.NS_SVG, `three`)
+  const four = doc.createElementNS(p.NS_SVG, `four`)
+  const five = doc.createElementNS(p.NS_HTML, `five`)
+  const six = doc.createElementNS(p.NS_HTML, `six`)
 
-  t.is(one.namespaceURI, p.nsHtml)
-  t.is(two.namespaceURI, p.nsHtml)
-  t.is(three.namespaceURI, p.nsSvg)
-  t.is(four.namespaceURI, p.nsSvg)
-  t.is(five.namespaceURI, p.nsHtml)
-  t.is(six.namespaceURI, p.nsHtml)
+  t.is(one.namespaceURI, p.NS_HTML)
+  t.is(two.namespaceURI, p.NS_HTML)
+  t.is(three.namespaceURI, p.NS_SVG)
+  t.is(four.namespaceURI, p.NS_SVG)
+  t.is(five.namespaceURI, p.NS_HTML)
+  t.is(six.namespaceURI, p.NS_HTML)
 
   eqm(one, `<one></one>`)
   eqm(two, `<two></two>`)

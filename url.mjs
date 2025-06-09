@@ -488,7 +488,7 @@ function reqSlash(val, slash, msg) {
 function isEmpty(val) {return l.isNil(val) || val === ``}
 function isURL(val) {return l.isInst(val, URL)}
 function isUrl(val) {return l.isInst(val, Url)}
-function isUrlLike(val) {return l.isStruct(val) && `href` in val}
+function isUrlLike(val) {return l.isRec(val) && `href` in val}
 
 // Needs optimization. This is currently our bottleneck.
 export function queryDec(val) {

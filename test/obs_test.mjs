@@ -6,16 +6,10 @@ import * as ds from '../dom_shim.mjs'
 
 /* Util */
 
-class Trig extends l.Emp {
-  constructor({trigs = 0} = {}) {
-    super()
-    this.trigs = trigs
-  }
+class Run extends l.Emp {
+  #ref = new ob.RunRef(this)
+  get ref() {return this.#ref}
 
-  trigger() {this.trigs++}
-}
-
-class Runner extends l.Emp {
   constructor({runs = 0, dep = 0} = {}) {
     super()
     this.runs = runs
@@ -27,17 +21,11 @@ class Runner extends l.Emp {
 }
 
 class TestRecur extends ob.Recur {
-  constructor({trigs = 0, runs = 0, dep = 0, shed} = {}) {
+  constructor({runs = 0, dep = 0, shed} = {}) {
     super()
-    this.trigs = trigs
     this.runs = runs
     this.dep = dep
     this.setShed(shed)
-  }
-
-  trigger() {
-    this.trigs++
-    return super.trigger()
   }
 
   run() {
@@ -48,9 +36,8 @@ class TestRecur extends ob.Recur {
   depth() {return this.dep}
 }
 
-class TestShed extends ob.ShedAsync {
+class TestShedMicro extends ob.ShedMicro {
   timerInit(fun) {return Promise.resolve().then(fun)}
-  timerDeinit() {}
 }
 
 function head(src) {return [...src][0]}
@@ -61,391 +48,656 @@ function after(ms) {
 
 /* Test */
 
-t.test(function test_TriggerWeakQue() {
-  t.test(function test_monitor() {
-    const que = new ob.TriggerWeakQue()
+t.test(function test_RUN_REF() {
+  const dyn = ob.RUN_REF
+  t.is(dyn.get(), undefined)
 
-    const trig = new Trig()
-    ob.TRIG.set(trig)
+  dyn.set()
+  t.is(dyn.get(), undefined)
 
-    que.monitor()
-    t.eq(que, new ob.TriggerWeakQue([new WeakRef(trig)]), `added and referenced weakly`)
+  t.throws(() => dyn.set(123), TypeError, `expected instance of RunRef, got 123`)
+  t.is(dyn.get(), undefined)
 
-    que.monitor()
-    t.eq(que, new ob.TriggerWeakQue([new WeakRef(trig)]), `no redundant addition`)
+  t.throws(() => dyn.set(new WeakRef({})), TypeError, `expected instance of RunRef, got instance of WeakRef`)
+  t.is(dyn.get(), undefined)
+
+  const ref = new ob.RunRef({})
+  dyn.set(ref)
+  t.is(dyn.get(), ref)
+
+  dyn.set()
+  t.is(dyn.get(), undefined)
+})
+
+await t.test(async function test_Que() {
+  t.test(function test_enqueDyn() {
+    const que = new ob.Que()
+    const dyn = que.dyn
+    t.is(dyn, ob.RUN_REF)
+
+    testQueEmpty(que)
+
+    const ref = new Run().ref
+    dyn.set(ref)
+
+    que.enqueDyn()
+    testQueRef(que, ref)
+
+    // No redundant addition.
+    que.enqueDyn()
+    testQueRef(que, ref)
 
     que.deinit()
-    t.eq(que, new ob.TriggerWeakQue())
+    testQueEmpty(que)
 
-    const weak = new WeakRef(trig)
-    ob.TRIG.set(weak)
-
-    que.monitor()
-    t.eq(que, new ob.TriggerWeakQue([weak]))
-    testTriggerWeakQueRef(que, weak)
-
-    ob.TRIG.set()
+    dyn.set()
   })
 
-  t.test(function test_add() {
-    const que = new ob.TriggerWeakQue()
-    t.eq(que, new ob.TriggerWeakQue())
+  t.test(function test_enque_flush() {
+    const que = new ob.Que()
+    testQueEmpty(que)
 
-    const trig = new Trig()
-    que.add(trig)
-    t.eq(que, new ob.TriggerWeakQue([new WeakRef(trig)]), `added and referenced weakly`)
+    const run0 = new Run()
+    const ref0 = run0.ref
+    t.throws(() => que.enque(run0), TypeError, `expected instance of RunRef, got instance of Run`)
 
-    que.add(trig)
-    t.eq(que, new ob.TriggerWeakQue([new WeakRef(trig)]), `no redundant addition`)
+    que.enque(ref0)
+    testQueRef(que, ref0)
 
-    que.deinit()
-    t.eq(que, new ob.TriggerWeakQue())
-
-    const weak = new WeakRef(trig)
-    que.add(weak)
-    t.eq(que, new ob.TriggerWeakQue([weak]))
-    testTriggerWeakQueRef(que, weak)
-
-    que.add(weak)
-    t.eq(que, new ob.TriggerWeakQue([weak]), `no redundant addition`)
-    testTriggerWeakQueRef(que, weak)
-
-    // Internal stuff.
-    t.eq(que.prev, new Set())
-    t.eq(que.next, new Set([weak]))
-    t.is(que.refs.get(trig), weak)
+    // No redundant addition.
+    que.enque(ref0)
+    testQueRef(que, ref0)
 
     que.deinit()
-    t.eq(que, new ob.TriggerWeakQue())
+    testQueEmpty(que)
 
-    que.add(weak)
-    t.eq(que, new ob.TriggerWeakQue([weak]))
-    testTriggerWeakQueRef(que, weak)
+    /*
+    When enqueing a new reference for the same target, we deque the old
+    reference for that target. This is implemented only for theoretical
+    misbehaving callers. Our code should avoid creating unnecessary new
+    references.
+    */
+    const ref_0_1 = new ob.RunRef(run0)
+    que.enque(ref_0_1)
+    testQueRef(que, ref_0_1)
+
+    // No redundant addition.
+    que.enque(ref_0_1)
+    testQueRef(que, ref_0_1)
 
     que.deinit()
-    t.eq(que, new ob.TriggerWeakQue())
-    t.eq(trig, new Trig())
+    testQueEmpty(que)
+
+    que.enque(ref0)
+    testQueRef(que, ref0)
+
+    const run1 = new Run()
+    const ref1 = run1.ref
+
+    que.enque(ref1)
+    t.eq(que, new ob.Que([ref0, ref1]))
+
+    que.flush()
+    testQueEmpty(que)
+    t.eq(run0, new Run({runs: 1}))
+    t.eq(run1, new Run({runs: 1}))
+
+    que.flush()
+    testQueEmpty(que)
+    t.eq(run0, new Run({runs: 1}))
+    t.eq(run1, new Run({runs: 1}))
+
+    que.enque(ref0)
+    que.enque(ref1)
+    que.enque(ref0)
+    que.enque(ref1)
+    que.enque(ref0)
+    que.enque(ref1)
+    t.eq(que, new ob.Que([ref0, ref1]))
+    que.flush()
+    testQueEmpty(que)
+    t.eq(run0, new Run({runs: 2}))
+    t.eq(run1, new Run({runs: 2}))
+
+    que.enque(ref0)
+    que.enque(ref1)
+    t.eq(que, new ob.Que([ref0, ref1]))
+    que.deinit()
+    testQueEmpty(que)
+    t.eq(run0, new Run({runs: 2}))
+    t.eq(run1, new Run({runs: 2}))
   })
 
-  t.test(function test_flush() {
-    const que = new ob.TriggerWeakQue()
+  t.test(function test_reentrant_enque() {
+    const que = new ob.Que()
+    t.no(que.flushing)
 
-    const tri0 = new Trig()
-    que.add(tri0)
-    t.eq(tri0, new Trig())
+    class RunEnque extends Run {
+      run() {
+        super.run()
+        t.ok(que.flushing)
+        que.enque(this.ref)
+      }
+    }
 
-    que.flush()
-    t.eq(tri0, new Trig({trigs: 1}))
+    const run0 = new RunEnque()
+    const run1 = new RunEnque()
 
+    que.enque(run0.ref)
+    que.enque(run1.ref)
     que.flush()
-    t.eq(tri0, new Trig({trigs: 1}), `removed from que, not re-added`)
 
-    que.flush()
-    t.eq(tri0, new Trig({trigs: 1}), `removed from que, not re-added`)
+    t.eq(run0, new RunEnque({runs: 1}))
+    t.eq(run1, new RunEnque({runs: 1}))
 
-    const tri1 = new Trig()
-    que.add(tri1)
+    t.eq(que, new ob.Que([run0.ref, run1.ref]))
+    t.no(que.flushing)
+  })
 
-    que.flush()
-    t.eq(tri0, new Trig({trigs: 1}))
-    t.eq(tri1, new Trig({trigs: 1}))
+  t.test(function test_reentrant_flush() {
+    const que = new ob.Que()
+    t.no(que.flushing)
 
-    que.add(tri0)
-    que.add(tri0)
-    que.add(tri0)
-    que.flush()
-    que.flush()
-    que.flush()
-    t.eq(tri0, new Trig({trigs: 2}))
-    t.eq(tri1, new Trig({trigs: 1}))
+    class RunFlush extends Run {
+      run() {
+        super.run()
+        t.ok(que.flushing)
+        que.flush()
+      }
+    }
 
-    que.flush()
-    t.eq(tri0, new Trig({trigs: 2}))
-    t.eq(tri1, new Trig({trigs: 1}))
+    const run0 = new RunFlush()
+    const run1 = new RunFlush()
 
-    que.add(tri0)
-    que.add(tri1)
-    que.add(tri0)
-    que.add(tri1)
+    que.enque(run0.ref)
+    que.enque(run1.ref)
     que.flush()
-    que.flush()
-    que.flush()
-    t.eq(tri0, new Trig({trigs: 3}))
-    t.eq(tri1, new Trig({trigs: 2}))
 
-    que.deinit()
-    t.eq(que, new ob.TriggerWeakQue())
-    t.eq(tri0, new Trig({trigs: 3}))
-    t.eq(tri1, new Trig({trigs: 2}))
+    t.eq(run0, new RunFlush({runs: 1}))
+    t.eq(run1, new RunFlush({runs: 1}))
 
+    testQueEmpty(que)
+    t.no(que.flushing)
+  })
+
+  t.test(function test_reentrant_enque_flush() {
+    const que = new ob.Que()
+    t.no(que.flushing)
+
+    class RunEnqueFlush extends Run {
+      run() {
+        super.run()
+        t.ok(que.flushing)
+        que.enque(this.ref)
+        que.flush()
+      }
+    }
+
+    const run0 = new RunEnqueFlush()
+    const run1 = new RunEnqueFlush()
+
+    que.enque(run0.ref)
+    que.enque(run1.ref)
     que.flush()
-    t.eq(tri0, new Trig({trigs: 3}))
-    t.eq(tri1, new Trig({trigs: 2}))
+
+    t.eq(run0, new RunEnqueFlush({runs: 1}))
+    t.eq(run1, new RunEnqueFlush({runs: 1}))
+
+    t.eq(que, new ob.Que([run0.ref, run1.ref]))
+    t.no(que.flushing)
+  })
+
+  /*
+  When runners are garbage collected, we want to auto-remove their weak refs
+  from ques. This prevents accidental accumulation of refs in long-lived ques
+  which are rarely flushed, such as for observables which never change, which
+  could have been a significant memory leak when many observers / runners come
+  and go frequently.
+  */
+  await t.test(async function test_finalization() {
+    if (!l.isFun(globalThis.gc)) return
+
+    const que = new ob.Que()
+
+    let run0 = new Run()
+    const ref0 = run0.ref
+    t.is(ref0.deref(), run0)
+
+    let run1 = new Run()
+    const ref1 = run1.ref
+    t.is(ref1.deref(), run1)
+
+    que.enque(ref0)
+    que.enque(ref1)
+    t.eq(que, new ob.Que([ref0, ref1]))
+
+    await waitForGcAndFinalizers()
+    t.eq(que, new ob.Que([ref0, ref1]))
+
+    run0 = undefined
+    run1 = undefined
+
+    await waitForGcAndFinalizers()
+    testQueEmpty(que)
+    t.is(ref0.deref(), undefined)
+    t.is(ref1.deref(), undefined)
   })
 })
 
-function testTriggerWeakQueRef(que, ref) {
-  t.eq(que, new ob.TriggerWeakQue([ref]))
-  t.is(head(que.next), ref, `uses the exact provided weak reference`)
+function testQueRef(que, ref) {
+  t.is(que.prev.size, 0)
+  t.is(que.next.size, 1)
+  t.is(head(que.next), ref)
+  t.is(que.refs.get(ref.deref()), ref)
+  t.eq(que, new ob.Que([ref]))
+}
+
+function testQueEmpty(que) {
+  t.eq(que, new ob.Que())
+  t.is(que.prev.size, 0)
+  t.is(que.next.size, 0)
 }
 
 await t.test(async function test_Shed() {
-  const shed = new TestShed()
-  const run0 = new Runner()
-  const run1 = new Runner()
+  const shed = new TestShedMicro()
+  const run0 = new Run()
+  const run1 = new Run()
 
-  shed.add(run0)
-  shed.add(run0)
-  shed.add(run0)
+  t.throws(() => shed.enque(run0), TypeError, `expected instance of RunRef, got instance of Run`)
 
-  t.eq(shed.ques, [new ob.RunQue([run0])])
-  t.eq(run0, new Runner())
+  shed.enque(run0.ref)
+  shed.enque(run0.ref)
+  shed.enque(run0.ref)
 
-  await shed.timer
-
-  t.eq(shed.ques, [new ob.RunQue()])
-  t.eq(run0, new Runner({runs: 1}))
-
-  shed.add(run1)
-  shed.add(run0)
-
-  t.eq(shed.ques, [new ob.RunQue([run1, run0])])
-  t.eq(run0, new Runner({runs: 1}))
-  t.eq(run1, new Runner())
+  t.eq(shed.ques, [new ob.Que([run0.ref])])
+  t.eq(run0, new Run())
 
   await shed.timer
 
-  t.eq(shed.ques, [new ob.RunQue()])
-  t.eq(run0, new Runner({runs: 2}))
-  t.eq(run1, new Runner({runs: 1}))
+  t.eq(shed.ques, [new ob.Que()])
+  t.eq(run0, new Run({runs: 1}))
+
+  shed.enque(run1.ref)
+  shed.enque(run0.ref)
+
+  t.eq(shed.ques, [new ob.Que([run1.ref, run0.ref])])
+  t.eq(run0, new Run({runs: 1}))
+  t.eq(run1, new Run())
+
+  await shed.timer
+
+  t.eq(shed.ques, [new ob.Que()])
+  t.eq(run0, new Run({runs: 2}))
+  t.eq(run1, new Run({runs: 1}))
 
   run0.dep = 3
   run1.dep = 2
 
-  shed.add(run0)
-  shed.add(run1)
+  shed.enque(run0.ref)
+  shed.enque(run1.ref)
 
-  t.eq(shed.ques, [new ob.RunQue(), undefined, new ob.RunQue([run1]), new ob.RunQue([run0])])
+  t.eq(shed.ques, [new ob.Que(), undefined, new ob.Que([run1.ref]), new ob.Que([run0.ref])])
 
   await shed.timer
 
-  t.eq(shed.ques, [new ob.RunQue(), undefined, new ob.RunQue(), new ob.RunQue()])
-  t.eq(run0, new Runner({runs: 3, dep: 3}))
-  t.eq(run1, new Runner({runs: 2, dep: 2}))
+  t.eq(shed.ques, [new ob.Que(), undefined, new ob.Que(), new ob.Que()])
+  t.eq(run0, new Run({runs: 3, dep: 3}))
+  t.eq(run1, new Run({runs: 2, dep: 2}))
 })
 
 t.test(function test_Recur() {
   const rec = new TestRecur()
-  t.no(rec.active)
-  testRecurRef(rec.weak, rec)
+  const dyn = rec.dyn
+  t.is(dyn, ob.RUN_REF)
+
+  t.no(rec.running)
+  t.is(rec.shed, undefined)
+
+  t.inst(getShedRef(rec), ob.ShedRef)
+  testWeakerRef(getShedRef(rec), rec)
+
+  t.inst(getRunRef(rec), ob.RunRef)
+  testWeakerRef(getRunRef(rec), rec)
+
   t.is(rec.depth(), 0)
-  t.is(ob.TRIG.get(), undefined)
+  t.is(dyn.get(), undefined)
 
   rec.onRun = function onRun() {
-    return {
-      active: this.active,
-      weak: this.weak,
-      trig: ob.TRIG.get(),
-    }
+    return {running: this.running, dyn: dyn.get()}
   }
 
-  function testRunOut(run) {
-    t.ok(run.active)
-    t.no(rec.active)
-
-    t.is(run.weak, rec.weak)
-    t.is(run.trig, run.weak)
-    testRecurRef(run.weak, rec)
+  function testRunOut(run, ref) {
+    t.ok(run.running)
+    t.no(rec.running)
+    t.is(run.dyn, ref)
+    testWeakerRef(run.dyn, rec)
   }
 
   const run0 = rec.run()
-  testRunOut(run0)
+  testRunOut(run0, getShedRef(rec))
   t.is(rec.runs, 1)
-  t.is(rec.trigs, 0)
 
   const run1 = rec.run()
-  testRunOut(run1)
+  testRunOut(run1, getShedRef(rec))
   t.is(rec.runs, 2)
-  t.is(rec.trigs, 0)
 
-  t.is(run0.weak, run1.weak)
-})
+  t.eq(run0, run1)
 
-/*
-Very minimal. See the more complete async test below.
+  const shed = ob.ShedSync.main
+  t.inst(shed, ob.ShedSync)
 
-TODO test pausing and resuming.
-*/
-t.test(function test_Recur_scheduling_sync() {
-  t.is(new ob.Recur().getShed(), ob.ShedSync.main)
+  rec.setShed(shed)
 
-  const shed = new ob.ShedSync()
-  const rec = new TestRecur({shed})
-  t.is(rec.getShed(), shed)
+  const run2 = rec.run()
+  testRunOut(run2, getShedRef(rec))
+  t.is(rec.runs, 3)
 
-  t.is(rec.runs, 0)
-  t.is(rec.trigs, 0)
-  t.no(rec.active)
-  testRecurRef(rec.weak, rec)
-
-  shed.add(rec)
-
-  t.is(rec.runs, 1)
-  t.is(rec.trigs, 0)
-  t.no(rec.active)
-  testRecurRef(rec.weak, rec)
-
-  rec.dep = 1
-  shed.add(rec)
-  t.is(rec.runs, 2)
-  t.is(rec.trigs, 0)
-
-  shed.add(rec)
-  shed.add(rec)
+  const run3 = rec.run()
+  testRunOut(run3, getShedRef(rec))
   t.is(rec.runs, 4)
-  t.is(rec.trigs, 0)
 
-  /*
-  Synchronous triggering is tricky. Without careful handling, it's easy to
-  accidentally re-trigger. We avoid that by rotating the prev / next sets
-  of triggerables in `Que`. This ensures that during a flush, we do not
-  re-trigger any previous triggerables, because they're being added to a
-  different set, while at the same time, they are still correctly queued up
-  for the next trigger.
-  */
-  t.test(function test_no_infinite_cycle() {
-    const obs = ob.obs({val: 10})
-    const que = ob.getPh(obs).que
+  t.eq(run2, run3)
 
-    t.eq(que, new ob.TriggerWeakQue())
+  t.test(function test_refs() {
+    const rec = new TestRecur({shed: ob.ShedSync.main})
+    const {shedRef, runRef} = rec
+    testWeakerRef(shedRef, rec)
+    testWeakerRef(runRef, rec)
 
-    rec.onRun = function onRun() {return obs.val}
-    t.is(rec.runs, 4)
-    t.is(rec.trigs, 0)
+    rec.deinit()
 
-    t.is(rec.run(), 10)
-    t.eq(que, new ob.TriggerWeakQue([rec.weak]))
-    t.is(rec.runs, 5)
-    t.is(rec.trigs, 0)
+    testWeakerRef(shedRef)
+    testWeakerRef(runRef)
 
-    obs.val++
-    t.is(obs.val, 11)
-    t.eq(que, new ob.TriggerWeakQue([rec.weak]))
-    t.is(rec.runs, 6)
-    t.is(rec.trigs, 1)
+    rec.run()
 
-    obs.val++
-    t.is(obs.val, 12)
-    t.eq(que, new ob.TriggerWeakQue([rec.weak]))
-    t.is(rec.runs, 7)
-    t.is(rec.trigs, 2)
+    testWeakerRef(shedRef, rec)
+    testWeakerRef(runRef)
+
+    shedRef.run()
+    testWeakerRef(shedRef, rec)
+    testWeakerRef(runRef, rec)
   })
 })
 
-await t.test(async function test_Recur_scheduling_async() {
-  t.is(new ob.Recur().getShed(), ob.ShedSync.main)
+t.test(function test_Recur_scheduling_sync() {
+  test_Recur_sync()
+  test_Recur_sync(new ob.ShedSync())
+})
 
-  const shed = new TestShed()
+// Very minimal. See the more complete async test below.
+function test_Recur_sync(shed) {
+  t.is(new ob.Recur().shed, undefined)
+  t.is(new ob.Recur(shed).shed, shed)
+
   const rec = new TestRecur({shed})
-  t.is(rec.getShed(), shed)
+  const ref = getShedRef(rec)
+  testWeakerRef(ref, rec)
+
+  t.is(rec.shed, shed)
+
+  rec.setShed()
+  t.is(rec.shed, undefined)
+
+  rec.setShed(shed)
+  t.is(rec.shed, shed)
 
   t.is(rec.runs, 0)
-  t.is(rec.trigs, 0)
-  t.no(rec.active)
-  testRecurRef(rec.weak, rec)
+  t.no(rec.running)
 
-  shed.add(rec)
+  function enque() {
+    if (shed) shed.enque(rec)
+    else rec.run()
+  }
 
-  t.is(rec.runs, 0)
-  t.is(rec.trigs, 0)
-  t.no(rec.active)
-  testRecurRef(rec.weak, rec)
-
-  t.eq(shed.ques, [new ob.RunQue([rec])])
-  await shed.timer
-  t.eq(shed.ques, [new ob.RunQue()])
+  enque()
 
   t.is(rec.runs, 1)
-  t.is(rec.trigs, 0)
-  t.no(rec.active)
-  testRecurRef(rec.weak, rec)
+  t.no(rec.running)
 
   rec.dep = 1
-  shed.add(rec)
-  shed.add(rec)
-  shed.add(rec)
+  enque()
+  t.is(rec.runs, 2)
+
+  enque()
+  enque()
+  t.is(rec.runs, 4)
+
+  /*
+  Synchronous triggering is tricky. Without careful handling, it's easy to
+  accidentally enter an infinite loop. We avoid that by rotating the prev /
+  next sets of runnables in `Que`. This ensures that during a flush, we do not
+  re-run any previous runnables, while correctly managing to add them to the
+  next pending set of runnables instead of dropping.
+  */
+  t.test(function test_no_infinite_cycle() {
+    const obs = ob.obs({val: 10})
+    const que = ob.getPh(obs)[ob.QUE]
+    testQueEmpty(que)
+
+    rec.onRun = function onRun() {return obs.val}
+    t.is(rec.runs, 4)
+
+    t.is(rec.run(), 10)
+    testQueRef(que, ref)
+    t.is(rec.runs, 5)
+
+    obs.val++
+    t.is(obs.val, 11)
+    testQueRef(que, ref)
+    t.is(rec.runs, 6)
+
+    obs.val++
+    t.is(obs.val, 12)
+    testQueRef(que, ref)
+    t.is(rec.runs, 7)
+  })
+}
+
+t.test(function test_shed_sync_pause_resume() {
+  const shed = ob.ShedSync.main
+
+  const obs = ob.obs({one: 10, two: 20})
+
+  class PauseTestRecur extends TestRecur {
+    constructor({val, ...opt}) {super(opt).val = val}
+    onRun() {this.val = obs.one + obs.two}
+  }
+
+  const rec = new PauseTestRecur({shed})
+
+  /*
+  Ideally, we would just compare via `t.eq`, but it has a false negative
+  when cyclic references are involved.
+  */
+  function test(runs, val) {
+    t.is(rec.runs, runs, `runs`)
+    t.is(rec.val, val, `val`)
+  }
+
+  test(0, undefined)
+  rec.run()
+  test(1, 30)
+
+  // Without pausing, it runs twice.
+  obs.one = 30
+  test(2, 50)
+
+  obs.two = 40
+  test(3, 70)
+
+  // Pausing and resuming causes it to run once.
+  shed.pause()
+  try {
+    obs.one = 50
+    test(3, 70) // Triggered once more.
+
+    obs.two = 60
+    test(3, 70) // NOT triggered anymore. Scheduled for later.
+  }
+  finally {shed.flush()}
+  test(4, 110)
+})
+
+await t.test(async function test_Recur_scheduling_async() {
+  const shed = new TestShedMicro()
+  const rec = new TestRecur({shed})
+  const ref = getRunRef(rec)
+  testWeakerRef(ref, rec)
+
+  t.is(rec.shed, shed)
+  t.no(rec.running)
+  t.is(rec.runs, 0)
+
+  shed.enque(ref)
+
+  t.no(rec.running)
+  t.is(rec.runs, 0)
+
+  await shedWait(shed, ref)
+
+  t.no(rec.running)
+  t.is(rec.runs, 1)
+
+  rec.dep = 1
+  shed.enque(ref)
+  shed.enque(ref)
+  shed.enque(ref)
 
   t.is(rec.runs, 1)
-  t.is(rec.trigs, 0)
 
-  t.eq(shed.ques, [new ob.RunQue(), new ob.RunQue([rec])])
+  t.eq(shed.ques, [new ob.Que(), new ob.Que([ref])])
   await shed.timer
-  t.eq(shed.ques, [new ob.RunQue(), new ob.RunQue()])
+  t.eq(shed.ques, [new ob.Que(), new ob.Que()])
 
   t.is(rec.runs, 2)
-  t.is(rec.trigs, 0)
+})
+
+t.test(function test_isRef_isObsRef_deref_derefAll() {
+  t.test(function test_obs() {
+    const tar = l.Emp()
+    const obs = ob.obs(tar)
+
+    t.eq(Object.keys(obs), [])
+    t.eq(Reflect.ownKeys(obs), [])
+
+    t.no(l.VAL in tar)
+    t.ok(l.VAL in obs)
+    t.is(tar[l.VAL], undefined)
+    t.is(obs[l.VAL], tar)
+
+    t.no(l.isRef(tar))
+    t.ok(l.isRef(obs))
+
+    t.no(ob.isObsRef(tar))
+    t.ok(ob.isObsRef(obs))
+
+    t.is(l.deref(tar), tar)
+    t.is(l.deref(obs), tar)
+
+    t.is(l.derefAll(tar), tar)
+    t.is(l.derefAll(obs), tar)
+
+    tar[l.VAL] = 10
+
+    t.ok(l.isRef(tar))
+    t.ok(l.isRef(obs))
+
+    t.no(ob.isObsRef(tar))
+    t.ok(ob.isObsRef(obs))
+
+    t.is(l.deref(tar), 10)
+    t.is(l.deref(obs), tar)
+
+    t.is(l.derefAll(tar), 10)
+    t.is(l.derefAll(obs), 10)
+  })
+
+  t.test(function test_obsRef() {
+    const obs = ob.obsRef()
+
+    t.eq(Object.keys(obs), [])
+    t.eq(Reflect.ownKeys(obs), [ob.QUE, l.VAL])
+
+    t.ok(l.isRef(obs))
+    t.no(l.isRef(obs.val))
+
+    t.ok(ob.isObsRef(obs))
+    t.no(ob.isObsRef(obs.val))
+
+    t.is(l.deref(obs), undefined)
+    t.is(l.derefAll(obs), undefined)
+
+    obs.val = 10
+
+    t.ok(l.isRef(obs))
+    t.no(l.isRef(obs.val))
+
+    t.ok(ob.isObsRef(obs))
+    t.no(ob.isObsRef(obs.val))
+
+    t.is(l.deref(obs), 10)
+    t.is(l.derefAll(obs), 10)
+  })
 })
 
 await t.test(async function test_obs() {
-  const shed = new TestShed()
+  const shed = new TestShedMicro()
 
   const tar0 = l.Emp()
   const obs0 = ob.obs(tar0)
-  t.is(ob.getTar(obs0), tar0)
+  t.is(l.deref(obs0), tar0)
 
   const ph0 = ob.getPh(obs0)
   t.inst(ph0, ob.ObsPh)
 
-  const que0 = ph0.que
-  t.eq(que0, new ob.TriggerWeakQue())
+  const que0 = ph0[ob.QUE]
+  testQueEmpty(que0)
 
-  ph0.monitor()
-  t.eq(que0, new ob.TriggerWeakQue())
+  ph0[ob.QUE].enqueDyn()
+  testQueEmpty(que0)
 
   const tar1 = l.Emp()
   const obs1 = ob.obs(tar1)
-  t.is(ob.getTar(obs1), tar1)
+  t.is(l.deref(obs1), tar1)
 
   const ph1 = ob.getPh(obs1)
   t.inst(ph1, ob.ObsPh)
 
-  const que1 = ph1.que
-  t.eq(que1, new ob.TriggerWeakQue())
+  const que1 = ph1[ob.QUE]
+  testQueEmpty(que1)
 
-  ph1.monitor()
-  t.eq(que1, new ob.TriggerWeakQue())
+  ph1[ob.QUE].enqueDyn()
+  testQueEmpty(que1)
 
   let rec0 = new TestRecur({shed})
   rec0.onRun = function onRun() {return obs0.val}
   t.is(rec0.runs, 0)
-  t.is(rec0.trigs, 0)
 
   rec0.run()
   t.is(rec0.runs, 1)
-  t.is(rec0.trigs, 0)
-  t.eq(que0, new ob.TriggerWeakQue([rec0.weak]))
+  testQueRef(que0, getShedRef(rec0))
 
   obs0.val = 10
   t.is(rec0.runs, 1)
-  t.is(rec0.trigs, 1)
-  t.eq(que0, new ob.TriggerWeakQue())
+  testQueEmpty(que0)
 
-  await shedWait(shed, rec0.weak)
+  await shedWait(shed, getRunRef(rec0))
+
   t.is(rec0.runs, 2)
-  t.is(rec0.trigs, 1)
-  t.eq(que0, new ob.TriggerWeakQue([rec0.weak]))
+  testQueRef(que0, getShedRef(rec0))
 
-  // No change, no trigger.
+  // No change, no run.
   obs0.val = 10
   await shed.timer
   t.is(rec0.runs, 2)
-  t.is(rec0.trigs, 1)
+  testQueRef(que0, getShedRef(rec0))
 
-  // Not monitored, no trigger.
+  // Not monitored / observed / enqued, no run.
   obs1.val = 20
   await shed.timer
   t.is(rec0.runs, 2)
-  t.is(rec0.trigs, 1)
+  testQueEmpty(que1)
 
   /*
   We switch from one observable to another. On the next run, the que of the
@@ -470,15 +722,15 @@ await t.test(async function test_obs() {
 
   obs0.val = 30
   t.is(rec0.runs, 2)
-  t.is(rec0.trigs, 2)
-  t.eq(que0, new ob.TriggerWeakQue())
-  t.eq(que1, new ob.TriggerWeakQue())
+  testQueEmpty(que0)
+  testQueEmpty(que1)
 
-  await shedWait(shed, rec0.weak)
+  await shedWait(shed, getRunRef(rec0))
+
   t.is(rec0.runs, 3)
-  t.is(rec0.trigs, 2)
-  t.eq(que0, new ob.TriggerWeakQue())
-  t.eq(que1, new ob.TriggerWeakQue([rec0.weak]))
+
+  testQueEmpty(que0)
+  testQueRef(que1, getShedRef(rec0))
 
   /*
   Since the reference held by `que0` is expired, changes should no longer
@@ -486,167 +738,177 @@ await t.test(async function test_obs() {
   */
   obs0.val = 40
   t.is(rec0.runs, 3)
-  t.is(rec0.trigs, 2)
 
   que0.flush()
   t.is(rec0.runs, 3)
-  t.is(rec0.trigs, 2)
-  t.eq(que0, new ob.TriggerWeakQue())
-  t.eq(que1, new ob.TriggerWeakQue([rec0.weak]))
+  testQueEmpty(que0)
+  testQueRef(que1, getShedRef(rec0))
 
   obs1.val = 50
   t.is(rec0.runs, 3)
-  t.is(rec0.trigs, 3)
-  t.eq(que1, new ob.TriggerWeakQue())
+  testQueEmpty(que1)
 
-  await shedWait(shed, rec0.weak)
+  await shedWait(shed, getRunRef(rec0))
+
   t.is(rec0.runs, 4)
-  t.is(rec0.trigs, 3)
-  t.eq(que1, new ob.TriggerWeakQue([rec0.weak]))
+  testQueRef(que1, getShedRef(rec0))
 
   // Monitor both observables.
   rec0.onRun = function onRun() {return obs0.val + obs1.val}
 
   obs1.val = 60
   t.is(rec0.runs, 4)
-  t.is(rec0.trigs, 4)
-  t.eq(que0, new ob.TriggerWeakQue())
-  t.eq(que1, new ob.TriggerWeakQue())
+  testQueEmpty(que0)
+  testQueEmpty(que1)
 
-  await shedWait(shed, rec0.weak)
+  await shedWait(shed, getRunRef(rec0))
+
   t.is(rec0.runs, 5)
-  t.is(rec0.trigs, 4)
-  t.eq(que0, new ob.TriggerWeakQue([rec0.weak]))
-  t.eq(que1, new ob.TriggerWeakQue([rec0.weak]))
+  testQueRef(que0, getShedRef(rec0))
+  testQueRef(que1, getShedRef(rec0))
 
   let rec1 = new TestRecur({shed})
   rec1.onRun = function onRun() {return obs1.val}
   t.is(rec1.runs, 0)
-  t.is(rec1.trigs, 0)
 
   rec1.run()
   t.is(rec1.runs, 1)
-  t.is(rec1.trigs, 0)
 
-  t.eq(que0, new ob.TriggerWeakQue([rec0.weak]))
-  t.eq(que1, new ob.TriggerWeakQue([rec0.weak, rec1.weak]))
+  t.eq(que0, new ob.Que([getShedRef(rec0)]))
+  t.eq(que1, new ob.Que([getShedRef(rec0), getShedRef(rec1)]))
 
   obs0.val = obs0.val // eslint-disable-line no-self-assign
   obs1.val = obs1.val // eslint-disable-line no-self-assign
   t.is(rec0.runs, 5)
-  t.is(rec0.trigs, 4)
   t.is(rec1.runs, 1)
-  t.is(rec1.trigs, 0)
+
+  t.eq(que0, new ob.Que([getShedRef(rec0)]))
+  t.eq(que1, new ob.Que([getShedRef(rec0), getShedRef(rec1)]))
 
   obs1.val = 70
   t.is(rec0.runs, 5)
-  t.is(rec0.trigs, 5)
   t.is(rec1.runs, 1)
-  t.is(rec1.trigs, 1)
+  testQueRef(que0, getShedRef(rec0))
+  testQueEmpty(que1)
 
-  t.eq(shed.ques, [new ob.RunQue([rec0.weak, rec1.weak])])
+  t.eq(shed.ques, [new ob.Que([getRunRef(rec0), getRunRef(rec1)])])
   await shed.timer
-  t.eq(shed.ques, [new ob.RunQue()])
+  t.eq(shed.ques, [new ob.Que()])
 
   t.is(rec0.runs, 6)
-  t.is(rec0.trigs, 5)
   t.is(rec1.runs, 2)
-  t.is(rec1.trigs, 1)
 
-  t.eq(que0, new ob.TriggerWeakQue([rec0.weak]))
-  t.eq(que1, new ob.TriggerWeakQue([rec0.weak, rec1.weak]))
+  t.eq(que0, new ob.Que([getShedRef(rec0)]))
+  t.eq(que1, new ob.Que([getShedRef(rec0), getShedRef(rec1)]))
 
-  {
-    const weak0 = rec0.weak
-    testWeakRef(weak0, rec0)
-    rec0.deinit()
-    t.is(rec0.weak, weak0)
-    testWeakRef(weak0)
-  }
+  rec0.deinit()
 
   obs0.val = 80
   obs1.val = 90
   t.is(rec0.runs, 6)
-  t.is(rec0.trigs, 5)
   t.is(rec1.runs, 2)
-  t.is(rec1.trigs, 2)
+  testQueEmpty(que0)
+  testQueEmpty(que1)
 
-  await shedWait(shed, rec1.weak)
+  await shedWait(shed, getRunRef(rec1))
+
   t.is(rec0.runs, 6)
-  t.is(rec0.trigs, 5)
   t.is(rec1.runs, 3)
-  t.is(rec1.trigs, 2)
+
+  testQueEmpty(que0)
+  testQueRef(que1, getShedRef(rec1))
 
   /*
-  Verify that our `Recur` instances are reusable.
-  It should be possible to `.deinit` one, and then use it again.
+  Earlier in this test, we deinit one of the `Recur` instances.
+  Here, we reinit it to verify that they're reusable: automatically
+  reinited if rerun.
   */
 
   rec0.run()
   t.is(rec0.runs, 7)
-  t.is(rec0.trigs, 5)
   t.is(rec1.runs, 3)
-  t.is(rec1.trigs, 2)
+
+  testQueRef(que0, getShedRef(rec0))
+  t.eq(que0, new ob.Que([getShedRef(rec0)]))
+  t.eq(que1, new ob.Que([getShedRef(rec1), getShedRef(rec0)]))
 
   obs0.val = 90
+
   t.is(rec0.runs, 7)
-  t.is(rec0.trigs, 6)
   t.is(rec1.runs, 3)
-  t.is(rec1.trigs, 2)
+  testQueEmpty(que0)
+  t.eq(que1, new ob.Que([getShedRef(rec1), getShedRef(rec0)]))
 
-  await shedWait(shed, rec0.weak)
+  await shedWait(shed, getRunRef(rec0))
+
   t.is(rec0.runs, 8)
-  t.is(rec0.trigs, 6)
   t.is(rec1.runs, 3)
-  t.is(rec1.trigs, 2)
 
-  /*
-  The function `globalThis.gc` is available with `--v8-flags=--expose_gc`.
-  The following test verifies that we use a `FinalizationRegistry` to evict
-  expired que entries.
-  */
+  t.eq(que0, new ob.Que([getShedRef(rec0)]))
+  t.eq(que1, new ob.Que([getShedRef(rec1), getShedRef(rec0)]))
+
   if (!l.isFun(globalThis.gc)) return
 
-  t.eq(que0, new ob.TriggerWeakQue([rec0.weak]))
-  t.eq(que1, new ob.TriggerWeakQue([rec0.weak, rec1.weak]))
+  t.eq(que0, new ob.Que([getShedRef(rec0)]))
+  t.eq(que1, new ob.Que([getShedRef(rec0), getShedRef(rec1)]))
 
-  const weak0 = rec0.weak
-  const weak1 = rec1.weak
+  const shedRef0 = getShedRef(rec0)
+  const runRef0 = getRunRef(rec0)
+  testWeakerRef(shedRef0, rec0)
+  testWeakerRef(runRef0, rec0)
 
-  testWeakRef(weak0, rec0)
-  testWeakRef(weak1, rec1)
+  const shedRef1 = getShedRef(rec1)
+  const runRef1 = getRunRef(rec1)
+  testWeakerRef(shedRef1, rec1)
+  testWeakerRef(runRef1, rec1)
 
   rec0 = undefined
   rec1 = undefined
 
   await waitForGcAndFinalizers()
 
-  testWeakRef(weak0)
-  testWeakRef(weak1)
+  testWeakerRef(shedRef0)
+  testWeakerRef(runRef0)
+  testWeakerRef(shedRef1)
+  testWeakerRef(runRef1)
 
-  t.eq(que0, new ob.TriggerWeakQue())
-  t.eq(que1, new ob.TriggerWeakQue())
+  testQueEmpty(que0)
+  testQueEmpty(que1)
 })
 
-function testWeakRef(ref, tar) {
-  t.inst(ref, WeakRef)
-  t.is(ref.deref(), tar)
-}
-
-function testRecurRef(ref, tar, exp) {
-  t.inst(ref, ob.RecurRef)
+function testWeakerRef(ref, tar, exp) {
+  t.inst(ref, ob.WeakerRef)
   t.is(ref.deref(), tar)
   if (l.isSome(exp)) t.is(ref.expired, exp)
   if (tar) t.no(ref.expired)
 }
 
-async function shedWait(shed, val) {
-  t.eq(shed.ques, [new ob.RunQue([val])])
+async function shedWait(shed, ref) {
+  t.ok(shed.scheduled)
+  t.inst(shed.timer, Promise)
+
+  t.eq(shed.ques, [new ob.Que([ref])])
+  testQueRef(shed.ques[0], ref)
+
   await shed.timer
-  t.eq(shed.ques, [new ob.RunQue()])
+
+  testShedEmpty(shed)
 }
 
-// Very unreliable. This will need adjustments in the future.
+function testShedEmpty(shed) {
+  t.no(shed.scheduled)
+  t.is(shed.timer, undefined)
+  t.eq(shed.ques, [new ob.Que()])
+  testQueEmpty(shed.ques[0])
+}
+
+/*
+The function `globalThis.gc` is available with `--v8-flags=--expose_gc`.
+
+We use `FinalizationRegistry` to evict expired que entries.
+
+The following seems unreliable. May need adjustments in the future.
+*/
 async function waitForGcAndFinalizers() {
   globalThis.gc()
   await after(1)
@@ -654,18 +916,141 @@ async function waitForGcAndFinalizers() {
   await after(1)
 }
 
-await t.test(async function test_reac_unreac_and_hierarchical_scheduling() {
-  const shed = new TestShed()
+await t.test(async function test_recur_sync() {
+  t.throws(() => ob.recurSync(), TypeError, `expected at least one function, got undefined and undefined`)
+  t.throws(() => ob.recurSync(10), TypeError, `expected at least one function, got 10 and undefined`)
+  t.throws(() => ob.recurSync(10, 20), TypeError, `expected at least one function, got 10 and 20`)
 
-  class TestNodeMethRecur extends ob.NodeMethRecur {
-    get shed() {return shed}
+  ob.recurSync(l.nop)
+  ob.recurSync(l.nop, undefined)
+  ob.recurSync(l.nop, 10)
+  ob.recurSync(l.nop, l.Emp())
+  ob.recurSync(undefined, l.nop)
+  ob.recurSync(10, l.nop)
+  ob.recurSync(l.Emp(), l.nop)
+
+  await test_recurSync(Symbol(), false)
+  await test_recurSync(Symbol(), true)
+  await test_recurSync(l.Emp(), false)
+  await test_recurSync(l.Emp(), true)
+})
+
+async function test_recurSync(tar, swap) {
+  l.reqSome(tar)
+
+  const obs0 = ob.obs({val: 3})
+  const obs1 = ob.obsRef(5)
+
+  const que0 = ob.getPh(obs0)[ob.QUE]
+  const que1 = obs1[ob.QUE]
+
+  let runs = 0
+  let val = undefined
+
+  function run(arg) {
+    t.is(this, tar)
+    t.is(arg, tar)
+
+    runs++
+    val = obs0.val + obs1.val
   }
 
-  class TestMethRecurs extends ob.MethRecurs {
-    get Recur() {return TestNodeMethRecur}
-  }
+  let rec = (
+    swap
+    ? ob.recurSync(run, tar)
+    : ob.recurSync(tar, run)
+  )
 
-  function reac(tar, ...vals) {return TestMethRecurs.init(tar, ...vals)}
+  t.is(runs, 1)
+  t.is(val, 8)
+
+  testQueRef(que0, getShedRef(rec))
+  testQueRef(que1, getShedRef(rec))
+
+  // No change, no run.
+  obs0.val = 3
+
+  t.is(runs, 1)
+  t.is(val, 8)
+
+  testQueRef(que0, getShedRef(rec))
+  testQueRef(que1, getShedRef(rec))
+
+  obs0.val = 7
+
+  t.is(runs, 2)
+  t.is(val, 12)
+
+  testQueRef(que0, getShedRef(rec))
+  testQueRef(que1, getShedRef(rec))
+
+  obs1.val = 11
+
+  t.is(runs, 3)
+  t.is(val, 18)
+
+  testQueRef(que0, getShedRef(rec))
+  testQueRef(que1, getShedRef(rec))
+
+  t.test(function test_deinit_reinit() {
+    rec.deinit()
+
+    testWeakerRef(getShedRef(rec))
+    testWeakerRef(getRunRef(rec))
+
+    t.is(que0.next.size, 1)
+    t.is(head(que0.next), getShedRef(rec))
+
+    t.is(que1.next.size, 1)
+    t.is(head(que1.next), getShedRef(rec))
+
+    obs1.val = 13
+
+    // No rerun.
+    t.is(runs, 3)
+    t.is(val, 18)
+
+    t.is(que0.next.size, 1)
+    t.is(head(que0.next), getShedRef(rec))
+    testQueEmpty(que1)
+
+    rec.run()
+
+    t.is(runs, 4)
+    t.is(val, 20)
+
+    testWeakerRef(getShedRef(rec), rec)
+    testWeakerRef(getRunRef(rec))
+
+    t.is(que0.next.size, 1)
+    t.is(head(que0.next), getShedRef(rec))
+
+    t.is(que1.next.size, 1)
+    t.is(head(que1.next), getShedRef(rec))
+
+    obs0.val = 17
+
+    t.is(runs, 5)
+    t.is(val, 30)
+
+    testWeakerRef(getShedRef(rec), rec)
+    testWeakerRef(getRunRef(rec), rec)
+  })
+
+  if (!l.isFun(globalThis.gc)) return
+
+  await t.test(async function test_finalization() {
+    rec = undefined
+    await waitForGcAndFinalizers()
+    testQueEmpty(que0)
+    testQueEmpty(que1)
+  })
+}
+
+await t.test(async function test_hierarchical_scheduling() {
+  const shed = new TestShedMicro()
+
+  function recur(tar, fun) {return ob.recurShed(shed, tar, fun)}
 
   const obs0 = ob.obs({val: 10})
   const obs1 = ob.obsRef(20)
@@ -696,28 +1081,10 @@ await t.test(async function test_reac_unreac_and_hierarchical_scheduling() {
   tar1.appendChild(tar2)
   tar2.appendChild(tar3)
 
-  reac(tar0)
-  testMethRecs(tar0)
-  testElem(tar0, 0, 0, undefined, undefined)
-
-  reac(tar0, tar0.run0)
-  testMethRecs(tar0, tar0.run0)
+  const rec0_0 = recur(tar0, tar0.run0)
   testElem(tar0, 1, 0, 10, undefined)
 
-  // No redundant invocation.
-  reac(tar0, tar0.run0)
-  testElem(tar0, 1, 0, 10, undefined)
-
-  reac(tar0, tar0.run1)
-  testMethRecs(tar0, tar0.run0, tar0.run1)
-  testElem(tar0, 1, 1, 10, 20)
-
-  // No redundant invocation.
-  reac(tar0, tar0.run1)
-  testElem(tar0, 1, 1, 10, 20)
-
-  // No redundant invocations.
-  reac(tar0, tar0.run0, tar0.run1)
+  const rec0_1 = recur(tar0, tar0.run1)
   testElem(tar0, 1, 1, 10, 20)
 
   t.eq(shed.ques, [])
@@ -725,26 +1092,25 @@ await t.test(async function test_reac_unreac_and_hierarchical_scheduling() {
 
   obs0.val++
 
-  t.eq(shed.ques, [new ob.RunQue([getWeak(recs(tar0).get(tar0.run0))])])
-  t.inst(shed.timer, Promise)
-  await shed.timer
-  t.eq(shed.ques, [new ob.RunQue()])
-  t.is(shed.timer, undefined)
+  await shedWait(shed, getRunRef(rec0_0))
+
   testElem(tar0, 2, 1, 11, 20)
 
   obs1.val += 3
 
-  t.eq(shed.ques, [new ob.RunQue([getWeak(recs(tar0).get(tar0.run1))])])
-  await shed.timer
-  t.eq(shed.ques, [new ob.RunQue()])
+  await shedWait(shed, getRunRef(rec0_1))
+
   testElem(tar0, 2, 2, 11, 23)
 
   testElem(tar3, 0, 0, undefined, undefined)
-  reac(tar3, tar3.run1, tar3.run0)
-  testMethRecs(tar3, tar3.run1, tar3.run0)
+
+  const rec3_1 = recur(tar3, tar3.run1)
+  testElem(tar3, 0, 1, undefined, 23)
+
+  const rec3_0 = recur(tar3, tar3.run0)
   testElem(tar3, 1, 1, 11, 23)
 
-  t.eq(shed.ques, [new ob.RunQue()])
+  testShedEmpty(shed)
 
   obs1.val += 2
 
@@ -777,36 +1143,35 @@ await t.test(async function test_reac_unreac_and_hierarchical_scheduling() {
   consumer code fine-grained control.
   */
   t.eq(shed.ques, [
-    new ob.RunQue([getWeak(recs(tar0).get(tar0.run1))]),
+    new ob.Que([getRunRef(rec0_1)]),
     undefined,
     undefined,
-    new ob.RunQue([getWeak(recs(tar3).get(tar3.run1))]),
+    new ob.Que([getRunRef(rec3_1)]),
   ], `each triggerable must be scheduled at node depth`)
 
   await shed.timer
-  t.eq(shed.ques, [new ob.RunQue(), undefined, undefined, new ob.RunQue()])
+  t.eq(shed.ques, [new ob.Que(), undefined, undefined, new ob.Que()])
 
   testElem(tar0, 2, 3, 11, 25)
   testElem(tar3, 1, 2, 11, 25)
 
-  reac(tar1, tar1.run0)
-  testMethRecs(tar1, tar1.run0)
+
+  const rec1_0 = recur(tar1, tar1.run0)
   testElem(tar1, 1, 0, 11, undefined)
 
-  reac(tar2, tar2.run1)
-  testMethRecs(tar2, tar2.run1)
+  const rec2_1 = recur(tar2, tar2.run1)
   testElem(tar2, 0, 1, undefined, 25)
 
   obs0.val++
 
   t.eq(shed.ques, [
-    new ob.RunQue([getWeak(recs(tar0).get(tar0.run0))]),
-    new ob.RunQue([getWeak(recs(tar1).get(tar1.run0))]),
+    new ob.Que([getRunRef(rec0_0)]),
+    new ob.Que([getRunRef(rec1_0)]),
     undefined,
-    new ob.RunQue([getWeak(recs(tar3).get(tar3.run0))]),
+    new ob.Que([getRunRef(rec3_0)]),
   ])
   await shed.timer
-  t.eq(shed.ques, [new ob.RunQue(), new ob.RunQue(), undefined, new ob.RunQue()])
+  t.eq(shed.ques, [new ob.Que(), new ob.Que(), undefined, new ob.Que()])
 
   testElem(tar0, 3, 3, 12, 25)
   testElem(tar1, 2, 0, 12, undefined)
@@ -820,13 +1185,13 @@ await t.test(async function test_reac_unreac_and_hierarchical_scheduling() {
 
   t.ok(shed.scheduled)
   t.eq(shed.ques, [
-    new ob.RunQue(recWeaks(tar0)),
-    new ob.RunQue([getWeak(recs(tar1).get(tar1.run0))]),
-    new ob.RunQue([getWeak(recs(tar2).get(tar1.run1))]),
-    new ob.RunQue(recWeaks(tar3)),
+    new ob.Que([getRunRef(rec0_0), getRunRef(rec0_1)]),
+    new ob.Que([getRunRef(rec1_0)]),
+    new ob.Que([getRunRef(rec2_1)]),
+    new ob.Que([getRunRef(rec3_1), getRunRef(rec3_0)]),
   ])
   await shed.timer
-  t.eq(shed.ques, [new ob.RunQue(), new ob.RunQue(), new ob.RunQue(), new ob.RunQue()])
+  t.eq(shed.ques, [new ob.Que(), new ob.Que(), new ob.Que(), new ob.Que()])
   t.no(shed.scheduled)
 
   testElem(tar0, 4, 4, 19, 30)
@@ -834,48 +1199,327 @@ await t.test(async function test_reac_unreac_and_hierarchical_scheduling() {
   testElem(tar2, 0, 2, undefined, 30)
   testElem(tar3, 3, 3, 19, 30)
 
-  ob.unreac(tar0)
-  ob.unreac(tar1)
-  ob.unreac(tar2)
-  ob.unreac(tar3)
-
-  t.is(recs(tar0), undefined)
-  t.is(recs(tar1), undefined)
-  t.is(recs(tar2), undefined)
-  t.is(recs(tar3), undefined)
+  rec0_0.deinit()
+  rec0_1.deinit()
+  rec1_0.deinit()
+  rec2_1.deinit()
+  rec3_1.deinit()
+  rec3_0.deinit()
 
   obs0.val++
   obs1.val++
 
-  t.eq(shed.ques, [new ob.RunQue(), new ob.RunQue(), new ob.RunQue(), new ob.RunQue()])
+  t.eq(shed.ques, [new ob.Que(), new ob.Que(), new ob.Que(), new ob.Que()])
   t.no(shed.scheduled)
   t.is(shed.timer, undefined)
 
   if (!l.isFun(globalThis.gc)) return
 
-  let tar4 = new Elem()
-  reac(tar4, tar4.run0, tar4.run1)
-  testElem(tar4, 1, 1, 20, 31)
+  await t.test(async function test_finalization() {
+    let tar4 = new Elem()
+    let rec4_0 = recur(tar4, tar4.run0)
+    let rec4_1 = recur(tar4, tar4.run1)
+    testElem(tar4, 1, 1, 20, 31)
 
-  const que0 = ob.getPh(obs0).que
-  const que1 = obs1.que
+    const que0 = ob.getPh(obs0)[ob.QUE]
+    const que1 = obs1[ob.QUE]
 
-  t.eq(que0, new ob.TriggerWeakQue([getWeak(recs(tar4).get(tar4.run0))]))
-  t.eq(que1, new ob.TriggerWeakQue([getWeak(recs(tar4).get(tar4.run1))]))
+    t.eq(que0, new ob.Que([getShedRef(rec4_0)]))
+    t.eq(que1, new ob.Que([getShedRef(rec4_1)]))
 
-  tar4 = undefined
+    tar4 = undefined
+    rec4_0 = undefined
+    rec4_1 = undefined
+
+    await waitForGcAndFinalizers()
+
+    testQueEmpty(que0)
+    t.eq(que1, new ob.Que())
+
+    obs0.val++
+    obs1.val++
+
+    t.eq(shed.ques, [new ob.Que(), new ob.Que(), new ob.Que(), new ob.Que()])
+    t.no(shed.scheduled)
+    t.is(shed.timer, undefined)
+  })
+})
+
+await t.test(async function test_calc() {
+  const obs0 = ob.obs({val: 10})
+  const obs1 = ob.obsRef(20)
+
+  const que0 = ob.getPh(obs0)[ob.QUE]
+  const que1 = obs1[ob.QUE]
+
+  let runs0 = 0
+
+  const calc0 = ob.calc(function calculate0() {
+    runs0++
+    return obs0.val + obs1.val
+  })
+
+  t.is(calc0[l.VAL], undefined)
+  t.no(calc0.valid)
+  t.is(runs0, 0)
+
+  // When accessing the value, calculate on demand.
+  t.is(calc0.val, 30)
+
+  t.ok(calc0.valid)
+  t.is(runs0, 1)
+
+  // No redundant recalc.
+  t.is(calc0.val, 30)
+  t.ok(calc0.valid)
+  t.is(runs0, 1)
+
+  // No redundant recalc.
+  t.is(calc0.get(), 30)
+  t.ok(calc0.valid)
+  t.is(runs0, 1)
+
+  // No redundant recalc.
+  t.is(calc0.get(), 30)
+  t.ok(calc0.valid)
+  t.is(runs0, 1)
+
+  // No redundant recalc.
+  t.is(calc0[l.VAL], 30)
+  t.ok(calc0.valid)
+  t.is(runs0, 1)
+
+  testQueRef(que0, getShedRef(calc0.rec))
+  testQueRef(que1, getShedRef(calc0.rec))
+
+  obs0.val = 5
+
+  testQueEmpty(que0)
+  testQueRef(que1, getShedRef(calc0.rec))
+
+  // Must invalidate but not recalculate.
+  t.is(calc0[l.VAL], 30)
+  t.no(calc0.valid)
+  t.is(runs0, 1)
+
+  // Accessing the value must recalculate once.
+  t.is(calc0.get(), 25)
+  t.ok(calc0.valid)
+  t.is(runs0, 2)
+
+  // Recalc must que up for future updates.
+  testQueRef(que0, getShedRef(calc0.rec))
+  testQueRef(que1, getShedRef(calc0.rec))
+
+  // No redundant recalc.
+  t.is(calc0.get(), 25)
+  t.ok(calc0.valid)
+  t.is(runs0, 2)
+
+  // No redundant recalc.
+  t.is(calc0.val, 25)
+  t.ok(calc0.valid)
+  t.is(runs0, 2)
+
+  testQueRef(que0, getShedRef(calc0.rec))
+  testQueRef(que1, getShedRef(calc0.rec))
+
+  obs1.val = 7
+
+  testQueRef(que0, getShedRef(calc0.rec))
+  testQueEmpty(que1)
+
+  // Must invalidate but not recalculate.
+  t.is(calc0[l.VAL], 25)
+  t.no(calc0.valid)
+  t.is(runs0, 2)
+
+  // Accessing the value must recalculate once.
+  t.is(calc0.get(), 12)
+  t.ok(calc0.valid)
+  t.is(runs0, 3)
+
+  // Recalc must que up for future updates.
+  testQueRef(que0, getShedRef(calc0.rec))
+  testQueRef(que1, getShedRef(calc0.rec))
+
+  // No redundant recalc.
+  t.is(calc0.get(), 12)
+  t.ok(calc0.valid)
+  t.is(runs0, 3)
+
+  // No redundant recalc.
+  t.is(calc0.val, 12)
+  t.ok(calc0.valid)
+  t.is(runs0, 3)
+
+  let runs1 = 0
+
+  let calc1 = ob.calc(function calculate1() {
+    runs1++
+    return calc0.val * 2
+  })
+
+  // No accidental rerun of accessed calc observable.
+  t.is(runs0, 3)
+  t.is(calc0[l.VAL], 12)
+
+  t.is(calc1[l.VAL], undefined)
+  t.no(calc1.valid)
+  t.is(runs1, 0)
+
+  // Nothing qued up until the derived calc is accessed.
+  testQueEmpty(calc0[ob.QUE])
+
+  // Accessing the valid calculates on demand and ques up for future updates.
+  t.is(calc1.val, 24)
+  t.ok(calc1.valid)
+  t.is(runs1, 1)
+
+  testQueRef(calc0[ob.QUE], getShedRef(calc1.rec))
+
+  // No accidental rerun of accessed calc observable.
+  t.is(runs0, 3)
+  t.is(calc0[l.VAL], 12)
+
+  // No redundant recalc.
+  t.is(calc1.val, 24)
+  t.ok(calc1.valid)
+  t.is(runs1, 1)
+
+  // No redundant recalc.
+  t.is(calc1.get(), 24)
+  t.ok(calc1.valid)
+  t.is(runs1, 1)
+
+  // No redundant recalc.
+  t.is(calc1.get(), 24)
+  t.ok(calc1.valid)
+  t.is(runs1, 1)
+
+  testQueRef(que0, getShedRef(calc0.rec))
+  testQueRef(que1, getShedRef(calc0.rec))
+
+  obs0.val = 11
+
+  // Must run and recalc immediately and flush the pending runners,
+  // in this case the derived calc.
+  t.is(runs0, 4)
+  t.is(calc0[l.VAL], 18)
+
+  // ...Which is why it must also que up on all of its source observables.
+  testQueRef(que0, getShedRef(calc0.rec))
+  testQueRef(que1, getShedRef(calc0.rec))
+
+  // ...But the derived calc is not qued up until its value is observed.
+  testQueEmpty(calc0[ob.QUE])
+
+  // Must invalidate derived calc but not recalculate.
+  t.is(calc1[l.VAL], 24)
+  t.no(calc1.valid)
+  t.is(runs1, 1)
+
+  // No redundant recalc of first calc on further value access.
+  t.is(calc0.get(), 18)
+  t.ok(calc0.valid)
+  t.is(runs0, 4)
+
+  // Accessing derived calc runs it and calculates value on demand.
+  t.is(calc1.get(), 36)
+  t.ok(calc1.valid)
+  t.is(runs1, 2)
+
+  // Recalc must que up derived calc for future updates.
+  testQueRef(calc0[ob.QUE], getShedRef(calc1.rec))
+
+  // No redundant recalc of derived calc.
+  t.is(calc1.get(), 36)
+  t.ok(calc1.valid)
+  t.is(runs1, 2)
+
+  // Must remain qued up for future updates.
+  testQueRef(calc0[ob.QUE], getShedRef(calc1.rec))
+
+  const shed = calc0.rec.shed
+  let rec = new TestRecur({shed})
+  let recTrueRuns = 0
+  let recVal = undefined
+
+  rec.onRun = function onRun() {
+    recTrueRuns++
+    recVal = calc0.val + calc1.val
+  }
+  rec.run()
+
+  t.eq(calc0[ob.QUE], new ob.Que([getShedRef(calc1.rec), getShedRef(rec)]))
+  testQueRef(calc1[ob.QUE], getShedRef(rec))
+
+  // No redundant recalc of either calc.
+  t.is(runs0, 4)
+  t.is(runs1, 2)
+
+  t.is(rec.runs, 1)
+  t.is(recTrueRuns, 1)
+  t.is(recVal, 54)
+
+  obs1.val = 13
+
+  /*
+  This produces +2 runs instead of an ideal +1. When we change the observable,
+  it synchronously flushes `calc0`, which synchronously flushes `rec`, which
+  was in its que, and `calc1`, and `calc1` also flushes `rec`, which was in its
+  que.
+
+  Pausing the synchronous scheduler doesn't prevent this because only `calc0`
+  gets paused, and all our ques explicitly prevent adding new runnables to a
+  que while it's flushing.
+  */
+  t.is(rec.runs, 3)
+  t.is(recTrueRuns, 3)
+  t.is(recVal, 72)
+
+  t.is(calc0.get(), 24)
+  t.is(calc1.get(), 48)
+  t.is(runs0, 5)
+  t.is(runs1, 3)
+
+  if (!l.isFun(globalThis.gc)) return
+
+  calc1 = undefined
+  rec = undefined
 
   await waitForGcAndFinalizers()
+  testQueEmpty(calc0[ob.QUE])
+})
 
-  t.eq(que0, new ob.TriggerWeakQue())
-  t.eq(que1, new ob.TriggerWeakQue())
+t.test(function test_calc_arg_swap() {
+  const tar0 = Symbol()
+  const tar1 = l.Emp()
 
-  obs0.val++
-  obs1.val++
+  let runs0 = 0
+  let runs1 = 0
 
-  t.eq(shed.ques, [new ob.RunQue(), new ob.RunQue(), new ob.RunQue(), new ob.RunQue()])
-  t.no(shed.scheduled)
-  t.is(shed.timer, undefined)
+  const calc0 = ob.calc(tar0, function run0(arg) {
+    runs0++
+    t.is(this, tar0)
+    t.is(arg, tar0)
+    return 10
+  })
+
+  t.is(runs0, 0)
+  t.is(calc0.get(), 10)
+  t.is(runs0, 1)
+
+  const calc1 = ob.calc(function run1(arg) {
+    runs1++
+    t.is(this, tar1)
+    t.is(arg, tar1)
+    return 20
+  }, tar1)
+
+  t.is(runs1, 0)
+  t.is(calc1.val, 20)
+  t.is(runs1, 1)
 })
 
 function testElem(tar, count0, count1, val0, val1) {
@@ -885,13 +1529,7 @@ function testElem(tar, count0, count1, val0, val1) {
   t.is(tar.val1, val1, `val1`)
 }
 
-// Incomplete, TODO validate values too.
-function testMethRecs(tar, ...funs) {t.eq(recKeys(tar), funs)}
-
-function recs(tar) {return tar[ob.SYM_RECS]}
-function recKeys(tar) {return [...tar[ob.SYM_RECS].keys()]}
-function recVals(tar) {return [...tar[ob.SYM_RECS].values()]}
-function recWeaks(tar) {return recVals(tar).map(getWeak)}
-function getWeak(val) {return l.reqInst(val.weak, WeakRef)}
+function getRunRef(val) {return l.reqInst(val.runRef, ob.RunRef)}
+function getShedRef(val) {return l.reqInst(val.shedRef, ob.ShedRef)}
 
 if (import.meta.main) console.log(`[test] ok!`)

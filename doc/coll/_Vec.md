@@ -21,16 +21,16 @@ The overhead of the wrapper is insignificant.
 import * as c from '{{featUrl coll}}'
 
 console.log(new c.Vec())
-// Vec{$: []}
+// Vec{Symbol(val): []}
 
 console.log(new c.Vec([10, 20, 30]))
-// Vec{$: [10, 20, 30]}
+// Vec{Symbol(val): [10, 20, 30]}
 
 console.log(c.Vec.of(10, 20, 30))
-// Vec{$: [10, 20, 30]}
+// Vec{Symbol(val): [10, 20, 30]}
 
 console.log(c.Vec.from(new Set([10, 20, 30])))
-// Vec{$: [10, 20, 30]}
+// Vec{Symbol(val): [10, 20, 30]}
 
 for (const val of c.Vec.of(10, 20, 30)) console.log(val)
 // 10 20 30

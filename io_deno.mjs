@@ -103,7 +103,7 @@ export class FileInfo extends l.Emp {
   constructor(stat, path) {
     super()
     this.path = p.reqPath(path)
-    this.stat = l.reqStruct(stat)
+    this.stat = l.reqRec(stat)
   }
 
   isFile() {return this.stat.isFile}

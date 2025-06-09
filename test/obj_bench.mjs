@@ -20,11 +20,11 @@ const emptyEmpNotFrozen = new l.Emp()
 const emptyEmpFrozen = Object.freeze(new l.Emp())
 
 class MemGet {
+  static {o.memGet(this)}
   get one() {}
   get two() {}
   get three() {}
 }
-o.memGet(MemGet)
 
 const memGet = new MemGet()
 l.nop(memGet.one)
@@ -39,7 +39,6 @@ class Shallow {
 }
 
 const shallowLax = new Shallow()
-const shallowStrict = new Proxy(new Shallow(), o.StrictStaticPh)
 
 class NonEnumDefprop {
   constructor(val) {
@@ -92,13 +91,15 @@ const structSpec = {
   six: l.reqStr,
 }
 
-t.own(new o.StructLax(structSrc), structSrc)
+class StructLax extends o.MixStructLax(l.Emp) {}
 
-class StructDeclaredLax extends o.StructLax {static spec = structSpec}
+t.own(new StructLax(structSrc), structSrc)
+
+class StructDeclaredLax extends StructLax {static spec = structSpec}
 
 t.own(new StructDeclaredLax(structSrc), structSrc)
 
-class StructDeclared extends o.Struct {static spec = structSpec}
+class StructDeclared extends o.MixStruct(l.Emp) {static spec = structSpec}
 
 t.own(new StructDeclared(structSrc), structSrc)
 
@@ -146,7 +147,7 @@ t.bench(function bench_cls_def() {
   })
 })
 
-t.bench(function bench_memGet_init() {
+t.bench(function bench_memGet_init_call() {
   l.nop(o.memGet(class MemGet {
     get one() {}
     get two() {}
@@ -154,14 +155,18 @@ t.bench(function bench_memGet_init() {
   }))
 })
 
+t.bench(function bench_memGet_init_static_block() {
+  l.nop(class MemGet {
+    static {o.memGet(this)}
+    get one() {}
+    get two() {}
+    get three() {}
+  })
+})
+
 t.bench(function bench_memGet_new() {l.nop(new MemGet())})
 t.bench(function bench_memGet_replace() {l.nop(new MemGet().one)})
 t.bench(function bench_memGet_access_replaced() {l.nop(memGet.one)})
-
-t.bench(function bench_property_get_unchecked() {l.nop(shallowLax.one)})
-t.bench(function bench_property_get_checked_manual() {l.nop(l.reqGet(shallowLax, `one`))})
-t.bench(function bench_property_get_checked_by_proxy_own() {l.nop(shallowStrict.one)})
-t.bench(function bench_property_get_checked_by_proxy_inherit() {l.nop(shallowStrict.toString)})
 
 t.bench(function bench_Object_getOwnPropertyDescriptor_miss() {
   l.nop(Object.getOwnPropertyDescriptor(shallowLax, `four`))
@@ -175,10 +180,10 @@ t.bench(function bench_Object_getPrototypeOf() {
   l.nop(Object.getPrototypeOf(shallowLax))
 })
 
-t.bench(function bench_assign_Object_assign() {l.reqStruct(Object.assign(Object.create(null), itc.numDict))})
-t.bench(function bench_assign_lodash_assign() {l.reqStruct(lo.assign(Object.create(null), itc.numDict))})
-t.bench(function bench_assign_our_assign() {l.reqStruct(o.assign(Object.create(null), itc.numDict))})
-t.bench(function bench_assign_our_patch() {l.reqStruct(o.patch(Object.create(null), itc.numDict))})
+t.bench(function bench_assign_Object_assign() {l.reqRec(Object.assign(Object.create(null), itc.numDict))})
+t.bench(function bench_assign_lodash_assign() {l.reqRec(lo.assign(Object.create(null), itc.numDict))})
+t.bench(function bench_assign_our_assign() {l.reqRec(o.assign(Object.create(null), itc.numDict))})
+t.bench(function bench_assign_our_patch() {l.reqRec(o.patch(Object.create(null), itc.numDict))})
 
 t.bench(function bench_Object_isFrozen_miss_npo() {l.nop(Object.isFrozen(emptyNpoNotFrozen))})
 t.bench(function bench_Object_isFrozen_miss_dict() {l.nop(Object.isFrozen(emptyDictNotFrozen))})
@@ -224,7 +229,7 @@ t.bench(function bench_non_enum_construct_set_get_defprop() {l.nop(new NonEnumDe
 t.bench(function bench_non_enum_construct_set_get_sym() {l.nop(new NonEnumSym(10).set(20).get())})
 t.bench(function bench_non_enum_construct_set_get_priv() {l.nop(new NonEnumPriv(10).set(20).get())})
 
-t.bench(function bench_struct_new_undeclared_lax() {l.nop(new o.StructLax(structSrc))})
+t.bench(function bench_struct_new_undeclared_lax() {l.nop(new StructLax(structSrc))})
 t.bench(function bench_struct_new_declared_lax() {l.nop(new StructDeclaredLax(structSrc))})
 t.bench(function bench_struct_new_declared() {l.nop(new StructDeclared(structSrc))})
 

@@ -4,6 +4,8 @@
 
 Isomorphic SSR is supported via lightweight and performant {{featLink dom_shim}}. Pairing these modules together, and using custom DOM elements, provides a good foundation for hybrid SSR/SPA.
 
+Supports observables and reactivity via the module {{featLink obs}}.
+
 Short overview of features:
 
   * Directly create DOM nodes.
@@ -15,8 +17,9 @@ Short overview of features:
     * No string parsing.
     * No need for JSX.
     * No need for a build system.
-  * Render only once. Use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
+  * Can use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
     * Use {{featLink dom_reg}} for more convenient element registration.
+  * Built-in reactivity with {{featLink obs}}.
   * Good for SSR/SPA hybrids.
 
 Complemented by:
@@ -41,10 +44,8 @@ Browser example:
 
 ```js
 import * as p from '{{featUrl prax}}'
-import {A} from '{{featUrl prax}}'
 
-const ren = new p.Ren()
-const E = ren.E.bind(ren)
+const {E} = p.Ren.main
 
 const elem = E(`div`, {id: `main`, class: `outer`},
   E(`p`, {class: `inner`},
@@ -78,8 +79,7 @@ Usage with custom elements:
 import * as p from '{{featUrl prax}}'
 import * as dr from '{{featUrl dom_reg}}'
 
-const ren = new p.Ren()
-const E = ren.E.bind(ren)
+const {E} = p.Ren.main
 
 class SomeLink extends dr.MixReg(HTMLAnchorElement) {
   init(href, text) {
@@ -92,6 +92,54 @@ document.body.append(
 )
 ```
 
+Reactivity:
+
+```js
+import * as ob from '{{featUrl obs}}'
+import * as p from '{{featUrl prax}}'
+
+const {E} = p.Ren.main
+const obs0 = ob.obs({val: `hello`})
+const obs1 = ob.obsRef(`world`)
+const msg = ob.calc(() => obs0.val + ` ` + obs1.val)
+
+/*
+The renderer specially detects and supports functions and observables.
+Any of the following will render the same message and update as needed.
+*/
+
+E(document.body, {}, msg)
+E(document.body, {}, () => msg)
+E(document.body, {}, () => msg.val)
+E(document.body, {}, () => obs0.val + ` ` + obs1.val)
+E(document.body, {}, () => [obs0.val, ` `, obs1.val])
+
+document.body.appendChild(E(`span`, {}, msg))
+document.body.appendChild(E(`span`, {}, () => msg))
+document.body.appendChild(E(`span`, {}, () => msg.val))
+document.body.appendChild(E(`span`, {}, () => obs0.val + ` ` + obs1.val))
+document.body.appendChild(E(`span`, {}, () => [obs0.val, ` `, obs1.val]))
+
+/*
+These modifications automatically notify all observers monitoring the
+observables. In browser environments, by default, the renderer uses the
+scheduler `ob.ShedTask`, which delays its runs via `requestAnimationFrame`
+and runs them hierarchically from ancestors to descendants. In this case,
+despite having two observable modifications, each function will be invoked
+only once, and only one UI repaint will happen.
+*/
+setTimeout(() => {
+  obs0.val = `welcome to`
+  obs1.val = `the future`
+}, 1024)
+
+/*
+Remove all nodes. When the engine runs garbage collection, all observers will
+be automatically deinitialized and removed from observable queues.
+*/
+E(document.body, {}, undefined)
+```
+
 ### SSR
 
 For SSR (server-side rendering), Prax needs our lightweight DOM shim:
@@ -100,8 +148,8 @@ For SSR (server-side rendering), Prax needs our lightweight DOM shim:
 import * as p from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_global_shim}}'
 
-const ren = new p.Ren(dg.global.document)
-const E = ren.E.bind(ren)
+const ren = new p.Ren(dg.global)
+const {E} = ren
 
 const elem = E(`div`, {id: `main`, class: `outer`},
   E(`p`, {class: `inner`}, `hello world!`),
@@ -123,8 +171,8 @@ import * as p from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_global_shim}}'
 import * as dg from '{{featUrl dom_global_native}}'
 
-const ren = new p.Ren(dg.global.document)
-const E = ren.E.bind(ren)
+const ren = new p.Ren(dg.global)
+const {E} = ren
 
 // In both environments, this will be a DOM element.
 // In SSR, it will be shimmed.
@@ -139,8 +187,8 @@ Rendering a complete document with doctype:
 import * as p from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_global_shim}}'
 
-const ren = new p.Ren(dg.global.document)
-const E = ren.E.bind(ren)
+const ren = new p.Ren(dg.global)
+const {E} = ren
 
 const elem = E(`html`, {lang: `en`},
   E(`head`, null,
@@ -169,6 +217,8 @@ Formatted here for viewing convenience:
 </html>
 */
 ```
+
+In non-browser environments, observers are invoked synchronously by default. Modifying observables causes DOM updates as expected. The user code is responsible for making sure that they're done with observable modifications before rendering to string.
 
 ## API
 

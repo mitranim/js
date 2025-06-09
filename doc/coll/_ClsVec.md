@@ -20,9 +20,9 @@ console.log(coll)
 
 /*
 Persons {
-  "$": [
-    Person { name: "Mira" },
-    Person { name: "Kara" },
+  Symbol(val): [
+    Person {name: "Mira"},
+    Person {name: "Kara"},
   ]
 }
 */

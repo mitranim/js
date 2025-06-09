@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as d from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.67/dom.mjs'
+import * as d from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/dom.mjs'
 ```
 
 ## API
@@ -64,14 +64,20 @@ The following APIs are exported but undocumented. Check [dom.mjs](../dom.mjs).
   * [`function copyToClipboard`](../dom.mjs#L157)
   * [`function clipNode`](../dom.mjs#L176)
   * [`function selectText`](../dom.mjs#L178)
-  * [`function ancestor`](../dom.mjs#L189)
-  * [`function findAncestor`](../dom.mjs#L196)
-  * [`function descendant`](../dom.mjs#L213)
-  * [`function findDescendant`](../dom.mjs#L215)
-  * [`function descendants`](../dom.mjs#L220)
-  * [`function findNextSibling`](../dom.mjs#L233)
-  * [`function nextSibling`](../dom.mjs#L241)
-  * [`function findPrevSibling`](../dom.mjs#L243)
-  * [`function prevSibling`](../dom.mjs#L251)
-  * [`function MixNode`](../dom.mjs#L257)
-  * [`class MixNodeCache`](../dom.mjs#L259)
+  * [`function setText`](../dom.mjs#L189)
+  * [`function ancestor`](../dom.mjs#L194)
+  * [`function findAncestor`](../dom.mjs#L201)
+  * [`function descendant`](../dom.mjs#L218)
+  * [`function findDescendant`](../dom.mjs#L220)
+  * [`function descendants`](../dom.mjs#L225)
+  * [`function findNextSibling`](../dom.mjs#L238)
+  * [`function nextSibling`](../dom.mjs#L246)
+  * [`function findPrevSibling`](../dom.mjs#L248)
+  * [`function prevSibling`](../dom.mjs#L256)
+  * [`function MixNode`](../dom.mjs#L262)
+  * [`class MixinNode`](../dom.mjs#L264)
+  * [`const PARENT_NODE`](../dom.mjs#L280)
+  * [`function MixChild`](../dom.mjs#L296)
+  * [`class MixinChild`](../dom.mjs#L298)
+  * [`function MixChildCon`](../dom.mjs#L353)
+  * [`class MixinChildCon`](../dom.mjs#L355)

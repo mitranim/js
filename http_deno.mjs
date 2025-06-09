@@ -180,7 +180,7 @@ export class HttpFileInfo extends io.FileInfo {
 export class HttpFileStream extends io.FileStream {
   res(opt) {
     try {
-      const res = new this.Res(this, l.optStruct(opt))
+      const res = new this.Res(this, l.optRec(opt))
       this.setTypeOpt(res.headers)
       return res
     }

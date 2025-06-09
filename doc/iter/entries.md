@@ -5,4 +5,4 @@ Takes an arbitrary input and returns an array of its entries (key-value tuples):
     * Examples: `Set`, `Map`, and more.
   * For {{link lang isList lists}}: equivalent to above for arrays.
   * For {{link lang isIterator iterators}}: exhausts the iterator, returning an array of entries where keys are indexes starting with 0.
-  * For {{link lang isStruct structs}}: equivalent to [`Object.entries`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries).
+  * For {{link lang isRec records}}: equivalent to [`Object.entries`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries).

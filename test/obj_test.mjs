@@ -32,6 +32,16 @@ class Fat {
   set getterSetter(_) {unreachable()}
 }
 
+class One extends l.Emp {
+  constructor(val) {super().val = val}
+  mut(val) {this.val = val}
+}
+
+class Two extends l.Emp {
+  constructor(val) {super().val = val}
+  mut(val) {this.val = val}
+}
+
 /* Test */
 
 t.test(function test_assign() {
@@ -84,20 +94,20 @@ t.test(function test_assign() {
 // Commonalities between `assign` and `patch`.
 function testMut(fun) {
   t.test(function test_invalid() {
-    t.throws(() => fun(),             TypeError, `expected variant of isStruct`)
-    t.throws(() => fun(null, {}),     TypeError, `expected variant of isStruct`)
-    t.throws(() => fun(10, {}),       TypeError, `expected variant of isStruct`)
-    t.throws(() => fun(`one`, {}),    TypeError, `expected variant of isStruct`)
-    t.throws(() => fun(`one`, `one`), TypeError, `expected variant of isStruct`)
-    t.throws(() => fun([], {}),       TypeError, `expected variant of isStruct`)
-    t.throws(() => fun([], []),       TypeError, `expected variant of isStruct`)
-    t.throws(() => fun(l.nop, {}),    TypeError, `expected variant of isStruct`)
-    t.throws(() => fun(l.nop, l.nop), TypeError, `expected variant of isStruct`)
-    t.throws(() => fun({}, 10),       TypeError, `expected variant of isStruct`)
-    t.throws(() => fun({}, `one`),    TypeError, `expected variant of isStruct`)
-    t.throws(() => fun({}, []),       TypeError, `expected variant of isStruct`)
-    t.throws(() => fun({}, l.nop),    TypeError, `expected variant of isStruct`)
-    t.throws(() => fun({}, []),       TypeError, `expected variant of isStruct`)
+    t.throws(() => fun(),             TypeError, `expected variant of isRec`)
+    t.throws(() => fun(null, {}),     TypeError, `expected variant of isRec`)
+    t.throws(() => fun(10, {}),       TypeError, `expected variant of isRec`)
+    t.throws(() => fun(`one`, {}),    TypeError, `expected variant of isRec`)
+    t.throws(() => fun(`one`, `one`), TypeError, `expected variant of isRec`)
+    t.throws(() => fun([], {}),       TypeError, `expected variant of isRec`)
+    t.throws(() => fun([], []),       TypeError, `expected variant of isRec`)
+    t.throws(() => fun(l.nop, {}),    TypeError, `expected variant of isRec`)
+    t.throws(() => fun(l.nop, l.nop), TypeError, `expected variant of isRec`)
+    t.throws(() => fun({}, 10),       TypeError, `expected variant of isRec`)
+    t.throws(() => fun({}, `one`),    TypeError, `expected variant of isRec`)
+    t.throws(() => fun({}, []),       TypeError, `expected variant of isRec`)
+    t.throws(() => fun({}, l.nop),    TypeError, `expected variant of isRec`)
+    t.throws(() => fun({}, []),       TypeError, `expected variant of isRec`)
   })
 
   function mutate(tar, src) {t.is(fun(tar, src), tar)}
@@ -188,689 +198,550 @@ t.test(function test_patch() {
   })
 })
 
-t.test(function test_StructType() {
+t.test(function test_Mixin() {
+  t.test(function test_nop() {
+    class TestMixin extends o.Mixin {static make(src) {return src}}
+
+    t.is(TestMixin.get(l.Emp), l.Emp)
+    t.is(TestMixin.get(l.Emp), l.Emp)
+    t.is(TestMixin.get(l.Emp), l.Emp)
+  })
+
+  t.test(function test_level_one() {
+    class TestMixin extends o.Mixin {
+      static make(src) {
+        return class TestMixin extends src {get() {return 10}}
+      }
+    }
+
+    const Cls = TestMixin.get(l.Emp)
+    t.isnt(Cls, l.Emp)
+    l.reqSubCls(Cls, l.Emp)
+
+    t.is(TestMixin.get(l.Emp), Cls)
+    t.is(TestMixin.get(l.Emp), Cls)
+    t.is(TestMixin.get(l.Emp), Cls)
+
+    // Deduplication: mixin only occurs once in the prototype chain.
+    t.is(TestMixin.get(Cls), Cls)
+    t.is(TestMixin.get(Cls), Cls)
+    t.is(TestMixin.get(Cls), Cls)
+
+    t.is(new Cls().get(), 10)
+  })
+
+  t.test(function test_level_two() {
+    class TestMixin0 extends o.Mixin {
+      static make(src) {
+        return class TestMixin0 extends src {get() {return 10}}
+      }
+    }
+
+    class TestMixin1 extends o.Mixin {
+      static make(src) {
+        return class TestMixin1 extends src {get() {return 20}}
+      }
+    }
+
+    const Cls0 = TestMixin0.get(l.Emp)
+    t.isnt(Cls0, l.Emp)
+    l.reqSubCls(Cls0, l.Emp)
+
+    t.is(TestMixin0.get(l.Emp), Cls0)
+    t.is(TestMixin0.get(l.Emp), Cls0)
+    t.is(TestMixin0.get(l.Emp), Cls0)
+
+    const val0 = new Cls0()
+    t.inst(val0, Cls0)
+    t.is(val0.get(), 10)
+
+    const Cls1 = TestMixin1.get(Cls0)
+    t.isnt(Cls1, l.Emp)
+    t.isnt(Cls1, Cls0)
+    l.reqSubCls(Cls1, Cls0)
+
+    t.is(TestMixin1.get(Cls0), Cls1)
+    t.is(TestMixin1.get(Cls0), Cls1)
+    t.is(TestMixin1.get(Cls0), Cls1)
+
+    // Deduplication: mixin only occurs once in the prototype chain.
+    t.is(TestMixin1.get(Cls1), Cls1)
+    t.is(TestMixin1.get(Cls1), Cls1)
+    t.is(TestMixin1.get(Cls1), Cls1)
+
+    const val1 = new Cls1()
+    t.inst(val1, Cls1)
+    t.is(val1.get(), 20)
+
+    class Cls2 extends Cls0 {}
+
+    // Deduplication: mixin only occurs once in the prototype chain.
+    t.is(TestMixin0.get(Cls2), Cls2)
+    t.is(TestMixin0.get(Cls2), Cls2)
+    t.is(TestMixin0.get(Cls2), Cls2)
+
+    class Cls3 extends Cls1 {}
+
+    // Deduplication: mixin only occurs once in the prototype chain.
+    t.is(TestMixin0.get(Cls3), Cls3)
+    t.is(TestMixin0.get(Cls3), Cls3)
+    t.is(TestMixin0.get(Cls3), Cls3)
+
+    // Deduplication: mixin only occurs once in the prototype chain.
+    t.is(TestMixin1.get(Cls3), Cls3)
+    t.is(TestMixin1.get(Cls3), Cls3)
+    t.is(TestMixin1.get(Cls3), Cls3)
+  })
+})
+
+// Actual spec behavior is tested below.
+t.test(function test_MixStruct() {
+  testMixStructSubclassing(o.MixStruct, o.StructSpec)
+})
+
+// Actual spec behavior is tested below.
+t.test(function test_MixStructLax() {
+  testMixStructSubclassing(o.MixStructLax, o.StructSpecLax)
+})
+
+function testMixStructSubclassing(Mix, Spec) {
+  const Cls = Mix(l.Emp)
+
+  t.isnt(Cls, l.Emp)
+  l.reqCls(Cls)
+  l.reqSubCls(Cls, l.Emp)
+
+  l.reqNpo(Cls.prototype)
+
+  t.is(Mix(l.Emp), Cls)
+  t.is(Mix(l.Emp), Cls)
+  t.is(Mix(l.Emp), Cls)
+
+  const spec0 = o.structSpec(Cls)
+  t.inst(spec0, Spec)
+
+  t.is(o.structSpec(Cls), spec0)
+  t.is(o.structSpec(Cls), spec0)
+  t.is(o.structSpec(new Cls()), spec0)
+  t.is(o.structSpec(new Cls()), spec0)
+
+  t.is(Cls[o.SPEC], spec0)
+
+  class Sub extends Cls {}
+
+  const spec1 = o.structSpec(Sub)
+  t.inst(spec1, Spec)
+  t.isnt(spec1, spec0)
+
+  t.is(o.structSpec(Sub), spec1)
+  t.is(o.structSpec(Sub), spec1)
+  t.is(o.structSpec(new Sub()), spec1)
+  t.is(o.structSpec(new Sub()), spec1)
+
+  t.is(Sub[o.SPEC], spec1)
+  t.is(Cls[o.SPEC], spec0)
+}
+
+t.test(function test_struct_specs() {
   t.test(function test_invalid() {
-    function fail(val) {
+    function fail(Spec, val) {
+      function failing() {
+        class Cls extends l.Emp {static spec = {one: val}}
+        l.nop(new Spec(Cls))
+      }
+
       t.throws(
-        () => class Tar extends o.Struct {static spec = {one: val}}.getType(),
+        failing,
         TypeError,
-        `invalid definition of "one" in [function Tar]: expected nil or function, got ` + l.show(val),
+        `invalid definition of "one" in [function Cls]: expected nil or function, got ` + l.show(val),
       )
     }
 
-    fail(10)
-    fail(`str`)
-    fail(true)
-    fail({one: 10})
-    fail([10])
+    function fails(Spec) {
+      fail(Spec, 10)
+      fail(Spec, `str`)
+      fail(Spec, true)
+      fail(Spec, {one: 10})
+      fail(Spec, [10])
+    }
+
+    fails(o.StructSpec)
+    fails(o.StructSpecLax)
   })
 
-  class Type extends o.StructType {
-    init() {}
-    reinit() {}
-  }
-
-  class Tar extends o.Struct {
-    static get Type() {return Type}
-
+  class Cls extends l.Emp {
     static spec = {
       id: l.reqIntPos,
       name: l.reqStr,
     }
   }
 
-  // Some later tests rely on this.
-  t.test(function test_statics() {
-    t.is(o.Struct.Type, o.StructType)
-    t.inst(o.Struct.getType(), o.StructType)
+  function testSpec(spec) {
+    t.is(spec.cls, Cls)
 
-    t.is(o.StructLax.Type, o.StructTypeLax)
-    t.inst(o.StructLax.getType(), o.StructTypeLax)
+    t.eq(spec.list, [
+      new o.FieldSpec(`id`, l.reqIntPos),
+      new o.FieldSpec(`name`, l.reqStr),
+    ])
 
-    t.inst(Tar.getType(), Tar.Type)
-    t.is(Tar.getType(), Tar.getType())
-  })
+    t.eq(spec.dict, {
+      id: new o.FieldSpec(`id`, l.reqIntPos),
+      name: new o.FieldSpec(`name`, l.reqStr),
+    })
+  }
 
-  t.test(function test_reset() {
-    const type = Tar.getType()
-    const tar = new Tar()
-
-    testStructTypeReset(tar, type.reset.bind(type))
-
-    type.reset(tar, {id: 30, name: `two`, undeclared0: 40, undeclared1: 50, constructor: 60})
-    t.own(tar, {id: 30, name: `two`})
-  })
-
-  t.test(function test_patch() {
-    const type = Tar.getType()
-    const tar = new Tar()
-
-    type.patch(tar)
-    t.own(tar, {})
-
-    type.patch(tar, {})
-    t.own(tar, {})
-
-    type.patch(tar, {id: 30, name: `two`, undeclared0: 40, undeclared1: 50, constructor: 60})
-    t.own(tar, {undeclared0: 40, undeclared1: 50})
-
-    type.patch(tar, {})
-    t.own(tar, {undeclared0: 40, undeclared1: 50})
-  })
-
-  t.test(function test_mut() {
-    const type = Tar.getType()
-    const tar = new Tar()
-
-    testStructTypeReset(tar, type.mut.bind(type))
-
-    type.mut(tar, {id: 30, name: `two`, undeclared0: 40, undeclared1: 50, constructor: 60})
-    t.own(tar, {id: 30, name: `two`, undeclared0: 40, undeclared1: 50})
-  })
-
-  t.test(function test_fallback() {
-    class Tar extends o.Struct {
-      static get Type() {return Type}
-      static spec = {id: l.reqIntPos}
-      static any(val) {return val + 1}
-    }
-
-    const type = Tar.getType()
-    const tar = new Tar()
-
-    type.patch(tar, {id: 10, undeclared0: 20, undeclared1: 30})
-    t.own(tar, {undeclared0: 21, undeclared1: 31})
-
-    type.mut(tar, {id: 10, undeclared0: 40, undeclared1: 50})
-    t.own(tar, {id: 10, undeclared0: 41, undeclared1: 51})
-  })
-
-  t.test(function test_fields_implementing_isMut() {
-    class SubDeclared extends o.StructLax {}
-    class SubUndeclared extends o.StructLax {}
-
-    class Tar extends o.Struct {
-      static get Type() {return Type}
-
-      static spec = {
-        id(val) {return l.reqIntPos(val)},
-        declared(val) {return l.toInstOpt(val, SubDeclared)},
+  function testSpecValidate(Spec) {
+    class Sub extends Cls {
+      static validate(tar) {
+        if (l.isValidStr(tar.name)) return
+        throw TypeError(`missing name`)
       }
-
-      static any(val) {return l.toInstOpt(val, SubUndeclared)}
     }
 
-    const type = Tar.getType()
-    const tar = new Tar()
+    const spec = new Spec(Sub)
 
-    type.mut(tar, {id: 10, declared: {one: 20}, undeclared: {two: 30}})
-    const {declared, undeclared} = tar
-    t.own(tar, {id: 10, declared, undeclared})
-    t.is(tar.id, 10)
-    t.inst(declared, SubDeclared)
-    t.own(declared, {one: 20})
-    t.inst(undeclared, SubUndeclared)
-    t.own(undeclared, {two: 30})
-
-    function unmodified() {
-      t.own(declared, {one: 20, three: 50})
-      t.own(undeclared, {two: 30, four: 60})
+    {
+      const tar = l.Emp()
+      t.is(spec.construct(tar, {id: 10, name: `one`}), tar)
+      t.own(tar, {id: 10, name: `one`})
+      Sub.validate(tar)
+      spec.validate(tar)
     }
 
-    type.mut(tar, {id: 40, declared: {three: 50}, undeclared: {four: 60}})
-    t.own(tar, {id: 40, declared, undeclared})
-    t.is(tar.declared, declared)
-    t.is(tar.undeclared, undeclared)
-    unmodified()
+    {
+      const tar = l.Emp()
+      t.throws(
+        () => spec.construct(tar, {id: 10, name: ``}),
+        TypeError,
+        `missing name`,
+      )
+      t.own(tar, {id: 10, name: ``})
 
-    t.throws(() => type.mut(tar, {id: 40, declared: 50}), TypeError, `expected variant of isStruct, got 50`)
-    t.throws(() => type.mut(tar, {id: 40, declared: {}, undeclared: 50}), TypeError, `expected variant of isStruct, got 50`)
-    t.own(tar, {id: 40, declared, undeclared})
-    t.is(tar.declared, declared)
-    t.is(tar.undeclared, undeclared)
-    unmodified()
+      t.throws(() => spec.validate(tar), TypeError, `missing name`)
+      t.own(tar, {id: 10, name: ``})
 
-    type.mut(tar, {id: 70})
-    t.own(tar, {id: 70, declared: undefined, undeclared})
-    t.is(tar.undeclared, undeclared)
-    unmodified()
+      t.throws(() => Sub.validate(tar), TypeError, `missing name`)
+      t.own(tar, {id: 10, name: ``})
+    }
+  }
 
-    type.mut(tar, {id: 70, undeclared: undefined})
-    // t.own(tar, {id: 70, declared: undefined, undeclared: undefined})
-    t.own(tar, {id: 70, declared: undefined, undeclared})
-    t.is(tar.undeclared, undeclared)
-    unmodified()
+  t.test(function test_StructSpec() {
+    const Spec = o.StructSpec
+    const spec = new Spec(Cls)
+    testSpec(spec)
+
+    t.test(function test_construct() {
+      testSpecConstruct(spec)
+
+      const tar = l.Emp()
+      t.is(spec.construct(tar, {id: 20, name: `two`, three: `four`}), tar)
+      t.own(tar, {id: 20, name: `two`})
+    })
+
+    t.test(function test_mut() {
+      testSpecMut(spec)
+
+      const tar = l.Emp()
+      t.is(spec.mut(tar, {three: `four`}), tar)
+      t.own(tar, {})
+
+      spec.construct(tar, {id: 20, name: `two`})
+      t.is(spec.mut(tar, {three: `four`}), tar)
+      t.own(tar, {id: 20, name: `two`})
+    })
+
+    testSpecValidate(Spec)
+  })
+
+  t.test(function test_StructSpecLax() {
+    const Spec = o.StructSpecLax
+    const spec = new Spec(Cls)
+    testSpec(spec)
+
+    t.test(function test_construct() {
+      testSpecConstruct(spec)
+
+      const tar = l.Emp()
+      t.is(spec.construct(tar, {id: 20, name: `two`, three: `four`}), tar)
+      t.own(tar, {id: 20, name: `two`, three: `four`})
+    })
+
+    t.test(function test_mut() {
+      testSpecMut(spec)
+
+      const tar = l.Emp()
+      t.is(spec.mut(tar, {one: `two`}), tar)
+      t.own(tar, {one: `two`})
+
+      t.is(spec.mut(tar, {one: `three`, two: `four`}), tar)
+      t.own(tar, {one: `three`, two: `four`})
+    })
+
+    t.test(function test_with_any() {
+      class Sub extends Cls {static any(val, key) {return [val, key]}}
+      const spec = new Spec(Sub)
+
+      const tar = l.Emp()
+      spec.construct(tar, {id: 10, name: `one`, two: `three`})
+      t.own(tar, {id: 10, name: `one`, two: [`three`, `two`]})
+    })
+
+    testSpecValidate(Spec)
+  })
+
+  t.test(function test_field_mut() {
+    testSpecFieldMut(o.StructSpec)
+    testSpecFieldMut(o.StructSpecLax)
+  })
+
+  t.test(function test_field_mut_implicit() {
+    testSpecFieldMutImplicit(o.StructSpec)
+    testSpecFieldMutImplicit(o.StructSpecLax)
+  })
+
+  t.test(function test_field_collision() {
+    testSpecFieldCollision(o.StructSpec)
+    testSpecFieldCollision(o.StructSpecLax)
   })
 })
 
-function testStructTypeReset(tar, fun) {
-  t.throws(() => fun(tar), TypeError, `invalid property "id"`)
+function testSpecConstruct(spec) {
+  function fail(src, msg) {
+    const tar = l.Emp()
+    t.throws(() => spec.construct(tar, src), TypeError, msg)
+  }
+
+  fail(undefined, `invalid property "id": expected variant of isIntPos, got undefined`)
+  fail(10, `expected variant of isRec, got 10`)
+  fail({id: -10}, `invalid property "id": expected variant of isIntPos, got -10`)
+  fail({id: 10}, `invalid property "name": expected variant of isStr, got undefined`)
+  fail({id: 10, name: 20}, `invalid property "name": expected variant of isStr, got 20`)
+  fail({id: -10, name: `one`}, `invalid property "id": expected variant of isIntPos, got -10`)
+
+  const tar = l.Emp()
+  t.is(spec.construct(tar, {id: 10, name: `one`}), tar)
+  t.own(tar, {id: 10, name: `one`})
+}
+
+function testSpecMut(spec) {
+  const tar = l.Emp()
+
+  t.is(spec.mut(tar), tar)
   t.own(tar, {})
 
-  t.throws(() => fun(tar, {id: undefined}), TypeError, `invalid property "id"`)
+  t.throws(
+    () => spec.mut(tar, {id: `one`}),
+    TypeError,
+    `invalid property "id": expected variant of isIntPos, got "one"`,
+  )
   t.own(tar, {})
 
-  t.throws(() => fun(tar, {id: 10}), TypeError, `invalid property "name"`)
+  t.throws(
+    () => spec.mut(tar, {name: 10}),
+    TypeError,
+    `invalid property "name": expected variant of isStr, got 10`,
+  )
+  t.own(tar, {})
+
+  t.is(spec.mut(tar, {id: 10}), tar)
   t.own(tar, {id: 10})
 
-  t.throws(() => fun(tar, {id: 10, name: undefined}), TypeError, `invalid property "name"`)
-  t.own(tar, {id: 10})
+  t.is(spec.mut(tar, {name: `one`}), tar)
+  t.own(tar, {id: 10, name: `one`})
 
-  t.throws(() => fun(tar, {name: `str`}), TypeError, `invalid property "id"`)
-  t.own(tar, {id: 10})
-
-  fun(tar, {id: 20, name: `one`})
+  t.is(spec.mut(tar, {id: 20}), tar)
   t.own(tar, {id: 20, name: `one`})
+
+  t.is(spec.mut(tar, {name: `two`}), tar)
+  t.own(tar, {id: 20, name: `two`})
 }
 
-t.test(function test_Struct() {
-  t.test(function test_undeclared() {
-    class Tar extends o.Struct {}
-
-    const tar = new Tar({one: 10, two: 20})
-    t.own(tar, {})
-
-    tar.mut({three: 30, four: 40})
-    t.own(tar, {})
-  })
-
-  /*
-  Subclasses of `Struct` inherit exactly two properties: `.constructor` and
-  `.mut`. A spec may explicitly override an inherited method such as `.mut`,
-  and this must not break the built-in behavior of the constructor.
-  */
-  t.test(function test_opt_in_shadowing() {
-    class Tar extends o.Struct {
-      static spec = {
-        mut: l.reqIntPos,
-        one: l.reqIntPos,
-      }
-      two() {}
-    }
-
-    const tar = new Tar({mut: 10, one: 20, two: 30, three: 40})
-    t.own(tar, {mut: 10, one: 20})
-  })
-
-  t.test(function test_declared() {
-    class Tar extends o.Struct {
-      static spec = {
-        one: l.reqIntPos,
-        two: l.laxBool,
-        three: l.optStr,
-      }
-    }
-
-    testStructDeclaredProperties(Tar)
-
-    t.own(new Tar({one: 10, undeclared: 20}), {one: 10, two: false, three: undefined})
-    t.own(new Tar({one: 10}).mut({one: 20, undeclared: 30}), {one: 20, two: false, three: undefined})
-  })
-
-  t.test(function test_collision_nil() {
-    class Three extends o.Struct {
-      static spec = {one: undefined}
-      get one() {return 10}
-    }
-
-    const tar = new Three({one: 20, undeclared: {two: 30}})
-    t.is(tar.one, 10)
-    t.own(tar, {})
-  })
-
-  t.test(function test_collision_method() {
-    class One extends o.Struct {
-      static spec = {one: l.reqIntPos}
-      one() {}
-    }
-    testStructFieldCollision(One)
-    class Two extends o.Struct {static spec = {one: l.reqIntPos}}
-    class Three extends Two {one() {}}
-    testStructFieldCollision(Three)
-  })
-
-  t.test(function test_collision_getter() {
-    class One extends o.Struct {
-      static spec = {one: l.reqIntPos}
-      get one() {}
-    }
-    testStructFieldCollision(One)
-    class Two extends o.Struct {static spec = {one: l.reqIntPos}}
-    class Three extends Two {get one() {}}
-    testStructFieldCollision(Three)
-  })
-})
-
-t.test(function test_StructLax() {
-  t.test(function test_undeclared() {
-    class Tar extends o.StructLax {}
-
-    const tar = new Tar({one: 10, two: 20})
-    t.own(tar, {one: 10, two: 20})
-
-    tar.mut({three: 30, four: 40})
-    t.own(tar, {one: 10, two: 20, three: 30, four: 40})
-  })
-
-  /*
-  Subclasses of `StructLax` inherit exactly two properties: `.constructor` and
-  `.mut`. By default, we don't shadow any inherited properties, in accordance
-  with `patch` semantics. However, we allow to explicitly define fields that
-  override/shadow inherited properties.
-  */
-  t.test(function test_no_accidental_shadowing() {
-    class Tar extends o.StructLax {}
-    t.own(new Tar({constructor: 10, mut: 20, one: 30}), {one: 30})
-  })
-
-  t.test(function test_opt_in_shadowing() {
-    class Tar extends o.StructLax {
-      static spec = {
-        mut: l.reqIntPos,
-        one: l.reqIntPos,
-      }
-      two() {}
-    }
-
-    const tar = new Tar({mut: 10, one: 20, two: 30, three: 40})
-    t.own(tar, {mut: 10, one: 20, three: 40})
-  })
-
-  t.test(function test_declared() {
-    class Tar extends o.StructLax {
-      static spec = {
-        one: l.reqIntPos,
-        two: l.laxBool,
-        three: l.optStr,
-      }
-    }
-
-    testStructDeclaredProperties(Tar)
-
-    t.own(new Tar({one: 10, undeclared: 20}), {one: 10, two: false, three: undefined, undeclared: 20})
-    t.own(new Tar({one: 10}).mut({one: 20, undeclared: 30}), {one: 20, two: false, three: undefined, undeclared: 30})
-  })
-})
-
-function testStructDeclaredProperties(Tar) {
-  t.throws(() => new Tar(), TypeError, `invalid property "one"`)
-  t.throws(() => new Tar({one: undefined}), TypeError, `invalid property "one"`)
-  t.throws(() => new Tar({one: 10, two: 20}), TypeError, `invalid property "two"`)
-  t.throws(() => new Tar({one: 10, three: 30}), TypeError, `invalid property "three"`)
-
-  const tar = new Tar({one: 10})
-  t.own(tar, {one: 10, two: false, three: undefined})
-
-  tar.mut()
-  t.own(tar, {one: 10, two: false, three: undefined})
-
-  t.throws(() => tar.mut({one: undefined}), TypeError, `invalid property "one"`)
-  t.own(tar, {one: 10, two: false, three: undefined})
-
-  t.throws(() => tar.mut({one: 10, two: 20}), TypeError, `invalid property "two"`)
-  t.own(tar, {one: 10, two: false, three: undefined})
-
-  t.throws(() => tar.mut({one: 10, three: 30}), TypeError, `invalid property "three"`)
-  t.own(tar, {one: 10, two: false, three: undefined})
-
-  tar.mut({one: 20})
-  t.own(tar, {one: 20, two: false, three: undefined})
-
-  tar.mut({one: 20, two: true, three: ``})
-  t.own(tar, {one: 20, two: true, three: ``})
-}
-
-function testStructFieldCollision(cls) {
-  t.throws(() => cls.getType(), TypeError, `property collision on "one" in ` + l.show(cls))
-  t.throws(() => new cls({one: 10}), TypeError, `property collision on "one" in ` + l.show(cls))
-}
-
-t.test(function test_StructLax_inheritance() {
-  t.test(function test_define_then_instantiate() {
-    class Super extends o.StructLax {
-      static spec = {one: l.reqIntPos}
-    }
-
-    class Sub extends Super {
-      static spec = {
-        ...super.spec,
-        two: l.reqStr,
-      }
-    }
-
-    t.throws(() => new Super({one: `10`}), TypeError, `invalid property "one"`)
-    t.own(new Super({one: 10, two: 20}), {one: 10, two: 20})
-
-    t.throws(() => new Sub({one: 10, two: 20}), TypeError, `invalid property "two"`)
-    t.own(new Sub({one: 10, two: `20`}), {one: 10, two: `20`})
-  })
-
-  t.test(function test_instantiate_then_define() {
-    class Super extends o.StructLax {
-      static spec = {one: l.reqIntPos}
-    }
-
-    t.throws(() => new Super({one: `10`}), TypeError, `invalid property "one"`)
-    t.own(new Super({one: 10, two: 20}), {one: 10, two: 20})
-
-    class Sub extends Super {
-      static spec = {
-        ...super.spec,
-        two: l.reqStr,
-      }
-    }
-
-    t.throws(() => new Sub({one: 10, two: 20}), TypeError, `invalid property "two"`)
-    t.own(new Sub({one: 10, two: `20`}), {one: 10, two: `20`})
-  })
-})
-
-t.test(function test_Struct_inheritance_remove_declared_property() {
-  class Super extends o.Struct {
+function testSpecFieldMut(Spec) {
+  class Cls extends l.Emp {
     static spec = {
-      one: l.reqIntPos,
-      two: l.reqIntPos,
+      one: val => l.toInst(val, One),
+      two: val => l.toInst(val, Two),
     }
   }
 
-  class Sub extends Super {
+  const spec = new Spec(Cls)
+  const tar = l.Emp()
+
+  spec.construct(tar, {one: 10, two: 20})
+  t.eq(tar, {one: new One(10), two: new Two(20)})
+
+  const one = tar.one
+  const two = tar.two
+
+  spec.construct(tar, {one: 30, two: 40})
+  t.eq(tar, {one: new One(30), two: new Two(40)})
+
+  t.is(tar.one, one)
+  t.is(tar.two, two)
+
+  spec.mut(tar, {one: 50})
+  t.eq(tar, {one: new One(50), two: new Two(40)})
+  t.is(tar.one, one)
+  t.is(tar.two, two)
+
+  spec.mut(tar, {two: 60})
+  t.eq(tar, {one: new One(50), two: new Two(60)})
+  t.is(tar.one, one)
+  t.is(tar.two, two)
+
+  if (!l.isSubCls(Spec, o.StructSpecLax)) return
+
+  t.test(function test_field_mut_undeclared() {
+    class Cls extends l.Emp {
+      static spec = {one: val => l.toInst(val, One)}
+      static any(val) {return l.toInst(val, Two)}
+    }
+
+    const spec = new Spec(Cls)
+    const tar = l.Emp()
+
+    spec.mut(tar, {one: 10, two: 20})
+    t.eq(tar, {one: new One(10), two: new Two(20)})
+
+    const {one, two} = tar
+
+    spec.mut(tar, {one: 30, two: 40, three: 50})
+    t.eq(tar, {one: new One(30), two: new Two(40), three: new Two(50)})
+
+    t.is(tar.one, one)
+    t.is(tar.two, two)
+  })
+}
+
+function testSpecFieldMutImplicit(Spec) {
+  class Cls extends o.MixStruct(l.Emp) {
+    static get Spec() {return Spec}
+
     static spec = {
-      ...super.spec,
-      two: undefined,
+      one: val => l.toInst(val, StructOne),
+      two: val => l.toInst(val, StructTwo),
     }
   }
 
-  t.throws(() => new Super({one: 10}), TypeError, `invalid property "two"`)
-  t.own(new Super({one: 10, two: 20, three: 30}), {one: 10, two: 20})
+  class StructOne extends o.MixStruct(l.Emp) {
+    static spec = {val: l.reqIntPos}
+  }
 
-  t.own(new Sub({one: 10}), {one: 10})
-  t.own(new Sub({one: 10, two: 20}), {one: 10})
-  t.own(new Sub({one: 10, two: `20`}), {one: 10})
-})
+  class StructTwo extends o.MixStructLax(l.Emp) {
+    static spec = {val: l.reqIntPos}
+  }
 
-t.test(function test_StructLax_recursive_mut() {
-  t.test(function test_undeclared() {
-    class Inner extends o.StructLax {}
-    class Middle extends o.StructLax {}
-    class Outer extends o.StructLax {}
+  const tar = new Cls({one: {val: 10}, two: {val: 20}})
 
-    const inner = new Inner({one: 10})
-    const middle = new Middle({two: 20, inner})
-    const outer = new Outer({three: 30, middle})
+  const {one, two} = tar
+  t.inst(one, StructOne)
+  t.inst(two, StructTwo)
 
-    t.is(outer.middle, middle)
-    t.is(middle.inner, inner)
-    t.eq(inner, new Inner({one: 10}))
-    t.eq(middle, new Middle({two: 20, inner}))
-    t.eq(outer, new Outer({three: 30, middle}))
+  o.structMut(tar, {one: {val: 30}})
 
-    outer.mut({
-      three: 40,
-      middle: {two: 50, inner: {one: 60, four: 70}},
-      five: {six: 80},
-    })
+  t.own(tar, {one: new StructOne({val: 30}), two: new StructTwo({val: 20})})
 
-    t.is(outer.middle, middle)
-    t.is(middle.inner, inner)
-    t.eq(inner, new Inner({one: 60, four: 70}))
-    t.eq(middle, new Middle({two: 50, inner: new Inner({one: 60, four: 70})}))
+  t.eq(one, new StructOne({val: 30}))
+  t.eq(two, new StructTwo({val: 20}))
 
-    function stable() {
-      t.eq(outer, new Outer({
-        three: 40,
-        middle: new Middle({two: 50, inner: new Inner({one: 60, four: 70})}),
-        five: {six: 80},
-      }))
-    }
+  t.is(tar.one, one)
+  t.is(tar.two, two)
+}
 
-    stable()
+function testSpecFieldCollision(Spec) {
+  class One extends l.Emp {
+    static spec = {one: l.reqIntPos}
+    one() {return `three`}
+  }
 
-    // Note: `outer.middle.inner` implements `.mut`, which must be invoked here,
-    // passing nil. As a result, the structure is unchanged.
-    outer.mut({middle: {inner: undefined}})
-    stable()
+  t.throws(
+    () => new Spec(One),
+    TypeError,
+    `property collision on "one" in [function One]`,
+  )
 
-    // Note: `outer.middle` implements `.mut`, which must be invoked here,
-    // passing nil. As a result, the structure is unchanged.
-    outer.mut({middle: undefined})
-    stable()
-  })
+  class Two extends One {}
 
-  t.test(function test_declared() {
-    class Inner extends o.StructLax {
-      static spec = {
-        one: l.reqIntPos,
-      }
-    }
+  t.throws(
+    () => new Spec(Two),
+    TypeError,
+    `property collision on "one" in [function Two]`,
+  )
 
-    class Middle extends o.StructLax {
-      static spec = {
-        two: l.reqIntPos,
-        inner(val) {return l.toInstOpt(val, Inner)},
-      }
-    }
+  class Three extends One {static spec = super.spec}
 
-    class Outer extends o.StructLax {
-      static spec = {
-        three: l.reqIntPos,
-        middle(val) {return l.toInstOpt(val, Middle)},
-      }
-    }
+  t.throws(
+    () => new Spec(Three),
+    TypeError,
+    `property collision on "one" in [function Three]`,
+  )
 
-    const outer = new Outer({three: 30, middle: {two: 20, inner: {one: 10}}})
-    const middle = outer.middle
-    const inner = middle.inner
+  class Four extends One {static spec = {
+    one: undefined,
+    two: l.reqIntPos,
+  }}
 
-    t.eq(inner, new Inner({one: 10}))
-    t.eq(middle, new Middle({two: 20, inner}))
-    t.eq(outer, new Outer({three: 30, middle}))
+  const spec = new Spec(Four)
+  t.eq(spec.list, [new o.FieldSpec(`two`, l.reqIntPos)])
 
-    outer.mut({
-      three: 40,
-      middle: {two: 50, inner: {one: 60, four: 70}},
-      five: {six: 80},
-    })
+  const val = new Four({two: 10})
+  t.is(val.one(), `three`)
 
-    t.is(outer.middle, middle)
-    t.is(middle.inner, inner)
-    t.eq(inner, new Inner({one: 60, four: 70}))
-    t.eq(middle, new Middle({two: 50, inner: new Inner({one: 60, four: 70})}))
+  class Five extends l.Emp {
+    static spec = {one: l.reqIntPos}
+    get one() {}
+  }
 
-    t.eq(outer, new Outer({
-      three: 40,
-      middle: new Middle({two: 50, inner: new Inner({one: 60, four: 70})}),
-      five: {six: 80},
-    }))
-  })
-})
+  t.throws(
+    () => new Spec(Five),
+    TypeError,
+    `property collision on "one" in [function Five]`,
+  )
 
-t.test(function test_StructLax_with_mem_getter() {
-  class Inner extends o.StructLax {}
+  class Six extends l.Emp {
+    static spec = {one: l.reqIntPos}
+    set one(_) {}
+  }
 
-  class Outer extends o.StructLax {
+  t.throws(
+    () => new Spec(Six),
+    TypeError,
+    `property collision on "one" in [function Six]`,
+  )
+}
+
+t.test(function test_StructSpecLax_with_mem_getter() {
+  class Cls extends o.MixStructLax(l.Emp) {
+    static spec = {three: l.reqInt}
     static {o.memGet(this)}
-    get inner() {return new Inner()}
+    get one() {return new One()}
+    get two() {return new Two()}
   }
 
-  function testWithMemGetter(make) {
-    const outer = make()
-    const inner = outer.inner
-
-    t.inst(inner, Inner)
-    t.own(inner, {two: 20})
-
-    t.inst(outer, Outer)
-    t.own(outer, {one: 10, inner})
-
-    outer.mut({inner: {two: 30}})
-
-    t.is(outer.inner, inner)
-    t.eq(inner, new Inner({two: 30}))
-  }
-
-  t.test(function test_constructor() {
-    testWithMemGetter(function make() {
-      return new Outer({one: 10, inner: {two: 20}})
-    })
+  t.test(function test_construct() {
+    t.own(new Cls({three: 10}), {three: 10})
+    t.own(new Cls({three: 10, one: 20}), {three: 10, one: new One(20)})
+    t.own(new Cls({three: 10, one: 20, two: 30}), {three: 10, one: new One(20), two: new Two(30)})
   })
 
   t.test(function test_mut() {
-    testWithMemGetter(function make() {
-      return new Outer().mut({one: 10, inner: {two: 20}})
-    })
+    const tar = new Cls({three: 10})
+    t.own(tar, {three: 10})
+
+    o.structMut(tar, {one: 20})
+    t.own(tar, {three: 10, one: new One(20)})
+
+    const {one} = tar
+    o.structMut(tar, {one: 30})
+    t.own(tar, {three: 10, one: new One(30)})
+    t.is(tar.one, one)
+
+    const {two} = tar
+    o.structMut(tar, {two: 40})
+    t.own(tar, {three: 10, one: new One(30), two: new Two(40)})
+    t.is(tar.one, one)
+    t.is(tar.two, two)
   })
-})
-
-// Incomplete: tests only `new` but not `.mut`. TODO test `.mut`.
-t.test(function test_StructLax_getters_and_setters() {
-  function testFields(Tar) {
-    t.own(new Tar({one: 10}), {one: 10})
-    t.is(new Tar({one: 10}).inner, `default`)
-    t.own(new Tar({one: 10, inner: 20}), {one: 10})
-  }
-
-  t.test(function test_undeclared_only_getter() {
-    class Tar extends o.StructLax {
-      get inner() {return `default`}
-    }
-    testFields(Tar)
-  })
-
-  t.test(function test_undeclared_getter_setter() {
-    class Tar extends o.StructLax {
-      get inner() {return `default`}
-      set inner(_) {throw l.errImpl()}
-    }
-    testFields(Tar)
-  })
-
-  t.test(function test_override_getter() {
-    class Super extends o.StructLax {
-      get inner() {return `default`}
-      get one() {return 123}
-    }
-
-    class Sub extends Super {
-      static spec = {
-        ...super.spec,
-        one: l.reqIntPos,
-      }
-    }
-
-    testFields(Sub)
-  })
-
-  t.test(function test_override_setter() {
-    class Super extends o.StructLax {
-      get inner() {return `default`}
-      set one(_) {}
-    }
-
-    class Sub extends Super {
-      static spec = {
-        ...super.spec,
-        one: l.reqIntPos,
-      }
-    }
-
-    testFields(Sub)
-  })
-
-  t.test(function test_override_getter_and_setter() {
-    class Super extends o.StructLax {
-      get inner() {return `default`}
-      get one() {return 123}
-      set one(_) {}
-    }
-
-    class Sub extends Super {
-      static spec = {
-        ...super.spec,
-        one: l.reqIntPos,
-      }
-    }
-
-    t.throws(() => new Sub({}), TypeError, `invalid property "one"`)
-    testFields(Sub)
-  })
-
-  /*
-  We support overriding an inherited field with an explicitly defined field
-  in a spec, but we don't allow to accidentally override a spec field with
-  a getter or method on the class prototype, even if the spec is inherited.
-  */
-  t.test(function test_declared_getter_in_subclass() {
-    class Super extends o.StructLax {
-      static spec = {one: l.laxFin}
-    }
-
-    t.throws(() => new Super({one: `10`}), TypeError, `invalid property "one"`)
-    t.own(new Super(), {one: 0})
-    t.own(new Super({one: 10}), {one: 10})
-
-    class Sub extends Super {
-      get one() {return `default`}
-    }
-
-    testStructFieldCollision(Sub)
-  })
-
-  /*
-  We support overriding an inherited field with an explicitly defined field
-  in a spec, but we don't allow to accidentally override a spec field with
-  a getter or method on the class prototype, even if the spec is inherited.
-  */
-  t.test(function test_declared_getter_setter() {
-    class Super extends o.StructLax {
-      static spec = {one: l.laxFin}
-    }
-
-    class Sub extends Super {
-      get one() {return this.secondary}
-      set one(val) {this.secondary = val + 1}
-    }
-
-    testStructFieldCollision(Sub)
-  })
-
-  t.test(function test_override_inherited_getter_with_field() {
-    class Super extends o.StructLax {
-      get one() {return 10}
-      get inner() {return `default`}
-    }
-
-    t.own(new Super(), {})
-    t.own(new Super({one: 20}), {})
-
-    class Sub extends Super {
-      static spec = {
-        ...super.spec,
-        one: l.laxFin,
-      }
-    }
-
-    t.throws(() => new Sub({one: `10`}), TypeError, `invalid property "one"`)
-    t.own(new Sub({one: 20}), {one: 20})
-
-    testFields(Sub)
-  })
-})
-
-/*
-The current implementation ignores symbolic properties in the spec.
-This behavior is accidental. We lock it down by a test for API stability.
-Fixing would involve runtime overheads, which seems not worth it.
-*/
-t.test(function test_StructLax_symbols() {
-  const one = Symbol.for(`one`)
-  const two = Symbol.for(`two`)
-
-  class Tar extends o.StructLax {
-    static spec = {[one]: l.reqIntPos}
-  }
-
-  const tar = new Tar({[one]: 10, [two]: 20})
-  t.own(tar, {})
 })
 
 t.test(function test_memGet() {

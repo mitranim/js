@@ -231,7 +231,7 @@ export class ReqRou extends Rou {
 
   // Shortcut for SPA routing.
   static from(loc, opt) {
-    return new this(new Request(l.reqScalar(loc), l.optStruct(opt)))
+    return new this(new Request(l.reqScalar(loc), l.optRec(opt)))
   }
 }
 
@@ -335,12 +335,12 @@ export class Cookie extends l.Emp {
 
   reset(val) {
     if (l.isNil(val)) return this
-    if (l.isStruct(val)) return this.resetFromStruct(val)
+    if (l.isRec(val)) return this.resetFromStruct(val)
     throw l.errConvInst(val, this)
   }
 
   resetFromStruct(val) {
-    l.reqStruct(val)
+    l.reqRec(val)
     this.setName(val.name)
     this.setValue(val.value)
     this.setPath(val.path)

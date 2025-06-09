@@ -54,7 +54,7 @@ export class Bmap extends Map {
   mut(val) {
     if (l.isNil(val)) return this
     if (l.isIter(val)) return this.mutFromIter(val)
-    if (l.isStruct(val)) return this.mutFromStruct(val)
+    if (l.isRec(val)) return this.mutFromRec(val)
     throw l.errConvInst(val, this)
   }
 
@@ -63,8 +63,8 @@ export class Bmap extends Map {
     return this
   }
 
-  mutFromStruct(val) {
-    for (const key of l.structKeys(val)) this.set(key, val[key])
+  mutFromRec(val) {
+    for (const key of l.recKeys(val)) this.set(key, val[key])
     return this
   }
 
@@ -140,6 +140,7 @@ export class Coll extends TypedMap {
   getKeyOpt(val) {return pkOpt(val)}
   reqKey(key) {return l.reqPk(key)}
   reqVal(val) {return val}
+  hasItem(val) {return this.has(this.getKeyOpt(val))}
   add(val) {return this.set(this.getKey(val), val)}
   addOpt(val) {return this.setOpt(this.getKeyOpt(val), val)}
 
@@ -165,28 +166,27 @@ export class ClsColl extends Coll {
 }
 
 export class Vec extends l.Emp {
-  constructor(val) {super().$ = l.laxTrueArr(val)}
+  constructor(val) {super()[l.VAL] = l.laxTrueArr(val)}
   mut(val) {return this.clear(), this.addFrom(val)}
-  add(val) {return this.$.push(val), this}
+  add(val) {return this[l.VAL].push(val), this}
 
-  // TODO rename to `.addVals`?
   addFrom(val) {
     if (l.optIter(val)) for (val of val) this.add(val)
     return this
   }
 
   clear() {
-    if (this.$.length) this.$.length = 0
+    if (this[l.VAL].length) this[l.VAL].length = 0
     return this
   }
 
-  at(ind) {return this.$[l.reqInt(ind)]}
-  sort(fun) {return this.$.sort(fun), this}
-  clone() {return new this.constructor(this.$.slice())}
-  toArray() {return this.$} // Used by `iter.mjs`.
+  at(ind) {return this[l.VAL][l.reqInt(ind)]}
+  sort(fun) {return this[l.VAL].sort(fun), this}
+  clone() {return new this.constructor(this[l.VAL].slice())}
+  toArray() {return this[l.VAL]} // Used by `iter.mjs`.
   toJSON() {return this.toArray()}
-  get size() {return this.$.length}
-  [Symbol.iterator]() {return this.$.values()}
+  get size() {return this[l.VAL].length}
+  [Symbol.iterator]() {return this[l.VAL].values()}
 
   static make(len) {return new this(Array(l.reqNat(len)))}
   static from(val) {return new this(l.toTrueArr(val))}
@@ -202,7 +202,7 @@ export class TypedVec extends Vec {
 
   add(val) {return super.add(this.reqVal(val))}
   reqVal() {throw l.errImpl()}
-  validate() {mapMut(this.$, this.reqVal, this)}
+  validate() {mapMut(this[l.VAL], this.reqVal, this)}
 }
 
 function mapMut(arr, fun, ctx) {

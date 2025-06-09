@@ -336,14 +336,14 @@ t.test(function test_Vec() {
     t.throws(() => new c.Vec(`str`), TypeError, `expected variant of isTrueArr, got "str"`)
 
     t.test(function test_reuse() {
-      function test(src) {t.is(new c.Vec(src).$, src)}
+      function test(src) {t.is(new c.Vec(src)[l.VAL], src)}
 
       test([])
       test([10, 20, 30])
     })
 
-    t.eq(new c.Vec().$, [])
-    t.isnt(new c.Vec().$, new c.Vec().$)
+    t.eq(new c.Vec()[l.VAL], [])
+    t.isnt(new c.Vec()[l.VAL], new c.Vec()[l.VAL])
   })
 
   t.test(function test_size() {
@@ -368,21 +368,21 @@ t.test(function test_Vec() {
 
   t.test(function test_add() {
     const vec = new c.Vec()
-    t.eq(vec.$, [])
+    t.eq(vec[l.VAL], [])
 
     t.is(vec.add(10), vec)
-    t.eq(vec.$, [10])
+    t.eq(vec[l.VAL], [10])
 
     t.is(vec.add(20), vec)
-    t.eq(vec.$, [10, 20])
+    t.eq(vec[l.VAL], [10, 20])
   })
 
   t.test(function test_clear() {
     const vec = new c.Vec([10, 20, 30])
-    t.eq(vec.$, [10, 20, 30])
+    t.eq(vec[l.VAL], [10, 20, 30])
 
     t.is(vec.clear(), vec)
-    t.eq(vec.$, [])
+    t.eq(vec[l.VAL], [])
   })
 
   t.test(function test_at() {
@@ -404,13 +404,13 @@ t.test(function test_Vec() {
   t.test(function test_clone() {
     const arr = [10, 20, 30]
     const vec = new c.Vec(arr)
-    t.is(vec.$, arr)
+    t.is(vec[l.VAL], arr)
 
     const out = vec.clone()
     t.eq(out, vec)
-    t.eq(out.$, arr)
+    t.eq(out[l.VAL], arr)
     t.isnt(out, vec)
-    t.isnt(out.$, arr)
+    t.isnt(out[l.VAL], arr)
   })
 
   t.test(function test_toArray() {
@@ -431,22 +431,22 @@ t.test(function test_Vec() {
   })
 
   t.test(function test_of() {
-    t.eq(c.Vec.of().$, [])
-    t.eq(c.Vec.of(10).$, [10])
-    t.eq(c.Vec.of(10, 20).$, [10, 20])
-    t.eq(c.Vec.of(10, 20, [30]).$, [10, 20, [30]])
+    t.eq(c.Vec.of()[l.VAL], [])
+    t.eq(c.Vec.of(10)[l.VAL], [10])
+    t.eq(c.Vec.of(10, 20)[l.VAL], [10, 20])
+    t.eq(c.Vec.of(10, 20, [30])[l.VAL], [10, 20, [30]])
   })
 
   t.test(function test_from() {
     t.throws(() => c.Vec.from(`str`), TypeError, `expected variant of isIter, got "str"`)
 
-    t.eq(c.Vec.from().$, [])
-    t.eq(c.Vec.from([10, 20, 30]).$, [10, 20, 30])
-    t.eq(c.Vec.from([10, 20, 30]).$, [10, 20, 30])
+    t.eq(c.Vec.from()[l.VAL], [])
+    t.eq(c.Vec.from([10, 20, 30])[l.VAL], [10, 20, 30])
+    t.eq(c.Vec.from([10, 20, 30])[l.VAL], [10, 20, 30])
   })
 
   t.test(function test_make() {
-    function test(len) {t.eq(c.Vec.make(len).$, Array(len))}
+    function test(len) {t.eq(c.Vec.make(len)[l.VAL], Array(len))}
 
     test(0)
     test(1)
@@ -458,7 +458,7 @@ t.test(function test_Vec() {
     function test(src, inp, exp) {
       const tar = new c.Vec(src)
       t.is(tar.mut(inp), tar)
-      t.eq(tar.$, exp)
+      t.eq(tar[l.VAL], exp)
     }
 
     test([], [], [])
@@ -485,7 +485,7 @@ t.test(function test_ClsVec() {
       new Person({name: `Kara`}),
     ]),
 
-    Object.assign(new PersonVec(), {$: [
+    Object.assign(new PersonVec(), {[l.VAL]: [
       new Person({name: `Mira`}),
       new Person({name: `Kara`}),
     ]}),

@@ -5,4 +5,4 @@ Universal length measurement:
     * For {{link lang isList lists}}: same as `.length`.
     * For ES2015 collections such as `Set`: same as `.size`.
     * For iterators: exhausts the iterator, returning element count.
-  * For {{link lang isStruct structs}}: equivalent to `Object.keys(val).length`.
+  * For {{link lang isRec records}}: equivalent to `Object.keys(val).length`.

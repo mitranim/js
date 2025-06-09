@@ -3,13 +3,14 @@
 [obs.mjs](../obs.mjs) implements observables and reactivity.
 
 * Nice-to-use in plain JS. Doesn't rely on decorators, TS features, etc.
-* Easy to wire into any UI system.
+* Easy to use in UI.
 * Automatic cleanup on GC via `FinalizationRegistry`.
 * Tiny with no external dependencies.
 
-Two types of observables are available:
+Three types of observables are available:
 * Proxy-based observables: `obs`: wraps any object in a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) which monitors all its fields.
-* Atomic single-value observables: `ObsRef`: only the `.val` getter and setter is observable.
+* Atomic single-value observables: `obsRef`: only the `.val` getter and setter is observable.
+* Calculated observables via `calc`.
 
 Proxy-based observables via `obs`:
 * Can wrap any object.
@@ -18,79 +19,253 @@ Proxy-based observables via `obs`:
   * No modifications to your objects.
   * Your objects remain pristine, exactly how you defined them.
 * Accessing any field in a reactive context (see below) implicitly establishes subscriptions.
-* Modifying any field triggers all subscribers.
+* Modifying any field notifies all observers.
 
 ## TOC
 
 * [#Overview](#overview)
 * [#Usage](#usage)
+* [#Timing](#timing)
+* [#Errors](#errors)
 * [#SSR considerations](#ssr_considerations)
 * [#API](#api)
   * [#Undocumented](#undocumented)
 
 ## Usage
 
-```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.67/obs.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.67/dom_reg.mjs'
+* Instantiate observables for your app's data.
+* Observe them by various tools provided by the library.
+* Modify observables to notify observers.
 
-// Both types of observables are compatible with implicit monitoring.
-const MSG = ob.obs({msg: `hello`})
-const NAME = ob.obsRef(`world`)
+Since the most common and important use of observables is UI updates, we start with a higher-level example that involves this library's DOM rendering module `prax`.
+
+```js
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/obs.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/prax.mjs'
+
+const obs0 = ob.obs({val: `hello`})
+const obs1 = ob.obsRef(`world`)
+const msg = ob.calc(() => obs0.val + ` ` + obs1.val)
+
+// Default renderer.
+const {E} = p.Ren.main
+
+/*
+The renderer has built-in support for observables and functions.
+Any of the following will render the same message and update as needed.
+*/
+
+E(document.body, {}, msg)
+E(document.body, {}, () => msg)
+E(document.body, {}, () => msg.val)
+E(document.body, {}, () => obs0.val + ` ` + obs1.val)
+E(document.body, {}, () => [obs0.val, ` `, obs1.val])
+
+document.body.appendChild(E(`span`, {}, msg))
+document.body.appendChild(E(`span`, {}, () => msg))
+document.body.appendChild(E(`span`, {}, () => msg.val))
+document.body.appendChild(E(`span`, {}, () => obs0.val + ` ` + obs1.val))
+document.body.appendChild(E(`span`, {}, () => [obs0.val, ` `, obs1.val]))
+
+/*
+These modifications automatically notify all observers monitoring the
+observables. In browser environments, by default, the renderer uses the
+scheduler `ob.ShedTask`, which delays its runs via `requestAnimationFrame`
+and runs them hierarchically from ancestors to descendants. In this case,
+despite having two observable modifications, each function will be invoked
+only once, and only one UI repaint will happen.
+*/
+setTimeout(() => {
+  obs0.val = `welcome to`
+  obs1.val = `the future`
+}, 1024)
+
+/*
+Remove all nodes. When the engine runs garbage collection, all observers will
+be automatically deinitialized and removed from observable queues.
+*/
+E(document.body, {}, undefined)
+```
+
+For operations with side effects, you can use lower-level procedural tools such as `recur`. Takes a function and an argument (in any order), and invokes it in a reactive context; future modifications of any observables accessed during the call will rerun the function.
+
+The observer object returned by `recur` (instance of `ob.FunRecur`) is automatically deinitialized when garbage collected. Make sure to store it while you need it.
+
+```js
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/obs.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/dom_reg.mjs'
+
+const obs = ob.obs({msg: `hello world`})
 
 class MyElem extends dr.MixReg(HTMLElement) {
   constructor() {
     super()
-
-    // Contrived for demonstration purposes.
-    this.msg = new Text()
-    this.name = new Text()
-    this.append(msg, ` `, name)
-
-    /*
-    Immediately runs each provided method in a reactive context. During each
-    method call, any accessed observables implicitly become monitored by this
-    element. The methods will rerun when the observables they monitor are
-    triggered. In this case, that's when their fields are modified.
-
-    You can pass any number of methods here, from 0 to N.
-
-    Deinitialization happens automatically when the element is
-    garbage-collected, via `FinalizationRegistry`.
-    */
-    ob.reac(this, this.onMsg, this.onName)
+    this.rec = ob.recur(this, this.draw)
   }
 
-  // Seriously worth remembering that the DOM is implicitly reactive too!
-  onMsg() {this.msg.textContent = MSG.msg}
-  onName() {this.name.textContent = NAME.val}
+  draw() {this.textContent = obs.msg}
 }
 
-document.body.append(new MyElem())
+document.body.appendChild(new MyElem())
 
-/*
-These modifications automatically trigger all subscribers monitoring the
-observables, in this case a single instance of `MyElem`. DOM updates are
-delayed, batched, and run hierarchically from ancestors to descendants.
-In this case, the methods `onMsg` and `onName` will be invoked only once
-more (each), and only one UI repaint will happen.
-*/
-MSG.msg = `welcome`
-NAME.val = `home`
+setTimeout(() => {obs.msg = `welcome to the future`}, 1024)
 ```
 
-Reactivity is also available for `Text` nodes:
+`recur` doesn't require an object, you can just pass a function:
 
 ```js
-const obs = o.obs({msg: `hello!`})
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/obs.mjs'
 
-const text = od.reacText(() => obs.msg)
+const obs = ob.obs({msg: `hello world`})
 
-text instanceof Text // true
+let rec = ob.recur(function test() {
+  console.log(obs.msg)
+})
 
-document.body.append(text)
+setTimeout(() => {
+  obs.msg = `welcome to the future`
 
-obs.msg = `hello world!`
+  // You can stop the observer explicitly. But this is not required.
+  // The library uses `FinalizationRegistry` for cleanup.
+  if (false) rec.deinit()
+
+  // We're done with this observer, let GC reclaim it.
+  // But make sure to keep it while you need it!
+  rec = undefined
+}, 1024)
+```
+
+## Timing
+
+This library gives you fine-grained control over _when_ your observers will rerun on changes. 3 timing modes are provided:
+
+* Synchronous (`ob.ShedSync.main`), with support for pausing and resuming.
+* Microtasks (`ob.ShedMicro.main`) via [`queueMicrotask`](https://developer.mozilla.org/en-US/docs/Web/API/Window/queueMicrotask) ([MDN guide](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide/In_depth)).
+* Tasks (`ob.ShedTask.main`): prefers [`requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame), falls back on `setTimeout`.
+
+The important thing to know is that the "task" timing should be used for browser DOM updates, and should not be used for anything else. This library attempts to provide the right defaults.
+
+The function `recur` uses microtasks by default, which can be changed via `ob.setDefaultShed`. It also has variants with explicit timing:
+* `recurSync`
+* `recurMicro`
+* `recurTask`
+
+All variants of "recur" first invoke the callback synchronously. The scheduling mode only affects the future reruns.
+
+Inside observer callbacks, you can also change the scheduling mode via:
+* `preferShed`
+* `preferSync`
+* `preferMicro`
+* `preferTask`
+
+`calc` uses synchronous scheduling in all environments. You can change that via the "prefer" functions, but async scheduling makes them "eventually consistent", allowing you to observe outdated calc states immeditely after modifying observables on which they depend.
+
+### Advice for choosing the timing mode
+
+For best results, you should understand the JS event loop, and how JS engines, especially browsers, schedule jobs. This [MDN guide](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model#job_queue_and_event_loop) might be a good start.
+
+During the microtask phase, _more_ microtasks can be inserted into the phase. _All_ pending microtasks will complete before the nearest task.
+
+Browsers have an additional feature: `requestAnimationFrame`, which schedules a task aligned with the rendering loop. This has a subtle distinction from tasks created via `setTimeout`.
+
+For observable modifications which ultimately lead to UI updates, this is your ideal operation order:
+
+```
+┌──────────────────────────────────┐
+│ data  → data  → data  →    UI    │
+├───────┬───────┬───────┬──────────┤
+│ micro │ micro │ micro │   task   │
+└───────┴───────┴───────┴──────────┘
+```
+
+...Where data is modified in microtasks, and UI is modified in a single task, which was scheduled via `requestAnimationFrame`.
+
+The sole purpose of async scheduling is to prevent expensive operations from running redundantly.
+
+Consider an observer which watches multiple observables. Suppose several of them are modified synchronously "at once", from the perspective of the code doing that. If the observer is synchronous, and the synchronous scheduler is not paused (see below), it reruns repeatedly in-between these modifications, even several times for one observable if several of its fields are modified. This is often a complete waste.
+
+On the other hand, if the observer is async, each synchronous observable modification idempotently places it in a queue (very cheaply), and it runs once.
+
+Use the "task" mode (`recurTask`, `ShedTask`) for UI-updating observers. It runs just before a browser repaint, and avoids wasted reruns during the microtask phase.
+
+Use the "micro" mode (`recurMicro`, `ShedMicro`) for operations which watch multiple observables and do not directly update the UI.
+
+Use the "sync" mode (`recurSync`, `ShedSync`) for small, cheap non-UI operations, especially when only one observable is involved.
+
+In the "task" phase, avoid modifying any UI observables. Otherwise, the following can happen:
+
+* In the "sync" phase, some UI observable is modified.
+* Some observers (in _any_ phase) modify the UI before the next repaint.
+* Some misbehaving observer in the "task" phase modifies more UI observables.
+* For non-synchronous UI-modifying observers, it is now too late to react to this change. They end up scheduling their update into the next frame.
+* The UI is updated twice instead of once, and the intermediary partially-updated state flickers before the user's eyes.
+
+### DOM rendering
+
+Our DOM rendering module `prax.mjs` supports observables and implicit reactivity. See the example code above.
+
+Every rendering call is entirely synchronous. When you pass functions or observable references into markup as "nodes", they are immediately called or dereferenced, placing the result in the DOM. In both cases, the renderer sets up a reactive context; any observables accessed during this call, if modified later, will cause a DOM update.
+
+By default, it uses "task" scheduling (`ob.ShedTask.main`) in browsers, and "microtask" scheduling (`ob.ShedMicro.main`) in non-browsers.
+
+### Pause and resume
+
+The synchronous scheduler `ShedSync` can be paused to briefly prevent synchronous observers from running, and resumed to flush them all at once.
+
+```js
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/obs.mjs'
+
+const obs = ob.obs({one: 10, two: 20})
+
+const rec = new ob.FunRecur(function onChange() {
+  console.log(`sum:`, obs.one + obs.two)
+})
+
+rec.run() // sum: 30
+
+/*
+Without pausing, the callback will run twice:
+*/
+obs.one = 30 // sum: 50
+obs.two = 40 // sum: 70
+
+/*
+Pausing and resuming causes it to run just once.
+Always use `try/finally` to prevent exceptions
+from keeping the sheduler paused.
+*/
+const shed = ob.ShedSync.main
+shed.pause()
+try {
+  // Notably, "sum: 90" is NOT printed here.
+  obs.one = 50
+  obs.two = 60
+}
+finally {
+  shed.flush() // sum: 110
+}
+```
+
+## Errors
+
+In non-browser environments, exceptions in async scheduler callbacks crash the process. In browsers, they may lead to silent failures. In all environments, you should define your own error handling callbacks, with the logic appropriate for your app, and provide them to async schedulers.
+
+Note that synchronous exceptions, such as during any initial call to `ob.recur`, are _not_ caught this way. This is intentional.
+
+```js
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/obs.mjs'
+
+ob.ShedMicro.main.onerror = console.error
+ob.ShedTask.main.onerror = console.error
+
+const obs = ob.obsRef()
+
+const rec = ob.recur(function panic() {
+  const {val} = obs
+  if (val) throw val
+})
+
+obs.val = Error(`no longer crashes the process`)
 ```
 
 ## SSR considerations
@@ -103,7 +278,9 @@ One of the biggest benefits of custom elements is how they can enable client-sid
 
 For comparison, many other JS frameworks require you to re-render the entire markup on the client, which usually also requires re-fetching the source data, or inlining it into the HTML as JSON.
 
-The hybrid approach forces some limitations. In particular, when custom elements activate from existing HTML markup, the client side of your application doesn't have the same data which was available to the server side. This is typically a good thing: less data transferred, fewer requests, and so on. This also means that for elements that react to observables, those observables are often not available during the initial activation. These issues _can_ be solved in special cases, for example by delaying the registration of custom element classes and creating the relevant global observables first. But in many cases, these issues are impractical to solve. Bottom line: observables are for client-only code.
+The hybrid approach forces some limitations. In particular, when custom elements activate from existing HTML markup, the client side of your application doesn't have the same data which was available to the server side. This is typically a good thing: less data transferred, fewer requests, and so on. This also means that for elements that react to observables, those observables are often not available during the initial activation. These issues _can_ be solved in special cases, for example by delaying the registration of custom element classes and creating the relevant global observables first. But in many cases, these issues are impractical to solve. Bottom line: observables are for client-side code.
+
+That said, the observable system provided by this library works in all environments. It's up to you how to use it.
 
 ## API
 
@@ -113,44 +290,61 @@ The docs are a work in progress. This module was originally ported from https://
 
 The following APIs are exported but undocumented. Check [obs.mjs](../obs.mjs).
 
-  * [`const TRIG`](../obs.mjs#L4)
-  * [`const SYM_PH`](../obs.mjs#L5)
-  * [`const SYM_TAR`](../obs.mjs#L6)
-  * [`const SYM_REC`](../obs.mjs#L7)
-  * [`const SYM_RECS`](../obs.mjs#L8)
-  * [`function isRunner`](../obs.mjs#L10)
-  * [`function reqRunner`](../obs.mjs#L11)
-  * [`function isTrigger`](../obs.mjs#L13)
-  * [`function reqTrigger`](../obs.mjs#L14)
-  * [`function obs`](../obs.mjs#L16)
-  * [`function getPh`](../obs.mjs#L17)
-  * [`function getTar`](../obs.mjs#L18)
-  * [`class Que`](../obs.mjs#L28)
-  * [`class ShardedQue`](../obs.mjs#L79)
-  * [`class RunQue`](../obs.mjs#L94)
-  * [`class ShardedRunQue`](../obs.mjs#L95)
-  * [`class ShedSync`](../obs.mjs#L118)
-  * [`class ShedAsync`](../obs.mjs#L136)
-  * [`class ShedMicro`](../obs.mjs#L173)
-  * [`class ShedMacro`](../obs.mjs#L177)
-  * [`class WeakQue`](../obs.mjs#L190)
-  * [`class TriggerWeakQue`](../obs.mjs#L231)
-  * [`function obsRef`](../obs.mjs#L242)
-  * [`class ObsRef`](../obs.mjs#L249)
-  * [`class TypedObsRef`](../obs.mjs#L276)
-  * [`class ObsPh`](../obs.mjs#L283)
-  * [`class RecurRef`](../obs.mjs#L333)
-  * [`class Recur`](../obs.mjs#L359)
-  * [`class FunRecur`](../obs.mjs#L390)
-  * [`class MethRecur`](../obs.mjs#L395)
-  * [`class NodeMethRecur`](../obs.mjs#L411)
-  * [`function nodeDepth`](../obs.mjs#L416)
-  * [`class MethRecurs`](../obs.mjs#L422)
-  * [`function reac`](../obs.mjs#L457)
-  * [`function unreac`](../obs.mjs#L458)
-  * [`function preferShed`](../obs.mjs#L460)
-  * [`function preferSync`](../obs.mjs#L461)
-  * [`function preferMicro`](../obs.mjs#L462)
-  * [`function preferMacro`](../obs.mjs#L463)
-  * [`function reacText`](../obs.mjs#L470)
-  * [`class ReacText`](../obs.mjs#L472)
+  * [`class DynRunRef`](../obs.mjs#L4)
+  * [`const RUN_REF`](../obs.mjs#L8)
+  * [`const HAS_DOM`](../obs.mjs#L10)
+  * [`let UI_SHED`](../obs.mjs#L16)
+  * [`function setUiShed`](../obs.mjs#L17)
+  * [`function getUiShed`](../obs.mjs#L18)
+  * [`let DEFAULT_SHED`](../obs.mjs#L22)
+  * [`function setDefaultShed`](../obs.mjs#L23)
+  * [`function getDefaultShed`](../obs.mjs#L24)
+  * [`const PH`](../obs.mjs#L26)
+  * [`const QUE`](../obs.mjs#L27)
+  * [`function isRunner`](../obs.mjs#L29)
+  * [`function optRunner`](../obs.mjs#L30)
+  * [`function reqRunner`](../obs.mjs#L31)
+  * [`function isObs`](../obs.mjs#L33)
+  * [`function optObs`](../obs.mjs#L34)
+  * [`function reqObs`](../obs.mjs#L35)
+  * [`function isObsRef`](../obs.mjs#L37)
+  * [`function optObsRef`](../obs.mjs#L38)
+  * [`function reqObsRef`](../obs.mjs#L39)
+  * [`function isQue`](../obs.mjs#L41)
+  * [`function optQue`](../obs.mjs#L42)
+  * [`function reqQue`](../obs.mjs#L43)
+  * [`function obs`](../obs.mjs#L45)
+  * [`function getPh`](../obs.mjs#L46)
+  * [`function getQue`](../obs.mjs#L47)
+  * [`function recur`](../obs.mjs#L49)
+  * [`function recurSync`](../obs.mjs#L50)
+  * [`function recurMicro`](../obs.mjs#L51)
+  * [`function recurTask`](../obs.mjs#L52)
+  * [`function recurShed`](../obs.mjs#L54)
+  * [`function preferShed`](../obs.mjs#L60)
+  * [`function preferSync`](../obs.mjs#L61)
+  * [`function preferMicro`](../obs.mjs#L62)
+  * [`function preferTask`](../obs.mjs#L63)
+  * [`function nodeDepth`](../obs.mjs#L65)
+  * [`class WeakerRef`](../obs.mjs#L71)
+  * [`class RunRef`](../obs.mjs#L78)
+  * [`class ShedRef`](../obs.mjs#L84)
+  * [`class Que`](../obs.mjs#L86)
+  * [`class ShardedQue`](../obs.mjs#L161)
+  * [`class ShedSync`](../obs.mjs#L180)
+  * [`class ShedAsync`](../obs.mjs#L202)
+  * [`class ShedMicro`](../obs.mjs#L248)
+  * [`class ShedTask`](../obs.mjs#L252)
+  * [`class ObsPh`](../obs.mjs#L266)
+  * [`class Obs`](../obs.mjs#L303)
+  * [`function obsRef`](../obs.mjs#L312)
+  * [`class ObsRef`](../obs.mjs#L319)
+  * [`class TypedObsRef`](../obs.mjs#L334)
+  * [`function calc`](../obs.mjs#L340)
+  * [`class ObsCalc`](../obs.mjs#L342)
+  * [`class Recur`](../obs.mjs#L404)
+  * [`class FunRecur`](../obs.mjs#L450)
+  * [`class FunRecurSync`](../obs.mjs#L467)
+  * [`class FunRecurMicro`](../obs.mjs#L471)
+  * [`class FunRecurTask`](../obs.mjs#L475)
+  * [`class CalcRecur`](../obs.mjs#L479)

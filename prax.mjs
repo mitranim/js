@@ -1,8 +1,13 @@
 import * as l from './lang.mjs'
+import * as o from './obj.mjs'
+import * as ob from './obs.mjs'
 
-export const nsHtml = `http://www.w3.org/1999/xhtml`
-export const nsSvg = `http://www.w3.org/2000/svg`
-export const nsMathMl = `http://www.w3.org/1998/Math/MathML`
+export const PROP_REC = Symbol.for(`propRec`)
+export const PROP_KEYS = Symbol.for(`propKeys`)
+
+export const NS_HTML = `http://www.w3.org/1999/xhtml`
+export const NS_SVG = `http://www.w3.org/2000/svg`
+export const NS_MATH_ML = `http://www.w3.org/1998/Math/MathML`
 
 /*
 The specification postulates the concept, but where's the standard list?
@@ -24,27 +29,38 @@ export const VOID = new Set([`area`, `base`, `br`, `col`, `embed`, `hr`, `img`, 
 Short for "renderer". Creates or mutates DOM elements. Compatible with native
 DOM API and `dom_shim.mjs`.
 */
-export class Ren extends l.Emp {
-  constructor(doc = globalThis.document) {
+export class Ren extends o.MixMain(l.Emp) {
+  constructor({env = globalThis, shed = ob.getUiShed()} = {}) {
     super()
     this.lax = false
-    this.doc = reqDocument(doc)
+    this.env = reqDomEnv(env)
+    this.shed = ob.optQue(shed)
     this.E = this.E.bind(this)
     this.S = this.S.bind(this)
   }
 
+  get doc() {return this.env.document}
+  get Node() {return this.env.Node}
+  get Text() {return this.env.Text}
+  get RecPropFun() {return RecPropFun}
+  get RecPropRef() {return RecPropRef}
+  get RecNodeFun() {return o.pub(this, `RecNodeFun`, MixRecNodeFun(this.Text))}
+  get RecNodeRef() {return o.pub(this, `RecNodeRef`, MixRecNodeRef(this.Text))}
+
   // All-purpose rendering function for HTML elements.
   E(tar, props, ...chi) {
     if (!l.isObj(tar)) return this.elemHtml(tar, props, ...chi)
-    if (!chi.length) return this.mutProps(tar, props)
-    return this.mut(tar, props, ...chi)
+    this.mutProps(tar, props)
+    if (chi.length) this.mutChi(tar, ...chi)
+    return tar
   }
 
   // All-purpose rendering function for SVG elements.
   S(tar, props, ...chi) {
     if (!l.isObj(tar)) return this.elemSvg(tar, props, ...chi)
-    if (!chi.length) return this.mutProps(tar, props)
-    return this.mut(tar, props, ...chi)
+    this.mutProps(tar, props)
+    if (chi.length) this.mutChi(tar, ...chi)
+    return tar
   }
 
   elemHtml(tag, props, ...chi) {
@@ -69,19 +85,19 @@ export class Ren extends l.Emp {
 
   makeElemHtml(tag, props) {
     if (tag === `svg`) return this.makeElemSvg(tag, props)
-    return this.makeElemNs(nsHtml, tag, deref(props))
+    return this.makeElemNs(NS_HTML, tag, l.deref(props))
   }
 
   makeElemSvg(tag, props) {
-    return this.makeElemNs(nsSvg, tag, deref(props))
+    return this.makeElemNs(NS_SVG, tag, l.deref(props))
   }
 
   makeElemNs(ns, tag, props) {
-    return this.doc.createElementNS(l.reqStr(ns), l.reqStr(tag), deref(props))
+    return this.doc.createElementNS(l.reqStr(ns), l.reqStr(tag), l.deref(props))
   }
 
   makeElem(tag, props) {
-    return this.doc.createElement(l.reqStr(tag), deref(props))
+    return this.doc.createElement(l.reqStr(tag), l.deref(props))
   }
 
   frag(...val) {
@@ -102,7 +118,40 @@ export class Ren extends l.Emp {
     return tar
   }
 
-  mutProps(tar, val) {return this.loop(l.reqObj(tar), val, this.mutProp)}
+  mutProps(tar, src) {
+    if (l.isFun(src)) return this.mutPropsFun(tar, src)
+    if (ob.isObsRef(src)) return this.mutPropsRef(tar, src)
+    return this.mutPropsRec(tar, l.deref(src))
+  }
+
+  mutPropsFun(tar, src) {
+    const {shed} = this
+    if (!shed) return this.mutProps(tar, src.call(tar, tar))
+    return this.RecPropFun.init(this, tar, src), tar
+  }
+
+  mutPropsRef(tar, src) {
+    const {shed} = this
+    if (!shed) return this.mutProps(tar, l.derefAll(src))
+    return this.RecPropRef.init(this, tar, src), tar
+  }
+
+  mutPropsRec(tar, src) {
+    l.reqRec(tar)
+    if (l.isNil(src)) return tar
+
+    const prev = tar[PROP_KEYS]
+    const dict = src
+    const list = l.recKeys(src)
+
+    for (const key of list) this.mutProp(tar, key, src[key])
+
+    tar[PROP_KEYS] = list
+    if (!prev) return tar
+
+    for (const key of prev) if (!l.hasOwn(dict, key)) this.mutProp(tar, key)
+    return tar
+  }
 
   // TODO consider supporting `innerHTML` prop.
   mutProp(tar, key, val) {
@@ -143,11 +192,11 @@ export class Ren extends l.Emp {
 
   mutStyle(tar, val) {
     if (l.isNil(val) || l.isStr(val)) return this.mutAttrAny(tar, `style`, val)
-    if (l.isStruct(val)) return this.mutStyleStruct(tar, val)
+    if (l.isRec(val)) return this.mutStyleRec(tar, val)
     throw l.errConv(val, `style`)
   }
 
-  mutStyleStruct(tar, val) {
+  mutStyleRec(tar, val) {
     this.loop(tar.style, val, this.mutStyleProp)
     return tar
   }
@@ -218,6 +267,8 @@ export class Ren extends l.Emp {
   }
 
   appendChi(tar, src) {
+    if (l.isFun(src)) return this.appendFun(tar, src)
+    if (ob.isObsRef(src)) return this.appendRef(tar, src)
     if (isNodable(src)) src = src.toNode()
     if (l.isNil(src)) return tar
     if (l.isStr(src)) return tar.append(src), tar
@@ -230,6 +281,18 @@ export class Ren extends l.Emp {
     return this.appendChi(tar, this.renderOpt(src)), tar
   }
 
+  appendFun(tar, src) {
+    const {shed} = this
+    if (!shed) return src.call(tar, tar)
+    return this.RecNodeFun.init(this, tar, src), tar
+  }
+
+  appendRef(tar, src) {
+    const {shed} = this
+    if (!shed) return l.derefAll(src)
+    return this.RecNodeRef.init(this, tar, src), tar
+  }
+
   /*
   This strange-looking code implements support for passing an element's
   `.childNodes` to a rendering call where that same element is the target
@@ -237,10 +300,11 @@ export class Ren extends l.Emp {
   where `.childNodes` is just a simple array internally.
   */
   appendList(tar, src) {
+    l.reqList(src)
     let ind = 0
 
     for (;;) {
-      const len = l.reqNum(src.length)
+      const len = src.length
       if (!(ind >= 0 && ind < len)) return tar
 
       this.appendChi(tar, src[ind])
@@ -296,16 +360,15 @@ export class Ren extends l.Emp {
   }
 
   loop(tar, src, fun) {
-    if ((src = deref(src))) {
-      for (const key of l.structKeys(src)) {
-        fun.call(this, tar, key, src[key])
-      }
+    if (l.isNil(src)) return tar
+    for (const key of l.recKeys(src)) {
+      fun.call(this, tar, key, src[key])
     }
     return tar
   }
 
-  isHtml(tar) {return tar.namespaceURI === nsHtml}
-  isSvg(tar) {return tar.namespaceURI === nsSvg}
+  isHtml(tar) {return tar.namespaceURI === NS_HTML}
+  isSvg(tar) {return tar.namespaceURI === NS_SVG}
 
   // Similar to `l.render` and `l.renderOpt` with slightly different rules.
   renderOpt(val, key) {
@@ -326,7 +389,7 @@ export class Ren extends l.Emp {
 
   elemHtmlSvg(tag, props, ...chi) {
     if (this.lax) return this.alignNs(this.elemSvg(tag, props, ...chi))
-    throw SyntaxError(`namespace mismatch for element ${l.show(tag)}: expected ${l.show(nsSvg)}, found ${l.show(nsHtml)})`)
+    throw SyntaxError(`namespace mismatch for element ${l.show(tag)}: expected ${l.show(NS_SVG)}, found ${l.show(NS_HTML)})`)
   }
 
   /*
@@ -359,6 +422,190 @@ export class Ren extends l.Emp {
 export class Raw extends l.Emp {
   constructor(val) {super().outerHTML = l.renderLax(val)}
 }
+
+export function MixInitRun(cls) {return MixinInitRun.get(cls)}
+
+export class MixinInitRun extends o.Mixin {
+  static make(cls) {
+    return class MixinInitRun extends cls {
+      static init(ctx, tar, key) {
+        const prev = tar[PROP_REC]
+
+        if (prev) {
+          if (prev.sameKey?.(key)) return prev
+          prev.deinit()
+        }
+
+        const next = tar[PROP_REC] = new this(ctx, tar, key)
+        next.run()
+        return next
+      }
+    }
+  }
+}
+
+export class RecPropFun extends MixInitRun(ob.FunRecur) {
+  constructor(ren, tar, fun) {super(ren.shed, tar, fun).ren = ren}
+  onRun() {this.ren.mutProps(this.tar, super.onRun())}
+  sameKey(key) {return key === this.fun}
+}
+
+export class RecPropRef extends MixInitRun(ob.RunRef) {
+  constructor(ren, tar, ref) {
+    super(tar)
+    this.ref = ref
+    this.ren = ren
+    this.shedRef = new ob.ShedRef(this)
+  }
+
+  run() {
+    const tar = this.deref()
+    if (!tar) return
+
+    const {ren, ref, shedRef} = this
+    ren.mutProps(tar, l.derefAll(ref))
+
+    ob.getQue(ref).enque(shedRef.init())
+  }
+
+  eq(key) {return key === this.ref}
+  depth() {return ob.nodeDepth(this.deref())}
+  schedule() {this.ren.shed.enque(this.init())}
+}
+
+export function MixRecNode(cls) {return MixinRecNode.get(cls)}
+
+export class MixinRecNode extends o.Mixin {
+  static make(Text) {
+    return class MixinRecNode extends Text {
+      ren = undefined
+      tar = undefined
+      chi = undefined
+
+      constructor(ren, tar) {
+        super()
+        this.ren = ren
+        this.tar = tar
+      }
+
+      deref() {}
+
+      run() {
+        let val = this.deref()
+        this.clear()
+
+        if (l.isArr(val) && val.length <= 1) val = val[0]
+        if (l.isNil(val)) return
+
+        if (l.isScalar(val)) {
+          this.textContent = l.renderLax(val)
+          return
+        }
+
+        const frag = this.ren.frag(val)
+        this.chi = [...frag.childNodes]
+
+        const par = this.parentNode
+        if (!isNode(par)) return
+
+        par.insertBefore(frag, this.nextSibling)
+
+        /*
+        For the DOM shim. Unfortunately, in this case we waste performance on
+        the snapshot above, which is required for correctness in "proper" DOM
+        environments. The overhead is minimal and only applies to the shim.
+        */
+        if (this.nextSibling === frag) this.chi = frag
+      }
+
+      clearChi() {
+        const {chi, parentNode: par} = this
+        if (!chi || !par) return
+
+        if (l.isArr(chi)) {
+          while (chi.length) par.removeChild(chi.pop())
+          return
+        }
+
+        if (l.isInst(chi, this.ren.Node)) par.removeChild(chi)
+      }
+
+      clear() {
+        this.clearChi()
+        this.textContent = ``
+      }
+
+      static init(ren, tar, src) {
+        const out = new this(ren, tar, src)
+        tar.appendChild(out)
+        out.run()
+        return out
+      }
+    }
+  }
+}
+
+export function MixRecNodeFun(cls) {return MixinRecNodeFun.get(cls)}
+
+export class MixinRecNodeFun extends o.Mixin {
+  static make(Text) {
+    return class MixinRecNodeFun extends MixRecNode(Text) {
+      get Recur() {return ob.FunRecur}
+
+      fun = undefined
+      rec = undefined
+
+      constructor(ren, tar, fun) {
+        super(ren, tar)
+        this.fun = l.reqFun(fun)
+        this.rec = new this.Recur(ren.shed, this, this.onRun)
+      }
+
+      deref() {
+        const {tar, fun} = this
+        return fun.call(tar, tar)
+      }
+
+      run() {this.rec.run()}
+      onRun() {super.run()}
+      deinit() {this.rec.deinit()}
+    }
+  }
+}
+
+export function MixRecNodeRef(cls) {return MixinRecNodeRef.get(cls)}
+
+export class MixinRecNodeRef extends o.Mixin {
+  static make(Text) {
+    return class MixinRecNodeRef extends MixRecNode(Text) {
+      ref = undefined
+
+      constructor(ren, tar, ref) {
+        super(ren, tar)
+        this.ref = ref
+        this.runRef = new ob.RunRef(this)
+        this.shedRef = new ob.ShedRef(this)
+      }
+
+      deref() {return l.derefAll(this.ref)}
+
+      run() {
+        super.run()
+        ob.getQue(this.ref).enque(this.shedRef.init())
+      }
+
+      depth() {return ob.nodeDepth(this.tar)}
+      schedule() {this.ren.shed.enque(this.runRef.init())}
+
+      deinit() {
+        this.shedRef.deinit()
+        this.runRef.deinit()
+      }
+    }
+  }
+}
+
+const FROZEN = Symbol.for(`frozen`)
 
 /*
 Short for "props builder". Provides various shortcuts for building and merging
@@ -406,30 +653,28 @@ Custom frozen marker has much better performance than `Object.freeze` and
 export class PropBui extends l.Emp {
   constructor(val) {
     super()
-    this[refKey] = deref(val)
-    this[frozenKey] = false
+    this[l.VAL] = l.deref(val)
+    this[FROZEN] = false
   }
-
-  get $() {return this[refKey]}
 
   has(key) {
     l.reqStr(key)
-    const src = this[refKey]
+    const src = this[l.VAL]
     return !!src && key in src
   }
 
   get(key) {
     l.reqStr(key)
-    return this[refKey]?.[key]
+    return this[l.VAL]?.[key]
   }
 
   set(key, val) {
     const self = this.mutable()
-    return self[refKey][l.reqStr(key)] = val, self
+    return self[l.VAL][l.reqStr(key)] = val, self
   }
 
   delete(key) {
-    const tar = this[refKey]
+    const tar = this[l.VAL]
     if (l.hasOwn(tar, key)) delete tar[key]
     return this
   }
@@ -507,46 +752,39 @@ export class PropBui extends l.Emp {
   */
 
   mut(val) {
-    val = deref(val)
-    return l.isSome(val) ? this.mutFromStruct(val) : this
+    val = l.deref(val)
+    return l.isSome(val) ? this.mutFromRec(val) : this
   }
 
-  mutFromStruct(val) {
+  mutFromRec(val) {
     const self = this.mutable()
-    for (const key of l.structKeys(val)) self.$[key] = val[key]
+    const tar = self[l.VAL]
+    for (const key of l.recKeys(val)) tar[key] = val[key]
     return self
   }
 
   with(val) {
-    if (this[refKey]) return this.mut(val)
+    if (this[l.VAL]) return this.mut(val)
     const self = this.mutableOuter()
-    self[refKey] = deref(val)
+    self[l.VAL] = l.deref(val)
     return self
   }
 
-  frozen() {return this[frozenKey] = true, this}
+  frozen() {return this[FROZEN] = true, this}
   snapshot(val) {return this.with(val).frozen()}
   mutable() {return this.mutableOuter().mutableInner()}
-  mutableOuter() {return this[frozenKey] ? new this.constructor().mut(this.$) : this}
-  mutableInner() {return (this[refKey] ??= l.Emp()), this}
+  mutableOuter() {return this[FROZEN] ? new this.constructor().mut(this[l.VAL]) : this}
+  mutableInner() {return (this[l.VAL] ??= l.Emp()), this}
 
   static of(val) {
     if (l.isNil(val)) return new this()
-    if (l.reqObj(val) instanceof this) return val
+    if (l.reqRec(val) instanceof this) return val
     return new this(val)
   }
 
-  // Copied from `obj.mjs`.`MixMain` to avoid import.
-  static get main() {
-    const key = Symbol.for(`main`)
-    return l.hasOwn(this, key) ? this[key] : this[key] = this.default()
-  }
-
+  // For `obs.mjs`.`MixMain`.
   static default() {return new this().frozen()}
 }
-
-const refKey = Symbol.for(`$`)
-const frozenKey = Symbol.for(`frozen`)
 
 function hasScheme(val) {return /^\w+:/.test(l.laxStr(val))}
 
@@ -580,14 +818,18 @@ export function isDocument(val) {
 export function optDocument(val) {return l.opt(val, isDocument)}
 export function reqDocument(val) {return l.req(val, isDocument)}
 
-export function isNamespaced(val) {return l.isObj(val) && `namespaceURI` in val}
-
-// Used for adapting various "props" inputs.
-export function deref(val) {
-  if (!l.optObj(val)) return val
-  if (`$` in val) return val.$
-  return val
+export function isDomEnv(val) {
+  return (
+    l.isComp(val) &&
+    isDocument(val.document) &&
+    l.isCls(val.Node) &&
+    l.isCls(val.Text)
+  )
 }
+export function optDomEnv(val) {return l.opt(val, isDomEnv)}
+export function reqDomEnv(val) {return l.req(val, isDomEnv)}
+
+export function isNamespaced(val) {return l.isObj(val) && `namespaceURI` in val}
 
 /*
 In many DOM APIs only `null` is considered nil/missing, while `undefined` is

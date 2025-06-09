@@ -62,16 +62,16 @@ t.test(function test_Dur() {
   t.test(function test_decoding_valid() {testDurResetFromStr(ti.dur)})
   t.test(function test_reset_from_str() {testDurReset(testDurResetFromStr)})
 
-  t.test(function test_from_struct() {testDurResetFromStruct(ti.dur)})
-  t.test(function test_reset_from_struct() {testDurReset(testDurResetFromStruct)})
+  t.test(function test_from_rec() {testDurResetFromRec(ti.dur)})
+  t.test(function test_reset_from_rec() {testDurReset(testDurResetFromRec)})
 
   t.test(function test_from_dur() {
-    testDurResetFromStruct(function make(src) {return ti.dur(ti.dur(src))})
+    testDurResetFromRec(function make(src) {return ti.dur(ti.dur(src))})
   })
 
   t.test(function test_reset_from_dur() {
-    testDurResetFromStruct(function make(src) {return ti.dur().reset(ti.dur(src))})
-    testDurResetFromStruct(function make(src) {return ti.dur(src).reset(ti.dur(src))})
+    testDurResetFromRec(function make(src) {return ti.dur().reset(ti.dur(src))})
+    testDurResetFromRec(function make(src) {return ti.dur(src).reset(ti.dur(src))})
   })
 
   t.test(function test_reset_from_milli() {testDurResetFromMilli()})
@@ -195,7 +195,7 @@ function testDurResetFromStr(make) {
   )
 }
 
-function testDurResetFromStruct(make) {
+function testDurResetFromRec(make) {
   t.throws(() => make({years: `10`}), TypeError, `expected variant of isInt, got "10"`)
   t.throws(() => make({months: `10`}), TypeError, `expected variant of isInt, got "10"`)
   t.throws(() => make({days: `10`}), TypeError, `expected variant of isInt, got "10"`)
