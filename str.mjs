@@ -4,7 +4,7 @@ import * as c from './coll.mjs'
 export const RE_WORD = /\p{Lu}+[\p{Ll}\d]*|[\p{Ll}\d]+/gu
 export const RE_EMBED = /{{([^{}]*)}}/g
 
-export function isBlank(val) {return l.reqStr(val) !== val.trim()}
+export function isBlank(val) {return !l.reqStr(val).trim()}
 export function isAscii(val) {return isEveryCharCode(val, isCodeAscii)}
 export function isAsciiPrint(val) {return isEveryCharCode(val, isCodeAsciiPrint)}
 

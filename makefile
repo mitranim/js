@@ -86,7 +86,7 @@ push:
 #   * `make pub`.
 #
 # Note: publishing to NPM is done automatically via GitHub Actions.
-pub: tag push
+pub: prep tag push
 
 # Trims trailing whitespace from all tracked files, then rebuilds the docs.
 # The `-i ''` is required on MacOS, do not remove.

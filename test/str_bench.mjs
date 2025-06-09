@@ -53,7 +53,7 @@ function draftRenderSimple(src, ctx) {
 }
 
 function isBlankRegex(val) {return /^\s*$/.test(l.reqStr(val))}
-function isBlankTrim(val) {return l.reqStr(val) !== val.trim()}
+function isBlankTrim(val) {return !l.reqStr(val).trim()}
 
 function joinDumb(val, sep) {
   l.reqStr(sep)

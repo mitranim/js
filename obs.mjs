@@ -17,11 +17,6 @@ export function obs(val) {return new Proxy(val, new ObsPh())}
 export function getPh(val) {return val?.[SYM_PH]}
 export function getTar(val) {return val?.[SYM_TAR]}
 
-function finalizeDeinit(val) {
-  if (l.isFun(val)) val()
-  else val.deinit()
-}
-
 /*
 Used internally by schedulers. Pending values are added to a queue, and ran as a
 batch by calling `.flush`. Re-adding the same value during a flush queues it up
