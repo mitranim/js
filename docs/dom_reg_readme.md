@@ -63,7 +63,7 @@ document.body.append(new MyLink(`click me`, `/some-link`))
 
 Apps which use server-side rendering and client-side upgrading of custom elements need a slightly different approach. `MixReg` registers an element class at construction time, when the class is invoked with `new`. Custom elements described in HTML markup are initially not associated with any class, and so the browser wouldn't know what to `new`.
 
-Instead, use `dr.reg`, which is also used internally by `MixReg`. This is simply a shortcut for using the [#default](#class-reg) provided by this module.
+Instead, use `dr.reg`, which is also used internally by `MixReg`. This is simply a shortcut for using the [#default registry](#class-reg) provided by this module.
 
 ```js
 import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/dom_reg.mjs'

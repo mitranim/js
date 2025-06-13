@@ -1,6 +1,6 @@
 Short for "better map". Variant of built-in `Map` with additional common-sense behaviors:
 
-  * Supports {{link lang isDict plain_dicts}}:
+  * Supports {{link lang isDict plain dicts}}:
     * Can be instantiated from a dict.
     * Can be patched by a dict by calling `.mut`.
     * Can be converted to a dict by calling `.toDict`.

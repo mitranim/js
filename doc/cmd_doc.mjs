@@ -59,9 +59,9 @@ class Pkg extends u.Strict {
 
   async $readmeOutText() {return renderNamed(this.readmeSrcText, this, this.readmeSrcPath)}
 
-  link(feat, ident, text) {return this.feat(feat).identDocLinkFull(ident, text)}
+  link(feat, ident, ...text) {return this.feat(feat).identDocLinkFull(ident, ...text)}
 
-  featLink(name, text) {return this.feat(name).selfLink(text)}
+  featLink(name, ...text) {return this.feat(name).selfLink(...text)}
 
   feat(name) {
     return (
@@ -195,22 +195,24 @@ ${a.joinLines(a.map(idents, toUndocBullet))}
     )
   }
 
-  async identDocLinkFull(name, text) {
-    return (await this.ident(name)).pkgIdentLink(text)
+  async identDocLinkFull(name, ...text) {
+    text = a.spaced(...text)
+    return (await this.ident(name)).pkgIdentLink(...text)
   }
 
-  link(feat, name, text) {
-    if (feat === this.name) return this.identLink(name, text)
-    return this.pkg.link(feat, name, text)
+  link(feat, name, ...text) {
+    if (feat === this.name) return this.identLink(name, ...text)
+    return this.pkg.link(feat, name, ...text)
   }
 
-  async identLink(name, text) {
-    return (await this.ident(name)).featIdentLink(text)
+  async identLink(name, ...text) {
+    return (await this.ident(name)).featIdentLink(...text)
   }
 
-  featLink(name, text) {return this.pkg.featLink(name, text)}
+  featLink(name, ...text) {return this.pkg.featLink(name, ...text)}
 
-  selfLink(text) {
+  selfLink(...text) {
+    text = a.spaced(...text)
     return text ? mdLink(text, this.docRelPath) : this.docRelLink
   }
 
@@ -263,7 +265,8 @@ class Ident extends u.Strict {
     )
   }
 
-  featIdentLink(text) {
+  featIdentLink(...text) {
+    text = a.spaced(...text)
     return (
       text
       ? mdLink(a.str(`#`, text), mdHash(this.head))
@@ -271,7 +274,7 @@ class Ident extends u.Strict {
     )
   }
 
-  featLink(name, text) {return this.feat.pkg.featLink(name, text)}
+  featLink(name, ...text) {return this.feat.pkg.featLink(name, ...text)}
 
   async $testRow() {return a.reqNat(await this.testLine) + 1}
   async $testLink() {return a.str(this.feat.docTestPath, `#L`, (await this.testRow))}

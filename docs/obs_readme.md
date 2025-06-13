@@ -217,7 +217,7 @@ import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/obs.mjs'
 
 const obs = ob.obs({one: 10, two: 20})
 
-const rec = new ob.FunRecur(function onChange() {
+const rec = ob.recurSync(function onChange() {
   console.log(`sum:`, obs.one + obs.two)
 })
 
@@ -274,7 +274,7 @@ Implicit reactivity, as shown above, is extremely convenient for UI updates. Thi
 
 The ideal way of making web apps, from a user experience perspective, involves a combination of SSR with client-side interactivity; and the less JS, the better.
 
-One of the biggest benefits of custom elements is how they can enable client-side interactive features by instantiating in-place from existing HTML markup. They can enrich SSR apps without forcing you to convert to a SPA. They're also well-suited for SSR/SPA hybrids, with the addition of a [`dom_shim`](dom_shim_readme.md) and a [rendering](prax_readme.md) compatible with both shimmed and native DOM.
+One of the biggest benefits of custom elements is how they can enable client-side interactive features by instantiating in-place from existing HTML markup. They can enrich SSR apps without forcing you to convert to a SPA. They're also well-suited for SSR/SPA hybrids, with the addition of a [`dom_shim`](dom_shim_readme.md) and a [rendering system](prax_readme.md) compatible with both shimmed and native DOM.
 
 For comparison, many other JS frameworks require you to re-render the entire markup on the client, which usually also requires re-fetching the source data, or inlining it into the HTML as JSON.
 

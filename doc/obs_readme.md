@@ -217,7 +217,7 @@ import * as ob from '{{featUrl obs}}'
 
 const obs = ob.obs({one: 10, two: 20})
 
-const rec = new ob.FunRecur(function onChange() {
+const rec = ob.recurSync(function onChange() {
   console.log(`sum:`, obs.one + obs.two)
 })
 

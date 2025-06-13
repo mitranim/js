@@ -85,7 +85,7 @@ Links: [source](../coll.mjs#L51); [test/example](../test/coll_test.mjs#L216).
 
 Short for "better map". Variant of built-in `Map` with additional common-sense behaviors:
 
-  * Supports [plain_dicts](lang_readme.md#function-isdict):
+  * Supports [p](lang_readme.md#function-isdict):
     * Can be instantiated from a dict.
     * Can be patched by a dict by calling `.mut`.
     * Can be converted to a dict by calling `.toDict`.
@@ -233,11 +233,11 @@ Short for "vector". Thin wrapper around a plain array. Features:
 Differences and advantages over `Array`:
 
   * Better constructor signature.
-    * Constructor takes exactly one argument, which is either [nil](lang_readme.md#function-isnil) or an [array](lang_readme.md#function-istruearr).
+    * Constructor takes exactly one argument, which is either [n](lang_readme.md#function-isnil) or an [a](lang_readme.md#function-istruearr).
     * For comparison, the `Array` constructor has special cases that make subclassing difficult.
   * Can be subclassed without trashing performance.
     * At the time of writing, subclasses of `Array` suffer horrible deoptimization in V8.
-    * `Vec` always wraps a [true](lang_readme.md#function-istruearr), avoiding this problem.
+    * `Vec` always wraps a [t](lang_readme.md#function-istruearr), avoiding this problem.
 
 The overhead of the wrapper is insignificant.
 

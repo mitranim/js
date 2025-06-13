@@ -30,8 +30,8 @@ Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaSc
   * Much faster.
   * Exactly two parameters, not variadic.
   * Sanity-checked:
-    * Target must be a [record](lang_readme.md#function-isrec).
-    * Source must be nil or a [record](lang_readme.md#function-isrec).
+    * Target must be a [r](lang_readme.md#function-isrec).
+    * Source must be nil or a [r](lang_readme.md#function-isrec).
     * Throws on invalid inputs.
 
 Similar to [#`patch`](#function-patch) but doesn't check for inherited and non-enumerable properties. Simpler, dumber, faster.
@@ -47,8 +47,8 @@ Similar to [`Object.assign`](https://developer.mozilla.org/en-US/docs/Web/JavaSc
   * Much faster.
   * Takes only two args.
   * Sanity-checked:
-    * Target must be a [record](lang_readme.md#function-isrec).
-    * Source must be nil or a [record](lang_readme.md#function-isrec).
+    * Target must be a [r](lang_readme.md#function-isrec).
+    * Source must be nil or a [r](lang_readme.md#function-isrec).
     * Throws on invalid inputs.
     * Does not override inherited properties.
     * Does not override own non-enumerable properties.
@@ -92,7 +92,7 @@ Mixin for classes representing a "struct" / "model" / "record". Also see [#`MixS
 
 * Supports explicit specs with validation / transformation functions.
 
-* Can be instantiated or mutated from any [record](lang_readme.md#function-isrec) (any dict-like object); each field is validated by the user-defined spec.
+* Can be instantiated or mutated from any [r](lang_readme.md#function-isrec) (any dict-like object); each field is validated by the user-defined spec.
 
 * Assigns and checks all declared fields when instantiating via `new`. Ignores undeclared fields.
 

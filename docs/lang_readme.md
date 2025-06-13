@@ -273,7 +273,7 @@ Uses the term "record" for consistency with [#`isRec`](#function-isrec) which de
 
 Links: [source](../lang.mjs#L110); [test/example](../test/lang_test.mjs#L543).
 
-True for objects that implement method `.pk` which must return a valid [#primary](#function-ispk). This interface is used internally by [`Coll`](coll_readme.md#class-coll).
+True for objects that implement method `.pk` which must return a valid [#primary key](#function-ispk). This interface is used internally by [`Coll`](coll_readme.md#class-coll).
 
 ### `function isJunk`
 
@@ -583,10 +583,10 @@ Renders a value for user display. Intended only for [#scalar](#function-isscalar
 
 Links: [source](../lang.mjs#L425); [test/example](../test/lang_test.mjs#L207).
 
-Idempotent conversion to a [#true](#function-istruearr). Allowed inputs:
+Idempotent conversion to a [#true array](#function-istruearr). Allowed inputs:
 
   * [#Nil](#function-isnil) → return `[]`.
-  * [#True](#function-istruearr) → return as-is.
+  * [#True array](#function-istruearr) → return as-is.
   * [#Iterable](#function-isiter) → convert to `Array`.
   * Otherwise → `TypeError` exception.
 

@@ -110,24 +110,24 @@ Shortcut. Converts the input to an array via [#`arr`](#function-arr) and asserts
 
 Links: [source](../iter.mjs#L10); [test/example](../test/iter_test.mjs#L74).
 
-Takes an [iterator](lang_readme.md#function-isiterator), consumes one value, and returns true if the iterator is not yet finished. Shortcut for `val.next().done === false`.
+Takes an [i](lang_readme.md#function-isiterator), consumes one value, and returns true if the iterator is not yet finished. Shortcut for `val.next().done === false`.
 
 ### `function alloc`
 
 Links: [source](../iter.mjs#L12); [test/example](../test/iter_test.mjs#L84).
 
-Shortcut for allocating an array with a sanity check. Same as `Array(N)` but ensures that the input is a [natural_number](lang_readme.md#function-isnat) suitable for array length. Avoids unintentionally passing any non-natural input such as `Array(-1)`. Allows [nil](lang_readme.md#function-isnil), replacing it with `0`.
+Shortcut for allocating an array with a sanity check. Same as `Array(N)` but ensures that the input is a [n](lang_readme.md#function-isnat) suitable for array length. Avoids unintentionally passing any non-natural input such as `Array(-1)`. Allows [n](lang_readme.md#function-isnil), replacing it with `0`.
 
 ### `function arr`
 
 Links: [source](../iter.mjs#L14); [test/example](../test/iter_test.mjs#L94).
 
-Converts an arbitrary [sequence](lang_readme.md#function-isseq) to an array. Supports the following inputs:
+Converts an arbitrary [s](lang_readme.md#function-isseq) to an array. Supports the following inputs:
 
-  * [Nil](lang_readme.md#function-isnil): return `[]`.
-  * [Array](lang_readme.md#function-istruearr): return as-is.
-  * [List](lang_readme.md#function-islist): convert via `Array.prototype.slice`.
-  * [Set](lang_readme.md#function-isset) or arbitrary [iterator](lang_readme.md#function-isiterator): convert to array by iterating.
+  * [N](lang_readme.md#function-isnil): return `[]`.
+  * [A](lang_readme.md#function-istruearr): return as-is.
+  * [L](lang_readme.md#function-islist): convert via `Array.prototype.slice`.
+  * [S](lang_readme.md#function-isset) or arbitrary [i](lang_readme.md#function-isiterator): convert to array by iterating.
 
 Unlike [#`values`](#function-values), this function rejects other inputs such as non-nil primitives, dicts, maps, arbitrary iterables, ensuring that the input is always a sequence.
 
@@ -143,7 +143,7 @@ Similar to [#`arr`](#function-arr), but always makes a copy, even if the input i
 
 Links: [source](../iter.mjs#L42); [test/example](../test/iter_test.mjs#L157).
 
-Like [`Array.prototype.slice`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice) but allows arbitrary [sequences](lang_readme.md#function-isseq) compatible with [#`arr`](#function-arr).
+Like [`Array.prototype.slice`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice) but allows arbitrary [s](lang_readme.md#function-isseq) compatible with [#`arr`](#function-arr).
 
 ### `function keys`
 
@@ -152,11 +152,11 @@ Links: [source](../iter.mjs#L46); [test/example](../test/iter_test.mjs#L189).
 Takes an arbitrary input and returns an array of its keys:
 
   * For non-objects: always `[]`.
-  * For [iterables](lang_readme.md#function-isiter) with `.keys()`: equivalent to converting the output of `.keys()` to an array. Implementation varies for performance.
+  * For [i](lang_readme.md#function-isiter) with `.keys()`: equivalent to converting the output of `.keys()` to an array. Implementation varies for performance.
     * Examples: `Array`, `Set`, `Map`, and more.
-  * For [lists](lang_readme.md#function-islist): equivalent to above for arrays.
-  * For [iterators](lang_readme.md#function-isiterator): exhausts the iterator, returning an array of indexes equivalent to `i.span(i.len(iterator))`. See [#`span`](#function-span) and [#`len`](#function-len).
-  * For [records](lang_readme.md#function-isrec): equivalent to [`Object.keys`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys).
+  * For [l](lang_readme.md#function-islist): equivalent to above for arrays.
+  * For [i](lang_readme.md#function-isiterator): exhausts the iterator, returning an array of indexes equivalent to `i.span(i.len(iterator))`. See [#`span`](#function-span) and [#`len`](#function-len).
+  * For [r](lang_readme.md#function-isrec): equivalent to [`Object.keys`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys).
 
 ### `function values`
 
@@ -165,12 +165,12 @@ Links: [source](../iter.mjs#L58); [test/example](../test/iter_test.mjs#L217).
 Takes an arbitrary input and returns an array of its values:
 
   * For non-objects: always `[]`.
-  * For [arrays](lang_readme.md#function-isarr): **returns as-is without copying**.
-  * For [lists](lang_readme.md#function-islist): slice to array.
-  * For [iterables](lang_readme.md#function-isiter) with `.values()`: equivalent to converting the output of `.values()` to an array. Implementation varies for performance.
+  * For [a](lang_readme.md#function-isarr): **returns as-is without copying**.
+  * For [l](lang_readme.md#function-islist): slice to array.
+  * For [i](lang_readme.md#function-isiter) with `.values()`: equivalent to converting the output of `.values()` to an array. Implementation varies for performance.
     * Examples: `Set`, `Map`, and more.
-  * For [iterators](lang_readme.md#function-isiterator): equivalent to `[...iterator]`.
-  * For [records](lang_readme.md#function-isrec): equivalent to [`Object.values`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/values).
+  * For [i](lang_readme.md#function-isiterator): equivalent to `[...iterator]`.
+  * For [r](lang_readme.md#function-isrec): equivalent to [`Object.values`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/values).
 
 ### `function valuesCopy`
 
@@ -185,17 +185,17 @@ Links: [source](../iter.mjs#L84); [test/example](../test/iter_test.mjs#L288).
 Takes an arbitrary input and returns an array of its entries (key-value tuples):
 
   * For non-objects: always `[]`.
-  * For [iterables](lang_readme.md#function-isiter) with `.entries()`: equivalent to converting the output of `.entries()` to an array. Implementation varies for performance.
+  * For [i](lang_readme.md#function-isiter) with `.entries()`: equivalent to converting the output of `.entries()` to an array. Implementation varies for performance.
     * Examples: `Set`, `Map`, and more.
-  * For [lists](lang_readme.md#function-islist): equivalent to above for arrays.
-  * For [iterators](lang_readme.md#function-isiterator): exhausts the iterator, returning an array of entries where keys are indexes starting with 0.
-  * For [records](lang_readme.md#function-isrec): equivalent to [`Object.entries`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries).
+  * For [l](lang_readme.md#function-islist): equivalent to above for arrays.
+  * For [i](lang_readme.md#function-isiterator): exhausts the iterator, returning an array of entries where keys are indexes starting with 0.
+  * For [r](lang_readme.md#function-isrec): equivalent to [`Object.entries`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries).
 
 ### `function reify`
 
 Links: [source](../iter.mjs#L111); [test/example](../test/iter_test.mjs#L308).
 
-Takes an arbitrary value and attempts to deeply materialize it. Any [iterators](lang_readme.md#function-isiterator), or [lists](lang_readme.md#function-islist) that contain iterators, or lists that contain lists that contain iterators, etc., are converted to arrays. Does not inspect other data structures such as [sets](lang_readme.md#function-isset) or [dicts](lang_readme.md#function-isdict).
+Takes an arbitrary value and attempts to deeply materialize it. Any [i](lang_readme.md#function-isiterator), or [l](lang_readme.md#function-islist) that contain iterators, or lists that contain lists that contain iterators, etc., are converted to arrays. Does not inspect other data structures such as [s](lang_readme.md#function-isset) or [d](lang_readme.md#function-isdict).
 
 ### `function indexOf`
 
@@ -204,7 +204,7 @@ Links: [source](../iter.mjs#L115); [test/example](../test/iter_test.mjs#L333).
 Like [`Array.prototype.indexOf`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf). Differences:
 
   * Uses [`is`](lang_readme.md#function-is) rather than `===`, therefore able to detect `NaN`.
-  * Input may be [nil](lang_readme.md#function-isnil) or any [list](lang_readme.md#function-islist).
+  * Input may be [n](lang_readme.md#function-isnil) or any [l](lang_readme.md#function-islist).
 
 ### `function findIndex`
 
@@ -214,7 +214,7 @@ Signature: `(List<A>, A => bool) => int`.
 
 Like [`Array.prototype.findIndex`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex). Differences:
 
-  * Input may be [nil](lang_readme.md#function-isnil) or any [list](lang_readme.md#function-islist).
+  * Input may be [n](lang_readme.md#function-isnil) or any [l](lang_readme.md#function-islist).
   * Doesn't support `this` or additional arguments.
 
 ### `function includes`
@@ -224,7 +224,7 @@ Links: [source](../iter.mjs#L135); [test/example](../test/iter_test.mjs#L377).
 Like [`Array.prototype.includes`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes). Differences:
 
   * Supports arbitrary iterables compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
 
 ### `function append`
 
@@ -246,7 +246,7 @@ Like [`Array.prototype.concat`](https://developer.mozilla.org/en-US/docs/Web/Jav
 
   * Takes two arguments, without rest/spread.
   * Supports arbitrary iterables compatible with [#`values`](#function-values).
-  * Iterables may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterables may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
 
 Note: for individual elements, use [#`append`](#function-append) and
 [#`prepend`](#function-prepend).
@@ -259,10 +259,10 @@ Universal length measurement:
 
   * For non-objects: always 0.
   * For iterables:
-    * For [lists](lang_readme.md#function-islist): same as `.length`.
+    * For [l](lang_readme.md#function-islist): same as `.length`.
     * For ES2015 collections such as `Set`: same as `.size`.
     * For iterators: exhausts the iterator, returning element count.
-  * For [records](lang_readme.md#function-isrec): equivalent to `Object.keys(val).length`.
+  * For [r](lang_readme.md#function-isrec): equivalent to `Object.keys(val).length`.
 
 ### `function hasLen`
 
@@ -279,7 +279,7 @@ Signature: `(Iter<A>, A => void) => void`.
 Similar to `Array.prototype.forEach`, `Set.prototype.forEach`, `Map.prototype.forEach`, and so on. Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Doesn't support `this` or additional arguments.
 
 ### `function map`
@@ -291,7 +291,7 @@ Signature: `(Iter<A>, A => B) => B[]`.
 Similar to [`Array.prototype.map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map). Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Doesn't support `this`, and doesn't pass additional arguments. When you want support for additional arguments, use [#`values`](#function-values) to convert an arbitrary iterable to an array, then use native `.map`.
 
 ### `function mapMut`
@@ -351,7 +351,7 @@ Signature: `(Iter<A>, A => B[]) => B[]`.
 Similar to [`Array.prototype.flatMap`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap). Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Doesn't support `this` or additional arguments.
 
 This function is equivalent to `i.flat(i.map(val, fun))`. See [#`map`](#function-map) and [#`flat`](#function-flat).
@@ -365,7 +365,7 @@ Signature: `(Iter<A>, A => bool) => A[]`.
 Similar to [`Array.prototype.filter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter). Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Doesn't support `this` or additional arguments.
 
 ### `function reject`
@@ -397,7 +397,7 @@ Signature: `(src: Iter<A>, acc: B, fun: (B, A) => B) => B`.
 Similar to [`Array.prototype.reduce`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce). Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Arguments are `(src, acc, fun)` rather than `(fun, acc)`.
   * Accumulator argument is mandatory.
   * Doesn't support `this`.
@@ -422,7 +422,7 @@ Signature: `(Iter<A>, A => bool) => A`.
 Similar to [`Array.prototype.find`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find). Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Doesn't support `this` or additional arguments.
 
 ### `function procure`
@@ -442,7 +442,7 @@ Signature: `(Iter<A>, A => bool) => bool`.
 Similar to [`Array.prototype.every`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every). Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Doesn't support `this` or additional arguments.
 
 ### `function some`
@@ -454,7 +454,7 @@ Signature: `(Iter<A>, A => bool) => bool`.
 Similar to [`Array.prototype.some`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some). Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Doesn't support `this` or additional arguments.
 
 ### `function flat`
@@ -466,7 +466,7 @@ Similar to [`Array.prototype.flat`](https://developer.mozilla.org/en-US/docs/Web
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
   * Always flattens to infinite depth.
 
-Currently flattens only children and descendants that are [plain](lang_readme.md#function-istruearr), preserving other nested iterables as-is.
+Currently flattens only children and descendants that are [p](lang_readme.md#function-istruearr), preserving other nested iterables as-is.
 
 ### `function head`
 
@@ -518,7 +518,7 @@ Equivalent to the [default JS sort comparison algorithm](https://tc39.github.io/
 
 Links: [source](../iter.mjs#L338); [test/example](../test/iter_test.mjs#L955).
 
-Signature: `(a, b) => -1 | 0 | 1` where arguments are [nil](lang_readme.md#function-isnil) or [finite](lang_readme.md#function-isfin).
+Signature: `(a, b) => -1 | 0 | 1` where arguments are [n](lang_readme.md#function-isnil) or [f](lang_readme.md#function-isfin).
 
 Sort comparison for finite numbers. Usable for [`Array.prototype.sort`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort) or [#`sort`](#function-sort). Throws on non-nil, non-finite arguments.
 
@@ -531,7 +531,7 @@ Signature: `(src: Iter<A>, fun?: (prev: A, next: A) => -1 | 0 | 1) => A[]`.
 Similar to [`Array.prototype.sort`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort). Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Always creates a new array. Does not mutate the input.
 
 The comparison function is optional. If omitted, default JS sorting is used.
@@ -543,7 +543,7 @@ Links: [source](../iter.mjs#L348); [test/example](../test/iter_test.mjs#L999).
 Similar to [`Array.prototype.reverse`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reverse). Differences:
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values).
-  * Iterable may be [nil](lang_readme.md#function-isnil), equivalent to `[]`.
+  * Iterable may be [n](lang_readme.md#function-isnil), equivalent to `[]`.
   * Always creates a new array. Does not mutate the input.
 
 ### `function index`
@@ -552,7 +552,7 @@ Links: [source](../iter.mjs#L362); [test/example](../test/iter_test.mjs#L1017).
 
 Signature: `(Iter<A>, A => Key | any) => {[Key: A]}`.
 
-Takes an arbitrary iterable compatible with [#`values`](#function-values) and returns an index where its values are _indexed_ by the given function, hence the name. The function is called for each value. If the function returns a [valid_key](lang_readme.md#function-iskey), the key-value pair is added to the index. Invalid keys are ignored. If the function returns the same key for multiple values, previous values are lost.
+Takes an arbitrary iterable compatible with [#`values`](#function-values) and returns an index where its values are _indexed_ by the given function, hence the name. The function is called for each value. If the function returns a [v](lang_readme.md#function-iskey), the key-value pair is added to the index. Invalid keys are ignored. If the function returns the same key for multiple values, previous values are lost.
 
 Compare [#`group`](#function-group) which keeps all values for each group, rather than only the last.
 
@@ -562,7 +562,7 @@ Links: [source](../iter.mjs#L372); [test/example](../test/iter_test.mjs#L1062).
 
 Signature: `(Iter<A>, A => Key | any) => {[Key: A[]]}`.
 
-Takes an arbitrary iterable compatible with [#`values`](#function-values) and groups its values by keys generated by the given function. The function is called for each value. If the function returns a [valid_key](lang_readme.md#function-iskey), the value is added to the index under that key. Invalid keys are ignored.
+Takes an arbitrary iterable compatible with [#`values`](#function-values) and groups its values by keys generated by the given function. The function is called for each value. If the function returns a [v](lang_readme.md#function-iskey), the value is added to the index under that key. Invalid keys are ignored.
 
 Compare [#`index`](#function-index), which keeps only the last value for each group.
 
@@ -592,8 +592,8 @@ Similar to [`Object.fromEntries`](https://developer.mozilla.org/en-US/docs/Web/J
 
   * Takes an arbitrary iterable compatible with [#`values`](#function-values) (more flexible).
     * Each value of this iterable must be a key-value pair.
-  * Ignores entries where the first element is not a [valid_key](lang_readme.md#function-iskey).
-  * Returns a [null_prototype_object](lang_readme.md#function-emp).
+  * Ignores entries where the first element is not a [v](lang_readme.md#function-iskey).
+  * Returns a [n](lang_readme.md#function-emp).
   * Slightly slower.
 
 ### `function setOf`
@@ -617,7 +617,7 @@ Converts an arbitrary input to a native [`Set`](https://developer.mozilla.org/en
 
   * If input is already a set: **return as-is without copying**.
   * Otherwise, create a set of the input's [#`values`](#function-values).
-    * [Maps](lang_readme.md#function-ismap) and [records](lang_readme.md#function-isrec) are treated as collections of their values rather than key-value entries.
+    * [M](lang_readme.md#function-ismap) and [r](lang_readme.md#function-isrec) are treated as collections of their values rather than key-value entries.
 
 ### `function setCopy`
 
@@ -671,8 +671,8 @@ Signature: `({[Key: A]}, A => B) => {[Key: B]}`.
 
 Similar to [#`map`](#function-map) but for dicts.
 
-* The input must be either [nil](lang_readme.md#function-isnil) or a [record](lang_readme.md#function-isrec). Nil is considered `{}`.
-* The output is always a [plain](lang_readme.md#function-emp) with the same keys but altered values.
+* The input must be either [n](lang_readme.md#function-isnil) or a [r](lang_readme.md#function-isrec). Nil is considered `{}`.
+* The output is always a [p](lang_readme.md#function-emp) with the same keys but altered values.
 * The mapping function receives only one argument: each value.
 
 ```js
@@ -693,8 +693,8 @@ Signature: `({[Key: A]}, A => bool) => {[Key: A]}`.
 
 Similar to [#`filter`](#function-filter) but for dicts.
 
-* The input must be either [nil](lang_readme.md#function-isnil) or a [record](lang_readme.md#function-isrec). Nil is considered `{}`.
-* The output is always a [plain](lang_readme.md#function-emp). It has only the key-values from the original input for which the given function returned a truthy result.
+* The input must be either [n](lang_readme.md#function-isnil) or a [r](lang_readme.md#function-isrec). Nil is considered `{}`.
+* The output is always a [p](lang_readme.md#function-emp). It has only the key-values from the original input for which the given function returned a truthy result.
 * The mapping function receives each value.
 
 ```js
@@ -715,8 +715,8 @@ Signature: `({[Key: A]}, A => bool) => {[Key: A]}`.
 
 Similar to [#`reject`](#function-reject) but for dicts.
 
-* The input must be either [nil](lang_readme.md#function-isnil) or a [record](lang_readme.md#function-isrec). Nil is considered `{}`.
-* The output is always a [plain](lang_readme.md#function-emp). It has only the key-values from the original input for which the given function returned a falsy result.
+* The input must be either [n](lang_readme.md#function-isnil) or a [r](lang_readme.md#function-isrec). Nil is considered `{}`.
+* The output is always a [p](lang_readme.md#function-emp). It has only the key-values from the original input for which the given function returned a falsy result.
 * The mapping function receives each value.
 
 ```js
@@ -737,8 +737,8 @@ Signature: `({[Key: A]}, Iter<Key>) => {[Key: A]}`.
 
 Similar to `[#`pick`](#function-pick)` but uses keys instead of a function.
 
-* The input must be either [nil](lang_readme.md#function-isnil) or a [record](lang_readme.md#function-isrec). Nil is considered `{}`.
-* The output is always a [plain](lang_readme.md#function-emp). It mirrors the original, but has only "known" given keys, excluding any other.
+* The input must be either [n](lang_readme.md#function-isnil) or a [r](lang_readme.md#function-isrec). Nil is considered `{}`.
+* The output is always a [p](lang_readme.md#function-emp). It mirrors the original, but has only "known" given keys, excluding any other.
 
 Performance note: dictionary iteration is much slower than array iteration, and should be avoided or minimized.
 
@@ -750,8 +750,8 @@ Signature: `({[Key: A]}, Iter<Key>) => {[Key: A]}`.
 
 Similar to `[#`omit`](#function-omit)` but uses keys instead of a function.
 
-* The input must be either [nil](lang_readme.md#function-isnil) or a [record](lang_readme.md#function-isrec). Nil is considered `{}`.
-* The output is always a [plain](lang_readme.md#function-emp). It mirrors the original, but has only "unknown" keys, excluding any given keys.
+* The input must be either [n](lang_readme.md#function-isnil) or a [r](lang_readme.md#function-isrec). Nil is considered `{}`.
+* The output is always a [p](lang_readme.md#function-emp). It mirrors the original, but has only "unknown" keys, excluding any given keys.
 
 Performance note: dictionary iteration is much slower than array iteration, and should be avoided or minimized.
 
