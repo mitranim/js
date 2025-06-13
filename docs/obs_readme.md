@@ -40,8 +40,8 @@ Proxy-based observables via `obs`:
 Since the most common and important use of observables is UI updates, we start with a higher-level example that involves this library's DOM rendering module `prax`.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/obs.mjs'
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/prax.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/obs.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/prax.mjs'
 
 const obs0 = ob.obs({val: `hello`})
 const obs1 = ob.obsRef(`world`)
@@ -92,8 +92,8 @@ For operations with side effects, you can use lower-level procedural tools such 
 The observer object returned by `recur` (instance of `ob.FunRecur`) is automatically deinitialized when garbage collected. Make sure to store it while you need it.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/obs.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/dom_reg.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/obs.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/dom_reg.mjs'
 
 const obs = ob.obs({msg: `hello world`})
 
@@ -114,7 +114,7 @@ setTimeout(() => {obs.msg = `welcome to the future`}, 1024)
 `recur` doesn't require an object, you can just pass a function:
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/obs.mjs'
 
 const obs = ob.obs({msg: `hello world`})
 
@@ -213,7 +213,7 @@ By default, it uses "task" scheduling (`ob.ShedTask.main`) in browsers, and "mic
 The synchronous scheduler `ShedSync` can be paused to briefly prevent synchronous observers from running, and resumed to flush them all at once.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/obs.mjs'
 
 const obs = ob.obs({one: 10, two: 20})
 
@@ -253,7 +253,7 @@ In non-browser environments, exceptions in async scheduler callbacks crash the p
 Note that synchronous exceptions, such as during any initial call to `ob.recur`, are _not_ caught this way. This is intentional.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/obs.mjs'
 
 ob.ShedMicro.main.onerror = console.error
 ob.ShedTask.main.onerror = console.error

@@ -147,8 +147,8 @@ export class Reg extends o.MixMain(l.Emp) {
   constructor(def) {
     super()
     this.pending = new Set()
-    this.TAG_TO_CLS = new Map()
-    this.CLS_TO_TAG = new Map()
+    this.tagToCls = new Map()
+    this.clsToTag = new Map()
     this.definer = optDefiner(def)
   }
 
@@ -175,10 +175,10 @@ export class Reg extends o.MixMain(l.Emp) {
     this.definer.define(customName, cls, opt)
   }
 
-  hasTag(val) {return this.TAG_TO_CLS.has(val)}
-  hasCls(val) {return this.CLS_TO_TAG.has(val)}
-  tagCls(val) {return this.TAG_TO_CLS.get(val)}
-  clsTag(val) {return this.CLS_TO_TAG.get(val)}
+  hasTag(val) {return this.tagToCls.has(val)}
+  hasCls(val) {return this.clsToTag.has(val)}
+  tagCls(val) {return this.tagToCls.get(val)}
+  clsTag(val) {return this.clsToTag.get(val)}
 
   setDefiner(def) {
     if ((this.definer = optDefiner(def))) {
@@ -213,18 +213,18 @@ export class Reg extends o.MixMain(l.Emp) {
     reqCustomName(tag)
     l.reqCls(cls)
 
-    const prevTag = this.CLS_TO_TAG.get(cls)
+    const prevTag = this.clsToTag.get(cls)
     if (prevTag && prevTag !== tag) {
       throw Error(`tag mismatch for ${l.show(cls)}: expected ${l.show(tag)}, found ${l.show(prevTag)}`)
     }
 
-    const prevCls = this.TAG_TO_CLS.get(tag)
+    const prevCls = this.tagToCls.get(tag)
     if (prevCls && prevTag !== cls) {
       throw Error(`class mismatch for ${l.show(tag)}: expected ${l.show(cls)}, found ${l.show(prevCls)}`)
     }
 
-    this.CLS_TO_TAG.set(cls, tag)
-    this.TAG_TO_CLS.set(tag, cls)
+    this.clsToTag.set(cls, tag)
+    this.tagToCls.set(tag, cls)
   }
 
   static default() {return new this(onlyDefiner(globalThis.customElements))}

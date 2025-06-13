@@ -134,12 +134,12 @@ t.test(function test_Reg() {
     reg.reg(Cls0)
     reg.reg(Cls1)
 
-    t.eq(reg.TAG_TO_CLS, i.mapOf(
+    t.eq(reg.tagToCls, i.mapOf(
       `a-cls0`, Cls0,
       `a-cls1`, Cls1,
     ))
 
-    t.eq(reg.CLS_TO_TAG, i.mapOf(
+    t.eq(reg.clsToTag, i.mapOf(
       Cls0, `a-cls0`,
       Cls1, `a-cls1`,
     ))
