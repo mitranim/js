@@ -137,7 +137,7 @@ export class Ren extends o.MixMain(l.Emp) {
   }
 
   mutPropsRec(tar, src) {
-    l.reqRec(tar)
+    l.reqObj(tar)
     if (l.isNil(src)) return tar
 
     const prev = tar[PROP_KEYS]

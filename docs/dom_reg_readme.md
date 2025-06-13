@@ -17,6 +17,7 @@
 
 * [#Usage](#usage)
 * [#API](#api)
+* [#SSR](#ssr)
   * [#`function reg`](#function-reg)
   * [#`class Reg`](#class-reg)
   * [#Undocumented](#undocumented)
@@ -26,11 +27,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/dom_reg.mjs'
-
-// Enables immediate registration.
-// By default, registration is deferred for SSR compatibility.
-dr.Reg.main.setDefiner(customElements)
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 // The mixin `MixReg` enables automatic registration on instantiation.
@@ -62,6 +59,32 @@ class MyLink extends dr.MixReg(HTMLAnchorElement) {
 document.body.append(new MyLink(`click me`, `/some-link`))
 ```
 
+## SSR
+
+Apps which use server-side rendering and client-side upgrading of custom elements need a slightly different approach. `MixReg` registers an element class at construction time, when the class is invoked with `new`. Custom elements described in HTML markup are initially not associated with any class, and so the browser wouldn't know what to `new`.
+
+Instead, use `dr.reg`, which is also used internally by `MixReg`. This is simply a shortcut for using the [#default](#class-reg) provided by this module.
+
+```js
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/dom_reg.mjs'
+
+class Btn extends HTMLButtonElement {
+  /*
+  Optional. If omitted, `dr.reg` autogenerates
+  this from the name of the class.
+
+    static customName = `some-btn`
+  */
+
+  // Automatically derives the name `a-btn` and registers the class.
+  static {dr.reg(this)}
+}
+
+const elem = new Btn()
+console.log(elem.outerHTML)
+`<button is="a-btn"></button>`
+```
+
 ## API
 
 ### `function reg`
@@ -76,22 +99,44 @@ Links: [source](../dom_reg.mjs#L146); [test/example](../test/dom_reg_test.mjs#L2
 
 Registry for custom DOM element classes. Automatically derives tag name from class name, using salting when necessary to avoid collisions. Supports idempotent registration which can be safely called in an element constructor. Allows immediate registration, deferred registration, or a mix of those.
 
-By default, this registry has **no global side effects**. To enable global registration, provide a "definer" to the registry.
+By default, the main registry uses `globalThis.customElements`, which exists only in browser environments. In non-browser environments, by default it has no global side effects, but does still modify registered classes by deriving their `.customName`, for rendering to HTML.
+
+For browser-only code, prefer the mixin `MixReg` from the same module which is easier to use. See examples in the [readme](dom_reg_readme.md).
+
+Simple usage:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.68/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
-  // Optional. If omitted, `dr.reg` autogenerates
-  // this from the name of the class.
-  static customName = `some-btn`
+  /*
+  Optional. If omitted, `dr.reg` autogenerates
+  this from the name of the class.
 
-  // Registers `Btn` in `dr.Reg.main`,
-  // but NOT in `window.customElements`.
+    static customName = `some-btn`
+  */
+
+  // Automatically derives the name `a-btn` and registers the class.
   static {dr.reg(this)}
 }
 
-// The element is NOT yet upgraded to our custom class.
+document.body.append(new Btn())
+```
+
+You can unset the default definer to defer registration:
+
+```js
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.69/dom_reg.mjs'
+
+dr.Reg.main.setDefiner()
+
+class Btn extends HTMLButtonElement {
+  // Registers `Btn` in `dr.Reg.main`,
+  // but not in `window.customElements` quite yet.
+  static {dr.reg(this)}
+}
+
+// The element is not yet upgraded to our custom class.
 document.body.append(document.createElement(`button`, {is: `some-btn`}))
 
 // Registers the class and upgrades the element.
@@ -108,7 +153,9 @@ The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg
   * [`function MixReg`](../dom_reg.mjs#L129)
   * [`class MixinReg`](../dom_reg.mjs#L131)
   * [`function setDefiner`](../dom_reg.mjs#L142)
-  * [`function isDefiner`](../dom_reg.mjs#L252)
-  * [`function optDefiner`](../dom_reg.mjs#L253)
-  * [`function isCustomName`](../dom_reg.mjs#L256)
-  * [`function reqCustomName`](../dom_reg.mjs#L260)
+  * [`function isDefiner`](../dom_reg.mjs#L254)
+  * [`function optDefiner`](../dom_reg.mjs#L255)
+  * [`function reqDefiner`](../dom_reg.mjs#L256)
+  * [`function onlyDefiner`](../dom_reg.mjs#L257)
+  * [`function isCustomName`](../dom_reg.mjs#L260)
+  * [`function reqCustomName`](../dom_reg.mjs#L264)

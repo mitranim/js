@@ -8,7 +8,6 @@ const msgOk = `[test] ok!`
 const msgFail = `[test] fail`
 
 try {
-  (await import(`../dom_reg.mjs`)).Reg.main.setDefiner(customElements)
   await import(`./all_test.mjs`)
   await import(`./lang_browser_test.mjs`)
   await import(`./dom_browser_test.mjs`)

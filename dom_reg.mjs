@@ -226,6 +226,8 @@ export class Reg extends o.MixMain(l.Emp) {
     this.CLS_TO_TAG.set(cls, tag)
     this.TAG_TO_CLS.set(tag, cls)
   }
+
+  static default() {return new this(onlyDefiner(globalThis.customElements))}
 }
 
 function toTag(name) {
@@ -251,6 +253,8 @@ function kebab(words) {return words.join(`-`).toLowerCase()}
 
 export function isDefiner(val) {return l.hasMeth(val, `define`)}
 export function optDefiner(val) {return l.opt(val, isDefiner)}
+export function reqDefiner(val) {return l.req(val, isDefiner)}
+export function onlyDefiner(val) {return l.only(val, isDefiner)}
 
 // https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
 export function isCustomName(val) {

@@ -834,7 +834,7 @@ t.test(function test_Ren_dom_behaviors() {
   // Parts of this function are tested elsewhere.
   // We only need a sanity check here.
   t.test(function test_mutProps_basic() {
-    t.throws(() => ren.mutProps(), TypeError, `expected variant of isRec, got undefined`)
+    t.throws(() => ren.mutProps(), TypeError, `expected variant of isObj, got undefined`)
 
     t.test(function test_identity() {
       const node = E(`div`)
@@ -912,7 +912,7 @@ t.test(function test_Ren_dom_behaviors() {
   // Parts of this function are tested elsewhere.
   // We only need a sanity check here.
   t.test(function test_mut() {
-    t.throws(() => ren.mut(), TypeError, `expected variant of isRec, got undefined`)
+    t.throws(() => ren.mut(), TypeError, `expected variant of isObj, got undefined`)
 
     t.test(function test_mut_identity() {
       const node = E(`div`)

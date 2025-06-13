@@ -203,12 +203,17 @@ export class ShedAsync extends o.MixMain(ShardedQue) {
   scheduled = false
   onerror = undefined
   timer = undefined
-  flush = this.flush.bind(this)
+
+  /*
+  Could simply declare `flush = this.flush.bind(this)` above, but too many
+  analysis tools produce a false warning about dupe members.
+  */
+  constructor(src) {super(src).flush = this.flush.bind(this)}
 
   timerInit() {}
   timerDeinit() {}
 
-  flush() { // eslint-disable-line no-dupe-class-members
+  flush() {
     this.unschedule()
 
     const onerror = l.optFun(this.onerror)

@@ -77,7 +77,7 @@ export function isBigInt(val) {return typeof val === `bigint`}
 export function reqBigInt(val) {return isBigInt(val) ? val : throwErrFun(val, isBigInt)}
 export function optBigInt(val) {return isNil(val) ? val : reqBigInt(val)}
 export function onlyBigInt(val) {return isBigInt(val) ? val : undefined}
-export function laxBigInt(val) {return isNil(val) ? 0n : reqBigInt(val)}
+export function laxBigInt(val) {return isNil(val) ? BigInt(0) : reqBigInt(val)}
 
 export function isStr(val) {return typeof val === `string`}
 export function reqStr(val) {return isStr(val) ? val : throwErrFun(val, isStr)}
