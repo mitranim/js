@@ -3,6 +3,7 @@ import * as o from './obj.mjs'
 import * as dr from './dom_reg.mjs'
 import * as p from './prax.mjs'
 import * as u from './url.mjs'
+import * as s from './str.mjs'
 import * as c from './coll.mjs'
 import * as ds from './dom_shim.mjs'
 
@@ -41,6 +42,10 @@ export function optChildNode(val) {return l.opt(val, isChildNode)}
 export function isParentNode(val) {return l.isObj(val) && `childNodes` in val}
 export function reqParentNode(val) {return l.req(val, isParentNode)}
 export function optParentNode(val) {return l.opt(val, isParentNode)}
+
+export function isNode(val) {return l.isObj(val) && `nodeType` in val}
+export function reqNode(val) {return l.req(val, isNode)}
+export function optNode(val) {return l.opt(val, isNode)}
 
 export function isElement(val) {return l.isObj(val) && val.nodeType === Node.ELEMENT_NODE}
 export function reqElement(val) {return l.req(val, isElement)}
@@ -116,6 +121,17 @@ export class Node extends l.Emp {
   get parentNode() {return norm(this[PARENT_NODE])}
   set parentNode(val) {this[PARENT_NODE] = val}
 
+  get textContent() {
+    return l.laxStr(this[CHILD_NODES]?.reduce(appendTextContent, ``))
+  }
+
+  set textContent(val) {
+    val = l.render(val)
+    const nodes = this.childNodes
+    nodes.length = 0
+    if (val) nodes.push(val)
+  }
+
   getRootNode() {
     const val = this.parentNode
     if (!val) return this
@@ -127,18 +143,10 @@ export class Node extends l.Emp {
 
   contains(val) {return !!this[CHILD_NODES]?.includes(val)}
 
-  /*
-  Intentional deviation: we append fragments like they were normal nodes,
-  instead of stealing children. This is far simpler, more efficient,
-  and serves our purposes well enough. When traversing children for
-  serialization, we treat fragments as arrays of children, which we
-  also traverse recursively.
-  */
-  appendChild(val) {
-    remove(val)
-    this.childNodes.push(val)
-    adopt(val, this)
-    return val
+  remove() {
+    const par = this.parentNode
+    if (l.isObj(par) && `removeChild` in par) par.removeChild(this)
+    if (par) this.parentNode = null
   }
 
   /*
@@ -155,8 +163,24 @@ export class Node extends l.Emp {
     return val
   }
 
+  /*
+  All our node-inserting methods have one notable deviation from the standard:
+  we append fragments like they were normal nodes, instead of stealing their
+  children. This is simpler, more performant, and serves our purposes well
+  enough. When traversing children for serialization, we treat fragments as
+  arrays of children, which we also traverse recursively.
+  */
+  appendChild(val) {
+    reqNode(val)
+    remove(val)
+    this.childNodes.push(val)
+    adopt(val, this)
+    return val
+  }
+
   replaceChild(next, prev) {
     if (l.is(next, prev)) return prev
+    reqNode(next)
 
     // May shift our children, must run first.
     remove(next)
@@ -177,6 +201,7 @@ export class Node extends l.Emp {
 
   insertBefore(next, prev) {
     if (l.isNil(prev)) return this.appendChild(next)
+    reqNode(next)
 
     const nodes = this.childNodes
     const ind = indexOf(nodes, prev)
@@ -190,97 +215,95 @@ export class Node extends l.Emp {
     return next
   }
 
-  append(...val) {for (val of val) this.appendChild(val)}
+  append(...val) {for (val of val) this.appendChild(this.valToNode(val))}
 
   prepend(...src) {
     for (const val of src) remove(val)
-    // Potential trap. Has bad combinatorial complexity for large inputs.
+    src = src.map(this.valToNode, this)
     this.childNodes.unshift(...src)
     for (const val of src) adopt(val, this)
   }
 
-  remove() {
+  after(...src) {
     const par = this.parentNode
-    if (l.isObj(par) && `removeChild` in par) par.removeChild(this)
-    if (this[PARENT_NODE]) this.parentNode = null
+    if (!par) return
+
+    const nodes = par.childNodes
+    let ind = indexOf(nodes, this)
+    if (!(ind >= 0)) return
+
+    let cur = this
+    for (src of src) {
+      remove(src)
+
+      /*
+      This code assumes that the DOM tree does not include elements with a
+      mischievous `.disconnectedCallback` with strange side effects like
+      removing our cursor from the list or moving it forward in the list
+      by prepending nodes. Handling would overcomplicate the algorithm.
+      */
+      if (src !== cur) {
+        while (nodes[ind] !== cur && ind-- > 0) {}
+        ind++
+      }
+
+      cur = par.valToNode(src)
+      nodes.splice(ind, 0, cur)
+      adopt(cur, par)
+    }
   }
 
   /* Non-standard extensions. */
 
   /*
   TODO: use a structure with good combinatorial complexity for all relevant
-  operations: push/pop/unshift/shift/splice. JS arrays have decent pop/push.
-  At small sizes, they may also outperform other structures on
-  shift/unshift/splice. However, at large sizes, their shift/unshift/splice
-  can be horrendous.
+  operations: push / pop / unshift / shift / splice. JS arrays have decent
+  pop / push. At small sizes, they may also outperform other structures on
+  shift / unshift / splice. However, at large sizes, their shift / unshift /
+  splice can be horrendous. Benchmark first.
   */
   NodeList() {return []}
 
-  siblingAt(shift) {
-    l.reqInt(shift)
+  siblingAt(off) {
+    l.reqInt(off)
 
     const nodes = this.parentNode?.childNodes
     if (!nodes) return null
 
     const ind = indexOf(nodes, this)
-    return ind >= 0 ? norm(nodes[ind + shift]) : null
+    return ind >= 0 ? norm(nodes[ind + off]) : null
   }
 
-  owned(doc) {return this[OWNER_DOCUMENT] = doc, this}
-}
+  adoptDocument(doc) {return this[OWNER_DOCUMENT] = doc, this}
 
-// Non-standard intermediary class for internal use.
-export class Textable extends Node {
-  get textContent() {return this.foldTextContent(``, this[CHILD_NODES])}
-
-  set textContent(val) {
-    val = l.renderLax(val)
-    const nodes = this.childNodes
-    nodes.length = 0
-    if (val) nodes.push(val)
-  }
-
-  // Non-standard.
-  foldTextContent(acc, val) {
-    if (l.isNil(val) || isComment(val)) return acc
-    if (l.isScalar(val)) return acc + l.render(val)
-    if (`textContent` in val) return acc + l.laxStr(val.textContent)
-    if (isFragment(val)) return this.foldTextContent(acc, val.childNodes)
-    if (p.isSeq(val)) for (val of val) acc = this.foldTextContent(acc, val)
-    return acc
+  valToNode(val) {
+    if (!isNode(val)) val = new Text(val)
+    this[OWNER_DOCUMENT]?.adoptNode(val)
+    return val
   }
 }
 
 // Non-standard intermediary class for internal use.
-export class TextableElementParent extends Textable {
+export class ElementParent extends Node {
   get children() {return this[CHILD_NODES]?.filter(isElement) ?? []}
   get childElementCount() {return count(this[CHILD_NODES], isElement)}
   get firstElementChild() {return norm(this[CHILD_NODES]?.find(isElement))}
   get lastElementChild() {return norm(this[CHILD_NODES]?.findLast(isElement))}
 }
 
-export class DocumentFragment extends TextableElementParent {
+export class DocumentFragment extends ElementParent {
   get nodeType() {return Node.DOCUMENT_FRAGMENT_NODE}
   get nodeName() {return `#document-fragment`}
 }
 
-// Non-standard intermediary class for internal use.
-export class Void extends Node {
-  appendChild() {throw errIllegal()}
-  removeChild() {throw errIllegal()}
-  replaceChild() {throw errIllegal()}
-  insertBefore() {throw errIllegal()}
-  append() {throw errIllegal()}
-}
+export class CharacterData extends Node {
+  constructor(val) {
+    super()
+    if (arguments.length) this.data = l.render(val)
+  }
 
-// Non-standard intermediary class for internal use.
-export class Data extends Void {
-  constructor(val) {super().data = val}
   get data() {return l.laxStr(this[DATA])}
-  set data(val) {this[DATA] = l.renderLax(val)}
-}
-
-export class CharacterData extends Data {
+  set data(val) {this[DATA] = l.render(val)}
   get textContent() {return this.data}
   set textContent(val) {this.data = val}
   get nodeValue() {return this.data}
@@ -308,6 +331,13 @@ export class Comment extends CharacterData {
   toJSON() {return this.outerHTML}
 }
 
+// Non-standard class for internal use.
+export class RawText extends CharacterData {
+  get innerHTML() {return this.data}
+  set innerHTML(val) {this.data = val}
+  get outerHTML() {return this.data}
+}
+
 /*
 Note: `.parentNode` must be `NamedNodeMap`, otherwise reading and setting the
 value doesn't work. As a result, `document.createAttribute` is currently not
@@ -331,6 +361,7 @@ export class NamedNodeMap extends Map {
   removeNamedItem(key) {this.delete(key)}
 
   // Extremely inefficient. Production code should never use this.
+  // In our rendering process, we simply iterate the map entries.
   *[Symbol.iterator]() {
     for (const key of this.keys()) yield this.getNamedItem(key)
   }
@@ -338,7 +369,7 @@ export class NamedNodeMap extends Map {
   /* Non-standard extensions. */
 
   get(key) {return norm(super.get(key))}
-  set(key, val) {return super.set(l.reqStr(key), l.render(val))}
+  set(key, val) {return super.set(l.render(key), l.render(val))}
 
   Attr(key) {
     const tar = new Attr(key)
@@ -360,7 +391,7 @@ export class NamedNodeMap extends Map {
   }
 }
 
-export class Element extends TextableElementParent {
+export class Element extends ElementParent {
   /* Standard behaviors. */
 
   get nodeType() {return Node.ELEMENT_NODE}
@@ -455,17 +486,13 @@ export class Element extends TextableElementParent {
     this.setAttribute(`tabindex`, (l.isNum(val) ? val : l.render(val)) | 0)
   }
 
-  get innerHTML() {return this.foldInnerHTML(``, this[CHILD_NODES])}
+  get innerHTML() {return l.laxStr(this[CHILD_NODES]?.reduce(appendInnerHtml, ``))}
 
-  /*
-  Known limitation: the resulting element has incorrect `.textContent` because
-  we don't parse the given HTML.
-  */
   set innerHTML(val) {
     val = l.render(val)
     const nodes = this.childNodes
     nodes.length = 0
-    if (val) nodes.push(new p.Raw(val))
+    if (val) nodes.push(new RawText(val))
   }
 
   get outerHTML() {
@@ -540,15 +567,6 @@ export class Element extends TextableElementParent {
       l.laxStr(this.innerHTML) +
       `</` + tag + `>`
     )
-  }
-
-  foldInnerHTML(acc, val) {
-    if (l.isNil(val)) return acc
-    if (p.isRaw(val)) return acc + l.laxStr(val.outerHTML)
-    if (l.isScalar(val)) return acc + escapeText(l.render(val))
-    if (isFragment(val)) return this.foldInnerHTML(acc, val.childNodes)
-    if (p.isSeq(val)) for (val of val) acc = this.foldInnerHTML(acc, val)
-    return acc
   }
 
   isVoid() {return p.VOID.has(this.localName)}
@@ -705,22 +723,27 @@ export class HTMLTableElement extends HTMLElement {
   get tHead() {return this.childNodes?.find(isTableHead)}
   get tBodies() {return this.childNodes?.filter(isTableBody) ?? []}
   get tFoot() {return this.childNodes?.find(isTableFoot)}
-  // Incomplete. Known defects: not live; only body rows.
+  // Incomplete. Known defects: not "live"; only body rows.
   get rows() {return this.childNodes?.find(isTableBody)?.childNodes?.filter(isTableRow) ?? []}
 }
 
-export class HTMLScriptElement extends HTMLElement {
-  /*
-  Difference from all other elements: inner text is not escaped. We have to
-  duplicate the special case for `isRaw` because it has precedence over scalars.
-  */
-  foldInnerHTML(acc, val) {
-    if (isText(val)) return acc + l.laxStr(val.textContent)
-    if (p.isRaw(val)) return acc + l.laxStr(val.outerHTML)
-    if (l.isScalar(val)) return acc + l.render(val)
-    return super.foldInnerHTML(acc, val)
-  }
+/*
+Non-standard intermediary class for internal use.
+
+When rendering the "raw text elements" `script` and `style` to HTML, their
+`.textContent` is used as-is and not escaped.
+
+  https://html.spec.whatwg.org/multipage/syntax.html#raw-text-elements
+  https://html.spec.whatwg.org/multipage/scripting.html#the-script-element
+  https://html.spec.whatwg.org/multipage/semantics.html#the-style-element
+*/
+export class RawTextElement extends HTMLElement {
+  get innerHTML() {return l.laxStr(this[CHILD_NODES]?.reduce(appendInnerHtmlRaw, ``))}
+  set innerHTML(val) {this.textContent = l.renderLax(val)}
 }
+
+export class HTMLScriptElement extends RawTextElement {}
+export class HTMLStyleElement extends RawTextElement {}
 
 /*
 Has various deviations from the standard. For example, in a standard
@@ -800,7 +823,7 @@ export class Document extends Node {
     if (node) node.textContent = l.render(val)
   }
 
-  createAttribute(key) {return new Attr(key).owned(this)}
+  createAttribute(key) {return new Attr(key).adoptDocument(this)}
 
   createAttributeNS(ns, key) {
     l.reqStr(ns)
@@ -809,9 +832,9 @@ export class Document extends Node {
     return tar
   }
 
-  createDocumentFragment() {return new DocumentFragment().owned(this)}
-  createTextNode(val) {return new Text(val).owned(this)}
-  createComment(val) {return new Comment(val).owned(this)}
+  createDocumentFragment() {return new DocumentFragment().adoptDocument(this)}
+  createTextNode(val) {return new Text(val).adoptDocument(this)}
+  createComment(val) {return new Comment(val).adoptDocument(this)}
 
   createElement(localName, opt) {
     l.reqStr(localName)
@@ -820,7 +843,7 @@ export class Document extends Node {
     const cls = this.customElements.get(is || localName) || this.baseClassByTag(localName)
     const tar = new cls()
 
-    tar.owned(this)
+    tar.adoptDocument(this)
     tar.localName = localName
     if (is) tar.setAttribute(`is`, is)
     return tar
@@ -834,11 +857,13 @@ export class Document extends Node {
     if (!cls) throw Error(`unable to find class for ${l.show(localName)}`)
 
     const tar = new cls()
-    tar.owned(this)
+    this.adoptNode(tar)
     tar.localName = localName
     tar.namespaceURI = ns
     return tar
   }
+
+  adoptNode(val) {val.adoptDocument?.(this)}
 
   /* Non-standard extensions. */
 
@@ -1268,38 +1293,58 @@ export const customElements = document.customElements
 /* Misc */
 
 /*
-https://www.w3.org/TR/html52/syntax.html#escaping-a-string
+Spec:
 
-We don't need to escape other chars like `'` because we always generate
-double-quoted attributes. Single quotes or angle brackets don't "break out".
+  https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
+  https://html.spec.whatwg.org/multipage/syntax.html#syntax-ambiguous-ampersand
+
+In double-quoted attributes, the spec requires us to escape only double quotes
+and ambiguous ampersands. In practice, everyone escapes ampersands by default.
+
+We align our escaping implementation with Chromium because we test our
+`.outerHTML` implementation against theirs. At some point, they were
+escaping the following:
+
+  \u00a0 -> &nbsp;
+  &      -> &amp;
+  "      -> &quot;
+
+Then they started escaping even more:
+
+  \u00a0 -> &nbsp;
+  &      -> &amp;
+  "      -> &quot;
+  <      -> &lt;
+  >      -> &gt;
+
+At this point, their attribute escaping is a superset of element text escaping.
+This is not mandated by the spec, and not necessary for proper HTML parsers
+such as browsers.
 */
-export function escapeAttr(val) {
-  val = l.reqStr(val)
-  const re = /[\u00a0&"]/g
-  return re.test(val) ? val.replace(re, escapeChar) : val
+export function escapeAttr(src) {
+  l.reqStr(src)
+  const re = /[\u00a0&"<>]/g
+  return re.test(src) ? src.replace(re, escapeChar) : src
 }
 
 /*
-https://www.w3.org/TR/html52/syntax.html#escaping-a-string
+Spec:
 
-We don't need to escape other chars like `'` because we don't interpolate
-unknown text into unknown parts of unknown markup. We generate valid markup
-and use precise contextual escaping in the right places.
+  https://html.spec.whatwg.org/multipage/syntax.html#elements-2
 */
 export function escapeText(src) {
-  src = l.laxStr(src)
+  l.reqStr(src)
   const re = /[\u00a0&<>]/g
   return re.test(src) ? src.replace(re, escapeChar) : src
 }
 
-// https://www.w3.org/TR/html52/syntax.html#escaping-a-string
-export function escapeChar(char) {
-  if (char === `&`) return `&amp;`
-  if (char === `\u00a0`) return `&nbsp;`
-  if (char === `"`) return `&quot;`
-  if (char === `<`) return `&lt;`
-  if (char === `>`) return `&gt;`
-  return char
+export function escapeChar(src) {
+  if (src === `\u00a0`) return `&nbsp;`
+  if (src === `&`) return `&amp;`
+  if (src === `"`) return `&quot;`
+  if (src === `<`) return `&lt;`
+  if (src === `>`) return `&gt;`
+  return src
 }
 
 export function unescape(src) {
@@ -1357,8 +1402,33 @@ function isTableFoot(val) {return hasLocalName(val, `tfoot`)}
 function isTableRow(val) {return hasLocalName(val, `tr`)}
 function isRemovable(val) {return l.isObj(val) && `remove` in val}
 function remove(val) {if (isRemovable(val)) val.remove()}
+function adopt(chi, par) {reqNode(chi).parentNode = par}
 function fromCharCode(val) {return val ? String.fromCharCode(val) : ``}
-function adopt(chi, par) {if (isChildNode(chi)) chi.parentNode = par}
+
+function appendTextContent(acc, src) {
+  l.reqStr(acc)
+  if (l.isNil(src) || isComment(src)) return acc
+  if (l.isObj(src) && `textContent` in src) return acc + l.laxStr(src.textContent)
+  if (l.isArr(src)) return src.reduce(appendTextContent, acc)
+  return acc + l.renderLax(src)
+}
+
+function appendInnerHtml(acc, src) {
+  l.reqStr(acc)
+  if (l.isNil(src)) return acc
+  if (l.isObj(src) && `outerHTML` in src) return acc + l.laxStr(src.outerHTML)
+  if (isFragment(src)) return src.childNodes.reduce(appendInnerHtml, acc)
+  if (l.isArr(src)) return src.reduce(appendInnerHtml, acc)
+  return acc + escapeText(l.renderLax(src))
+}
+
+function appendInnerHtmlRaw(acc, src) {
+  l.reqStr(acc)
+  if (isText(src)) return acc + l.reqStr(src.textContent)
+  const out = l.renderOpt(src)
+  if (l.isSome(out)) return acc + out
+  return appendInnerHtml(acc, src)
+}
 
 /*
 Reference:
@@ -1381,7 +1451,7 @@ function dataToCamel(src) {
 
   const buf = src.slice(pre.length).split(`-`)
   let ind = 0
-  while (++ind < buf.length) buf[ind] = title(buf[ind])
+  while (++ind < buf.length) buf[ind] = s.title(buf[ind])
   return buf.join(``)
 }
 
@@ -1392,13 +1462,6 @@ but we may have to differentiate them later.
 Suboptimal, should be cached.
 */
 function camelToKebab(val) {return val.split(/(?=[A-Z])/g).map(lower).join(`-`)}
-
-// Copied from `str.mjs` to avoid dependency.
-function title(val) {
-  val = lower(val)
-  if (!val.length) return val
-  return val[0].toUpperCase() + val.slice(1)
-}
 
 // Difference from `Array.prototype.indexOf`: supports `NaN`.
 function indexOf(src, val) {

@@ -52,7 +52,7 @@ export function recurMicro(tar, fun) {return recurShed(ShedMicro.main, tar, fun)
 export function recurTask(tar, fun) {return recurShed(ShedTask.main, tar, fun)}
 
 export function recurShed(shed, tar, fun) {
-  const rec = new FunRecur(shed, tar, fun)
+  const rec = new FunRecur(tar, fun).setShed(shed)
   rec.run()
   return rec
 }
@@ -76,12 +76,18 @@ export class WeakerRef extends WeakRef {
 }
 
 export class RunRef extends WeakerRef {
-  run() {this.deref()?.run()}
+  fun = undefined
+
+  constructor(tar, fun) {super(tar).fun = l.reqFun(fun)}
+
+  run() {
+    const tar = this.deref()
+    return tar && this.fun.call(tar, tar)
+  }
+
   depth() {return this.deref()?.depth() ?? 0}
   setShed(val) {this.deref()?.setShed(val)}
 }
-
-export class ShedRef extends RunRef {run() {this.deref()?.schedule()}}
 
 export class Que extends l.Emp {
   get dyn() {return RUN_REF}
@@ -348,7 +354,7 @@ export class ObsCalc extends ObsRef {
   get Recur() {return CalcRecur}
 
   valid = false
-  rec = new this.Recur(this, this.onFlush)
+  rec = new this.Recur(this, this.onFlush).setShed(ShedSync.main)
 
   constructor(tar, fun) {
     super()
@@ -395,8 +401,8 @@ function reqTarFun(tar, fun) {
 }
 
 /*
-Base class for implementing implicit monitoring. Counterpart and complement to
-our observables (`ObsPh`, `ObsRef`, `ObsCalc`). Invoking `.run` sets up
+Base tool for implementing implicit monitoring. Counterpart and complement
+to our observables (`ObsPh`, `ObsRef`, `ObsCalc`). Invoking `.run` sets up
 reactive context by placing a runnable in `RUN_REF` and calls `.onRun`.
 During the call, observables may look for the runnable in `RUN_REF` and
 enque it for future runs.
@@ -406,55 +412,61 @@ override `.shed` to choose the timing mode appropriate for their use case.
 
 Subclasses must override `.onRun` with a non-nop implementation.
 */
-export class Recur extends l.Emp {
-  get ShedRef() {return ShedRef}
-  get RunRef() {return RunRef}
-  get dyn() {return RUN_REF}
+export function MixRecur(cls) {return MixinRecur.get(cls)}
 
-  running = false
-  shedRef = new this.ShedRef(this) // Enqued on observables, schedules a run.
-  runRef = new this.RunRef(this)   // Enqued on schedulers, runs immediately.
+export class MixinRecur extends o.Mixin {
+  static make(cls) {
+    return class Recur extends cls {
+      get RunRef() {return RunRef}
+      get dyn() {return RUN_REF}
 
-  constructor(shed) {super().shed = shed}
+      running = false
+      shedRef = new this.RunRef(this, this.schedule)
+      runRef = new this.RunRef(this, this.run)
+      shed = undefined
 
-  onRun() {}
+      onRun() {}
 
-  run(tar, fun) {
-    const {running, dyn} = this
-    if (running) return undefined
+      run(tar, fun) {
+        tar ??= this
+        fun = l.optFun(fun) ?? this.onRun
 
-    tar ??= this
-    fun = l.optFun(fun) ?? this.onRun
+        const {running, dyn} = this
+        if (running) return undefined
 
-    const prev = dyn.swap(this.shedRef.init())
-    this.running = true
+        const prev = dyn.swap(this.shedRef.init())
+        this.running = true
 
-    try {return fun.call(tar, tar)}
-    finally {
-      this.running = false
-      dyn.swap(prev)
+        try {return fun.call(tar, tar)}
+        finally {
+          this.running = false
+          dyn.swap(prev)
+        }
+      }
+
+      setShed(val) {return this.shed = val, this}
+
+      schedule() {
+        const {shed} = this
+        if (shed) shed.enque(this.runRef.init())
+        else this.run()
+      }
+
+      depth() {return 0}
+
+      deinit() {
+        this.shedRef.deinit()
+        this.runRef.deinit()
+      }
     }
-  }
-
-  setShed(val) {this.shed = val}
-
-  schedule() {
-    const {shed} = this
-    if (shed) shed.enque(this.runRef.init())
-    else this.run()
-  }
-
-  depth() {return 0}
-
-  deinit() {
-    this.shedRef.deinit()
-    this.runRef.deinit()
   }
 }
 
+export class Recur extends MixRecur(l.Emp) {}
+
 export class FunRecur extends Recur {
-  constructor(shed, tar, fun) {
-    super(shed)
+  constructor(tar, fun) {
+    super()
     if (l.isFun(tar)) [tar, fun] = [fun, tar]
     reqTarFun(tar, fun)
     this.tar = tar
@@ -469,16 +481,4 @@ export class FunRecur extends Recur {
   depth() {return nodeDepth(this.tar)}
 }
 
-export class FunRecurSync extends FunRecur {
-  constructor(tar, fun) {super(ShedSync.main, tar, fun)}
-}
-
-export class FunRecurMicro extends FunRecur {
-  constructor(tar, fun) {super(ShedMicro.main, tar, fun)}
-}
-
-export class FunRecurTask extends FunRecur {
-  constructor(tar, fun) {super(ShedTask.main, tar, fun)}
-}
-
-export class CalcRecur extends FunRecurSync {depth() {return this.tar.depth()}}
+export class CalcRecur extends FunRecur {depth() {return this.tar.depth()}}

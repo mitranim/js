@@ -7,7 +7,7 @@ import * as ds from '../dom_shim.mjs'
 /* Util */
 
 class Run extends l.Emp {
-  #ref = new ob.RunRef(this)
+  #ref = new ob.RunRef(this, this.run)
   get ref() {return this.#ref}
 
   constructor({runs = 0, dep = 0} = {}) {
@@ -61,7 +61,9 @@ t.test(function test_RUN_REF() {
   t.throws(() => dyn.set(new WeakRef({})), TypeError, `expected instance of RunRef, got instance of WeakRef`)
   t.is(dyn.get(), undefined)
 
-  const ref = new ob.RunRef({})
+  t.throws(() => new ob.RunRef({}, 123), TypeError, `expected variant of isFun, got 123`)
+
+  const ref = new ob.RunRef({}, l.nop)
   dyn.set(ref)
   t.is(dyn.get(), ref)
 
@@ -117,7 +119,7 @@ await t.test(async function test_Que() {
     misbehaving callers. Our code should avoid creating unnecessary new
     references.
     */
-    const ref_0_1 = new ob.RunRef(run0)
+    const ref_0_1 = new ob.RunRef(run0, run0.run)
     que.enque(ref_0_1)
     testQueRef(que, ref_0_1)
 
@@ -353,7 +355,6 @@ t.test(function test_Recur() {
   t.no(rec.running)
   t.is(rec.shed, undefined)
 
-  t.inst(getShedRef(rec), ob.ShedRef)
   testWeakerRef(getShedRef(rec), rec)
 
   t.inst(getRunRef(rec), ob.RunRef)
@@ -428,7 +429,7 @@ t.test(function test_Recur_scheduling_sync() {
 // Very minimal. See the more complete async test below.
 function test_Recur_sync(shed) {
   t.is(new ob.Recur().shed, undefined)
-  t.is(new ob.Recur(shed).shed, shed)
+  t.is(new ob.Recur().setShed(shed).shed, shed)
 
   const rec = new TestRecur({shed})
   const ref = getShedRef(rec)
@@ -1529,7 +1530,7 @@ function testElem(tar, count0, count1, val0, val1) {
   t.is(tar.val1, val1, `val1`)
 }
 
+function getShedRef(val) {return l.reqInst(val.shedRef, ob.RunRef)}
 function getRunRef(val) {return l.reqInst(val.runRef, ob.RunRef)}
-function getShedRef(val) {return l.reqInst(val.shedRef, ob.ShedRef)}
 
 if (import.meta.main) console.log(`[test] ok!`)

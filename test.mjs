@@ -131,11 +131,11 @@ export class FinRunner extends Number {
     this.defaultWarmup().run(function warmup2() {}, new Run(`warmup_${this.name}_2`))
     this.defaultWarmup().run(function warmup3() {}, new Run(`warmup_${this.name}_3`))
 
-    this.nowAvg = l.req(nowAvg(), l.isFinPos)
+    this.nowAvg = l.reqFin(nowAvg())
 
     const run = new Run(`overhead_${this.name}`)
     this.defaultWarmup().run(function overhead() {}, run)
-    this.overhead = l.req(run.avg, l.isFinPos)
+    this.overhead = l.reqFin(run.avg)
 
     this.warm = true
     conf.verbLog(`[warmup] warmed up ${this.name}`)
@@ -302,7 +302,7 @@ export class ConsoleAvgReporter extends ConsoleReporter {
   reportEnd(run) {
     l.reqInst(run, Run)
     const {fun} = this
-    this.report(this.runPrefix(run), l.req(fun(run.avg), l.isStr))
+    this.report(this.runPrefix(run), l.reqStr(fun(run.avg)))
   }
 
   static default() {return this.with(tsNano)}
@@ -319,7 +319,7 @@ export class ConsoleStartEndAvgReporter extends ConsoleAvgReporter {
   reportEnd(run) {
     l.reqInst(run, Run)
     const {fun} = this
-    this.report(this.runPrefix(run) + ` [end]`, l.req(fun(run.avg), l.isStr))
+    this.report(this.runPrefix(run) + ` [end]`, l.reqStr(fun(run.avg)))
   }
 }
 
@@ -341,7 +341,7 @@ export class ConsoleBenchReporter extends ConsoleAvgReporter {
   reportEnd(run) {
     l.reqInst(run, Run)
     const {fun} = this
-    this.report(this.runPrefix(run), `x${run.runs} ${l.req(fun(run.avg), l.isStr)}`)
+    this.report(this.runPrefix(run), `x${run.runs} ${l.reqStr(fun(run.avg))}`)
   }
 }
 
@@ -363,15 +363,15 @@ export const conf = new class Conf extends l.Emp {
 
   #benchRunner = TimeRunner.default()
   get benchRunner() {return this.#benchRunner}
-  set benchRunner(val) {this.#benchRunner = l.req(val, isRunner)}
+  set benchRunner(val) {this.#benchRunner = reqRunner(val)}
 
   #testRep = undefined
   get testRep() {return this.#testRep}
-  set testRep(val) {this.#testRep = l.opt(val, isReporter)}
+  set testRep(val) {this.#testRep = optReporter(val)}
 
   #benchRep = ConsoleAvgReporter.default()
   get benchRep() {return this.#benchRep}
-  set benchRep(val) {this.#benchRep = l.opt(val, isReporter)}
+  set benchRep(val) {this.#benchRep = optReporter(val)}
 
   #run = undefined
   get run() {return this.#run}
@@ -667,7 +667,7 @@ export function throws(fun, cls, msg) {
   catch (err) {
     msg = msgThrowsCaught(fun, cls, msg, err)
     if (msg) throw new AssertError(msg, {skip: throws})
-    return undefined
+    return err
   }
 
   throw new AssertError(msgThrowsReturned(fun, cls, msg, val), {skip: throws})
@@ -679,7 +679,7 @@ async function throwsAsync(fun, cls, msg) {
   catch (err) {
     msg = msgThrowsCaught(fun, cls, msg, err)
     if (msg) throw new AssertError(msg, {skip: throwsAsync})
-    return
+    return err
   }
   throw new AssertError(msgThrowsReturned(fun, cls, msg, val), {skip: throwsAsync})
 }
@@ -895,17 +895,16 @@ export function nowAvg(runs = 65536) {
   return (end - start) / runs
 }
 
-function reqRunner(val) {
-  if (!isRunner(val)) {
-    throw TypeError(`benchmarks require a valid runner, got ${l.show(val)}`)
-  }
-  return val
+export function isRunner(val) {return l.hasMeth(val, `run`)}
+export function optRunner(val) {return l.isNil(val) ? undefined : reqRunner(val)}
+
+export function reqRunner(val) {
+  if (isRunner(val)) return val
+  throw TypeError(`benchmarks require a valid runner, got ${l.show(val)}`)
 }
-
-function optRunner(val) {return l.isNil(val) ? undefined : reqRunner(val)}
-
-export function isRunner(val) {return l.isComp(val) && l.hasMeth(val, `run`)}
 
 export function isReporter(val) {
-  return l.isComp(val) && l.hasMeth(val, `reportStart`) && l.hasMeth(val, `reportEnd`)
+  return l.hasMeth(val, `reportStart`) && l.hasMeth(val, `reportEnd`)
 }
+export function optReporter(val) {return l.opt(val, isReporter)}
+export function reqReporter(val) {return l.req(val, isReporter)}

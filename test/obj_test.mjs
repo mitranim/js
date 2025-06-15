@@ -209,9 +209,7 @@ t.test(function test_Mixin() {
 
   t.test(function test_level_one() {
     class TestMixin extends o.Mixin {
-      static make(src) {
-        return class TestMixin extends src {get() {return 10}}
-      }
+      static make(src) {return class Test extends src {get() {return 10}}}
     }
 
     const Cls = TestMixin.get(l.Emp)
@@ -232,15 +230,11 @@ t.test(function test_Mixin() {
 
   t.test(function test_level_two() {
     class TestMixin0 extends o.Mixin {
-      static make(src) {
-        return class TestMixin0 extends src {get() {return 10}}
-      }
+      static make(src) {return class Test0 extends src {get() {return 10}}}
     }
 
     class TestMixin1 extends o.Mixin {
-      static make(src) {
-        return class TestMixin1 extends src {get() {return 20}}
-      }
+      static make(src) {return class Test1 extends src {get() {return 20}}}
     }
 
     const Cls0 = TestMixin0.get(l.Emp)

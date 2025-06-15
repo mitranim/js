@@ -5,8 +5,17 @@ import * as p from '../prax.mjs'
 import * as ds from '../dom_shim.mjs'
 import {eqm} from './prax_test.mjs'
 
+/* Utils */
+
 const dom = ds.document.implementation
 function unreachable() {throw Error(`unreachable`)}
+const unstringables = [undefined, null, {}, [], Promise.resolve(), unreachable]
+
+function failUnstringable(fun) {
+  for (const val of unstringables) {
+    t.throws(() => {fun(val)}, TypeError, `unable to convert ${l.show(val)} to string`)
+  }
+}
 
 function fragOf(...val) {
   const buf = new ds.DocumentFragment()
@@ -14,62 +23,103 @@ function fragOf(...val) {
   return buf
 }
 
-t.test(function test_Node_empty() {
-  const node = new ds.Node()
+function textOf(tar, src) {
+  const out = new ds.Text(src)
+  out.parentNode = tar
+  return out
+}
 
-  t.no(node.isConnected)
-  t.is(node.parentNode, null)
-  t.is(node.parentElement, null)
-  t.eq(node.childNodes, [])
-  t.is(node.childNodes, node.childNodes)
-  t.is(node.firstChild, null)
-  t.is(node.lastChild, null)
-  t.is(node.previousSibling, null)
-  t.is(node.nextSibling, null)
-  t.is(node.ownerDocument, null)
-  t.is(node.nodeName, null)
-  t.is(node.nodeType, null)
-  t.is(node.nodeValue, null)
+function toTextContent(src) {return l.reqStr(src.textContent)}
+
+/* Tests */
+
+t.test(function test_Node_empty() {
+  const tar = new ds.Node()
+
+  t.no(tar.isConnected)
+  t.is(tar.parentNode, null)
+  t.is(tar.parentElement, null)
+  t.eq(tar.childNodes, [])
+  t.is(tar.childNodes, tar.childNodes)
+  t.is(tar.firstChild, null)
+  t.is(tar.lastChild, null)
+  t.is(tar.previousSibling, null)
+  t.is(tar.nextSibling, null)
+  t.is(tar.ownerDocument, null)
+  t.is(tar.nodeName, null)
+  t.is(tar.nodeType, null)
+  t.is(tar.nodeValue, null)
+})
+
+t.test(function test_owner_document() {
+  function test(cls) {
+    const node = new cls()
+    t.is(node.ownerDocument, null)
+
+    ds.document.adoptNode(node)
+    t.is(node.ownerDocument, ds.document)
+  }
+
+  test(ds.Node)
+  test(ds.Text)
+  test(ds.Comment)
+
+  t.is(ds.document.createElement(`div`).ownerDocument, ds.document)
 })
 
 t.test(function test_Node_childNodes() {
-  const node = new ds.Node()
-  const nodes = node.childNodes
+  const tar = new ds.Node()
+  const nodes = tar.childNodes
   t.eq(nodes, [])
 
-  t.is(node.childNodes, nodes)
-  t.is(node.childNodes, nodes)
+  t.is(tar.childNodes, nodes)
+  t.is(tar.childNodes, nodes)
 
   nodes.push(10)
-  t.eq(node.childNodes, [10])
+  t.eq(tar.childNodes, [10])
 })
 
 t.test(function test_Node_hasChildNodes() {
-  const node = new ds.Node()
-  t.no(node.hasChildNodes())
+  const tar = new ds.Node()
+  t.no(tar.hasChildNodes())
 
-  t.is(node.childNodes.length, 0)
-  t.no(node.hasChildNodes())
+  t.is(tar.childNodes.length, 0)
+  t.no(tar.hasChildNodes())
 
-  node.appendChild(NaN)
-  t.ok(node.hasChildNodes())
+  const chi = new ds.Text(NaN)
+  t.is(chi.data, `NaN`)
 
-  node.removeChild(NaN)
-  t.no(node.hasChildNodes())
+  t.is(tar.appendChild(chi), chi)
+  t.ok(tar.hasChildNodes())
+  t.is(chi.parentNode, tar)
+
+  tar.removeChild(chi)
+  t.no(tar.hasChildNodes())
+  t.is(chi.parentNode, null)
 })
 
 t.test(function test_Node_contains() {
-  const node = new ds.Node()
-  t.no(node.contains(10))
-  t.no(node.contains(NaN))
+  const tar = new ds.Node()
+  const one = new ds.Text()
+  const two = new ds.Text(`two`)
 
-  node.childNodes.push(10)
-  t.ok(node.contains(10))
-  t.no(node.contains(NaN))
+  t.no(tar.contains(one))
+  t.no(tar.contains(two))
 
-  node.childNodes.push(NaN)
-  t.ok(node.contains(10))
-  t.ok(node.contains(NaN))
+  tar.childNodes.push(one)
+
+  t.ok(tar.contains(one))
+  t.no(tar.contains(two))
+
+  t.is(one.parentNode, null)
+  t.is(two.parentNode, null)
+
+  tar.childNodes.push(two)
+  t.ok(tar.contains(one))
+  t.ok(tar.contains(two))
+
+  t.is(one.parentNode, null)
+  t.is(two.parentNode, null)
 })
 
 /*
@@ -83,254 +133,424 @@ possible, but would be unnecessarily wasteful and restrictive.
 Known defect: doesn't detect cyclic references.
 */
 t.test(function test_Node_appendChild() {
-  const top = new ds.Node()
+  const tar = new ds.Node()
   const one = new ds.Text(`one`)
-  const two = `two`
+  const two = new ds.Text(`two`)
   const three = new ds.Comment(`three`)
 
-  t.eq(top.childNodes, [])
+  t.throws(() => tar.appendChild(), TypeError, `expected variant of isNode, got undefined`)
+  t.throws(() => tar.appendChild(10), TypeError, `expected variant of isNode, got 10`)
+  t.throws(() => tar.appendChild(`one`), TypeError, `expected variant of isNode, got "one"`)
 
-  t.is(top.appendChild(one), one)
-  t.eq(top.childNodes, [one])
-  t.is(one.parentNode, top)
+  t.eq(tar.childNodes, [])
 
-  t.is(top.appendChild(one), one)
-  t.eq(top.childNodes, [one])
-  t.is(one.parentNode, top)
+  t.is(tar.appendChild(one), one)
+  t.eq(tar.childNodes, [one])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, null)
+  t.is(three.parentNode, null)
 
-  t.is(top.appendChild(two), two)
-  t.eq(top.childNodes, [one, two])
+  t.is(tar.appendChild(one), one)
+  t.eq(tar.childNodes, [one])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, null)
+  t.is(three.parentNode, null)
 
-  t.is(top.appendChild(three), three)
-  t.eq(top.childNodes, [one, two, three])
-  t.is(three.parentNode, top)
+  t.is(tar.appendChild(two), two)
+  t.eq(tar.childNodes, [one, two])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, tar)
+  t.is(three.parentNode, null)
 
-  t.is(top.appendChild(three), three)
-  t.eq(top.childNodes, [one, two, three])
-  t.is(three.parentNode, top)
+  t.is(tar.appendChild(three), three)
+  t.eq(tar.childNodes, [one, two, three])
+  t.is(three.parentNode, tar)
+  t.is(two.parentNode, tar)
+  t.is(three.parentNode, tar)
 
-  t.is(top.appendChild(one), one)
-  t.is(one.parentNode, top)
-  t.eq(top.childNodes, [two, three, one])
+  t.is(tar.appendChild(three), three)
+  t.eq(tar.childNodes, [one, two, three])
+  t.is(three.parentNode, tar)
 
-  t.is(top.appendChild(three), three)
-  t.is(three.parentNode, top)
-  t.eq(top.childNodes, [two, one, three])
+  t.is(tar.appendChild(one), one)
+  t.is(one.parentNode, tar)
+  t.eq(tar.childNodes, [two, three, one])
 
-  t.is(top.parentNode, null)
+  t.is(tar.appendChild(three), three)
+  t.is(three.parentNode, tar)
+  t.eq(tar.childNodes, [two, one, three])
+
+  t.is(tar.parentNode, null)
+
+  // Verify that the test tool compares them properly.
+  t.notEq(tar.childNodes, [one, two, three])
+  t.notEq(tar.childNodes, [one, three, two])
 })
 
 t.test(function test_Node_removeChild() {
-  const top = new ds.Node()
+  const tar = new ds.Node()
   const one = new ds.Text(`one`)
   const two = new ds.Comment(`two`)
 
   // Intentionally not implemented.
   //
-  // t.throws(() => top.removeChild(one), Error, `missing child [object Text]`)
+  // t.throws(() => tar.removeChild(one), Error, `missing child [object Text]`)
 
-  top.appendChild(one)
-  t.is(one.parentNode, top)
+  tar.appendChild(one)
+  t.is(one.parentNode, tar)
 
-  top.appendChild(two)
-  t.is(two.parentNode, top)
+  tar.appendChild(two)
+  t.is(two.parentNode, tar)
 
-  t.eq(top.childNodes, [one, two])
+  t.eq(tar.childNodes, [one, two])
 
-  top.removeChild(one)
+  tar.removeChild(one)
   t.is(one.parentNode, null)
-  t.eq(top.childNodes, [two])
+  t.eq(tar.childNodes, [two])
 
-  top.removeChild(two)
+  tar.removeChild(two)
   t.is(two.parentNode, null)
-  t.eq(top.childNodes, [])
-})
-
-t.test(function test_Node_removeChild_prim() {
-  const top = new ds.Node()
-  const one = 10
-  const two = NaN
-  const three = `str`
-  const four = false
-
-  // Intentionally not implemented.
-  //
-  // t.throws(() => top.removeChild(one), Error, `missing child 10`)
-
-  top.appendChild(one)
-  top.appendChild(two)
-  top.appendChild(three)
-  top.appendChild(four)
-  t.eq(top.childNodes, [one, two, three, four])
-
-  t.is(top.removeChild(two), two)
-  t.eq(top.childNodes, [one, three, four])
-
-  t.is(top.removeChild(three), three)
-  t.eq(top.childNodes, [one, four])
-
-  t.is(top.removeChild(one), one)
-  t.eq(top.childNodes, [four])
-
-  t.is(top.removeChild(four), four)
-  t.eq(top.childNodes, [])
+  t.eq(tar.childNodes, [])
 })
 
 t.test(function test_Node_replaceChild() {
-  const top = new ds.Node()
+  const tar = new ds.Node()
   const one = new ds.Text(`one`)
   const two = new ds.Text(`two`)
   const three = new ds.Text(`three`)
 
-  t.is(top.appendChild(one), one)
-  t.is(top.appendChild(two), two)
+  t.is(tar.appendChild(one), one)
+  t.is(tar.appendChild(two), two)
 
-  t.eq(top.childNodes, [one, two])
-  t.is(one.parentNode, top)
-  t.is(two.parentNode, top)
+  t.eq(tar.childNodes, [one, two])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, tar)
   t.is(three.parentNode, null)
 
-  t.throws(() => top.replaceChild(`four`, three), Error, `missing child [object Text`)
+  function fail(val) {
+    t.throws(() => tar.replaceChild(val, three), TypeError, `expected variant of isNode, got ` + l.show(val))
+  }
 
-  t.is(top.replaceChild(three, one), one)
+  fail(undefined)
+  fail(null)
+  fail(false)
+  fail(true)
+  fail(10)
+  fail(`one`)
 
-  t.eq(top.childNodes, [three, two])
+  t.is(tar.replaceChild(three, one), one)
+
+  t.eq(tar.childNodes, [three, two])
   t.is(one.parentNode, null)
-  t.is(two.parentNode, top)
-  t.is(three.parentNode, top)
+  t.is(two.parentNode, tar)
+  t.is(three.parentNode, tar)
 
-  t.is(top.replaceChild(one, two), two)
+  t.is(tar.replaceChild(one, two), two)
 
-  t.eq(top.childNodes, [three, one])
-  t.is(one.parentNode, top)
+  t.eq(tar.childNodes, [three, one])
+  t.is(one.parentNode, tar)
   t.is(two.parentNode, null)
-  t.is(three.parentNode, top)
-})
-
-t.test(function test_Node_replaceChild_prim() {
-  const top = new ds.Node()
-  const one = 10
-  const two = NaN
-  const three = 20
-
-  t.is(top.appendChild(one), one)
-  t.is(top.appendChild(two), two)
-  t.eq(top.childNodes, [one, two])
-
-  t.throws(() => top.replaceChild(40, three), Error, `missing child 20`)
-
-  t.is(top.replaceChild(three, one), one)
-  t.eq(top.childNodes, [three, two])
-
-  t.is(top.replaceChild(one, two), two)
-  t.eq(top.childNodes, [three, one])
+  t.is(three.parentNode, tar)
 })
 
 t.test(function test_Node_insertBefore() {
-  const top = new ds.Node()
+  const tar = new ds.Node()
   const one = new ds.Text(`one`)
   const two = new ds.Text(`two`)
   const three = new ds.Text(`three`)
 
-  t.throws(() => top.insertBefore(`four`, two), Error, `missing child [object Text`)
+  function fail(val) {
+    t.throws(() => tar.insertBefore(val, three), TypeError, `expected variant of isNode, got ` + l.show(val))
+  }
 
-  t.is(top.insertBefore(one, null), one)
-  t.eq(top.childNodes, [one])
-  t.is(one.parentNode, top)
+  fail(undefined)
+  fail(null)
+  fail(false)
+  fail(true)
+  fail(10)
+  fail(`one`)
 
-  t.is(top.insertBefore(two, null), two)
-  t.eq(top.childNodes, [one, two])
-  t.is(one.parentNode, top)
-  t.is(two.parentNode, top)
+  t.is(tar.insertBefore(one, null), one)
+  t.eq(tar.childNodes, [one])
+  t.is(one.parentNode, tar)
 
-  t.is(top.insertBefore(three, two), three)
-  t.eq(top.childNodes, [one, three, two])
-  t.is(one.parentNode, top)
-  t.is(two.parentNode, top)
-  t.is(three.parentNode, top)
+  t.is(tar.insertBefore(two, null), two)
+  t.eq(tar.childNodes, [one, two])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, tar)
 
-  t.is(top.insertBefore(three, one), three)
-  t.eq(top.childNodes, [three, one, two])
-  t.is(one.parentNode, top)
-  t.is(two.parentNode, top)
-  t.is(three.parentNode, top)
+  t.is(tar.insertBefore(three, two), three)
+  t.eq(tar.childNodes, [one, three, two])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, tar)
+  t.is(three.parentNode, tar)
+
+  t.is(tar.insertBefore(three, one), three)
+  t.eq(tar.childNodes, [three, one, two])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, tar)
+  t.is(three.parentNode, tar)
 })
 
 // Uses `.appendChild`, this is just a sanity check.
 t.test(function test_Node_append() {
-  const top = new ds.Node()
+  const tar = new ds.Node()
   const one = new ds.Text(`one`)
-  const two = `two`
   const three = new ds.Comment(`three`)
 
-  t.is(top.append(one, two, three), undefined)
-  t.eq(top.childNodes, [one, two, three])
-  t.is(one.parentNode, top)
-  t.is(two.parentNode, undefined)
-  t.is(three.parentNode, top)
+  t.is(tar.append(one, `two`, three), undefined)
+
+  t.is(one.parentNode, tar)
+  t.is(three.parentNode, tar)
+
+  t.eq(tar.childNodes, [one, textOf(tar, `two`), three])
 })
 
 t.test(function test_Node_prepend() {
-  const top = new ds.Node()
+  const tar = new ds.Node()
   const one = new ds.Text(`one`)
-  const two = new ds.Text(`two`)
+  const two = textOf(tar, `two`)
   const three = new ds.Comment(`three`)
   const four = new ds.Comment(`four`)
 
-  t.is(top.prepend(one, two), undefined)
-  t.eq(top.childNodes, [one, two])
-  t.is(one.parentNode, top)
-  t.is(two.parentNode, top)
+  t.is(tar.prepend(one, `two`), undefined)
+  t.eq(tar.childNodes, [one, two])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, tar)
 
-  t.is(top.prepend(three, four), undefined)
-  t.eq(top.childNodes, [three, four, one, two])
-  t.is(one.parentNode, top)
-  t.is(two.parentNode, top)
-  t.is(three.parentNode, top)
-  t.is(four.parentNode, top)
+  t.is(tar.prepend(three, four), undefined)
+  t.eq(tar.childNodes, [three, four, one, two])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, tar)
+  t.is(three.parentNode, tar)
+  t.is(four.parentNode, tar)
 
-  t.is(top.prepend(...top.childNodes), undefined)
-  t.eq(top.childNodes, [three, four, one, two])
-  t.is(one.parentNode, top)
-  t.is(two.parentNode, top)
-  t.is(three.parentNode, top)
-  t.is(four.parentNode, top)
+  t.is(tar.prepend(...tar.childNodes), undefined)
+  t.eq(tar.childNodes, [three, four, one, two])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, tar)
+  t.is(three.parentNode, tar)
+  t.is(four.parentNode, tar)
 })
 
 t.test(function test_Node_remove() {
-  const top = new ds.Node()
+  const tar = new ds.Node()
   const one = new ds.Text(`one`)
   const two = new ds.Comment(`two`)
   const three = new ds.Text(`three`)
 
-  top.append(one, two, three)
-  t.eq(top.childNodes, [one, two, three])
-  t.is(one.parentNode, top)
-  t.is(two.parentNode, top)
-  t.is(three.parentNode, top)
+  tar.append(one, two, three)
+  t.eq(tar.childNodes, [one, two, three])
+  t.is(one.parentNode, tar)
+  t.is(two.parentNode, tar)
+  t.is(three.parentNode, tar)
 
   two.remove()
-  t.eq(top.childNodes, [one, three])
-  t.is(one.parentNode, top)
+  t.eq(tar.childNodes, [one, three])
+  t.is(one.parentNode, tar)
   t.is(two.parentNode, null)
-  t.is(three.parentNode, top)
+  t.is(three.parentNode, tar)
 
   three.remove()
-  t.eq(top.childNodes, [one])
-  t.is(one.parentNode, top)
+  t.eq(tar.childNodes, [one])
+  t.is(one.parentNode, tar)
   t.is(two.parentNode, null)
   t.is(three.parentNode, null)
 
   one.remove()
-  t.eq(top.childNodes, [])
+  t.eq(tar.childNodes, [])
   t.is(one.parentNode, null)
   t.is(two.parentNode, null)
   t.is(three.parentNode, null)
 })
 
+t.test(function test_Node_after() {
+  const tar = new ds.Node()
+  const one = new ds.Text(`one`)
+  const two = new ds.Text(`two`)
+  const three = new ds.Text(`three`)
+  const four = new ds.Text(`four`)
+
+  function test(...exp) {
+    t.is(tar.textContent, exp.map(toTextContent).join(``))
+    t.eq(tar.childNodes, exp)
+
+    tar.append(one, two, three, four)
+    t.is(tar.textContent, `onetwothreefour`)
+    t.eq(tar.childNodes, [one, two, three, four])
+  }
+
+  tar.append(one, two, three, four)
+  test(one, two, three, four)
+
+  failUnstringable(val => one.after(val))
+
+  one.after()
+  test(one, two, three, four)
+
+  one.after(one)
+  test(one, two, three, four)
+
+  one.after(one, one)
+  test(one, two, three, four)
+
+  one.after(two)
+  test(one, two, three, four)
+
+  one.after(two, two)
+  test(one, two, three, four)
+
+  one.after(two, three)
+  test(one, two, three, four)
+
+  one.after(two, two, three, three)
+  test(one, two, three, four)
+
+  one.after(two, three, two, three)
+  test(one, two, three, four)
+
+  one.after(two, three, two, three, two, three)
+  test(one, two, three, four)
+
+  one.after(two, three, four)
+  test(one, two, three, four)
+
+  one.after(three)
+  test(one, three, two, four)
+
+  one.after(three, three)
+  test(one, three, two, four)
+
+  one.after(three, two)
+  test(one, three, two, four)
+
+  one.after(three, three, two, two)
+  test(one, three, two, four)
+
+  one.after(three, two, three, two)
+  test(one, three, two, four)
+
+  one.after(three, four)
+  test(one, three, four, two)
+
+  one.after(three, four, three, four)
+  test(one, three, four, two)
+
+  one.after(three, three, four, four)
+  test(one, three, four, two)
+
+  one.after(four)
+  test(one, four, two, three)
+
+  one.after(four, four)
+  test(one, four, two, three)
+
+  one.after(four, two)
+  test(one, four, two, three)
+
+  one.after(four, four, two, two)
+  test(one, four, two, three)
+
+  one.after(four, two, four, two)
+  test(one, four, two, three)
+
+  two.after()
+  test(one, two, three, four)
+
+  two.after(two)
+  test(one, two, three, four)
+
+  two.after(two, two)
+  test(one, two, three, four)
+
+  two.after(two, three)
+  test(one, two, three, four)
+
+  two.after(two, three, three)
+  test(one, two, three, four)
+
+  two.after(two, two, three, three)
+  test(one, two, three, four)
+
+  two.after(two, three, two, three)
+  test(one, two, three, four)
+
+  two.after(two, three, four)
+  test(one, two, three, four)
+
+  two.after(one)
+  test(two, one, three, four)
+
+  two.after(one, one)
+  test(two, one, three, four)
+
+  two.after(two, one)
+  test(two, one, three, four)
+
+  two.after(two, two, one, one)
+  test(two, one, three, four)
+
+  two.after(two, one, two, one)
+  test(two, one, three, four)
+
+  two.after(one, two)
+  test(one, two, three, four)
+
+  two.after(one, one, two, two)
+  test(one, two, three, four)
+
+  two.after(one, two, one, two)
+  test(one, two, three, four)
+
+  three.after()
+  test(one, two, three, four)
+
+  three.after(three)
+  test(one, two, three, four)
+
+  three.after(one)
+  test(two, three, one, four)
+
+  three.after(one, two)
+  test(three, one, two, four)
+
+  three.after(one, two, four)
+  test(three, one, two, four)
+
+  three.after(four)
+  test(one, two, three, four)
+
+  four.after()
+  test(one, two, three, four)
+
+  four.after(four)
+  test(one, two, three, four)
+
+  four.after(four, four)
+  test(one, two, three, four)
+
+  four.after(one)
+  test(two, three, four, one)
+
+  four.after(one, one)
+  test(two, three, four, one)
+
+  four.after(one, two)
+  test(three, four, one, two)
+
+  four.after(one, one, two, two)
+  test(three, four, one, two)
+
+  four.after(one, two, three)
+  test(four, one, two, three)
+
+  four.after(three, two, one)
+  test(four, three, two, one)
+})
+
 t.test(function test_Node_getRootNode() {
-  const top = new ds.Element()
-  t.is(top.getRootNode(), top)
+  const tar = new ds.Element()
+  t.is(tar.getRootNode(), tar)
 
   const mid = new ds.Node()
   t.is(mid.getRootNode(), mid)
@@ -338,12 +558,12 @@ t.test(function test_Node_getRootNode() {
   const bot = new ds.Text(`str`)
   t.is(bot.getRootNode(), bot)
 
-  top.appendChild(mid)
+  tar.appendChild(mid)
   mid.appendChild(bot)
 
-  t.is(top.getRootNode(), top)
-  t.is(mid.getRootNode(), top)
-  t.is(bot.getRootNode(), top)
+  t.is(tar.getRootNode(), tar)
+  t.is(mid.getRootNode(), tar)
+  t.is(bot.getRootNode(), tar)
 })
 
 t.test(function test_Node_isConnected() {
@@ -397,24 +617,30 @@ t.test(function test_Node_parentElement() {
 
 t.test(function test_Node_firstChild() {
   const tar = new ds.Node()
+  const one = new ds.Text(`one`)
+  const two = new ds.Text(`two`)
+
   t.is(tar.firstChild, null)
 
-  tar.appendChild(`one`)
-  t.is(tar.firstChild, `one`)
+  tar.appendChild(one)
+  t.is(tar.firstChild, one)
 
-  tar.appendChild(`two`)
-  t.is(tar.firstChild, `one`)
+  tar.appendChild(two)
+  t.is(tar.firstChild, one)
 })
 
 t.test(function test_Node_lastChild() {
   const tar = new ds.Node()
+  const one = new ds.Text(`one`)
+  const two = new ds.Text(`two`)
+
   t.is(tar.lastChild, null)
 
-  tar.appendChild(`one`)
-  t.is(tar.lastChild, `one`)
+  tar.appendChild(one)
+  t.is(tar.lastChild, one)
 
-  tar.appendChild(`two`)
-  t.is(tar.lastChild, `two`)
+  tar.appendChild(two)
+  t.is(tar.lastChild, two)
 })
 
 t.test(function test_Node_previousSibling_nextSibling() {
@@ -470,7 +696,7 @@ function testCharacterData(Cls, fun) {
     t.throws(() => tar.appendChild(chi), TypeError, `illegal invocation`)
   })
 
-  t.throws(() => new Cls({}), TypeError, `unable to convert {} to string`)
+  failUnstringable(val => new Cls(val))
 
   function valid(node, src, exp) {
     l.reqInst(node, Cls)
@@ -485,32 +711,36 @@ function testCharacterData(Cls, fun) {
   }
 
   function test(src, exp) {
-    valid(new Cls(src), l.renderLax(src), exp)
+    valid(new Cls(src), l.render(src), exp)
 
     {
       const tar = new Cls()
       tar.data = src
-      valid(tar, l.renderLax(src), exp)
+      valid(tar, l.render(src), exp)
     }
 
     {
       const tar = new Cls()
       tar.nodeValue = src
-      valid(tar, l.renderLax(src), exp)
+      valid(tar, l.render(src), exp)
     }
 
     {
       const tar = new Cls()
       tar.textContent = src
-      valid(tar, l.renderLax(src), exp)
+      valid(tar, l.render(src), exp)
     }
   }
 
-  test(undefined, ``)
-  test(null, ``)
+  valid(new Cls(), ``, ``)
+
   test(``, ``)
-  test(`str`, `str`)
+  test(false, `false`)
+  test(true, `true`)
+  test(NaN, `NaN`)
+  test(-0, `0`)
   test(10, `10`)
+  test(`one`, `one`)
   test(new URL(`https://example.com`), `https://example.com/`)
   test(`<script>alert("hacked")</script>`, `&lt;script&gt;alert("hacked")&lt;/script&gt;`)
 }
@@ -560,9 +790,8 @@ t.test(function test_NamedNodeMap() {
   t.test(function test_set() {
     const tar = new ds.NamedNodeMap()
 
-    t.throws(() => tar.set(10, `str`), TypeError, `expected variant of isStr, got 10`)
-    t.throws(() => tar.set(`str`), TypeError, `unable to convert undefined to string`)
-    t.throws(() => tar.set(`str`, {}), TypeError, `unable to convert {} to string`)
+    failUnstringable(val => tar.set(val, `str`))
+    failUnstringable(val => tar.set(`str`, val))
 
     tar.set(`one`, 10)
     tar.set(`two`, new URL(`https://example.com`))
@@ -579,14 +808,15 @@ t.test(function test_NamedNodeMap() {
     At the moment, we escape attribute values, which often come from untrusted
     sources, without validating attribute names which are assumed to be
     hardcoded. In the future, we may also add validation of attribute names.
+
+    See comment on `ds.escapeAttr`.
     */
     t.is(
-      new ds.NamedNodeMap()
-      .set(
+      new ds.NamedNodeMap([[
         `one`,
         `"><script>alert("two")</script><span `
-      ).toString(),
-      ` one="&quot;><script>alert(&quot;two&quot;)</script><span "`,
+      ]]).toString(),
+      ` one="&quot;&gt;&lt;script&gt;alert(&quot;two&quot;)&lt;/script&gt;&lt;span "`,
     )
   })
 
@@ -757,8 +987,8 @@ t.test(function test_Element_parentNode_and_lifecycle() {
 })
 
 t.test(function test_Element_children() {
-  const top = new ds.Element()
-  top.localName = `top`
+  const tar = new ds.Element()
+  tar.localName = `tar`
 
   const one = new ds.Text(`one`)
 
@@ -770,30 +1000,26 @@ t.test(function test_Element_children() {
   const four = new ds.Element()
   four.localName = `four`
 
-  t.eq(top.children, [])
+  t.eq(tar.children, [])
 
-  top.appendChild(one)
-  t.eq(top.children, [])
+  tar.appendChild(one)
+  t.eq(tar.children, [])
 
-  top.appendChild(two)
-  t.eq(top.children, [two])
+  tar.appendChild(two)
+  t.eq(tar.children, [two])
 
-  top.appendChild(three)
-  t.eq(top.children, [two])
+  tar.appendChild(three)
+  t.eq(tar.children, [two])
 
-  top.appendChild(four)
-  t.eq(top.children, [two, four])
+  tar.appendChild(four)
+  t.eq(tar.children, [two, four])
 })
 
 t.test(function test_Element_attributes() {
   const tar = new ds.Element()
 
-  t.throws(() => tar.setAttribute(undefined, `val`), TypeError, `expected variant of isStr, got undefined`)
-  t.throws(() => tar.setAttribute(10, `val`), TypeError, `expected variant of isStr, got 10`)
-  t.throws(() => tar.setAttribute({}, `val`), TypeError, `expected variant of isStr, got {}`)
-
-  t.throws(() => tar.setAttribute(`key`), TypeError, `unable to convert undefined to string`)
-  t.throws(() => tar.setAttribute(`key`, {}), TypeError, `unable to convert {} to string`)
+  failUnstringable(val => tar.setAttribute(val, `str`))
+  failUnstringable(val => tar.setAttribute(`str`, val))
 
   {
     t.no(tar.hasAttribute(`one`))
@@ -986,9 +1212,7 @@ t.test(function test_Element_dataset() {
 t.test(function test_Element_className() {
   const tar = new ds.Element()
 
-  t.throws(() => tar.className = undefined, TypeError, `unable to convert undefined to string`)
-  t.throws(() => tar.className = null, TypeError, `unable to convert null to string`)
-  t.throws(() => tar.className = {}, TypeError, `unable to convert {} to string`)
+  failUnstringable(val => tar.className = val)
 
   function none() {
     t.is(tar.className, ``)
@@ -1130,8 +1354,7 @@ t.test(function test_Element_hidden() {
 t.test(function test_Element_tabIndex() {
   const tar = new ds.Element()
 
-  t.throws(() => tar.tabIndex = [], TypeError, `unable to convert [] to string`)
-  t.throws(() => tar.tabIndex = {}, TypeError, `unable to convert {} to string`)
+  failUnstringable(val => tar.tabIndex = val)
 
   function test(prop, attr) {
     t.is(tar.tabIndex, prop)
@@ -1181,83 +1404,78 @@ t.test(function test_DocumentFragment_textContent() {
 t.test(function test_Element_textContent() {
   const tar = new ds.Element()
 
-  t.throws(() => tar.textContent = {}, TypeError, `unable to convert {} to string`)
-  t.throws(() => tar.textContent = [], TypeError, `unable to convert [] to string`)
+  /*
+  In the actual DOM API, setting `.textContent = null` is equivalent to setting
+  an empty string. But not `undefined`, which becomes `"undefined"`. Treating
+  the two nil values differently is far too gotcha-prone, so we forbid both,
+  just like everywhere else.
+  */
+  failUnstringable(val => tar.textContent = val)
 
-  function none() {
-    t.is(tar.textContent, ``)
-    t.eq(tar.childNodes, [])
+  const text = l.bind(textOf, tar)
+
+  function test(...src) {
+    t.is(tar.textContent, src.map(l.render).join(``))
+    t.eq(tar.childNodes, src.map(text))
   }
 
-  function some(val) {
-    t.is(tar.textContent, val)
-    t.eq(tar.childNodes, [val])
+  function reset(...src) {
+    tar.textContent = ``
+    test()
+    tar.append(...src)
   }
 
-  function reset(...val) {
-    tar.textContent = undefined
-    none()
-    tar.append(...val)
-  }
+  test()
 
-  none()
-
-  tar.appendChild(`<script>alert("one")</script>`)
-  some(`<script>alert("one")</script>`)
+  tar.append(`<script>alert("one")</script>`)
+  test(`<script>alert("one")</script>`)
 
   tar.textContent = ``
-  none()
+  test()
 
-  tar.appendChild(`two`)
-  some(`two`)
+  tar.append(`t`, `w`, `o`)
+  test(`t`, `w`, `o`)
 
-  tar.textContent = undefined
-  none()
+  tar.textContent = ``
+  test()
 
-  tar.appendChild(`three`)
-  some(`three`)
+  tar.append(`three`)
+  test(`three`)
 
-  tar.textContent = null
-  none()
+  tar.append(`four`, `five`)
+  test(`three`, `four`, `five`)
 
-  reset(10, null, 20, undefined, 30)
+  reset()
+  test()
+
+  reset(10, 20, 30)
   t.is(tar.textContent, `102030`)
 
   reset(new URL(`https://example.com`))
   t.is(tar.textContent, `https://example.com/`)
 
-  reset(new p.Raw(`str`))
-  t.is(tar.textContent, ``)
+  reset(`one`)
+  t.is(tar.textContent, `one`)
 
-  reset(`one `, new p.Raw(`two`), `three`)
-  t.is(tar.textContent, `one three`)
+  reset(`one`, `_`, `two`)
+  t.is(tar.textContent, `one_two`)
 
-  reset(new ds.Text(`<script>alert("four")</script>`))
-  t.is(tar.textContent, `<script>alert("four")</script>`)
+  reset(new ds.Text(`<script>alert("one")</script>`))
+  t.is(tar.textContent, `<script>alert("one")</script>`)
 
   reset(new ds.Comment(`comment`))
   t.is(tar.textContent, ``)
 
-  reset({}, [], [{}, unreachable])
-  t.is(tar.textContent, ``)
-
-  reset({}, [], [{}, unreachable], `one`)
-  t.is(tar.textContent, `one`)
-
-  reset(fragOf(10), [fragOf(20, 30)])
+  reset(fragOf(10), fragOf(20, 30))
   t.is(tar.textContent, `102030`)
 
   const inner = new ds.global.HTMLElement()
   inner.localName = `span`
 
-  // Appending lists and nested lists would absolutely not work in a spec
-  // compliant DOM API. It works in ours by accident because storing them
-  // as-is, and flattening in `.textContent` and `.innerHTML`, saves some
-  // complexity and performance.
   inner.append(
     `one `,
-    [[new ds.Text(`two`)]],
-    [` three`],
+    new ds.Text(`two`),
+    ` three`,
     new ds.Comment(`four`),
   )
 
@@ -1272,22 +1490,22 @@ don't parse the given HTML.
 t.test(function test_Element_innerHTML() {
   const tar = new ds.Element()
 
-  t.throws(() => tar.innerHTML = undefined, TypeError, `unable to convert undefined to string`)
-  t.throws(() => tar.innerHTML = null, TypeError, `unable to convert null to string`)
-  t.throws(() => tar.innerHTML = {}, TypeError, `unable to convert {} to string`)
+  failUnstringable(val => tar.innerHTML = val)
 
-  function none() {
-    t.is(tar.innerHTML, ``)
-    t.eq(tar.childNodes, [])
+  const text = l.bind(textOf, tar)
+
+  function test(...src) {
+    t.is(tar.innerHTML, src.map(l.render).join(``))
+    t.eq(tar.childNodes, src.map(text))
   }
 
-  function reset(...val) {
+  function reset(...src) {
     tar.innerHTML = ``
-    none()
-    tar.append(...val)
+    test()
+    tar.append(...src)
   }
 
-  none()
+  test()
 
   tar.textContent = `<script>alert("one")</script>`
   t.is(tar.innerHTML, `&lt;script&gt;alert("one")&lt;/script&gt;`)
@@ -1298,38 +1516,32 @@ t.test(function test_Element_innerHTML() {
   reset()
   t.is(tar.innerHTML, ``)
 
-  reset(undefined)
-  t.is(tar.innerHTML, ``)
-
-  reset(null)
-  t.is(tar.innerHTML, ``)
-
   reset(``)
   t.is(tar.innerHTML, ``)
 
-  reset([null, [undefined], ``])
-  t.is(tar.innerHTML, ``)
-
-  reset(fragOf(10), [fragOf(20, 30)])
+  reset(fragOf(10), fragOf(20, 30))
   t.is(tar.innerHTML, `102030`)
 
-  reset([null, [[[new ds.Comment(`comment`)], ``], undefined]])
-  t.is(tar.innerHTML, `<!--comment-->`)
+  reset(new ds.Comment(`one`))
+  t.is(tar.innerHTML, `<!--one-->`)
+
+  reset(`one`, new ds.Comment(`two`), `three`, new ds.Comment(`four`))
+  t.is(tar.innerHTML, `one<!--two-->three<!--four-->`)
 
   reset(new ds.Text(`text`))
   t.is(tar.innerHTML, `text`)
 
-  reset(`one `, new ds.Text(`two`), new p.Raw(` three`))
-  t.is(tar.innerHTML, `one two three`)
+  reset(new ds.Text(`one`), `_`, new ds.Text(`two`))
+  t.is(tar.innerHTML, `one_two`)
 
   const inner = new ds.Element()
   inner.localName = `ins`
   inner.className = `cls`
-  inner.append(new ds.Text(`one `), new p.Raw(`two`))
-  t.is(inner.innerHTML, `one two`)
+  inner.append(new ds.Text(`three`), new ds.Text(`_`), `four`)
+  t.is(inner.innerHTML, `three_four`)
 
-  reset(`three `, inner, ` `, 10)
-  t.is(tar.innerHTML, `three <ins class="cls">one two</ins> 10`)
+  reset(`one `, inner, ` `, 10)
+  t.is(tar.innerHTML, `one <ins class="cls">three_four</ins> 10`)
 })
 
 t.test(function test_Element_outerHTML() {

@@ -1,5 +1,6 @@
 import * as l from './lang.mjs'
 import * as o from './obj.mjs'
+import * as d from './dom.mjs'
 import * as ob from './obs.mjs'
 
 export const PROP_REC = Symbol.for(`propRec`)
@@ -41,7 +42,9 @@ export class Ren extends o.MixMain(l.Emp) {
 
   get doc() {return this.env.document}
   get Node() {return this.env.Node}
+  get Comment() {return this.env.Comment}
   get Text() {return this.env.Text}
+  get Frag() {return this.env.DocumentFragment}
   get RecPropFun() {return RecPropFun}
   get RecPropRef() {return RecPropRef}
   get RecNodeFun() {return o.pub(this, `RecNodeFun`, MixRecNodeFun(this.Text))}
@@ -50,17 +53,13 @@ export class Ren extends o.MixMain(l.Emp) {
   // All-purpose rendering function for HTML elements.
   E(tar, props, ...chi) {
     if (!l.isObj(tar)) return this.elemHtml(tar, props, ...chi)
-    this.mutProps(tar, props)
-    if (chi.length) this.mutChi(tar, ...chi)
-    return tar
+    return this.mut(tar, props, ...chi)
   }
 
   // All-purpose rendering function for SVG elements.
   S(tar, props, ...chi) {
     if (!l.isObj(tar)) return this.elemSvg(tar, props, ...chi)
-    this.mutProps(tar, props)
-    if (chi.length) this.mutChi(tar, ...chi)
-    return tar
+    return this.mut(tar, props, ...chi)
   }
 
   elemHtml(tag, props, ...chi) {
@@ -100,48 +99,37 @@ export class Ren extends o.MixMain(l.Emp) {
     return this.doc.createElement(l.reqStr(tag), l.deref(props))
   }
 
-  frag(...val) {
-    const tar = this.doc.createDocumentFragment()
-    this.appendList(tar, val)
-    return tar
-  }
-
-  node(...val) {
-    if (val.length === 0) return null
-    if (val.length === 1 && isNode(val[0])) return val[0]
-    return this.frag(...val)
-  }
-
   mut(tar, props, ...chi) {
-    this.mutProps(tar, props)
-    this.mutChi(tar, ...chi)
+    d.reqNode(tar)
+    if (l.isSome(props)) this.replaceProps(tar, props)
+    if (chi.length) this.replaceChi(tar, chi)
     return tar
   }
 
-  mutProps(tar, src) {
-    if (l.isFun(src)) return this.mutPropsFun(tar, src)
-    if (ob.isObsRef(src)) return this.mutPropsRef(tar, src)
-    return this.mutPropsRec(tar, l.deref(src))
+  replaceProps(tar, src) {
+    if (l.isFun(src)) return this.replacePropsFun(tar, src)
+    if (ob.isObsRef(src)) return this.replacePropsRef(tar, src)
+    return this.replacePropsDict(tar, l.deref(src))
   }
 
-  mutPropsFun(tar, src) {
+  replacePropsFun(tar, src) {
     const {shed} = this
-    if (!shed) return this.mutProps(tar, src.call(tar, tar))
+    if (!shed) return this.replaceProps(tar, src.call(tar, tar))
     return this.RecPropFun.init(this, tar, src), tar
   }
 
-  mutPropsRef(tar, src) {
+  replacePropsRef(tar, src) {
     const {shed} = this
-    if (!shed) return this.mutProps(tar, l.derefAll(src))
+    if (!shed) return this.replaceProps(tar, l.derefAll(src))
     return this.RecPropRef.init(this, tar, src), tar
   }
 
-  mutPropsRec(tar, src) {
-    l.reqObj(tar)
+  replacePropsDict(tar, src) {
+    d.reqElement(tar)
     if (l.isNil(src)) return tar
 
     const prev = tar[PROP_KEYS]
-    const dict = src
+    const dict = l.reqRec(src)
     const list = l.recKeys(src)
 
     for (const key of list) this.mutProp(tar, key, src[key])
@@ -153,14 +141,19 @@ export class Ren extends o.MixMain(l.Emp) {
     return tar
   }
 
-  // TODO consider supporting `innerHTML` prop.
   mutProp(tar, key, val) {
+    if (key === `innerHTML`) return this.mutInnerHtml(tar, val)
     if (key === `attributes`) return this.mutAttrs(tar, val)
     if (key === `class`) return this.mutCls(tar, val, key)
     if (key === `className`) return this.mutCls(tar, val, key)
     if (key === `style`) return this.mutStyle(tar, val)
     if (key === `dataset`) return this.mutDataset(tar, val)
     return this.mutPropAny(tar, key, val)
+  }
+
+  mutInnerHtml(tar, val) {
+    d.reqElement(tar).innerHTML = l.laxStr(this.renderOpt(val))
+    return tar
   }
 
   mutAttrs(tar, val) {return this.loop(tar, val, this.mutAttr)}
@@ -247,117 +240,72 @@ export class Ren extends o.MixMain(l.Emp) {
     return this.mutAttr(tar, key, val)
   }
 
-  mutChi(tar, ...chi) {
-    reqNode(tar)
+  mutText(tar, src) {
+    d.reqNode(tar).textContent = l.laxStr(this.renderOpt(src))
+    return tar
+  }
 
-    if (!chi.length) {
+  replaceChi(tar, chi) {
+    d.reqNode(tar)
+    l.reqArr(chi)
+
+    if (isVac(chi)) {
       this.clear(tar)
       return tar
     }
 
-    if (!tar.hasChildNodes()) {
-      for (chi of chi) this.appendChi(tar, chi)
-      return tar
-    }
-
-    const frag = this.frag(...chi)
+    const list = this.chi(tar, chi)
     this.clear(tar)
-    tar.appendChild(frag)
+    tar.append(...list)
     return tar
-  }
-
-  appendChi(tar, src) {
-    if (l.isFun(src)) return this.appendFun(tar, src)
-    if (ob.isObsRef(src)) return this.appendRef(tar, src)
-    if (isNodable(src)) src = src.toNode()
-    if (l.isNil(src)) return tar
-    if (l.isStr(src)) return tar.append(src), tar
-    if (isNode(src)) return tar.appendChild(src), tar
-    if (isRaw(src)) return this.appendRaw(tar, src), tar
-    if (isSeq(src)) {
-      if (l.isList(src)) return this.appendList(tar, src), tar
-      return this.appendSeq(tar, src), tar
-    }
-    return this.appendChi(tar, this.renderOpt(src)), tar
-  }
-
-  appendFun(tar, src) {
-    const {shed} = this
-    if (!shed) return src.call(tar, tar)
-    return this.RecNodeFun.init(this, tar, src), tar
-  }
-
-  appendRef(tar, src) {
-    const {shed} = this
-    if (!shed) return l.derefAll(src)
-    return this.RecNodeRef.init(this, tar, src), tar
-  }
-
-  /*
-  This strange-looking code implements support for passing an element's
-  `.childNodes` to a rendering call where that same element is the target
-  of mutation, and having it work correctly, when using our DOM shim,
-  where `.childNodes` is just a simple array internally.
-  */
-  appendList(tar, src) {
-    l.reqList(src)
-    let ind = 0
-
-    for (;;) {
-      const len = src.length
-      if (!(ind >= 0 && ind < len)) return tar
-
-      this.appendChi(tar, src[ind])
-
-      ind += 1
-      ind -= Math.max(0, len - src.length)
-    }
-  }
-
-  appendSeq(tar, src) {
-    for (src of src) this.appendChi(tar, src)
-    return tar
-  }
-
-  /*
-  Might be stupidly inefficient. Need benchmarks.
-  Might not be compatible with SVG rendering. Needs SVG testing.
-  */
-  appendRaw(tar, src) {
-    if (!tar.hasChildNodes() && `innerHTML` in tar) {
-      tar.innerHTML = l.laxStr(src.outerHTML)
-      return tar
-    }
-
-    const ns = l.get(src, `namespaceURI`)
-    const buf = ns ? this.makeElemNs(ns, `span`) : this.makeElem(`span`)
-
-    buf.innerHTML = l.laxStr(src.outerHTML)
-    return this.move(tar, buf)
-  }
-
-  mutText(tar, src) {
-    reqNode(tar)
-    setOpt(tar, `textContent`, tar.textContent, l.laxStr(this.renderOpt(src)))
-    return tar
-  }
-
-  replace(tar, ...chi) {
-    reqNode(tar)
-    tar.parentNode.replaceChild(this.frag(...chi), tar)
   }
 
   clear(tar) {
-    while (tar.hasChildNodes()) tar.removeChild(tar.lastChild)
+    d.reqNode(tar).textContent = ``
     return tar
   }
 
-  move(tar, src) {
-    if (src !== tar) {
-      while (src.hasChildNodes()) tar.appendChild(src.removeChild(src.firstChild))
-    }
-    return tar
+  chi(tar, chi) {
+    const buf = []
+    this.appendChi(buf, tar, chi)
+    return buf
   }
+
+  appendChi(buf, tar, src) {
+    if (l.isFun(src)) return void this.appendFun(buf, tar, src)
+    if (ob.isObsRef(src)) return void this.appendRef(buf, tar, src)
+    if (isNodable(src)) src = src.toNode()
+    if (d.isNode(src)) return void buf.push(src)
+    if (l.isList(src)) return void this.appendList(buf, tar, src)
+
+    src = this.renderOpt(src)
+    if (!src) return undefined
+
+    const ind = buf.length - 1
+    if (l.isStr(buf[ind])) return void (buf[ind] += src)
+    return void buf.push(src)
+  }
+
+  appendFun(buf, tar, src) {
+    const {shed} = this
+    if (!shed) return this.appendChi(buf, tar, src.call(tar, tar))
+    return this.appendRecNode(buf, tar, src, this.RecNodeFun)
+  }
+
+  appendRef(buf, tar, src) {
+    const {shed} = this
+    if (!shed) return this.appendChi(buf, tar, l.derefAll(src))
+    return this.appendRecNode(buf, tar, src, this.RecNodeRef)
+  }
+
+  appendRecNode(buf, tar, src, cls) {
+    const out = new cls(this, tar, src)
+    const chi = out.init()
+    buf.push(out)
+    if (chi) buf.push(...chi)
+  }
+
+  appendList(buf, tar, src) {for (src of src) this.appendChi(buf, tar, src)}
 
   loop(tar, src, fun) {
     if (l.isNil(src)) return tar
@@ -372,11 +320,11 @@ export class Ren extends o.MixMain(l.Emp) {
 
   // Similar to `l.render` and `l.renderOpt` with slightly different rules.
   renderOpt(val, key) {
-    if (l.isNil(val)) return undefined
+    if (l.isNil(val)) return null
 
     const out = l.renderOpt(val)
     if (l.isSome(out)) return out
-    if (this.lax) return undefined
+    if (this.lax) return null
 
     if (key) {
       throw TypeError(`unable to convert property ${l.show(l.reqStr(key))} ${l.show(val)} to string`)
@@ -418,16 +366,11 @@ export class Ren extends o.MixMain(l.Emp) {
   }
 }
 
-// Marks "raw text" which must be preserved as-is without escaping.
-export class Raw extends l.Emp {
-  constructor(val) {super().outerHTML = l.renderLax(val)}
-}
-
 export function MixInitRun(cls) {return MixinInitRun.get(cls)}
 
 export class MixinInitRun extends o.Mixin {
   static make(cls) {
-    return class MixinInitRun extends cls {
+    return class InitRun extends cls {
       static init(ctx, tar, key) {
         const prev = tar[PROP_REC]
 
@@ -445,17 +388,17 @@ export class MixinInitRun extends o.Mixin {
 }
 
 export class RecPropFun extends MixInitRun(ob.FunRecur) {
-  constructor(ren, tar, fun) {super(ren.shed, tar, fun).ren = ren}
-  onRun() {this.ren.mutProps(this.tar, super.onRun())}
+  constructor(ren, tar, fun) {super(tar, fun).setShed(ren.shed).ren = ren}
+  onRun() {this.ren.replaceProps(this.tar, super.onRun())}
   sameKey(key) {return key === this.fun}
 }
 
 export class RecPropRef extends MixInitRun(ob.RunRef) {
   constructor(ren, tar, ref) {
-    super(tar)
+    super(tar, l.nop)
     this.ref = ref
     this.ren = ren
-    this.shedRef = new ob.ShedRef(this)
+    this.shedRef = new ob.RunRef(this, this.schedule)
   }
 
   run() {
@@ -463,7 +406,7 @@ export class RecPropRef extends MixInitRun(ob.RunRef) {
     if (!tar) return
 
     const {ren, ref, shedRef} = this
-    ren.mutProps(tar, l.derefAll(ref))
+    ren.replaceProps(tar, l.derefAll(ref))
 
     ob.getQue(ref).enque(shedRef.init())
   }
@@ -477,69 +420,70 @@ export function MixRecNode(cls) {return MixinRecNode.get(cls)}
 
 export class MixinRecNode extends o.Mixin {
   static make(Text) {
-    return class MixinRecNode extends Text {
+    return class RecNode extends Text {
       ren = undefined
       tar = undefined
-      chi = undefined
+      edge = undefined
+      prev = undefined
+      next = undefined
 
       constructor(ren, tar) {
         super()
         this.ren = ren
-        this.tar = tar
+        this.tar = d.reqNode(tar)
       }
 
       deref() {}
 
+      init() {
+        const chi = this.chi()
+        if (!chi) return chi
+        const frag = new this.ren.Frag()
+        frag.append(...chi)
+        return this.prev = new Set(frag.childNodes)
+      }
+
+      chi() {
+        const chi = this.ren.chi(this.tar, this.deref())
+        if (chi.length <= 1 && l.isPrim(chi[0])) {
+          this.ren.mutText(this, chi[0])
+          return undefined
+        }
+        this.textContent = ``
+        return chi
+      }
+
       run() {
-        let val = this.deref()
-        this.clear()
-
-        if (l.isArr(val) && val.length <= 1) val = val[0]
-        if (l.isNil(val)) return
-
-        if (l.isScalar(val)) {
-          this.textContent = l.renderLax(val)
+        const chi = this.chi()
+        if (!chi) {
+          this.clearChi()
           return
         }
 
-        const frag = this.ren.frag(val)
-        this.chi = [...frag.childNodes]
+        const prev = this.prev ??= new Set()
+        const next = this.next ??= new Set()
+        next.clear()
 
-        const par = this.parentNode
-        if (!isNode(par)) return
+        const edge = this.edge ??= new this.ren.Comment()
+        chi.push(edge)
+        this.after(...chi)
 
-        par.insertBefore(frag, this.nextSibling)
+        let val = this
+        while ((val = val.nextSibling) && val !== edge) {
+          prev.delete(val)
+          next.add(val)
+        }
 
-        /*
-        For the DOM shim. Unfortunately, in this case we waste performance on
-        the snapshot above, which is required for correctness in "proper" DOM
-        environments. The overhead is minimal and only applies to the shim.
-        */
-        if (this.nextSibling === frag) this.chi = frag
+        this.clearChi()
+
+        this.prev = next
+        this.next = prev
       }
 
       clearChi() {
-        const {chi, parentNode: par} = this
-        if (!chi || !par) return
-
-        if (l.isArr(chi)) {
-          while (chi.length) par.removeChild(chi.pop())
-          return
-        }
-
-        if (l.isInst(chi, this.ren.Node)) par.removeChild(chi)
-      }
-
-      clear() {
-        this.clearChi()
-        this.textContent = ``
-      }
-
-      static init(ren, tar, src) {
-        const out = new this(ren, tar, src)
-        tar.appendChild(out)
-        out.run()
-        return out
+        const {tar, edge, prev} = this
+        if (prev) for (const val of prev) removeLax(tar, val)
+        edge?.remove()
       }
     }
   }
@@ -549,7 +493,7 @@ export function MixRecNodeFun(cls) {return MixinRecNodeFun.get(cls)}
 
 export class MixinRecNodeFun extends o.Mixin {
   static make(Text) {
-    return class MixinRecNodeFun extends MixRecNode(Text) {
+    return class RecNodeFun extends MixRecNode(Text) {
       get Recur() {return ob.FunRecur}
 
       fun = undefined
@@ -558,7 +502,7 @@ export class MixinRecNodeFun extends o.Mixin {
       constructor(ren, tar, fun) {
         super(ren, tar)
         this.fun = l.reqFun(fun)
-        this.rec = new this.Recur(ren.shed, this, this.onRun)
+        this.rec = new this.Recur(this, this.run).setShed(ren.shed)
       }
 
       deref() {
@@ -566,8 +510,7 @@ export class MixinRecNodeFun extends o.Mixin {
         return fun.call(tar, tar)
       }
 
-      run() {this.rec.run()}
-      onRun() {super.run()}
+      init() {return this.rec.run(this, super.init)}
       deinit() {this.rec.deinit()}
     }
   }
@@ -577,14 +520,14 @@ export function MixRecNodeRef(cls) {return MixinRecNodeRef.get(cls)}
 
 export class MixinRecNodeRef extends o.Mixin {
   static make(Text) {
-    return class MixinRecNodeRef extends MixRecNode(Text) {
+    return class RecNodeRef extends MixRecNode(Text) {
       ref = undefined
 
       constructor(ren, tar, ref) {
         super(ren, tar)
         this.ref = ref
-        this.runRef = new ob.RunRef(this)
-        this.shedRef = new ob.ShedRef(this)
+        this.runRef = new ob.RunRef(this, this.run)
+        this.shedRef = new ob.RunRef(this, this.schedule)
       }
 
       deref() {return l.derefAll(this.ref)}
@@ -592,6 +535,12 @@ export class MixinRecNodeRef extends o.Mixin {
       run() {
         super.run()
         ob.getQue(this.ref).enque(this.shedRef.init())
+      }
+
+      init() {
+        const out = super.init()
+        ob.getQue(this.ref).enque(this.shedRef.init())
+        return out
       }
 
       depth() {return ob.nodeDepth(this.tar)}
@@ -642,10 +591,6 @@ avoid object rest/spread and providing more efficient "merge" shortcuts such as
 
 The cost of the wrapper is insignificant; the main cost is giving up object
 literals which are nearly free to construct.
-
-Using `l.Emp()` for the inner dict would reduce our performance in
-benchmarks. Using an object with a clean but non-null prototype, via `Emp`,
-avoids that. Unclear if this makes any difference in actual apps.
 
 Custom frozen marker has much better performance than `Object.freeze` and
 `Object.isFrozen`.
@@ -790,22 +735,8 @@ function hasScheme(val) {return /^\w+:/.test(l.laxStr(val))}
 
 export const DOCTYPE_HTML = `<!doctype html>`
 
-/*
-Much more restrictive than `lang.mjs`.`isSeq`. Designed to prevent programmer
-errors such as accidentally passing a `Set` as an element child.
-*/
-export function isSeq(val) {
-  return l.isObj(val) && !l.isScalar(val) && (l.isList(val) || l.isIterator(val))
-}
-
 export function isNodable(val) {return l.isComp(val) && l.isFun(val.toNode)}
 export function reqNodable(val) {return l.req(val, isNodable)}
-
-export function isRaw(val) {return l.isObj(val) && `outerHTML` in val}
-export function reqRaw(val) {return l.req(val, isRaw)}
-
-export function isNode(val) {return l.isObj(val) && `parentNode` in val && `childNodes` in val}
-export function reqNode(val) {return l.req(val, isNode)}
 
 export function isDocument(val) {
   return (
@@ -823,7 +754,8 @@ export function isDomEnv(val) {
     l.isComp(val) &&
     isDocument(val.document) &&
     l.isCls(val.Node) &&
-    l.isCls(val.Text)
+    l.isCls(val.Text) &&
+    l.isCls(val.Comment)
   )
 }
 export function optDomEnv(val) {return l.opt(val, isDomEnv)}
@@ -833,7 +765,7 @@ export function isNamespaced(val) {return l.isObj(val) && `namespaceURI` in val}
 
 /*
 In many DOM APIs only `null` is considered nil/missing, while `undefined` is
-stringified to `'undefined'`.
+stringified to `"undefined"`.
 */
 function norm(val) {return val ?? null}
 
@@ -841,8 +773,8 @@ function errMismatch(tar, key, val, src) {
   return TypeError(`unable to set ${l.show(key)} ${l.show(val)} on ${l.show(tar)}: type mismatch with ${l.show(src)}`)
 }
 
-// Sometimes avoids slow style/layout recalculations.
 function setOpt(tar, key, prev, next) {if (!l.is(prev, next)) tar[key] = next}
+function removeLax(tar, val) {if (tar === val?.parentNode) val.remove()}
 
 function spaced(one, two) {
   one = l.laxStr(one)
@@ -853,4 +785,9 @@ function spaced(one, two) {
 function optAt(key, val, fun) {
   if (l.isNil(val) || fun(val)) return val
   throw TypeError(`invalid property ${l.show(key)}: ` + l.msgType(val, l.showFunName(fun)))
+}
+
+function isVac(src) {
+  while (l.isArr(src) && src.length <= 1) src = src[0]
+  return l.isNil(src) || src === ``
 }

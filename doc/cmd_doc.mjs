@@ -365,7 +365,7 @@ async function run() {
 }
 
 async function runFeat(val) {
-  await io.writeText(val.readmeOutPath, await val.readmeOutText)
+  await io.writeFile(val.readmeOutPath, await val.readmeOutText)
 }
 
 if (import.meta.main) await main()

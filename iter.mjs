@@ -228,9 +228,9 @@ export function remove(src, val) {
   return filter(src, function remove(elem) {return !l.is(val, elem)})
 }
 
-export function fold(val, acc, fun) {
+export function fold(src, acc, fun) {
   l.reqFun(fun)
-  for (val of values(val)) acc = fun(acc, val)
+  for (src of values(src)) acc = fun(acc, src)
   return acc
 }
 

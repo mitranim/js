@@ -63,7 +63,7 @@ Timing precision varies by JS engine and environment.
 Simple testing example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/test.mjs'
 
 t.test(function test_some_feature() {
   t.eq(someFunction(someInputs), `expected result`)
@@ -73,7 +73,7 @@ t.test(function test_some_feature() {
 Simple benchmarking example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/test.mjs'
 
 t.bench(function bench_some_feature() {
   someFunction(someInputs)
@@ -86,7 +86,7 @@ t.benches()
 Complex example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.70/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/test.mjs'
 
 // Optional CLI flag parsing.
 const cli = t.Args.os()
@@ -161,5 +161,9 @@ The following APIs are exported but undocumented. Check [test.mjs](../test.mjs).
   * [`class Eq`](../test.mjs#L762)
   * [`function now`](../test.mjs#L878)
   * [`function nowAvg`](../test.mjs#L889)
-  * [`function isRunner`](../test.mjs#L907)
-  * [`function isReporter`](../test.mjs#L909)
+  * [`function isRunner`](../test.mjs#L898)
+  * [`function optRunner`](../test.mjs#L899)
+  * [`function reqRunner`](../test.mjs#L901)
+  * [`function isReporter`](../test.mjs#L906)
+  * [`function optReporter`](../test.mjs#L909)
+  * [`function reqReporter`](../test.mjs#L910)

@@ -157,7 +157,7 @@ export function MixMain(cls) {return MixinMain.get(cls)}
 
 export class MixinMain extends Mixin {
   static make(cls) {
-    return class MixinMain extends cls {
+    return class Main extends cls {
       static get main() {
         return l.hasOwn(this, MAIN) ? this[MAIN] : this[MAIN] = this.default()
       }
@@ -193,7 +193,7 @@ export function MixStruct(val) {return MixinStruct.get(val)}
 
 export class MixinStruct extends Mixin {
   static make(cls) {
-    return class MixinStruct extends cls {
+    return class Struct extends cls {
       static get Spec() {return StructSpec}
       constructor(...src) {structSpec(new.target).construct(super(...src), src[0])}
     }
@@ -204,7 +204,7 @@ export function MixStructLax(val) {return MixinStructLax.get(val)}
 
 export class MixinStructLax extends Mixin {
   static make(cls) {
-    return class MixinStructLax extends cls {
+    return class StructLax extends cls {
       static get Spec() {return StructSpecLax}
       constructor(...src) {structSpec(new.target).construct(super(...src), src[0])}
     }
@@ -215,7 +215,7 @@ export function MixStructMut(val) {return MixinStructMut.get(val)}
 
 export class MixinStructMut extends Mixin {
   static make(cls) {
-    return class MixinStructMut extends cls {
+    return class StructMut extends cls {
       mut(src) {return structMut(this, src)}
     }
   }

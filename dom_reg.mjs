@@ -130,7 +130,7 @@ export function MixReg(val) {return MixinReg.get(val)}
 
 export class MixinReg extends o.Mixin {
   static make(cls) {
-    return class MixinReg extends cls {
+    return class Reg extends cls {
       constructor(...val) {
         reg(new.target)
         super(...val)

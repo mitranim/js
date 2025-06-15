@@ -185,6 +185,28 @@ t.bench(function bench_prepend() {l.reqArr(i.prepend(itc.numArr, 10))})
 t.bench(function bench_prepend_spread_arr() {l.reqArr(prependSpreadArr(itc.numArr, 10))})
 t.bench(function bench_prepend_spread_values() {l.reqArr(prependSpreadValues(itc.numArr, 10))})
 
+t.bench(function bench_array_push_from_empty() {[].push(...itc.numArr)})
+
+t.bench(function bench_array_push_from_empty_comparison() {
+  [].push(...itc.numArr)
+  l.nop(itc.numArr.slice())
+})
+
+t.bench(function bench_array_push_from_long() {
+  itc.numArr.slice().push(...itc.numArr)
+})
+
+t.bench(function bench_array_unshift_from_empty() {[].unshift(...itc.numArr)})
+
+t.bench(function bench_array_unshift_from_empty_comparison() {
+  [].unshift(...itc.numArr)
+  l.nop(itc.numArr.slice())
+})
+
+t.bench(function bench_array_unshift_from_long() {
+  itc.numArr.slice().unshift(...itc.numArr)
+})
+
 t.eq(itc.numArr.slice(), itc.numArr.concat())
 t.bench(function bench_copy_arr_flat_slice() {l.reqArr(itc.numArr.slice())})
 t.bench(function bench_copy_arr_flat_concat() {l.reqArr(itc.numArr.concat())})

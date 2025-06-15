@@ -300,7 +300,7 @@ export class MixinChild extends o.Mixin {
     const desc = o.descIn(cls.prototype, `parentNode`)
 
     if (!desc || !desc.get) {
-      return class MixChildClsBase extends cls {
+      return class ChildClsBase extends cls {
         get parentNode() {return this[PARENT_NODE]}
         set parentNode(val) {this[PARENT_NODE] = val}
 
@@ -310,20 +310,20 @@ export class MixinChild extends o.Mixin {
     }
 
     if (desc.set) {
-      return class MixChildClsOnlyMethods extends cls {
+      return class ChildClsOnlyMethods extends cls {
         getParent() {return this.parentNode}
         setParent(val) {return this.parentNode = val, this}
       }
     }
 
-    /**
+    /*
     Native DOM classes operate in this mode. They define `.parentNode` getter
     without setter. DOM tree operations set this property magically, bypassing
     JS operations. We must prioritize the native getter over our property to
     ensure that when the element is attached to the DOM, the native parent
     takes priority over the grafted one.
     */
-    return class MixChildClsCompat extends cls {
+    return class ChildClsCompat extends cls {
       get parentNode() {return super.parentNode ?? this[PARENT_NODE]}
       set parentNode(val) {this[PARENT_NODE] = val}
 
@@ -354,7 +354,7 @@ export function MixChildCon(val) {return MixinChildCon.get(val)}
 
 export class MixinChildCon extends o.Mixin {
   static make(cls) {
-    return class MixinChildCon extends MixChild(cls) {
+    return class ChildCon extends MixChild(cls) {
       constructor(...val) {
         super()
         if (val.length) this.setParent(...val)

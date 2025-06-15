@@ -57,8 +57,12 @@ export async function readJson(path) {
   return JSON.parse(await readText(path))
 }
 
-export function writeText(path, val, opt) {
-  return Deno.writeTextFile(p.reqPath(path), l.reqStr(val), opt)
+export function writeFile(path, body, opt) {
+  p.reqPath(path)
+  l.optRec(opt)
+  if (l.isStr(body)) return Deno.writeTextFile(path, body, opt)
+  if (l.isInst(body, Uint8Array)) return Deno.writeFile(path, body, opt)
+  throw TypeError(`unable to write ${l.show(path)}: file body must be either a string or a Uint8Array, got ${l.show(body)}`)
 }
 
 export function create(path) {return Deno.create(p.reqPath(path))}

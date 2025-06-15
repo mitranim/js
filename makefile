@@ -1,6 +1,6 @@
 MAKEFLAGS := --silent --always-make
 MAKE_CONC := $(MAKE) -j 128 clear=$(or $(clear),false)
-RUN ?= $(if $(run),--run="$(run)",)
+RUN ?= $(and $(run),--run="$(run)")
 FEAT ?= $(or $(feat),all_deno)
 VERB ?= $(if $(filter true,$(verb)),--verb,)
 PREC ?= $(if $(filter true,$(prec)),--prec,)
@@ -15,7 +15,7 @@ HOOK_PRE_COMMIT_FILE ?= .git/hooks/pre-commit
 CLEAR ?= $(if $(filter false,$(clear)),, )
 CMD_CLEAR ?= $(and $(CLEAR),--clear)
 DENO_RUN ?= deno run -A --no-check --node-modules-dir=false --v8-flags=--expose_gc
-DENO_WATCH ?= $(DENO_RUN) --watch $(if $(CLEAR),,--no-clear-screen)
+DENO_WATCH ?= $(DENO_RUN) --watch $(or $(CLEAR),--no-clear-screen)
 WATCH ?= watchexec $(and $(CLEAR),-c) -r -d=1ms -n
 WATCH_SRC ?= $(WATCH) -e=mjs
 ESLINT ?= $(DENO_RUN) npm:eslint@8.47.0 --config .eslintrc --ext mjs .
@@ -50,7 +50,7 @@ lint_deno_w:
 	$(WATCH_SRC) -- $(MAKE) lint_deno
 
 lint_deno:
-	deno lint --rules-exclude=no-empty,require-yield,require-await,constructor-super,no-self-assign
+	deno lint --rules-exclude=no-empty,require-yield,require-await,constructor-super,no-self-assign,no-this-alias
 
 lint_eslint_w:
 	$(WATCH_SRC) -- $(MAKE) lint_eslint

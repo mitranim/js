@@ -135,6 +135,8 @@ setTimeout(() => {
 }, 1024)
 ```
 
+`calc` and all "recur" variants hold their inputs strongly. This is because the their inputs are often instantiated inline and not held by user code.
+
 ## Timing
 
 This library gives you fine-grained control over _when_ your observers will rerun on changes. 3 timing modes are provided:
@@ -232,7 +234,7 @@ obs.two = 40 // sum: 70
 /*
 Pausing and resuming causes it to run just once.
 Always use `try/finally` to prevent exceptions
-from keeping the sheduler paused.
+from keeping the scheduler paused.
 */
 const shed = ob.ShedSync.main
 shed.pause()

@@ -11,51 +11,38 @@ import * as ob from '../obs.mjs'
 const env = ob.HAS_DOM ? globalThis : ds.global
 const ren = new p.Ren({env})
 const E = ren.E
-const F = ren.frag.bind(ren)
 const A = new p.PropBui().frozen()
-const {Text, Comment} = env
 
-function* gen(...vals) {for (const val of vals) yield val}
+function args() {return arguments}
 function testDerefOwn(src, exp) {t.own(src[l.VAL], exp)}
 
 // Short for "equal markup".
-export function eqm(val, exp) {
-  t.ok(p.isRaw(val))
-  l.reqStr(exp)
-  t.is(val.outerHTML, exp)
-}
+export function eqm(val, exp) {t.is(l.reqStr(val.outerHTML), l.reqStr(exp))}
 
 export function eqm2(val, native, shimmed) {
-  t.ok(p.isRaw(val))
   l.reqStr(native)
   l.reqStr(shimmed)
 
-  if (ob.HAS_DOM) {
-    t.is(val.outerHTML, native)
-  }
-  else {
-    t.is(val.outerHTML, shimmed)
-  }
+  if (ob.HAS_DOM) eqm(val, native)
+  else eqm(val, shimmed)
 }
+
+const ESC_SRC = `<one>&"</one>`
+
+// See comment on `ds.escapeAttr`.
+const ESC_OUT_ATTR = `&lt;one&gt;&amp;&quot;&lt;/one&gt;`
+
+// See comment on `ds.escapeText`.
+const ESC_OUT_TEXT = `&lt;one&gt;&amp;"&lt;/one&gt;`
 
 /* Test */
 
-t.test(function test_Raw() {
-  t.throws(() => new p.Raw({}), TypeError, `unable to convert {} to string`)
-  t.throws(() => new p.Raw([]), TypeError, `unable to convert [] to string`)
+t.test(function test_escaping_attr() {
+  t.is(ds.escapeAttr(ESC_SRC), ESC_OUT_ATTR)
+})
 
-  function test(src, exp) {
-    const tar = new p.Raw(src)
-    t.ok(p.isRaw(tar))
-    t.is(tar.outerHTML, exp)
-  }
-
-  test(undefined, ``)
-  test(null, ``)
-  test(``, ``)
-  test(10, `10`)
-  test(`str`, `str`)
-  test(`<script>alert("hacked")</script>`, `<script>alert("hacked")</script>`)
+t.test(function test_escaping_text() {
+  t.is(ds.escapeText(ESC_SRC), ESC_OUT_TEXT)
 })
 
 t.test(function test_PropBui() {
@@ -255,6 +242,52 @@ t.test(function test_Ren_E_basic() {
   })
 })
 
+t.test(function test_Ren_chi() {
+  // `ren.chi` requires a target node for reactivity-related reasons.
+  const node = ren.doc.createElement(`div`)
+  function empty() {eqm(node, `<div></div>`)}
+
+  t.eq(ren.chi(node, []), [])
+
+  t.eq(ren.chi(node, [undefined]), [])
+  t.eq(ren.chi(node, [undefined, [[]]]), [])
+  t.eq(ren.chi(node, [undefined, [[]], [null], ``, [[[``]]]]), [])
+  empty()
+
+  t.eq(ren.chi(node, [`one`]), [`one`])
+  t.eq(ren.chi(node, [[`one`]]), [`one`])
+  t.eq(ren.chi(node, [[[`one`]]]), [`one`])
+  t.eq(ren.chi(node, [[], [[[`one`]]], []]), [`one`])
+  empty()
+
+  // Must concatenate adjacent primitives.
+  t.eq(
+    ren.chi(node, [
+      10, null, [[20]], [undefined], [[[`one`]]],
+      E(`three`),
+      [30], [null], [[`four`]], undefined, [[[40]]],
+    ]),
+    [
+      `1020one`,
+      E(`three`),
+      `30four40`,
+    ],
+  )
+  empty()
+
+  t.eq(
+    ren.chi(node, [
+      `one`,
+      [[10, [20]]],
+      E(`two`),
+      [undefined, [[[null], ``]]],
+      args(args(args(`four`))),
+    ]),
+    [`one1020`, E(`two`), `four`],
+  )
+  empty()
+})
+
 /*
 The test mostly verifies serialization behaviors common between DOM and non-DOM
 environments. For DOM-specific behaviors (native or shimmed), see other tests.
@@ -345,13 +378,13 @@ t.test(function test_Ren_serialization() {
 
       t.test(function test_attr_val_escaping() {
         eqm(
-          E(`div`, {attr: `<one>&"</one>`}),
-          `<div attr="<one>&amp;&quot;</one>"></div>`,
+          E(`div`, {attr: ESC_SRC}),
+          `<div attr="${ESC_OUT_ATTR}"></div>`,
         )
 
         eqm(
-          E(`outer`, {}, E(`inner`, {attr: `<one>&"</one>`})),
-          `<outer><inner attr="<one>&amp;&quot;</one>"></inner></outer>`,
+          E(`outer`, {}, E(`inner`, {attr: ESC_SRC})),
+          `<outer><inner attr="${ESC_OUT_ATTR}"></inner></outer>`,
         )
       })
 
@@ -372,8 +405,8 @@ t.test(function test_Ren_serialization() {
 
       t.test(function test_class_escaping() {
         eqm(
-          E(`div`, {class: `<one>&"</one>`}),
-          `<div class="<one>&amp;&quot;</one>"></div>`,
+          E(`div`, {class: ESC_SRC}),
+          `<div class="${ESC_OUT_ATTR}"></div>`,
         )
       })
 
@@ -414,8 +447,8 @@ t.test(function test_Ren_serialization() {
       */
       t.test(function test_style_escaping() {
         eqm(
-          E(`div`, {style: `<one>&"</one>`}),
-          `<div style="<one>&amp;&quot;</one>"></div>`,
+          E(`div`, {style: ESC_SRC}),
+          `<div style="${ESC_OUT_ATTR}"></div>`,
         )
       })
     })
@@ -461,25 +494,25 @@ t.test(function test_Ren_serialization() {
 
       t.test(function test_data_attr_escaping() {
         eqm(
-          E(`div`, {'data-attr': `<one>&"</one>`}),
-          `<div data-attr="<one>&amp;&quot;</one>"></div>`,
+          E(`div`, {'data-attr': ESC_SRC}),
+          `<div data-attr="${ESC_OUT_ATTR}"></div>`,
         )
         eqm(
-          E(`div`, {dataset: {attr: `<one>&"</one>`}}),
-          `<div data-attr="<one>&amp;&quot;</one>"></div>`,
+          E(`div`, {dataset: {attr: ESC_SRC}}),
+          `<div data-attr="${ESC_OUT_ATTR}"></div>`,
         )
       })
     })
 
     /*
     The DOM standard defines various aria getters/setters for the `Element`
-    interface, such as `.ariaCurrent` and more. We don't implement them because
-    Firefox doesn't implement them. It would be a compatibility footgun,
-    leading to code that works with a shim and in various environments, but
-    breaks in FF.
+    interface, such as `.ariaCurrent` and more. Our DOM shim doesn't define
+    them because Firefox doesn't implement them, or at least didn't at the time
+    of writing the shim. It would be a compatibility footgun, leading to code
+    that works with a shim and in various environments, but breaks in FF.
     */
     t.test(function test_aria_attrs() {
-      // This test would work with shim and in FF, but not in Chrome.
+      // This test would work with shim and in Chrome, but not in FF.
       //
       // eqm(
       //   E(`span`, {ariaCurrent: `page`, ariaChecked: `mixed`}),
@@ -530,8 +563,8 @@ t.test(function test_Ren_serialization() {
 
       t.test(function test_attributes_prop_escaping() {
         eqm(
-          E(`div`, {attributes: {attr: `<one>&"</one>`}}),
-          `<div attr="<one>&amp;&quot;</one>"></div>`,
+          E(`div`, {attributes: {attr: ESC_SRC}}),
+          `<div attr="${ESC_OUT_ATTR}"></div>`,
         )
       })
     })
@@ -561,6 +594,33 @@ t.test(function test_Ren_serialization() {
         `<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">`,
         `<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />`,
       )
+    })
+
+    t.test(function test_innerHTML() {
+      function fail(src, msg) {
+        t.throws(() => E(`div`, {innerHTML: src}), TypeError, msg)
+      }
+
+      fail([], `unable to convert [] to string`)
+      fail({}, `unable to convert {} to string`)
+
+      function test(src, exp) {
+        const tar = E(`div`, {innerHTML: src})
+        t.is(tar.innerHTML, exp)
+        eqm(tar, `<div>${exp}</div>`)
+      }
+
+      function same(src) {test(src, src)}
+
+      test(undefined, ``)
+      test(null, ``)
+      test(10, `10`)
+      test({toString() {return `one`}}, `one`)
+
+      same(``)
+      same(`one`)
+      same(`<script>alert("hacked")</script>`)
+      same(`<div><a>one</a><b>two</b><c>three</c></div>`)
     })
   })
 
@@ -606,142 +666,101 @@ t.test(function test_Ren_serialization() {
       eqm(E(`div`, {}, new URL(`https://example.com`)), `<div>https://example.com/</div>`)
     })
 
-    t.test(function test_child_flattening() {
-      eqm(
-        E(`outer`, {},
-          undefined,
-          [[[]]],
-          [[[`one`]]],
-          [
-            null,
-            E(`mid`, {},
-              undefined,
-              [`two`, [E(`inner`, {}, [[`three`]], undefined)]],
-              null,
-              `four`,
-            ),
-          ],
-          `five`,
-        ),
-        `<outer>one<mid>two<inner>three</inner>four</mid>five</outer>`,
-      )
-
-      eqm(
-        E(`outer`, {}, gen(
-          undefined,
-          gen(gen(gen([]))),
-          gen(gen(gen(`one`))),
-          gen(
-            null,
-            E(`mid`, {}, gen(
-              undefined,
-              gen(`two`, gen(E(`inner`, {}, gen(gen([`three`]), undefined)))),
-              null,
-              [`four`],
-            )),
-          ),
-          `five`,
-        )),
-        `<outer>one<mid>two<inner>three</inner>four</mid>five</outer>`,
-      )
-    })
-
     t.test(function test_child_escaping() {
-      t.test(function test_escape_non_raw() {
-        eqm(
-          E(`span`, {}, `console.log('</script>')`),
-          `<span>console.log('&lt;/script&gt;')</span>`,
-        )
+      eqm(
+        E(`span`, {}, `console.log('</script>')`),
+        `<span>console.log('&lt;/script&gt;')</span>`,
+      )
 
-        /*
-        However, `HTMLScriptElement` is a special case!
+      /*
+      However, `HTMLScriptElement` is a special case!
 
-        This example, if printed as HTML, would produce broken markup with a
-        broken script inside. Users must escape script content in an
-        appropriate language-specific way and then use `Raw`. We might be
-        unable to provide a generic solution because `<script>` allows an open
-        set of languages/syntaxes. Even just for JS and JSON, the correct way
-        to escape </script> depends on the syntactic context.
-        */
-        eqm(
-          E(`script`, {}, `console.log('</script>')`),
-          `<script>console.log('</script>')</script>`,
-        )
+      This example, if printed as HTML, would produce broken markup with a
+      broken script inside. Users must escape script content in an
+      appropriate language-specific way and then use `Raw`. We might be
+      unable to provide a generic solution because `<script>` allows an open
+      set of languages/syntaxes. Even just for JS and JSON, the correct way
+      to escape </script> depends on the syntactic context.
+      */
+      eqm(
+        E(`script`, {}, `console.log('</script>')`),
+        `<script>console.log('</script>')</script>`,
+      )
 
-        t.test(function test_dont_escape_raw() {
-          eqm(
-            E(`outer`, {}, new p.Raw(`<one>two</one>`)),
-            `<outer><one>two</one></outer>`,
-          )
-        })
+      eqm(
+        E(`div`, {}, ESC_SRC),
+        `<div>${ESC_OUT_TEXT}</div>`,
+      )
 
-        eqm(
-          E(`div`, {}, `<one>&"</one>`),
-          `<div>&lt;one&gt;&amp;"&lt;/one&gt;</div>`,
-        )
+      eqm(
+        E(`div`, {}, `<script></script>`),
+        `<div>&lt;script&gt;&lt;/script&gt;</div>`,
+      )
 
-        eqm(
-          E(`div`, {}, `<script></script>`),
-          `<div>&lt;script&gt;&lt;/script&gt;</div>`,
-        )
+      eqm(
+        E(`outer`, {}, E(`inner`, {}, ESC_SRC)),
+        `<outer><inner>${ESC_OUT_TEXT}</inner></outer>`,
+      )
 
-        eqm(
-          E(`outer`, {}, E(`inner`, {}, `<one>&"</one>`)),
-          `<outer><inner>&lt;one&gt;&amp;"&lt;/one&gt;</inner></outer>`,
-        )
+      eqm(
+        E(`div`, {}, {toString() {return `<script></script>`}}),
+        `<div>&lt;script&gt;&lt;/script&gt;</div>`,
+      )
+    })
 
-        eqm(
-          E(`div`, {}, {toString() {return `<script></script>`}}),
-          `<div>&lt;script&gt;&lt;/script&gt;</div>`,
-        )
+    t.test(function test_svg() {
+      t.test(function test_svg_strict_mode() {
+        t.throws(() => E(`svg`), SyntaxError, `namespace mismatch for element "svg": expected "http://www.w3.org/2000/svg", found "http://www.w3.org/1999/xhtml"`)
       })
 
-      t.test(function test_dont_escape_raw() {
-        t.test(function test_html() {
-          eqm(
-            E(`outer`, {}, new p.Raw(`<inner>text</inner>`)),
-            `<outer><inner>text</inner></outer>`,
+      t.test(function test_svg_lax_mode() {
+        ren.lax = true
+
+        t.is(E(`svg`).namespaceURI, `http://www.w3.org/2000/svg`)
+
+        const tar = E(`svg`, {},
+          E(`line`, {x1: `12`, y1: `8`, x2: `12`, y2: `12`}),
+        )
+
+        eqm(tar, `<svg><line x1="12" y1="8" x2="12" y2="12"></line></svg>`)
+        t.is(tar.namespaceURI, l.reqValidStr(p.NS_SVG))
+
+        if (ob.HAS_DOM) {
+          t.is(tar.firstChild.namespaceURI, l.reqValidStr(p.NS_SVG))
+        }
+        else {
+          t.eq(
+            tar.firstChild,
+            new ds.RawText(`<line x1="12" y1="8" x2="12" y2="12"></line>`),
           )
+        }
 
-          eqm(
-            E(`div`, {}, new p.Raw(`<a>one</a><b>two</b><c>three</c>`)),
-            `<div><a>one</a><b>two</b><c>three</c></div>`,
-          )
-        })
-
-        t.test(function test_svg_in_strict_mode() {
-          t.throws(() => E(`svg`), SyntaxError, `namespace mismatch for element "svg": expected "http://www.w3.org/2000/svg", found "http://www.w3.org/1999/xhtml"`)
-        })
-
-        t.test(function test_svg_in_lax_mode() {
-          ren.lax = true
-
-          t.is(E(`svg`).namespaceURI, `http://www.w3.org/2000/svg`)
-
-          eqm(
-            E(`svg`, {}, new p.Raw(`<line x1="12" y1="8" x2="12" y2="12"></line>`)),
-            `<svg><line x1="12" y1="8" x2="12" y2="12"></line></svg>`,
-          )
-
-          ren.lax = false
-        })
+        ren.lax = false
       })
     })
 
-    // Fragment's type and structure is different between `str.mjs` and
-    // `dom.mjs`, and tested separately.
     t.test(function test_fragment() {
-      t.test(function test_fragment_as_child() {
-        eqm(
-          E(`div`, {}, F(null, `one`, undefined, [`two`], [])),
-          `<div>onetwo</div>`,
-        )
+      const frag = new ren.Frag()
 
-        eqm(
-          E(`outer`, {}, F(F(F(E(`inner`, {}, `text`))))),
-          `<outer><inner>text</inner></outer>`,
-        )
-      })
+      E(frag, undefined,
+        null, `one`, undefined, [[`_`]], [`two`], [[[]]],
+        new env.Comment(`three`),
+      )
+
+      t.is(frag.textContent, `one_two`)
+
+      eqm(
+        E(`div`, {}, frag),
+        `<div>one_two<!--three--></div>`
+      )
+
+      // An unfortunate deviation which is not worth fixing.
+      if (ob.HAS_DOM) {
+        t.is(frag.textContent, ``)
+      }
+      else {
+        t.is(frag.textContent, `one_two`)
+      }
     })
   })
 
@@ -822,33 +841,28 @@ function testNonScalarPropLax(E, eqm) {
 }
 
 t.test(function test_Ren_dom_behaviors() {
-  t.test(function test_fragment() {
-    t.inst(F(), env.DocumentFragment)
-
-    t.is(
-      F(`one`, [10], E(`div`, {}, `two`, new Comment(`three`))).textContent,
-      `one10two`,
-    )
-  })
-
   // Parts of this function are tested elsewhere.
   // We only need a sanity check here.
-  t.test(function test_mutProps_basic() {
-    t.throws(() => ren.mutProps(), TypeError, `expected variant of isObj, got undefined`)
+  t.test(function test_replaceProps_basic() {
+    t.throws(
+      () => ren.replaceProps(),
+      TypeError,
+      `expected variant of isElement, got undefined`,
+    )
 
     t.test(function test_identity() {
       const node = E(`div`)
-      t.is(ren.mutProps(node), node)
+      t.is(ren.replaceProps(node), node)
     })
 
     const node = E(`div`, {class: `one`}, `two`)
     eqm(node, `<div class="one">two</div>`)
 
-    t.is(ren.mutProps(node, {class: `three`}), node)
+    t.is(ren.replaceProps(node, {class: `three`}), node)
     eqm(node, `<div class="three">two</div>`)
   })
 
-  t.test(function test_mutProps_fun() {
+  t.test(function test_replaceProps_fun() {
     const obs = ob.obsRef(`one`)
 
     ren.shed = undefined
@@ -872,7 +886,7 @@ t.test(function test_Ren_dom_behaviors() {
     ren.shed = ob.getUiShed()
   })
 
-  t.test(function test_mutProps_obs() {
+  t.test(function test_replaceProps_obs() {
     ren.shed = undefined
 
     {
@@ -912,51 +926,80 @@ t.test(function test_Ren_dom_behaviors() {
   // Parts of this function are tested elsewhere.
   // We only need a sanity check here.
   t.test(function test_mut() {
-    t.throws(() => ren.mut(), TypeError, `expected variant of isObj, got undefined`)
+    t.throws(() => ren.mut(), TypeError, `expected variant of isNode, got undefined`)
 
     t.test(function test_mut_identity() {
       const node = E(`div`)
       t.is(ren.mut(node), node)
     })
 
-    t.test(function test_mut_removes_children() {
-      eqm(
-        ren.mut(E(`div`, {class: `one`}, `two`), {class: `three`}),
-        `<div class="three"></div>`,
-      )
+    t.test(function test_mut_only_props() {
+      const node = E(`div`, {class: `one`}, `two`)
+      eqm(node, `<div class="one">two</div>`)
+
+      t.is(ren.mut(node, {class: `three`}), node)
+      eqm(node, `<div class="three">two</div>`)
+
+      // Ignore nil props.
+      t.is(ren.mut(node, undefined), node)
+      eqm(node, `<div class="three">two</div>`)
     })
 
-    t.test(function test_mut_replaces_children() {
-      eqm(
-        ren.mut(E(`div`, {class: `one`}, `two`), {class: `three`}, `four`),
-        `<div class="three">four</div>`,
-      )
+    t.test(function test_mut_only_chi() {
+      const node = E(`div`, {class: `one`}, `two`)
+      eqm(node, `<div class="one">two</div>`)
+
+      t.is(ren.mut(node, undefined, `three`), node)
+      eqm(node, `<div class="one">three</div>`)
+
+      t.is(ren.mut(node, undefined, `three`, `_`, `four`), node)
+      eqm(node, `<div class="one">three_four</div>`)
+
+      t.is(ren.mut(node, undefined, undefined), node)
+      eqm(node, `<div class="one"></div>`)
+    })
+
+    t.test(function test_mut_combined() {
+      const node = E(`div`)
+      eqm(node, `<div></div>`)
+
+      t.is(ren.mut(node, {class: `one`}, `two`), node)
+      eqm(node, `<div class="one">two</div>`)
+
+      t.is(ren.mut(node, {class: `three`}, `four`, `_`, `five`), node)
+      eqm(node, `<div class="three">four_five</div>`)
     })
   })
 
-  t.test(function test_child_stealing() {
-    t.test(function test_stealing_from_self() {
-      const one = new Text(`one`)
-      const two = new Text(`two`)
-      const three = new Text(`three`)
+  t.test(function test_moving_children() {
+    t.test(function test_moving_between_one_node() {
+      const one = new env.Text(`one`)
+      const two = new env.Text(`two`)
+      const three = new env.Text(`three`)
 
       const tar = E(`div`)
       tar.appendChild(one)
       tar.appendChild(two)
       tar.appendChild(three)
 
-      // Flat structure is important for this test.
       t.eq([...tar.childNodes], [one, two, three])
 
-      ren.mutChi(tar, three, tar.childNodes)
+      // This input is "ambiguous": the node `three` is provided more than once.
+      ren.replaceChi(tar, [three, tar.childNodes])
 
-      eqm(tar, `<div>threeonetwo</div>`)
+      eqm(tar, `<div>onetwothree</div>`)
+      t.eq([...tar.childNodes], [one, two, three])
+
+      ren.replaceChi(tar, [tar.childNodes, one])
+
+      eqm(tar, `<div>twothreeone</div>`)
+      t.eq([...tar.childNodes], [two, three, one])
     })
 
-    t.test(function test_stealing_from_another() {
-      const one = new Text(`one`)
-      const two = new Text(`two`)
-      const three = new Text(`three`)
+    t.test(function test_moving_between_two_nodes() {
+      const one = new env.Text(`one`)
+      const two = new env.Text(`two`)
+      const three = new env.Text(`three`)
 
       const prev = E(`div`, {}, one, two, three)
       const next = E(`p`, {}, prev.childNodes)
@@ -974,7 +1017,6 @@ t.test(function test_Ren_dom_behaviors() {
 
     t.throws(() => ren.mutText(node, {}), TypeError, `unable to convert {} to string`)
     t.throws(() => ren.mutText(node, []), TypeError, `unable to convert [] to string`)
-    t.throws(() => ren.mutText(node, new p.Raw()), TypeError, `unable to convert [object Raw {outerHTML: ""}] to string`)
 
     t.is(ren.mutText(node), node)
     eqm(node, `<div class="one"></div>`)
@@ -1022,40 +1064,16 @@ t.test(function test_Ren_dom_behaviors() {
     )
   })
 
-  t.test(function test_replace() {
-    t.throws(() => ren.replace(), TypeError, `expected variant of isNode, got undefined`)
-    t.throws(() => ren.replace(E(`div`)), TypeError, `properties of null`)
-
-    {
-      const tar = E(`div`, {}, new Text(`text`))
-      eqm(tar, `<div>text</div>`)
-      ren.replace(tar.firstChild, undefined)
-      eqm(tar, `<div></div>`)
-    }
-
-    {
-      const one = E(`one`)
-      const two = E(`two`)
-      const three = E(`three`)
-      const tar = E(`div`, {}, one, two, three)
-
-      eqm(tar, `<div><one></one><two></two><three></three></div>`)
-
-      ren.replace(two, `four`, null, `five`)
-      eqm(tar, `<div><one></one>fourfive<three></three></div>`)
-    }
-  })
-
   t.test(function test_chi_fun_obs() {
-    const obs0 = ob.obsRef()
-
     t.test(function test_fun_non_reactive() {
       ren.shed = undefined
 
-      const tar = E(`div`, {}, () => obs0.val)
-      eqm(tar, `<div></div>`)
-      obs0.val = 10
-      eqm(tar, `<div></div>`)
+      const obs = ob.obsRef(10)
+      const tar = E(`div`, {}, () => obs.val)
+      eqm(tar, `<div>10</div>`)
+
+      obs.val = 20
+      eqm(tar, `<div>10</div>`)
 
       ren.shed = ob.getUiShed()
     })
@@ -1063,18 +1081,20 @@ t.test(function test_Ren_dom_behaviors() {
     t.test(function test_obs_non_reactive() {
       ren.shed = undefined
 
-      const tar = E(`div`, {}, obs0)
-      eqm(tar, `<div></div>`)
-      obs0.val = 10
-      eqm(tar, `<div></div>`)
+      const obs = ob.obsRef(10)
+      const tar = E(`div`, {}, obs)
+      eqm(tar, `<div>10</div>`)
+
+      obs.val = 20
+      eqm(tar, `<div>10</div>`)
 
       ren.shed = ob.getUiShed()
     })
 
     t.test(function test_reactive() {
       ren.shed = ob.ShedSync.main
-      obs0.val = undefined
 
+      const obs0 = ob.obsRef()
       const tar = E(`div`, {}, () => obs0.val)
       eqm(tar, `<div></div>`)
 
@@ -1153,34 +1173,6 @@ t.test(function test_Ren_custom_element() {
     new SomeElem().init(),
     `<elem-a5425a id="one" class="two">three</elem-a5425a>`,
   )
-})
-
-t.test(function test_Ren_node() {
-  t.is(ren.node(), null)
-
-  function same(val) {
-    t.is(ren.node(val), val)
-    t.isnt(ren.node(val, val), val)
-  }
-
-  same(new Text(`one`))
-  same(new Comment(`one`))
-  same(ren.elemHtml(`span`))
-  same(ren.frag())
-
-  function frag(src, exp) {
-    const tar = ren.node(...src)
-    t.inst(tar, env.DocumentFragment)
-    t.is(tar.textContent, exp)
-  }
-
-  frag([undefined], ``)
-  frag([undefined, null], ``)
-  frag([``], ``)
-  frag([`one`], `one`)
-  frag([`one`, ``], `one`)
-  frag([`one`, `_`], `one_`)
-  frag([`one`, `_`, `two`], `one_two`)
 })
 
 t.test(function test_overview_html_document() {
