@@ -9,10 +9,11 @@ import {eqm} from './prax_test.mjs'
 
 const dom = ds.document.implementation
 function unreachable() {throw Error(`unreachable`)}
-const unstringables = [undefined, null, {}, [], Promise.resolve(), unreachable]
+const unstringablesLax = [{}, [], Promise.resolve(), unreachable]
+const unstringablesStrict = [undefined, null, ...unstringablesLax]
 
-function failUnstringable(fun) {
-  for (const val of unstringables) {
+function failUnstringable(fun, src = unstringablesStrict) {
+  for (const val of src) {
     t.throws(() => {fun(val)}, TypeError, `unable to convert ${l.show(val)} to string`)
   }
 }
@@ -1354,7 +1355,7 @@ t.test(function test_Element_hidden() {
 t.test(function test_Element_tabIndex() {
   const tar = new ds.Element()
 
-  failUnstringable(val => tar.tabIndex = val)
+  failUnstringable((val => tar.tabIndex = val), unstringablesLax)
 
   function test(prop, attr) {
     t.is(tar.tabIndex, prop)
@@ -1383,6 +1384,15 @@ t.test(function test_Element_tabIndex() {
 
   tar.tabIndex = -2.3
   test(-2, `-2`)
+
+  tar.tabIndex = undefined
+  test(0, `0`)
+
+  tar.removeAttribute(`tabindex`)
+  test(0, null)
+
+  tar.tabIndex = null
+  test(0, `0`)
 
   tar.setAttribute(`tabindex`, `12.34`)
   test(12, `12.34`)

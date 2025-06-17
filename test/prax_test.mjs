@@ -985,12 +985,12 @@ t.test(function test_Ren_dom_behaviors() {
       t.eq([...tar.childNodes], [one, two, three])
 
       // This input is "ambiguous": the node `three` is provided more than once.
-      ren.replaceChi(tar, [three, tar.childNodes])
+      ren.replaceChi(tar, three, tar.childNodes)
 
       eqm(tar, `<div>onetwothree</div>`)
       t.eq([...tar.childNodes], [one, two, three])
 
-      ren.replaceChi(tar, [tar.childNodes, one])
+      ren.replaceChi(tar, tar.childNodes, one)
 
       eqm(tar, `<div>twothreeone</div>`)
       t.eq([...tar.childNodes], [two, three, one])

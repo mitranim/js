@@ -102,7 +102,7 @@ export class Ren extends o.MixMain(l.Emp) {
   mut(tar, props, ...chi) {
     d.reqNode(tar)
     if (l.isSome(props)) this.replaceProps(tar, props)
-    if (chi.length) this.replaceChi(tar, chi)
+    if (chi.length) this.replaceChi(tar, ...chi)
     return tar
   }
 
@@ -240,14 +240,18 @@ export class Ren extends o.MixMain(l.Emp) {
     return this.mutAttr(tar, key, val)
   }
 
+  clear(tar) {
+    d.reqNode(tar).textContent = ``
+    return tar
+  }
+
   mutText(tar, src) {
     d.reqNode(tar).textContent = l.laxStr(this.renderOpt(src))
     return tar
   }
 
-  replaceChi(tar, chi) {
+  replaceChi(tar, ...chi) {
     d.reqNode(tar)
-    l.reqArr(chi)
 
     if (isVac(chi)) {
       this.clear(tar)
@@ -260,23 +264,28 @@ export class Ren extends o.MixMain(l.Emp) {
     return tar
   }
 
-  clear(tar) {
-    d.reqNode(tar).textContent = ``
+  appendChi(tar, ...chi) {
+    tar.append(...this.chi(tar, chi))
+    return tar
+  }
+
+  prependChi(tar, ...chi) {
+    tar.prepend(...this.chi(tar, chi))
     return tar
   }
 
   chi(tar, chi) {
     const buf = []
-    this.appendChi(buf, tar, chi)
+    this.bufAppendChi(buf, tar, chi)
     return buf
   }
 
-  appendChi(buf, tar, src) {
-    if (l.isFun(src)) return void this.appendFun(buf, tar, src)
-    if (ob.isObsRef(src)) return void this.appendRef(buf, tar, src)
+  bufAppendChi(buf, tar, src) {
+    if (l.isFun(src)) return void this.bufAppendFun(buf, tar, src)
+    if (ob.isObsRef(src)) return void this.bufAppendRef(buf, tar, src)
     if (isNodable(src)) src = src.toNode()
     if (d.isNode(src)) return void buf.push(src)
-    if (l.isList(src)) return void this.appendList(buf, tar, src)
+    if (l.isList(src)) return void this.bufAppendList(buf, tar, src)
 
     src = this.renderOpt(src)
     if (!src) return undefined
@@ -286,26 +295,28 @@ export class Ren extends o.MixMain(l.Emp) {
     return void buf.push(src)
   }
 
-  appendFun(buf, tar, src) {
+  bufAppendFun(buf, tar, src) {
     const {shed} = this
-    if (!shed) return this.appendChi(buf, tar, src.call(tar, tar))
-    return this.appendRecNode(buf, tar, src, this.RecNodeFun)
+    if (!shed) return this.bufAppendChi(buf, tar, src.call(tar, tar))
+    return this.bufAppendRecNode(buf, tar, src, this.RecNodeFun)
   }
 
-  appendRef(buf, tar, src) {
+  bufAppendRef(buf, tar, src) {
     const {shed} = this
-    if (!shed) return this.appendChi(buf, tar, l.derefAll(src))
-    return this.appendRecNode(buf, tar, src, this.RecNodeRef)
+    if (!shed) return this.bufAppendChi(buf, tar, l.derefAll(src))
+    return this.bufAppendRecNode(buf, tar, src, this.RecNodeRef)
   }
 
-  appendRecNode(buf, tar, src, cls) {
+  bufAppendRecNode(buf, tar, src, cls) {
     const out = new cls(this, tar, src)
     const chi = out.init()
     buf.push(out)
     if (chi) buf.push(...chi)
   }
 
-  appendList(buf, tar, src) {for (src of src) this.appendChi(buf, tar, src)}
+  bufAppendList(buf, tar, src) {
+    for (src of src) this.bufAppendChi(buf, tar, src)
+  }
 
   loop(tar, src, fun) {
     if (l.isNil(src)) return tar

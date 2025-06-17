@@ -43,7 +43,7 @@ Rendering is done via `Ren`. You must create an instance, which should be a sing
 Browser example:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
 
 const {E} = p.Ren.main
 
@@ -76,8 +76,8 @@ console.log(elem.outerHTML)
 Usage with custom elements:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/prax.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/dom_reg.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_reg.mjs'
 
 const {E} = p.Ren.main
 
@@ -95,8 +95,8 @@ document.body.append(
 Reactivity:
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/obs.mjs'
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/prax.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/obs.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
 
 const {E} = p.Ren.main
 const obs0 = ob.obs({val: `hello`})
@@ -145,8 +145,8 @@ E(document.body, {}, undefined)
 For SSR (server-side rendering), Prax needs our lightweight DOM shim:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_global_shim.mjs'
 
 const ren = new p.Ren(dg.global)
 const {E} = ren
@@ -165,11 +165,11 @@ console.log(elem.outerHTML)
 For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global `document` and pass it to `Ren`. The rest will just work.
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
 
 // Your bundler or importmap should choose the right one.
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/dom_global_shim.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/dom_global_native.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_global_shim.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_global_native.mjs'
 
 const ren = new p.Ren(dg.global)
 const {E} = ren
@@ -184,8 +184,8 @@ const elem = E(`div`, {id: `main`, class: `outer`},
 Rendering a complete document with doctype:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.71/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_global_shim.mjs'
 
 const ren = new p.Ren(dg.global)
 const {E} = ren
@@ -234,24 +234,24 @@ The following APIs are exported but undocumented. Check [prax.mjs](../prax.mjs).
   * [`const BOOL`](../prax.mjs#L19)
   * [`const VOID`](../prax.mjs#L27)
   * [`class Ren`](../prax.mjs#L33)
-  * [`function MixInitRun`](../prax.mjs#L369)
-  * [`class MixinInitRun`](../prax.mjs#L371)
-  * [`class RecPropFun`](../prax.mjs#L390)
-  * [`class RecPropRef`](../prax.mjs#L396)
-  * [`function MixRecNode`](../prax.mjs#L419)
-  * [`class MixinRecNode`](../prax.mjs#L421)
-  * [`function MixRecNodeFun`](../prax.mjs#L492)
-  * [`class MixinRecNodeFun`](../prax.mjs#L494)
-  * [`function MixRecNodeRef`](../prax.mjs#L519)
-  * [`class MixinRecNodeRef`](../prax.mjs#L521)
-  * [`class PropBui`](../prax.mjs#L598)
-  * [`const DOCTYPE_HTML`](../prax.mjs#L736)
-  * [`function isNodable`](../prax.mjs#L738)
-  * [`function reqNodable`](../prax.mjs#L739)
-  * [`function isDocument`](../prax.mjs#L741)
-  * [`function optDocument`](../prax.mjs#L749)
-  * [`function reqDocument`](../prax.mjs#L750)
-  * [`function isDomEnv`](../prax.mjs#L752)
-  * [`function optDomEnv`](../prax.mjs#L761)
-  * [`function reqDomEnv`](../prax.mjs#L762)
-  * [`function isNamespaced`](../prax.mjs#L764)
+  * [`function MixInitRun`](../prax.mjs#L380)
+  * [`class MixinInitRun`](../prax.mjs#L382)
+  * [`class RecPropFun`](../prax.mjs#L401)
+  * [`class RecPropRef`](../prax.mjs#L407)
+  * [`function MixRecNode`](../prax.mjs#L430)
+  * [`class MixinRecNode`](../prax.mjs#L432)
+  * [`function MixRecNodeFun`](../prax.mjs#L503)
+  * [`class MixinRecNodeFun`](../prax.mjs#L505)
+  * [`function MixRecNodeRef`](../prax.mjs#L530)
+  * [`class MixinRecNodeRef`](../prax.mjs#L532)
+  * [`class PropBui`](../prax.mjs#L609)
+  * [`const DOCTYPE_HTML`](../prax.mjs#L747)
+  * [`function isNodable`](../prax.mjs#L749)
+  * [`function reqNodable`](../prax.mjs#L750)
+  * [`function isDocument`](../prax.mjs#L752)
+  * [`function optDocument`](../prax.mjs#L760)
+  * [`function reqDocument`](../prax.mjs#L761)
+  * [`function isDomEnv`](../prax.mjs#L763)
+  * [`function optDomEnv`](../prax.mjs#L772)
+  * [`function reqDomEnv`](../prax.mjs#L773)
+  * [`function isNamespaced`](../prax.mjs#L775)

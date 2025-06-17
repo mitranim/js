@@ -482,8 +482,10 @@ export class Element extends ElementParent {
   // TODO: default -1 for non-interactive elements.
   get tabIndex() {return this.getAttribute(`tabindex`) | 0}
 
+  // In the native DOM API, `.tabIndex = undefined` and `.tabIndex = null`
+  // actually make it 0. We support the same.
   set tabIndex(val) {
-    this.setAttribute(`tabindex`, (l.isNum(val) ? val : l.render(val)) | 0)
+    this.setAttribute(`tabindex`, (l.isNum(val) ? val : l.renderLax(val)) | 0)
   }
 
   get innerHTML() {return l.laxStr(this[CHILD_NODES]?.reduce(appendInnerHtml, ``))}
