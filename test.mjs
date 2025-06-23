@@ -636,7 +636,7 @@ export function inst(val, cls, ...info) {
 Asserts that the given value is either nil or an instance of the given class.
 The argument order matches `instanceof` and `l.isInst`.
 */
-export function optInst(val, cls) {
+export function instOpt(val, cls) {
   l.reqCls(cls)
   if (l.isNil(val)) return
   inst(val, cls)

@@ -103,15 +103,6 @@ export class TypedMap extends Bmap {
   set(key, val) {return super.set(this.reqKey(key), this.reqVal(val))}
 }
 
-/*
-TODO better name. Restricts key type to strings, for compatibility with plain
-dicts, without restricting value types.
-*/
-export class CompatMap extends TypedMap {
-  reqKey(key) {return l.reqStr(key)}
-  reqVal(val) {return val}
-}
-
 export class ClsMap extends TypedMap {
   get cls() {return Object}
   reqVal(val) {return l.toInst(val, this.cls)}

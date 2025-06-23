@@ -24,13 +24,16 @@ EXT_TO_MIME_TYPE[`.png`] = `image/png`
 EXT_TO_MIME_TYPE[`.svg`] = `image/svg+xml`
 EXT_TO_MIME_TYPE[`.tif`] = `image/tiff`
 EXT_TO_MIME_TYPE[`.tiff`] = `image/tiff`
+EXT_TO_MIME_TYPE[`.txt`] = `text/plain`
 EXT_TO_MIME_TYPE[`.xml`] = `text/xml`
 EXT_TO_MIME_TYPE[`.zip`] = `application/zip`
 EXT_TO_MIME_TYPE[`.webp`] = `image/webp`
 EXT_TO_MIME_TYPE[`.woff`] = `font/woff`
 EXT_TO_MIME_TYPE[`.woff2`] = `font/woff2`
 
-export function guessContentType(val) {return EXT_TO_MIME_TYPE[p.posix.ext(val)]}
+export function guessContentType(val) {
+  return EXT_TO_MIME_TYPE[p.posix.ext(val).toLowerCase()]
+}
 
 export class DirBase extends l.Emp {
   urlPathToFsPath() {return undefined}

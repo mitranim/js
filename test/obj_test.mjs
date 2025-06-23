@@ -347,7 +347,7 @@ t.test(function test_struct_specs() {
       t.throws(
         failing,
         TypeError,
-        `invalid definition of "one" in [function Cls]: expected nil or function, got ` + l.show(val),
+        `invalid definition of "one" in [function Cls {spec: {one: ${l.show(val)}}}]: expected nil or function, got ` + l.show(val),
       )
     }
 
@@ -651,7 +651,7 @@ function testSpecFieldCollision(Spec) {
   t.throws(
     () => new Spec(One),
     TypeError,
-    `property collision on "one" in [function One]`,
+    `property collision on "one" in [function One {spec: {one: [function reqIntPos]}}]`,
   )
 
   class Two extends One {}
@@ -667,7 +667,7 @@ function testSpecFieldCollision(Spec) {
   t.throws(
     () => new Spec(Three),
     TypeError,
-    `property collision on "one" in [function Three]`,
+    `property collision on "one" in [function Three {spec: {one: [function reqIntPos]}}]`,
   )
 
   class Four extends One {static spec = {
@@ -689,7 +689,7 @@ function testSpecFieldCollision(Spec) {
   t.throws(
     () => new Spec(Five),
     TypeError,
-    `property collision on "one" in [function Five]`,
+    `property collision on "one" in [function Five {spec: {one: [function reqIntPos]}}]`,
   )
 
   class Six extends l.Emp {
@@ -700,7 +700,7 @@ function testSpecFieldCollision(Spec) {
   t.throws(
     () => new Spec(Six),
     TypeError,
-    `property collision on "one" in [function Six]`,
+    `property collision on "one" in [function Six {spec: {one: [function reqIntPos]}}]`,
   )
 }
 

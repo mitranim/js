@@ -374,7 +374,7 @@ export function group(val, fun) {
   const out = l.Emp()
   for (val of values(val)) {
     const key = fun(val)
-    if (l.isKey(key)) (out[key] || (out[key] = [])).push(val)
+    if (l.isKey(key)) (out[key] ||= []).push(val)
   }
   return out
 }

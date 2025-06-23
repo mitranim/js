@@ -3,7 +3,6 @@ import * as itc from './internal_test_coll.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as p from '../prax.mjs'
-import * as o from '../obj.mjs'
 import * as ds from '../dom_shim.mjs'
 
 /* Util */
@@ -23,8 +22,8 @@ function each(val, fun) {
 function makeDictInline() {return {one: 10, two: 20, three: 30, class: `one two three`}}
 function makeDictSpread() {return {...prop0, ...prop1, ...prop2}}
 
-function makePropBuiMutOne() {return P().mut(longDict)}
-function makePropBuiMutMany() {return P().mut(prop0).mut(prop1).mut(prop2)}
+function makePropBuiWithOne() {return P().with(longDict)}
+function makePropBuiWithMany() {return P().with(prop0).with(prop1).with(prop2)}
 
 function makePropBuiBuildPartial() {
   return P({one: 10, two: 20, three: 30, class: `one`}).cls(`two three`)
@@ -54,8 +53,8 @@ t.bench(function bench_props_A_mutable_set() {l.nop(A.href(`/one`))})
 
 t.bench(function bench_props_make_dict_inline() {l.nop(makeDictInline())})
 t.bench(function bench_props_make_dict_spread() {l.nop(makeDictSpread())})
-t.bench(function bench_props_make_PropBui_mut_one() {l.nop(makePropBuiMutOne())})
-t.bench(function bench_props_make_PropBui_mut_many() {l.nop(makePropBuiMutMany())})
+t.bench(function bench_props_make_PropBui_mut_one() {l.nop(makePropBuiWithOne())})
+t.bench(function bench_props_make_PropBui_mut_many() {l.nop(makePropBuiWithMany())})
 t.bench(function bench_props_make_PropBui_build_partial() {l.nop(makePropBuiBuildPartial())})
 t.bench(function bench_props_make_PropBui_build_full() {l.nop(makePropBuiBuildFull())})
 
@@ -79,38 +78,16 @@ and requires method chaining, which requires adding methods to native
 prototypes, creating dangers of collisions in the future.
 */
 
-const PH_REN_makeElemHtml = l.Emp()
-PH_REN_makeElemHtml.get = function get(ren, key) {return ren.makeElem(key)}
+t.bench(function bench_Ren_elem_empty() {l.nop(ren.elem(`span`))})
+t.bench(function bench_Ren_E_empty() {l.nop(E(`span`))})
 
-const EP = new Proxy(ren, PH_REN_makeElemHtml)
+t.bench(function bench_Ren_elem_props() {l.nop(ren.elem(`span`, {class: `cls`}))})
+t.bench(function bench_Ren_E_props() {l.nop(E(`span`, {class: `cls`}))})
 
-o.priv(ds.Element.prototype, `ren`, ren)
+t.bench(function bench_Ren_elem_chi() {l.nop(ren.elem(`span`, {chi: `text`}))})
+t.bench(function bench_Ren_E_chi() {l.nop(E(`span`, {chi: `text`}))})
 
-o.priv(ds.Element.prototype, `props`, function props(src) {
-  return this.ren.mutProps(this, src)
-})
-
-o.priv(ds.Element.prototype, `chi`, function chi(...src) {
-  return this.ren.mutChi(this, ...src)
-})
-
-t.bench(function bench_Ren_elem_make_normal() {l.nop(ren.makeElemHtml(`span`))})
-t.bench(function bench_Ren_elem_make_proxy() {l.nop(EP.span)})
-
-t.bench(function bench_Ren_elem_empty_normal() {l.nop(ren.elemHtml(`span`))})
-t.bench(function bench_Ren_elem_empty_bound() {l.nop(E(`span`))})
-t.bench(function bench_Ren_elem_empty_proxy() {l.nop(EP.span)})
-
-t.bench(function bench_Ren_elem_props_normal() {l.nop(ren.elemHtml(`span`, {class: `cls`}))})
-t.bench(function bench_Ren_elem_props_bound() {l.nop(E(`span`, {class: `cls`}))})
-t.bench(function bench_Ren_elem_props_proxy() {l.nop(EP.span.props({class: `cls`}))})
-
-t.bench(function bench_Ren_elem_chi_normal() {l.nop(ren.elemHtml(`span`, undefined, `text`))})
-t.bench(function bench_Ren_elem_chi_bound() {l.nop(E(`span`, undefined, `text`))})
-t.bench(function bench_Ren_elem_chi_proxy() {l.nop(EP.span.chi(`text`))})
-
-t.bench(function bench_Ren_elem_props_chi_normal() {l.nop(ren.elemHtml(`span`, {class: `cls`}, `text`))})
-t.bench(function bench_Ren_elem_props_chi_bound() {l.nop(E(`span`, {class: `cls`}, `text`))})
-t.bench(function bench_Ren_elem_props_chi_proxy() {l.nop(EP.span.props({class: `cls`}).chi(`text`))})
+t.bench(function bench_Ren_elem_props_chi() {l.nop(ren.elem(`span`, {class: `cls`, chi: `text`}))})
+t.bench(function bench_Ren_E_props_chi() {l.nop(E(`span`, {class: `cls`, chi: `text`}))})
 
 if (import.meta.main) t.deopt(), t.benches()

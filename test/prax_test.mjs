@@ -133,9 +133,9 @@ t.test(function test_PropBui_A() {
     test(A.href(`/one`).cls(`two`), {href: `/one`, class: `two`})
   })
 
-  t.test(function test_mut() {
+  t.test(function test_with() {
     function none(src) {
-      const out = A.mut(src)
+      const out = A.with(src)
       t.is(out, A)
       t.is(out[l.VAL], undefined)
     }
@@ -145,7 +145,7 @@ t.test(function test_PropBui_A() {
     none(null)
 
     function some(src) {
-      const out = A.mut(src)
+      const out = A.with(src)
       t.isnt(out, A)
       testDerefOwn(out, {...src})
     }
@@ -153,56 +153,88 @@ t.test(function test_PropBui_A() {
     some({})
     some({one: 10})
     some({one: 10, two: 20})
+
+    function copy(src) {
+      const one = A.with(src)
+      const two = A.with(one)
+      t.isnt(one, A)
+      t.isnt(two, A)
+      t.isnt(one, two)
+      testDerefOwn(one, {...src})
+      testDerefOwn(two, {...src})
+      t.isnt(l.deref(one), l.deref(two))
+    }
+
+    copy({})
+    copy({one: 10})
+    copy({one: 10, two: 20})
+
+    function fail(src) {
+      t.throws(
+        () => A.with(src),
+        TypeError,
+        `expected variant of isRec, got ${l.show(src)}`,
+      )
+    }
+
+    fail(true)
+    fail(10)
+    fail(`one`)
+    fail([])
   })
 })
 
-t.test(function test_Ren_elemHtml_invalid() {
+t.test(function test_Ren_elem_invalid() {
   t.test(function test_invalid_tag() {
-    function fail(src, exp) {t.throws(() => ren.elemHtml(src), TypeError, exp)}
+    function fail(src) {
+      t.throws(
+        () => ren.elem(src),
+        TypeError,
+        `expected variant of isStr, got ${l.show(src)}`,
+      )
+    }
 
-    fail(undefined, `unable to convert undefined to HTML element`)
-    fail(null, `unable to convert null to HTML element`)
-    fail(true, `unable to convert true to HTML element`)
-    fail(123, `unable to convert 123 to HTML element`)
-    fail(E, `unable to convert [function bound E] to HTML element`)
-    fail({}, `expected variant of isNode, got {}`)
-    fail({one: 123}, `expected variant of isNode, got {one: 123}`)
-    fail({toString() {return `div`}}, `expected variant of isNode, got {toString: [function toString]}`)
+    fail(undefined)
+    fail(null)
+    fail(true)
+    fail(1230)
+    fail(E)
+    fail({})
+    fail({one: 123})
+    fail({toString() {return `div`}})
   })
 
   t.test(function test_invalid_props() {
-    t.throws(() => ren.elemHtml(`div`, 10),                          TypeError, `expected variant of isRec, got 10`)
-    t.throws(() => ren.elemHtml(`div`, `str`),                       TypeError, `expected variant of isRec, got "str"`)
-    t.throws(() => ren.elemHtml(`div`, {nop: l.nop}),                TypeError, `unable to convert property "nop" [function nop] to string`)
-    t.throws(() => ren.elemHtml(`div`, []),                          TypeError, `expected variant of isRec, got []`)
-    t.throws(() => ren.elemHtml(`div`, new String()),                TypeError, `expected variant of isRec, got [object String ""]`)
-    t.throws(() => ren.elemHtml(`div`, {attributes: 10}),            TypeError, `expected variant of isRec, got 10`)
-    t.throws(() => ren.elemHtml(`div`, {attributes: `str`}),         TypeError, `expected variant of isRec, got "str"`)
-    t.throws(() => ren.elemHtml(`div`, {attributes: []}),            TypeError, `expected variant of isRec, got []`)
-    t.throws(() => ren.elemHtml(`div`, {class: []}),                 TypeError, `unable to convert property "class" [] to string`)
-    t.throws(() => ren.elemHtml(`div`, {className: []}),             TypeError, `unable to convert property "className" [] to string`)
-    t.throws(() => ren.elemHtml(`div`, {class: {}}),                 TypeError, `unable to convert property "class" {} to string`)
-    t.throws(() => ren.elemHtml(`div`, {className: {}}),             TypeError, `unable to convert property "className" {} to string`)
-    t.throws(() => ren.elemHtml(`div`, {class: new class {}()}),     TypeError, `unable to convert property "class" [object] to string`)
-    t.throws(() => ren.elemHtml(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" [object] to string`)
-    t.throws(() => ren.elemHtml(`div`, {style: 10}),                 TypeError, `unable to convert 10 to style`)
-    t.throws(() => ren.elemHtml(`div`, {style: []}),                 TypeError, `unable to convert [] to style`)
-    t.throws(() => ren.elemHtml(`div`, {dataset: 10}),               TypeError, `expected variant of isRec, got 10`)
-    t.throws(() => ren.elemHtml(`div`, {dataset: `str`}),            TypeError, `expected variant of isRec, got "str"`)
-    t.throws(() => ren.elemHtml(`div`, {dataset: []}),               TypeError, `expected variant of isRec, got []`)
+    t.throws(() => ren.elem(`div`, 10),                          TypeError, `expected variant of isRec, got 10`)
+    t.throws(() => ren.elem(`div`, `str`),                       TypeError, `expected variant of isRec, got "str"`)
+    t.throws(() => ren.elem(`div`, []),                          TypeError, `expected variant of isRec, got []`)
+    t.throws(() => ren.elem(`div`, new String()),                TypeError, `expected variant of isRec, got [object String ""]`)
+    t.throws(() => ren.elem(`div`, {attributes: 10}),            TypeError, `expected variant of isRec, got 10`)
+    t.throws(() => ren.elem(`div`, {attributes: `str`}),         TypeError, `expected variant of isRec, got "str"`)
+    t.throws(() => ren.elem(`div`, {attributes: []}),            TypeError, `expected variant of isRec, got []`)
+    t.throws(() => ren.elem(`div`, {class: []}),                 TypeError, `unable to convert property "class" [] to string`)
+    t.throws(() => ren.elem(`div`, {className: []}),             TypeError, `unable to convert property "className" [] to string`)
+    t.throws(() => ren.elem(`div`, {class: {}}),                 TypeError, `unable to convert property "class" {} to string`)
+    t.throws(() => ren.elem(`div`, {className: {}}),             TypeError, `unable to convert property "className" {} to string`)
+    t.throws(() => ren.elem(`div`, {class: new class {}()}),     TypeError, `unable to convert property "class" [object] to string`)
+    t.throws(() => ren.elem(`div`, {className: new class {}()}), TypeError, `unable to convert property "className" [object] to string`)
+    t.throws(() => ren.elem(`div`, {style: 10}),                 TypeError, `unable to convert 10 to style`)
+    t.throws(() => ren.elem(`div`, {style: []}),                 TypeError, `unable to convert [] to style`)
+    t.throws(() => ren.elem(`div`, {dataset: 10}),               TypeError, `expected variant of isRec, got 10`)
+    t.throws(() => ren.elem(`div`, {dataset: `str`}),            TypeError, `expected variant of isRec, got "str"`)
+    t.throws(() => ren.elem(`div`, {dataset: []}),               TypeError, `expected variant of isRec, got []`)
   })
 })
 
 t.test(function test_Ren_E_basic() {
   t.test(function test_tag_string() {
-    eqm(E(`span`),                        `<span></span>`)
-    eqm(E(`span`, null),                  `<span></span>`)
-    eqm(E(`span`, null, null),            `<span></span>`)
-    eqm(E(`span`, null, null, null),      `<span></span>`)
-    eqm(E(`span`, null, `one`),           `<span>one</span>`)
-    eqm(E(`span`, null, `one`, `two`),    `<span>onetwo</span>`)
-    eqm(E(`span`, {one: `two`}),          `<span one="two"></span>`)
-    eqm(E(`span`, {one: `two`}, `three`), `<span one="two">three</span>`)
+    eqm(E(`span`),                             `<span></span>`)
+    eqm(E(`span`, null),                       `<span></span>`)
+    eqm(E(`span`, {chi: `one`}),               `<span>one</span>`)
+    eqm(E(`span`, {children: `one`}),          `<span>one</span>`)
+    eqm(E(`span`, {chi: [`one`, `two`]}),      `<span>onetwo</span>`)
+    eqm(E(`span`, {one: `two`}),               `<span one="two"></span>`)
+    eqm(E(`span`, {one: `two`, chi: `three`}), `<span one="two">three</span>`)
   })
 
   t.test(function test_element_mut_props_or_chi() {
@@ -217,27 +249,30 @@ t.test(function test_Ren_E_basic() {
     eqm(node, `<span one="two"></span>`)
 
     t.is(E(node, {three: `four`}), node)
+    eqm(node, `<span one="two" three="four"></span>`)
+
+    // No change.
+    t.is(E(node, {one: `two`, three: `four`}), node)
+    eqm(node, `<span one="two" three="four"></span>`)
+
+    // No change.
+    t.is(E(node, undefined), node)
+    eqm(node, `<span one="two" three="four"></span>`)
+
+    t.is(E(node, {one: undefined}), node)
     eqm(node, `<span three="four"></span>`)
 
-    t.is(E(node, {one: `two`, three: `four`}), node)
-    eqm(node, `<span three="four" one="two"></span>`)
+    t.is(E(node, {chi: [`five`]}), node)
+    eqm(node, `<span three="four">five</span>`)
 
-    t.is(E(node, undefined), node)
-    eqm(node, `<span three="four" one="two"></span>`)
+    // No change.
+    t.is(E(node, {}), node)
+    eqm(node, `<span three="four">five</span>`)
 
-    t.is(E(node, undefined, `five`), node)
-    eqm(node, `<span three="four" one="two">five</span>`)
+    t.is(E(node, {chi: `eight`}), node)
+    eqm(node, `<span three="four">eight</span>`)
 
-    t.is(E(node, {six: `seven`}), node)
-    eqm(node, `<span six="seven">five</span>`)
-
-    t.is(E(node, undefined, undefined), node)
-    eqm(node, `<span six="seven"></span>`)
-
-    t.is(E(node, null, `eight`), node)
-    eqm(node, `<span six="seven">eight</span>`)
-
-    t.is(E(node, {}, undefined), node)
+    t.is(E(node, {three: undefined, chi: []}), node)
     eqm(node, `<span></span>`)
   })
 })
@@ -288,46 +323,56 @@ t.test(function test_Ren_chi() {
   empty()
 })
 
-/*
-The test mostly verifies serialization behaviors common between DOM and non-DOM
-environments. For DOM-specific behaviors (native or shimmed), see other tests.
-*/
-t.test(function test_Ren_serialization() {
-  t.throws(() => E(`link`, {}, null), SyntaxError, `expected void element "link" to have no children, got [null]`)
-  t.throws(() => E(`link`, null, null), SyntaxError, `expected void element "link" to have no children, got [null]`)
-  t.throws(() => E(`link`, null, undefined), SyntaxError, `expected void element "link" to have no children, got [undefined]`)
-  t.throws(() => E(`link`, null, 123), SyntaxError, `expected void element "link" to have no children, got [123]`)
+t.test(function test_Ren_E_chi_flattening() {
+  const elem = E(`outer`, {chi: [
+    undefined,
+    [[[``]]],
+    [[[`one`]]],
+    [
+      null,
+      E(`mid`, {chi: [
+        undefined,
+        [`two`, [E(`inner`, {chi: [[[`three`]], undefined]})]],
+        null,
+        `four`,
+      ]}),
+    ],
+    ``,
+    `five`,
+  ]})
 
+  t.is(
+    elem.textContent,
+    `onetwothreefourfive`,
+  )
+
+  eqm(
+    elem,
+    `<outer>one<mid>two<inner>three</inner>four</mid>five</outer>`,
+  )
+})
+
+t.test(function test_serialization() {
   t.test(function test_tag_closing() {
     t.test(function test_void_elems() {
-      t.test(function test_void_elems_with_children() {
-        for (const tag of [`link`, `img`]) {
-          for (const child of [null, ``, [], {}]) {
-            t.throws(() => E(tag, {}, child), Error, `expected void element ${l.show(tag)} to have no children, got [${l.show(child)}]`)
-          }
-        }
-      })
+      eqm2(E(`area`), `<area>`, `<area />`)
+      eqm2(E(`base`), `<base>`, `<base />`)
+      eqm2(E(`br`), `<br>`, `<br />`)
+      eqm2(E(`col`), `<col>`, `<col />`)
+      eqm2(E(`embed`), `<embed>`, `<embed />`)
+      eqm2(E(`hr`), `<hr>`, `<hr />`)
+      eqm2(E(`img`), `<img>`, `<img />`)
+      eqm2(E(`input`), `<input>`, `<input />`)
+      eqm2(E(`link`), `<link>`, `<link />`)
+      eqm2(E(`meta`), `<meta>`, `<meta />`)
+      eqm2(E(`param`), `<param>`, `<param />`)
+      eqm2(E(`source`), `<source>`, `<source />`)
+      eqm2(E(`track`), `<track>`, `<track />`)
+      eqm2(E(`wbr`), `<wbr>`, `<wbr />`)
 
-      t.test(function test_empty_void_elem_self_closing() {
-        eqm2(E(`area`), `<area>`, `<area />`)
-        eqm2(E(`base`), `<base>`, `<base />`)
-        eqm2(E(`br`), `<br>`, `<br />`)
-        eqm2(E(`col`), `<col>`, `<col />`)
-        eqm2(E(`embed`), `<embed>`, `<embed />`)
-        eqm2(E(`hr`), `<hr>`, `<hr />`)
-        eqm2(E(`img`), `<img>`, `<img />`)
-        eqm2(E(`input`), `<input>`, `<input />`)
-        eqm2(E(`link`), `<link>`, `<link />`)
-        eqm2(E(`meta`), `<meta>`, `<meta />`)
-        eqm2(E(`param`), `<param>`, `<param />`)
-        eqm2(E(`source`), `<source>`, `<source />`)
-        eqm2(E(`track`), `<track>`, `<track />`)
-        eqm2(E(`wbr`), `<wbr>`, `<wbr />`)
-
-        eqm2(E(`link`, {}), `<link>`, `<link />`)
-        eqm2(E(`link`, null), `<link>`, `<link />`)
-        eqm2(E(`link`, undefined), `<link>`, `<link />`)
-      })
+      eqm2(E(`link`, {}), `<link>`, `<link />`)
+      eqm2(E(`link`, null), `<link>`, `<link />`)
+      eqm2(E(`link`, undefined), `<link>`, `<link />`)
     })
 
     t.test(function test_normal_elems() {
@@ -383,14 +428,14 @@ t.test(function test_Ren_serialization() {
         )
 
         eqm(
-          E(`outer`, {}, E(`inner`, {attr: ESC_SRC})),
+          E(`outer`, {chi: E(`inner`, {attr: ESC_SRC})}),
           `<outer><inner attr="${ESC_OUT_ATTR}"></inner></outer>`,
         )
       })
 
       t.test(function test_attr_PropBui() {
         eqm(
-          E(`a`, A.href(`/`).cls(`link`), `text`),
+          E(`a`, A.href(`/`).cls(`link`).chi(`text`)),
           `<a href="/" class="link">text</a>`,
         )
       })
@@ -551,6 +596,9 @@ t.test(function test_Ren_serialization() {
         `<input hidden="">`,
         `<input hidden="" />`,
       )
+
+      t.ok(E(`input`, {type: `checkbox`, checked: true}).checked)
+      t.no(E(`input`, {type: `checkbox`, checked: false}).checked)
     })
 
     t.test(function test_attributes_prop() {
@@ -634,19 +682,19 @@ t.test(function test_Ren_serialization() {
     })
 
     t.test(function test_prim_children() {
-      eqm(E(`div`, {}, null), `<div></div>`)
-      eqm(E(`div`, {}, undefined), `<div></div>`)
-      eqm(E(`div`, {}, 0), `<div>0</div>`)
-      eqm(E(`div`, {}, 10), `<div>10</div>`)
-      eqm(E(`div`, {}, NaN), `<div>NaN</div>`)
-      eqm(E(`div`, {}, Infinity), `<div>Infinity</div>`)
-      eqm(E(`div`, {}, -Infinity), `<div>-Infinity</div>`)
-      eqm(E(`div`, {}, true), `<div>true</div>`)
-      eqm(E(`div`, {}, false), `<div>false</div>`)
-      eqm(E(`div`, {}, `str`), `<div>str</div>`)
+      eqm(E(`div`, {chi: null}), `<div></div>`)
+      eqm(E(`div`, {chi: undefined}), `<div></div>`)
+      eqm(E(`div`, {chi: 0}), `<div>0</div>`)
+      eqm(E(`div`, {chi: 10}), `<div>10</div>`)
+      eqm(E(`div`, {chi: NaN}), `<div>NaN</div>`)
+      eqm(E(`div`, {chi: Infinity}), `<div>Infinity</div>`)
+      eqm(E(`div`, {chi: -Infinity}), `<div>-Infinity</div>`)
+      eqm(E(`div`, {chi: true}), `<div>true</div>`)
+      eqm(E(`div`, {chi: false}), `<div>false</div>`)
+      eqm(E(`div`, {chi: `str`}), `<div>str</div>`)
 
       eqm(
-        E(`div`, {},
+        E(`div`, {chi: [
           null,
           undefined,
           0,
@@ -657,18 +705,18 @@ t.test(function test_Ren_serialization() {
           true,
           false,
           `str`,
-        ),
+        ]}),
         `<div>010NaNInfinity-Infinitytruefalsestr</div>`,
       )
     })
 
     t.test(function test_child_scalar() {
-      eqm(E(`div`, {}, new URL(`https://example.com`)), `<div>https://example.com/</div>`)
+      eqm(E(`div`, {chi: new URL(`https://example.com`)}), `<div>https://example.com/</div>`)
     })
 
     t.test(function test_child_escaping() {
       eqm(
-        E(`span`, {}, `console.log('</script>')`),
+        E(`span`, {chi: `console.log('</script>')`}),
         `<span>console.log('&lt;/script&gt;')</span>`,
       )
 
@@ -683,27 +731,27 @@ t.test(function test_Ren_serialization() {
       to escape </script> depends on the syntactic context.
       */
       eqm(
-        E(`script`, {}, `console.log('</script>')`),
+        E(`script`, {chi: `console.log('</script>')`}),
         `<script>console.log('</script>')</script>`,
       )
 
       eqm(
-        E(`div`, {}, ESC_SRC),
+        E(`div`, {chi: ESC_SRC}),
         `<div>${ESC_OUT_TEXT}</div>`,
       )
 
       eqm(
-        E(`div`, {}, `<script></script>`),
+        E(`div`, {chi: `<script></script>`}),
         `<div>&lt;script&gt;&lt;/script&gt;</div>`,
       )
 
       eqm(
-        E(`outer`, {}, E(`inner`, {}, ESC_SRC)),
+        E(`outer`, {chi: E(`inner`, {chi: ESC_SRC})}),
         `<outer><inner>${ESC_OUT_TEXT}</inner></outer>`,
       )
 
       eqm(
-        E(`div`, {}, {toString() {return `<script></script>`}}),
+        E(`div`, {chi: {toString() {return `<script></script>`}}}),
         `<div>&lt;script&gt;&lt;/script&gt;</div>`,
       )
     })
@@ -718,9 +766,9 @@ t.test(function test_Ren_serialization() {
 
         t.is(E(`svg`).namespaceURI, `http://www.w3.org/2000/svg`)
 
-        const tar = E(`svg`, {},
+        const tar = E(`svg`, {chi:
           E(`line`, {x1: `12`, y1: `8`, x2: `12`, y2: `12`}),
-        )
+        })
 
         eqm(tar, `<svg><line x1="12" y1="8" x2="12" y2="12"></line></svg>`)
         t.is(tar.namespaceURI, l.reqValidStr(p.NS_SVG))
@@ -742,15 +790,15 @@ t.test(function test_Ren_serialization() {
     t.test(function test_fragment() {
       const frag = new ren.Frag()
 
-      E(frag, undefined,
+      E(frag, {chi: [
         null, `one`, undefined, [[`_`]], [`two`], [[[]]],
         new env.Comment(`three`),
-      )
+      ]})
 
       t.is(frag.textContent, `one_two`)
 
       eqm(
-        E(`div`, {}, frag),
+        E(`div`, {chi: frag}),
         `<div>one_two<!--three--></div>`
       )
 
@@ -770,7 +818,7 @@ t.test(function test_Ren_serialization() {
       class SomeElem extends env.HTMLElement {
         static customName = `elem-35e92d`
         static {dr.reg(this)}
-        init() {return E(this, A.cls(`theme-prim`), `some text`)}
+        init() {return E(this, A.cls(`theme-prim`).chi(`some text`))}
       }
 
       l.nop(new SomeElem())
@@ -785,7 +833,7 @@ t.test(function test_Ren_serialization() {
       class TestBtn extends env.HTMLButtonElement {
         static customName = `elem-4873e3`
         static {dr.reg(this)}
-        init() {return E(this, A.cls(`theme-prim`), `click me`)}
+        init() {return E(this, A.cls(`theme-prim`).chi(`click me`))}
       }
 
       l.nop(new TestBtn())
@@ -799,20 +847,21 @@ t.test(function test_Ren_serialization() {
 })
 
 function testNonScalarChiStrict(E) {
-  t.throws(() => E(`div`, {}, Symbol(`str`)),       TypeError, `unable to convert Symbol(str) to string`)
-  t.throws(() => E(`div`, {}, {}),                  TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {}, Object.create(null)),             TypeError, `unable to convert {} to string`)
-  t.throws(() => E(`div`, {}, Promise.resolve()),   TypeError, `unable to convert [object Promise] to string`)
+  t.throws(() => E(`div`, {chi: Symbol(`str`)}),       TypeError, `unable to convert Symbol(str) to string`)
+  t.throws(() => E(`div`, {chi: {}}),                  TypeError, `unable to convert {} to string`)
+  t.throws(() => E(`div`, {chi: Object.create(null)}), TypeError, `unable to convert {} to string`)
+  t.throws(() => E(`div`, {chi: new class {}()}),      TypeError, `unable to convert [object] to string`)
+  t.throws(() => E(`div`, {chi: Promise.resolve()}),   TypeError, `unable to convert [object Promise] to string`)
 }
 
 function testNonScalarChiLax(E, eqm) {
-  eqm(E(`div`, {}, Symbol(`str`)), `<div></div>`)
-  eqm(E(`div`, {}, {}), `<div></div>`)
-  eqm(E(`div`, {}, Object.create(null)), `<div></div>`)
-  eqm(E(`div`, {}, new class {}()), `<div></div>`)
-  eqm(E(`div`, {}, () => {}), `<div></div>`)
-  eqm(E(`div`, {}, function fun() {}), `<div></div>`)
-  eqm(E(`div`, {}, Promise.resolve()), `<div></div>`)
+  eqm(E(`div`, {chi: Symbol(`str`)}), `<div></div>`)
+  eqm(E(`div`, {chi: {}}), `<div></div>`)
+  eqm(E(`div`, {chi: Object.create(null)}), `<div></div>`)
+  eqm(E(`div`, {chi: new class {}()}), `<div></div>`)
+  eqm(E(`div`, {chi: () => {}}), `<div></div>`)
+  eqm(E(`div`, {chi: function fun() {}}), `<div></div>`)
+  eqm(E(`div`, {chi: Promise.resolve()}), `<div></div>`)
 }
 
 function testNonScalarPropStrict(E) {
@@ -840,36 +889,21 @@ function testNonScalarPropLax(E, eqm) {
   eqm(E(`div`, {one: new class extends Array {}(10, 20)}), `<div></div>`)
 }
 
-t.test(function test_Ren_dom_behaviors() {
-  // Parts of this function are tested elsewhere.
-  // We only need a sanity check here.
-  t.test(function test_replaceProps_basic() {
-    t.throws(
-      () => ren.replaceProps(),
-      TypeError,
-      `expected variant of isElement, got undefined`,
-    )
-
-    t.test(function test_identity() {
-      const node = E(`div`)
-      t.is(ren.replaceProps(node), node)
-    })
-
-    const node = E(`div`, {class: `one`}, `two`)
-    eqm(node, `<div class="one">two</div>`)
-
-    t.is(ren.replaceProps(node, {class: `three`}), node)
-    eqm(node, `<div class="three">two</div>`)
-  })
-
-  t.test(function test_replaceProps_fun() {
-    const obs = ob.obsRef(`one`)
-
+/*
+TODO: also test cleanup on GC. Our `obs_test.mjs` covers the cleanup of all
+features provided by that module, but in principle, it is possible for a
+renderer to accidentally mess up GC by creating strong references in the wrong
+places. Some manual testing was done. Automated testing is needed.
+*/
+t.test(function test_Ren_reactivity() {
+  t.test(function test_props_fun() {
     ren.shed = undefined
 
     {
-      const node = E(`div`, () => ({class: obs.val}), `two`)
+      const obs = ob.obsRef(`one`)
+      const node = E(`div`, () => ({class: obs.val, chi: `two`}))
       eqm(node, `<div class="one">two</div>`)
+
       obs.val = `three`
       eqm(node, `<div class="one">two</div>`)
     }
@@ -877,191 +911,367 @@ t.test(function test_Ren_dom_behaviors() {
     ren.shed = ob.ShedSync.main
 
     {
-      const node = E(`div`, () => ({class: obs.val}), `two`)
+      const obs = ob.obsRef(`one`)
+      const node = E(`div`, () => ({class: obs.val, chi: `two`}))
+      eqm(node, `<div class="one">two</div>`)
+
+      obs.val = `three`
       eqm(node, `<div class="three">two</div>`)
+
       obs.val = `four`
       eqm(node, `<div class="four">two</div>`)
+
+      E(node, undefined)
+      eqm(node, `<div class="four">two</div>`)
+
+      obs.val = `five`
+      eqm(node, `<div class="four">two</div>`)
+    }
+
+    {
+      const obs0 = ob.obsRef(`one`)
+      const node = E(`div`, () => ({class: l.deref(obs0), chi: `two`}))
+      eqm(node, `<div class="one">two</div>`)
+
+      l.reset(obs0, `three`)
+      eqm(node, `<div class="three">two</div>`)
+
+      const obs1 = ob.obsRef(`four`)
+      E(node, () => ({class: `five`, chi: l.deref(obs1)}))
+      eqm(node, `<div class="five">four</div>`)
+
+      l.reset(obs0, `six`)
+      eqm(node, `<div class="five">four</div>`)
+
+      l.reset(obs1, `seven`)
+      eqm(node, `<div class="five">seven</div>`)
+
+      E(node, undefined)
+      eqm(node, `<div class="five">seven</div>`)
+
+      l.reset(obs0, `eight`)
+      eqm(node, `<div class="five">seven</div>`)
+
+      l.reset(obs1, `nine`)
+      eqm(node, `<div class="five">seven</div>`)
     }
 
     ren.shed = ob.getUiShed()
   })
 
-  t.test(function test_replaceProps_obs() {
+  t.test(function test_props_obs() {
     ren.shed = undefined
 
     {
-      const obs = ob.obsRef({class: `one`})
-      const node = E(`div`, obs, `two`)
+      const obs = ob.obsRef({class: `one`, chi: `two`})
+      const node = E(`div`, obs)
       eqm(node, `<div class="one">two</div>`)
-      obs.val = {class: `three`}
+      obs.val = {class: `three`, chi: `four`}
       eqm(node, `<div class="one">two</div>`)
     }
 
     ren.shed = ob.ShedSync.main
 
     {
-      const obs = ob.obsRef({class: `one`})
-      const node = E(`div`, obs, `two`)
+      const obs = ob.obsRef({class: `one`, chi: `two`})
+      const node = E(`div`, obs)
       eqm(node, `<div class="one">two</div>`)
-      obs.val = {class: `three`, style: `display: flex`}
-      eqm(node, `<div class="three" style="display: flex">two</div>`)
+
+      obs.val = {class: `three`, chi: `four`}
+      eqm(node, `<div class="three">four</div>`)
+
+      obs.val = {class: `five`, chi: `six`}
+      eqm(node, `<div class="five">six</div>`)
+
+      E(node, undefined)
+      eqm(node, `<div class="five">six</div>`)
+
+      obs.val = {class: `seven`, chi: `eight`}
+      eqm(node, `<div class="five">six</div>`)
     }
 
     {
-      const obs = ob.obs({class: `one`})
-      const node = E(`div`, obs, `two`)
+      const obs0 = ob.obs({class: `one`, chi: `two`})
+      const node = E(`div`, obs0)
       eqm(node, `<div class="one">two</div>`)
-      ren.shed.pause()
-      try {
-        obs.class = `three`
-        obs.style = `display: flex`
-      }
-      finally {ren.shed.flush()}
-      eqm(node, `<div class="three" style="display: flex">two</div>`)
+
+      l.reset(obs0, {class: `three`, style: {display: `flex`}})
+      eqm(node, `<div class="three" style="display: flex;">two</div>`)
+
+      l.reset(obs0, {chi: `four`})
+      eqm(node, `<div class="three" style="display: flex;">four</div>`)
+
+      const obs1 = ob.obs({class: `five`, style: undefined, chi: `six`})
+      E(node, obs1)
+      eqm(node, `<div class="five">six</div>`)
+
+      l.reset(obs0, {chi: `seven`})
+      eqm(node, `<div class="five">six</div>`)
+
+      l.reset(obs1, {chi: `eight`})
+      eqm(node, `<div class="five">eight</div>`)
+
+      E(node, undefined)
+      eqm(node, `<div class="five">eight</div>`)
+
+      l.reset(obs0, {chi: `nine`})
+      eqm(node, `<div class="five">eight</div>`)
+
+      l.reset(obs1, {chi: `ten`})
+      eqm(node, `<div class="five">eight</div>`)
     }
 
     ren.shed = ob.getUiShed()
   })
 
-  // Parts of this function are tested elsewhere.
-  // We only need a sanity check here.
-  t.test(function test_mut() {
-    t.throws(() => ren.mut(), TypeError, `expected variant of isNode, got undefined`)
+  t.test(function test_individual_prop_fun() {
+    ren.shed = undefined
 
-    t.test(function test_mut_identity() {
-      const node = E(`div`)
-      t.is(ren.mut(node), node)
-    })
+    {
+      const obs = ob.obsRef(`four`)
+      const node = E(`div`, {one: `two`, three: () => obs.val})
+      eqm(node, `<div one="two" three="four"></div>`)
+      obs.val = `five`
+      eqm(node, `<div one="two" three="four"></div>`)
+    }
 
-    t.test(function test_mut_only_props() {
-      const node = E(`div`, {class: `one`}, `two`)
-      eqm(node, `<div class="one">two</div>`)
+    ren.shed = ob.ShedSync.main
 
-      t.is(ren.mut(node, {class: `three`}), node)
-      eqm(node, `<div class="three">two</div>`)
+    {
+      const obs = ob.obsRef(`four`)
+      const node = E(`div`, {one: `two`, three: () => obs.val})
+      eqm(node, `<div one="two" three="four"></div>`)
 
-      // Ignore nil props.
-      t.is(ren.mut(node, undefined), node)
-      eqm(node, `<div class="three">two</div>`)
-    })
+      obs.val = `five`
+      eqm(node, `<div one="two" three="five"></div>`)
 
-    t.test(function test_mut_only_chi() {
-      const node = E(`div`, {class: `one`}, `two`)
-      eqm(node, `<div class="one">two</div>`)
+      obs.val = `six`
+      eqm(node, `<div one="two" three="six"></div>`)
 
-      t.is(ren.mut(node, undefined, `three`), node)
-      eqm(node, `<div class="one">three</div>`)
+      E(node, {three: `seven`})
+      eqm(node, `<div one="two" three="seven"></div>`)
 
-      t.is(ren.mut(node, undefined, `three`, `_`, `four`), node)
-      eqm(node, `<div class="one">three_four</div>`)
+      obs.val = `eight`
+      eqm(node, `<div one="two" three="seven"></div>`)
+    }
 
-      t.is(ren.mut(node, undefined, undefined), node)
-      eqm(node, `<div class="one"></div>`)
-    })
+    {
+      const obs = ob.obs({val: `four`})
+      const node = E(`div`, {one: `two`, three: () => obs.val})
+      eqm(node, `<div one="two" three="four"></div>`)
 
-    t.test(function test_mut_combined() {
-      const node = E(`div`)
-      eqm(node, `<div></div>`)
+      obs.val = `five`
+      eqm(node, `<div one="two" three="five"></div>`)
 
-      t.is(ren.mut(node, {class: `one`}, `two`), node)
-      eqm(node, `<div class="one">two</div>`)
+      obs.val = `six`
+      eqm(node, `<div one="two" three="six"></div>`)
 
-      t.is(ren.mut(node, {class: `three`}, `four`, `_`, `five`), node)
-      eqm(node, `<div class="three">four_five</div>`)
-    })
+      E(node, {three: `seven`})
+      eqm(node, `<div one="two" three="seven"></div>`)
+
+      obs.val = `eight`
+      eqm(node, `<div one="two" three="seven"></div>`)
+    }
+
+    {
+      const obs = ob.obsRef(`four`)
+      const node = E(`div`, {
+        one: `two`,
+        three: () => obs.val,
+        chi: () => obs.val,
+      })
+      eqm(node, `<div one="two" three="four">four</div>`)
+
+      obs.val = `five`
+      eqm(node, `<div one="two" three="five">five</div>`)
+
+      obs.val = `six`
+      eqm(node, `<div one="two" three="six">six</div>`)
+
+      E(node, {three: `seven`})
+      eqm(node, `<div one="two" three="seven">six</div>`)
+
+      obs.val = `eight`
+      eqm(node, `<div one="two" three="seven">eight</div>`)
+
+      E(node, {chi: `nine`})
+      eqm(node, `<div one="two" three="seven">nine</div>`)
+
+      obs.val = `ten`
+      eqm(node, `<div one="two" three="seven">nine</div>`)
+    }
+
+    {
+      const obs0 = ob.obsRef(`four`)
+      const obs1 = ob.obs({val: `five`})
+      const node = E(`div`, {
+        one: `two`,
+        three: () => obs0.val,
+        chi: () => obs1.val,
+      })
+      eqm(node, `<div one="two" three="four">five</div>`)
+
+      obs0.val = `six`
+      eqm(node, `<div one="two" three="six">five</div>`)
+
+      obs1.val = `seven`
+      eqm(node, `<div one="two" three="six">seven</div>`)
+
+      obs0.val = `eight`
+      eqm(node, `<div one="two" three="eight">seven</div>`)
+
+      obs1.val = `nine`
+      eqm(node, `<div one="two" three="eight">nine</div>`)
+
+      E(node, {
+        three: () => obs1.val,
+        chi: () => obs0.val,
+      })
+      eqm(node, `<div one="two" three="nine">eight</div>`)
+
+      obs0.val = `ten`
+      eqm(node, `<div one="two" three="nine">ten</div>`)
+
+      obs1.val = `eleven`
+      eqm(node, `<div one="two" three="eleven">ten</div>`)
+
+      E(node, {three: undefined})
+      eqm(node, `<div one="two">ten</div>`)
+
+      obs1.val = `twelve`
+      eqm(node, `<div one="two">ten</div>`)
+
+      obs0.val = `thirteen`
+      eqm(node, `<div one="two">thirteen</div>`)
+
+      E(node, {chi: undefined})
+      eqm(node, `<div one="two"></div>`)
+
+      obs0.val = `fourteen`
+      eqm(node, `<div one="two"></div>`)
+    }
+
+    ren.shed = ob.getUiShed()
   })
 
-  t.test(function test_moving_children() {
-    t.test(function test_moving_between_one_node() {
-      const one = new env.Text(`one`)
-      const two = new env.Text(`two`)
-      const three = new env.Text(`three`)
+  t.test(function test_individual_prop_obs() {
+    ren.shed = undefined
 
-      const tar = E(`div`)
-      tar.appendChild(one)
-      tar.appendChild(two)
-      tar.appendChild(three)
+    {
+      const obs = ob.obsRef(`four`)
+      const node = E(`div`, {one: `two`, three: obs})
+      eqm(node, `<div one="two" three="four"></div>`)
+      obs.val = `five`
+      eqm(node, `<div one="two" three="four"></div>`)
+    }
 
-      t.eq([...tar.childNodes], [one, two, three])
+    ren.shed = ob.ShedSync.main
 
-      // This input is "ambiguous": the node `three` is provided more than once.
-      ren.replaceChi(tar, three, tar.childNodes)
+    {
+      const obs = ob.obsRef(`four`)
+      const node = E(`div`, {one: `two`, three: obs})
+      eqm(node, `<div one="two" three="four"></div>`)
 
-      eqm(tar, `<div>onetwothree</div>`)
-      t.eq([...tar.childNodes], [one, two, three])
+      obs.val = `five`
+      eqm(node, `<div one="two" three="five"></div>`)
 
-      ren.replaceChi(tar, tar.childNodes, one)
+      obs.val = `six`
+      eqm(node, `<div one="two" three="six"></div>`)
 
-      eqm(tar, `<div>twothreeone</div>`)
-      t.eq([...tar.childNodes], [two, three, one])
-    })
+      E(node, {three: `seven`})
+      eqm(node, `<div one="two" three="seven"></div>`)
 
-    t.test(function test_moving_between_two_nodes() {
-      const one = new env.Text(`one`)
-      const two = new env.Text(`two`)
-      const three = new env.Text(`three`)
+      obs.val = `eight`
+      eqm(node, `<div one="two" three="seven"></div>`)
+    }
 
-      const prev = E(`div`, {}, one, two, three)
-      const next = E(`p`, {}, prev.childNodes)
+    {
+      const src = ob.obs({val: `four`})
+      const obs = ob.calc(() => src.val)
+      const node = E(`div`, {one: `two`, three: obs})
+      eqm(node, `<div one="two" three="four"></div>`)
 
-      eqm(prev, `<div></div>`)
-      eqm(next, `<p>onetwothree</p>`)
-    })
-  })
+      src.val = `five`
+      eqm(node, `<div one="two" three="five"></div>`)
 
-  t.test(function test_mutText() {
-    t.throws(() => ren.mutText(), TypeError, `expected variant of isNode, got undefined`)
+      src.val = `six`
+      eqm(node, `<div one="two" three="six"></div>`)
 
-    const node = E(`div`, {class: `one`}, `two`)
-    eqm(node, `<div class="one">two</div>`)
+      E(node, {three: `seven`})
+      eqm(node, `<div one="two" three="seven"></div>`)
 
-    t.throws(() => ren.mutText(node, {}), TypeError, `unable to convert {} to string`)
-    t.throws(() => ren.mutText(node, []), TypeError, `unable to convert [] to string`)
+      obs.val = `eight`
+      eqm(node, `<div one="two" three="seven"></div>`)
+    }
 
-    t.is(ren.mutText(node), node)
-    eqm(node, `<div class="one"></div>`)
+    {
+      const obs = ob.obsRef(`four`)
+      const node = E(`div`, {one: `two`, three: obs, chi: obs})
+      eqm(node, `<div one="two" three="four">four</div>`)
 
-    t.is(ren.mutText(node, `three`), node)
-    eqm(node, `<div class="one">three</div>`)
+      obs.val = `five`
+      eqm(node, `<div one="two" three="five">five</div>`)
 
-    t.is(ren.mutText(node, new String(`<four></four>`)), node)
-    eqm(node, `<div class="one">&lt;four&gt;&lt;/four&gt;</div>`)
-  })
+      obs.val = `six`
+      eqm(node, `<div one="two" three="six">six</div>`)
 
-  t.test(function test_bool_attrs_as_props() {
-    t.ok(E(`input`, {type: `checkbox`, checked: true}).checked)
-    t.no(E(`input`, {type: `checkbox`, checked: false}).checked)
-  })
+      E(node, {three: `seven`})
+      eqm(node, `<div one="two" three="seven">six</div>`)
 
-  t.test(function test_child_flattening() {
-    const elem = (
-      E(`outer`, {},
-        undefined,
-        [[[``]]],
-        [[[`one`]]],
-        [
-          null,
-          E(`mid`, {},
-            undefined,
-            [`two`, [E(`inner`, {}, [[`three`]], undefined)]],
-            null,
-            `four`,
-          ),
-        ],
-        ``,
-        `five`,
-      )
-    )
+      obs.val = `eight`
+      eqm(node, `<div one="two" three="seven">eight</div>`)
 
-    t.is(
-      elem.textContent,
-      `onetwothreefourfive`,
-    )
+      E(node, {chi: `nine`})
+      eqm(node, `<div one="two" three="seven">nine</div>`)
 
-    eqm(
-      elem,
-      `<outer>one<mid>two<inner>three</inner>four</mid>five</outer>`,
-    )
+      obs.val = `ten`
+      eqm(node, `<div one="two" three="seven">nine</div>`)
+    }
+
+    {
+      const obs0 = ob.obsRef(`four`)
+      const obs1 = ob.obsRef(`five`)
+      const node = E(`div`, {one: `two`, three: obs0, chi: obs1})
+      eqm(node, `<div one="two" three="four">five</div>`)
+
+      obs0.val = `six`
+      eqm(node, `<div one="two" three="six">five</div>`)
+
+      obs1.val = `seven`
+      eqm(node, `<div one="two" three="six">seven</div>`)
+
+      obs0.val = `eight`
+      eqm(node, `<div one="two" three="eight">seven</div>`)
+
+      obs1.val = `nine`
+      eqm(node, `<div one="two" three="eight">nine</div>`)
+
+      E(node, {three: obs1, chi: obs0})
+      eqm(node, `<div one="two" three="nine">eight</div>`)
+
+      obs0.val = `ten`
+      eqm(node, `<div one="two" three="nine">ten</div>`)
+
+      obs1.val = `eleven`
+      eqm(node, `<div one="two" three="eleven">ten</div>`)
+
+      E(node, {three: undefined})
+      eqm(node, `<div one="two">ten</div>`)
+
+      obs1.val = `twelve`
+      eqm(node, `<div one="two">ten</div>`)
+
+      obs0.val = `thirteen`
+      eqm(node, `<div one="two">thirteen</div>`)
+
+      E(node, {chi: undefined})
+      eqm(node, `<div one="two"></div>`)
+
+      obs0.val = `fourteen`
+      eqm(node, `<div one="two"></div>`)
+    }
+
+    ren.shed = ob.getUiShed()
   })
 
   t.test(function test_chi_fun_obs() {
@@ -1069,7 +1279,7 @@ t.test(function test_Ren_dom_behaviors() {
       ren.shed = undefined
 
       const obs = ob.obsRef(10)
-      const tar = E(`div`, {}, () => obs.val)
+      const tar = E(`div`, {chi: () => obs.val})
       eqm(tar, `<div>10</div>`)
 
       obs.val = 20
@@ -1082,7 +1292,7 @@ t.test(function test_Ren_dom_behaviors() {
       ren.shed = undefined
 
       const obs = ob.obsRef(10)
-      const tar = E(`div`, {}, obs)
+      const tar = E(`div`, {chi: obs})
       eqm(tar, `<div>10</div>`)
 
       obs.val = 20
@@ -1091,17 +1301,36 @@ t.test(function test_Ren_dom_behaviors() {
       ren.shed = ob.getUiShed()
     })
 
-    t.test(function test_reactive() {
+    t.test(function test_mixed_reactive() {
       ren.shed = ob.ShedSync.main
 
       const obs0 = ob.obsRef()
-      const tar = E(`div`, {}, () => obs0.val)
+      const obs1 = ob.obs({val: undefined})
+
+      // This is initialized as a "prop" recurrent, not as a child.
+      // We're also testing that it will be cleaned up / replaced.
+      const tar = E(`div`, {chi: () => obs1.val})
+      eqm(tar, `<div></div>`)
+
+      t.is(tar.childNodes[0], undefined)
+      t.is(tar.childNodes.length, 0)
+
+      obs1.val = `one`
+      eqm(tar, `<div>one</div>`)
+
+      t.inst(tar.childNodes[0], env.Text)
+      t.is(tar.childNodes.length, 1)
+
+      E(tar, {chi: [() => obs0.val]})
       eqm(tar, `<div></div>`)
 
       t.inst(tar.childNodes[0], ren.RecNodeFun)
       t.is(tar.childNodes.length, 1)
 
       obs0.val = 10
+      eqm(tar, `<div>10</div>`)
+
+      obs1.val = undefined
       eqm(tar, `<div>10</div>`)
 
       t.inst(tar.childNodes[0], ren.RecNodeFun)
@@ -1122,9 +1351,8 @@ t.test(function test_Ren_dom_behaviors() {
       obs0.val = [10, `_`, 20, `_`, 30]
       eqm(tar, `<div>10_20_30</div>`)
 
-      const obs1 = ob.obs({val: [`_`, 40, `_`, 50]})
-
-      E(tar, {}, obs0, () => obs1.val)
+      obs1.val = [`_`, 40, `_`, 50]
+      E(tar, {chi: [obs0, () => obs1.val]})
       eqm(tar, `<div>10_20_30_40_50</div>`)
 
       obs1.val = undefined
@@ -1145,8 +1373,7 @@ t.test(function test_Ren_dom_behaviors() {
       obs0.val = [10, `_`]
       obs1.toNode = () => [`_`, 20]
 
-      E(tar, {}, obs0, obs1)
-
+      E(tar, {chi: [obs0, obs1]})
       eqm(tar, `<div>10__20</div>`)
 
       ren.shed.pause()
@@ -1162,11 +1389,68 @@ t.test(function test_Ren_dom_behaviors() {
   })
 })
 
+t.test(function test_Ren_moving_children() {
+  t.test(function test_moving_between_one_node() {
+    const one = new env.Text(`one`)
+    const two = new env.Text(`two`)
+    const three = new env.Text(`three`)
+
+    const tar = E(`div`)
+    tar.appendChild(one)
+    tar.appendChild(two)
+    tar.appendChild(three)
+
+    t.eq([...tar.childNodes], [one, two, three])
+
+    // This input is "ambiguous": the node `three` is provided more than once.
+    ren.replaceChi(tar, [three, tar.childNodes])
+
+    eqm(tar, `<div>onetwothree</div>`)
+    t.eq([...tar.childNodes], [one, two, three])
+
+    ren.replaceChi(tar, [tar.childNodes, one])
+
+    eqm(tar, `<div>twothreeone</div>`)
+    t.eq([...tar.childNodes], [two, three, one])
+  })
+
+  t.test(function test_moving_between_two_nodes() {
+    const one = new env.Text(`one`)
+    const two = new env.Text(`two`)
+    const three = new env.Text(`three`)
+
+    const prev = E(`div`, {chi: [one, two, three]})
+    const next = E(`p`, {chi: prev.childNodes})
+
+    eqm(prev, `<div></div>`)
+    eqm(next, `<p>onetwothree</p>`)
+  })
+})
+
+t.test(function test_Ren_mutText() {
+  t.throws(() => ren.mutText(), TypeError, `expected variant of isNode, got undefined`)
+
+  const node = E(`div`, {class: `one`, chi: `two`})
+  eqm(node, `<div class="one">two</div>`)
+
+  t.throws(() => ren.mutText(node, {}), TypeError, `unable to convert {} to string`)
+  t.throws(() => ren.mutText(node, []), TypeError, `unable to convert [] to string`)
+
+  t.is(ren.mutText(node), node)
+  eqm(node, `<div class="one"></div>`)
+
+  t.is(ren.mutText(node, `three`), node)
+  eqm(node, `<div class="one">three</div>`)
+
+  t.is(ren.mutText(node, new String(`<four></four>`)), node)
+  eqm(node, `<div class="one">&lt;four&gt;&lt;/four&gt;</div>`)
+})
+
 t.test(function test_Ren_custom_element() {
   class SomeElem extends env.HTMLElement {
     static customName = `elem-a5425a`
     static {dr.reg(this)}
-    init() {return E(this, {id: `one`, class: `two`}, `three`)}
+    init() {return E(this, {id: `one`, class: `two`, chi: `three`})}
   }
 
   eqm(
@@ -1175,16 +1459,14 @@ t.test(function test_Ren_custom_element() {
   )
 })
 
-t.test(function test_overview_html_document() {
+t.test(function test_html_document_basic() {
   t.is(
-    p.DOCTYPE_HTML + E(`html`, null,
-      E(`head`, null, E(`title`, null, `test`)),
-      E(`body`, A.cls(`page`),
-        E(`main`, null,
-          E(`a`, A.href(`/`).cls(`link`), `Home`),
-        ),
-      ),
-    ).outerHTML,
+    p.DOCTYPE_HTML + E(`html`, {chi: [
+      E(`head`, {chi: E(`title`, {chi: `test`})}),
+      E(`body`, A.cls(`page`).chi(
+        E(`main`, {chi: E(`a`, A.href(`/`).cls(`link`).chi(`Home`))}),
+      )),
+    ]}).outerHTML,
     `<!doctype html><html><head><title>test</title></head><body class="page"><main><a href="/" class="link">Home</a></main></body></html>`,
   )
 })

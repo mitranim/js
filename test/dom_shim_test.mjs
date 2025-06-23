@@ -1806,7 +1806,7 @@ t.test(function test_CustomElementRegistry() {
   })
 
   t.test(function test_redundant() {
-    t.throws(() => reg.define(`one-two`, l.nop), Error, `redundant registration of "one-two"`)
+    t.throws(() => reg.define(`one-two`, Empty), Error, `redundant registration of "one-two"`)
     t.throws(() => reg.define(`two-three`, Empty), Error, `redundant registration of [function Empty]`)
   })
 

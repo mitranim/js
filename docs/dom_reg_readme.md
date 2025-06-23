@@ -27,7 +27,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 // The mixin `MixReg` enables automatic registration on instantiation.
@@ -66,7 +66,7 @@ Apps which use server-side rendering and client-side upgrading of custom element
 Instead, use `dr.reg`, which is also used internally by `MixReg`. This is simply a shortcut for using the [#default registry](#class-reg) provided by this module.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   /*
@@ -89,13 +89,13 @@ console.log(elem.outerHTML)
 
 ### `function reg`
 
-Links: [source](../dom_reg.mjs#L144); [test/example](../test/dom_reg_test.mjs#L16).
+Links: [source](../dom_reg.mjs#L143); [test/example](../test/dom_reg_test.mjs#L16).
 
 Shortcut for calling `Reg.main.reg`. Takes a custom element class and idempotently registers it, automatically deriving the custom element tag name _and_ the base tag for `extends`.
 
 ### `class Reg`
 
-Links: [source](../dom_reg.mjs#L146); [test/example](../test/dom_reg_test.mjs#L22).
+Links: [source](../dom_reg.mjs#L145); [test/example](../test/dom_reg_test.mjs#L22).
 
 Registry for custom DOM element classes. Automatically derives tag name from class name, using salting when necessary to avoid collisions. Supports idempotent registration which can be safely called in an element constructor. Allows immediate registration, deferred registration, or a mix of those.
 
@@ -106,7 +106,7 @@ For browser-only code, prefer the mixin `MixReg` from the same module which is e
 Simple usage:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   /*
@@ -126,7 +126,7 @@ document.body.append(new Btn())
 You can unset the default definer to defer registration:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_reg.mjs'
 
 dr.Reg.main.setDefiner()
 
@@ -149,13 +149,13 @@ The following APIs are exported but undocumented. Check [dom_reg.mjs](../dom_reg
 
   * [`const TAG_TO_CLS`](../dom_reg.mjs#L9)
   * [`const CLS_TO_TAG`](../dom_reg.mjs#L95)
-  * [`function clsLocalName`](../dom_reg.mjs#L105)
-  * [`function MixReg`](../dom_reg.mjs#L129)
-  * [`class MixinReg`](../dom_reg.mjs#L131)
-  * [`function setDefiner`](../dom_reg.mjs#L142)
-  * [`function isDefiner`](../dom_reg.mjs#L254)
-  * [`function optDefiner`](../dom_reg.mjs#L255)
-  * [`function reqDefiner`](../dom_reg.mjs#L256)
-  * [`function onlyDefiner`](../dom_reg.mjs#L257)
-  * [`function isCustomName`](../dom_reg.mjs#L260)
-  * [`function reqCustomName`](../dom_reg.mjs#L264)
+  * [`function clsLocalName`](../dom_reg.mjs#L108)
+  * [`function MixReg`](../dom_reg.mjs#L128)
+  * [`class MixinReg`](../dom_reg.mjs#L130)
+  * [`function setDefiner`](../dom_reg.mjs#L141)
+  * [`function isDefiner`](../dom_reg.mjs#L250)
+  * [`function optDefiner`](../dom_reg.mjs#L251)
+  * [`function reqDefiner`](../dom_reg.mjs#L252)
+  * [`function onlyDefiner`](../dom_reg.mjs#L253)
+  * [`function isCustomName`](../dom_reg.mjs#L258)
+  * [`function reqCustomName`](../dom_reg.mjs#L262)

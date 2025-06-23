@@ -122,6 +122,7 @@ export function eventKill(val) {
     val.preventDefault()
     eventStop(val)
   }
+  return val
 }
 
 export function eventStop(val) {
@@ -129,6 +130,7 @@ export function eventStop(val) {
     val.stopPropagation()
     val.stopImmediatePropagation()
   }
+  return val
 }
 
 export function isEventModified(val) {

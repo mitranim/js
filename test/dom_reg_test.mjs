@@ -6,7 +6,7 @@ import * as dr from '../dom_reg.mjs'
 import * as ds from '../dom_shim.mjs'
 
 // `Reg` is tested below. This is a sanity check.
-t.test(function test_cer() {l.reqInst(dr.Reg.main, dr.Reg)})
+t.test(function test_Reg() {l.reqInst(dr.Reg.main, dr.Reg)})
 
 /*
 `Reg..reg` is checked more thoroughly below.
@@ -16,7 +16,7 @@ this on the default instance.
 t.test(function test_reg() {
   class SomeDetails extends ds.global.HTMLDetailsElement {}
   dr.reg(SomeDetails)
-  testCerMatch(dr.Reg.main, SomeDetails, `details`, `some-details`)
+  testRegMatch(dr.Reg.main, SomeDetails, `details`, `some-details`)
 })
 
 t.test(function test_Reg() {
@@ -28,7 +28,7 @@ t.test(function test_Reg() {
     t.no(reg.hasTag(`some-link`))
 
     reg.reg(SomeLink)
-    testCerMatch(reg, SomeLink, `a`, `some-link`)
+    testRegMatch(reg, SomeLink, `a`, `some-link`)
   })
 
   t.test(function test_with_localName() {
@@ -37,10 +37,35 @@ t.test(function test_Reg() {
       static customName = `my-link`
     }
     reg.reg(SomeLink)
-    testCerMatch(reg, SomeLink, `a`, `my-link`)
+    testRegMatch(reg, SomeLink, `a`, `my-link`)
   })
 
   t.test(function test_reg() {
+    t.test(function test_autonomous_elements() {
+      const reg = new dr.Reg()
+
+      class One extends ds.global.HTMLElement {}
+      reg.reg(One)
+      testRegMatch(reg, One, `a-one`, `a-one`)
+
+      // Degenerate case which prevents this element from actually being custom,
+      // but we define this case anyway.
+      class Two extends One {static localName = `two`}
+      reg.reg(Two)
+      testRegMatch(reg, Two, `two`, `a-two`)
+
+      class Three extends Two {}
+      reg.reg(Three)
+      testRegMatch(reg, Three, `two`, `a-three`)
+
+      class Four extends Three {
+        static localName = `four`
+        static customName = `four-five`
+      }
+      reg.reg(Four)
+      testRegMatch(reg, Four, `four`, `four-five`)
+    })
+
     t.test(function test_multiple_sequential_regs() {
       const reg = new dr.Reg()
 
@@ -48,7 +73,7 @@ t.test(function test_Reg() {
 
       function test0() {
         reg.reg(Details)
-        testCerMatch(reg, Details, `details`, `a-details`)
+        testRegMatch(reg, Details, `details`, `a-details`)
       }
 
       test0()
@@ -59,7 +84,7 @@ t.test(function test_Reg() {
 
       function test1() {
         reg.reg(SomeBtn)
-        testCerMatch(reg, SomeBtn, `button`, `some-btn`)
+        testRegMatch(reg, SomeBtn, `button`, `some-btn`)
       }
 
       test1()
@@ -70,7 +95,7 @@ t.test(function test_Reg() {
 
       function test2() {
         reg.reg(SubBtn123)
-        testCerMatch(reg, SubBtn123, `button`, `sub-btn123`)
+        testRegMatch(reg, SubBtn123, `button`, `sub-btn123`)
       }
 
       test2()
@@ -84,25 +109,31 @@ t.test(function test_Reg() {
       {
         class SomeBtn extends ds.global.HTMLButtonElement {}
         reg.reg(SomeBtn)
-        testCerMatch(reg, SomeBtn, `button`, `some-btn`)
+        testRegMatch(reg, SomeBtn, `button`, `some-btn`)
       }
 
       {
         class SomeBtn extends ds.global.HTMLButtonElement {}
         reg.reg(SomeBtn)
-        testCerMatch(reg, SomeBtn, `button`, `some-btn-1`)
+        testRegMatch(reg, SomeBtn, `button`, `some-btn-1`)
       }
 
       {
         class SomeBtn extends ds.global.HTMLButtonElement {}
         reg.reg(SomeBtn)
-        testCerMatch(reg, SomeBtn, `button`, `some-btn-2`)
+        testRegMatch(reg, SomeBtn, `button`, `some-btn-2`)
       }
     })
   })
 
   t.test(function test_tag_ambiguity() {
     const reg = new dr.Reg()
+
+    t.is(dr.clsLocalName(ds.global.HTMLTableCellElement), undefined)
+
+    t.is(dr.clsLocalName(
+      class Cell extends ds.global.HTMLTableCellElement {}
+    ), undefined)
 
     class HeadCell extends ds.global.HTMLTableCellElement {
       static localName = `th`
@@ -112,14 +143,14 @@ t.test(function test_Reg() {
       static localName = `td`
     }
 
-    t.is(dr.clsLocalName(HeadCell), undefined)
-    t.is(dr.clsLocalName(BodyCell), undefined)
+    t.is(dr.clsLocalName(HeadCell), `th`)
+    t.is(dr.clsLocalName(BodyCell), `td`)
 
     reg.reg(HeadCell)
     reg.reg(BodyCell)
 
-    testCerMatch(reg, HeadCell, `th`, `head-cell`)
-    testCerMatch(reg, BodyCell, `td`, `body-cell`)
+    testRegMatch(reg, HeadCell, `th`, `head-cell`)
+    testRegMatch(reg, BodyCell, `td`, `body-cell`)
   })
 
   t.test(function test_setDefiner() {
@@ -129,9 +160,13 @@ t.test(function test_Reg() {
 
     class Cls0 extends ds.global.HTMLElement {}
     class Cls1 extends ds.global.HTMLElement {}
-    class Cls2 extends ds.global.HTMLElement {}
+    class Cls2 extends Cls1 {}
+    class Cls3 extends ds.global.HTMLButtonElement {}
+    class Cls4 extends Cls3 {}
 
     reg.reg(Cls0)
+    reg.reg(Cls0)
+    reg.reg(Cls1)
     reg.reg(Cls1)
 
     t.eq(reg.tagToCls, i.mapOf(
@@ -144,22 +179,35 @@ t.test(function test_Reg() {
       Cls1, `a-cls1`,
     ))
 
-    class Definer extends Array {
-      define(tag, cls, opt) {
-        this.push([tag, cls, opt])
-        if (tag === `a-cls0`) reg.reg(Cls2)
-      }
-    }
-
-    const def = new Definer()
+    const defined = []
+    const def = l.Emp()
+    def.define = function define(tag, cls, opt) {defined.push([tag, cls, opt])}
     reg.setDefiner(def)
     t.is(reg.definer, def)
 
-    t.eq(def, Definer.of(
+    t.eq(defined, [
       [`a-cls0`, Cls0, undefined],
-      [`a-cls2`, Cls2, undefined],
       [`a-cls1`, Cls1, undefined],
-    ))
+    ])
+
+    reg.reg(Cls2)
+
+    t.eq(defined, [
+      [`a-cls0`, Cls0, undefined],
+      [`a-cls1`, Cls1, undefined],
+      [`a-cls2`, Cls2, undefined],
+    ])
+
+    reg.reg(Cls3)
+    reg.reg(Cls4)
+
+    t.eq(defined, [
+      [`a-cls0`, Cls0, undefined],
+      [`a-cls1`, Cls1, undefined],
+      [`a-cls2`, Cls2, undefined],
+      [`a-cls3`, Cls3, {extends: `button`}],
+      [`a-cls4`, Cls4, {extends: `button`}],
+    ])
   })
 })
 
@@ -186,7 +234,7 @@ t.test(function test_MixReg() {
 
 /* Util */
 
-function testCerMatch(reg, cls, local, custom) {
+function testRegMatch(reg, cls, local, custom) {
   t.ok(reg.hasCls(cls))
   t.ok(reg.hasTag(custom))
 

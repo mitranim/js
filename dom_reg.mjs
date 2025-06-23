@@ -99,25 +99,24 @@ for (const [tag, cls] of Object.entries(TAG_TO_CLS)) {
 
 const RE_ELEM_CLS_NAME = /^(?:HTML|SVG)(\w*)Element$/
 
-// Given a DOM element class, returns an HTML `.localName` for its nearest
-// superclass with a known associated `.localName`. Otherwise `undefined`.
-// Uses the registry `CLS_TO_TAG`.
+/*
+Given a DOM element class, returns any known `.localName` for it. The static
+property `.localName` takes priority. Otherwise we look for the nearest
+superclass with a known entry in the registry `CLS_TO_TAG`. If nothing is
+found, the result is nil.
+*/
 export function clsLocalName(cls) {
   l.reqCls(cls)
+  const out = l.onlyStr(cls.localName)
+  if (out) return isPossiblyCustomName(out) ? undefined : out
 
   while (l.isFun(cls)) {
     const {name} = cls
 
     if (name) {
       if (name in CLS_TO_TAG) return CLS_TO_TAG[name]
-
-      const mat = name.match(RE_ELEM_CLS_NAME)
-
-      if (mat) {
-        const val = mat[1].toLowerCase()
-        CLS_TO_TAG[name] = val
-        return val
-      }
+      const val = name.match(RE_ELEM_CLS_NAME)?.[1]?.toLowerCase()
+      if (val) return CLS_TO_TAG[name] = val
     }
 
     cls = Object.getPrototypeOf(cls)
@@ -144,13 +143,10 @@ export function setDefiner(def) {return Reg.main.setDefiner(def)}
 export function reg(cls) {return Reg.main.reg(cls)}
 
 export class Reg extends o.MixMain(l.Emp) {
-  constructor(def) {
-    super()
-    this.pending = new Set()
-    this.tagToCls = new Map()
-    this.clsToTag = new Map()
-    this.definer = optDefiner(def)
-  }
+  pending = new Set()
+  tagToCls = new Map()
+  clsToTag = new Map()
+  constructor(def) {super().definer = optDefiner(def)}
 
   reg(cls) {
     if (this.hasCls(cls)) return cls
@@ -189,13 +185,7 @@ export class Reg extends o.MixMain(l.Emp) {
   mut(cls) {
     const customName = l.getOwn(cls, `customName`) || this.toTag(cls.name)
     if (!customName) throw Error(`unable to derive custom name for ${l.show(cls)}`)
-
-    const localName = (
-      l.getOwn(cls, `localName`) ||
-      clsLocalName(cls) ||
-      customName
-    )
-
+    const localName = clsLocalName(cls) || customName
     o.final(cls, `localName`, localName)
     o.final(cls, `customName`, customName)
     this.assoc(customName, cls)
@@ -227,6 +217,12 @@ export class Reg extends o.MixMain(l.Emp) {
     this.tagToCls.set(tag, cls)
   }
 
+  nameIs(cls) {
+    this.reg(cls)
+    const {localName: local, customName: custom} = cls
+    return {name: local, is: local === custom ? undefined: custom}
+  }
+
   static default() {return new this(onlyDefiner(globalThis.customElements))}
 }
 
@@ -255,6 +251,8 @@ export function isDefiner(val) {return l.hasMeth(val, `define`)}
 export function optDefiner(val) {return l.opt(val, isDefiner)}
 export function reqDefiner(val) {return l.req(val, isDefiner)}
 export function onlyDefiner(val) {return l.only(val, isDefiner)}
+
+function isPossiblyCustomName(val) {return l.isStr(val) && val.includes(`-`)}
 
 // https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
 export function isCustomName(val) {

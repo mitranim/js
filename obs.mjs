@@ -24,6 +24,7 @@ export function setDefaultShed(val) {DEFAULT_SHED = val}
 export function getDefaultShed() {return DEFAULT_SHED ?? ShedMicro.main}
 
 export const PH = Symbol.for(`ph`)
+export const TAR = Symbol.for(`tar`)
 export const QUE = Symbol.for(`que`)
 
 export function isRunner(val) {return l.hasMeth(val, `run`)}
@@ -44,6 +45,7 @@ export function reqQue(val) {return l.req(val, isQue)}
 
 export function obs(val) {return new Proxy(val, new ObsPh())}
 export function getPh(val) {return val?.[PH]}
+export function getTar(val) {return l.isObj(val) && TAR in val ? val[TAR] : val}
 export function getQue(val) {return val?.[QUE]}
 
 export function recur(tar, fun) {return recurShed(getDefaultShed(), tar, fun)}
@@ -135,7 +137,7 @@ export class Que extends l.Emp {
   }
 
   flush() {
-    const {flushing, prev, next} = this
+    const {dyn, flushing, prev, next} = this
     if (flushing) return
 
     this.prev = next
@@ -145,6 +147,7 @@ export class Que extends l.Emp {
     try {
       for (const val of next) {
         next.delete(val)
+        if (dyn.get() === val) continue
         val.run()
       }
     }
@@ -276,17 +279,20 @@ export class ShedTask extends ShedAsync {
 // Short for "observable proxy handler". Used via `obs`.
 export class ObsPh extends l.Emp {
   get Que() {return Que}
-
   [QUE] = new this.Que()
 
   has(tar, key) {
-    return key === PH || key === QUE || key === l.VAL || key in tar
+    return key === PH || key === TAR || key === QUE || key === l.VAL || key in tar
   }
 
   get(tar, key) {
     if (key === PH) return this
+    if (key === TAR) return tar
     if (key === QUE) return this[QUE]
-    if (key === l.VAL) return tar
+    if (key === l.VAL) {
+      this[QUE].enqueDyn()
+      return tar
+    }
 
     const val = tar[key]
     if (!l.isFun(val) || l.hasOwnEnum(tar, key)) this[QUE].enqueDyn()
@@ -294,9 +300,16 @@ export class ObsPh extends l.Emp {
   }
 
   set(tar, key, val) {
-    const prev = tar[key]
-    tar[key] = val
-    if (!l.is(prev, val)) this[QUE].flush()
+    let changed = false
+    if (key === l.VAL) {
+      for (key of l.recKeys(val)) {
+        if (!l.is(tar[key], (tar[key] = val[key]))) changed = true
+      }
+    }
+    else {
+      changed = !l.is(tar[key], (tar[key] = val))
+    }
+    if (changed) this[QUE].flush()
     return true
   }
 
@@ -328,18 +341,17 @@ which implicitly observes all fields of the target. Unlike `obs`, this one
 doesn't have proxy overheads (which are small to begin with).
 */
 export class ObsRef extends Obs {
-  constructor(val) {super()[l.VAL] = val}
+  constructor(val) {super()[TAR] = val}
 
-  get val() {
-    this.enqueDyn()
-    return this.get()
-  }
+  get val() {return this[l.VAL]}
+  set val(val) {this[l.VAL] = val}
 
-  set val(val) {if (this.set(val)) this.flush()}
+  get [l.VAL]() {return this.enqueDyn(), this.get()}
+  set [l.VAL](val) {if (this.set(val)) this.flush()}
 
   // `get` and `set` are lower-level and non-reactive.
-  get() {return this[l.VAL]}
-  set(val) {return !l.is(this[l.VAL], (this[l.VAL] = val))}
+  get() {return this[TAR]}
+  set(val) {return !l.is(this[TAR], (this[TAR] = val))}
 }
 
 export class TypedObsRef extends ObsRef {
@@ -377,7 +389,7 @@ export class ObsCalc extends ObsRef {
 
   onRun() {
     const {tar, fun} = this
-    this[l.VAL] = fun.call(tar, tar)
+    this[TAR] = fun.call(tar, tar)
   }
 
   onFlush() {
@@ -400,6 +412,27 @@ function reqTarFun(tar, fun) {
   throw TypeError(`expected at least one function, got ${l.show(tar)} and ${l.show(fun)}`)
 }
 
+export function MixScheduleRun(cls) {return MixinScheduleRun.get(cls)}
+
+export class MixinScheduleRun extends o.Mixin {
+  static make(cls) {
+    return class ScheduleRun extends cls {
+      get RunRef() {return RunRef}
+      shedRef = new this.RunRef(this, this.schedule)
+      runRef = new this.RunRef(this, this.run)
+
+      schedule() {}
+      run() {}
+      depth() {return 0}
+
+      deinit() {
+        this.shedRef.deinit()
+        this.runRef.deinit()
+      }
+    }
+  }
+}
+
 /*
 Base tool for implementing implicit monitoring. Counterpart and complement
 to our observables (`ObsPh`, `ObsRef`, `ObsCalc`). Invoking `.run` sets up
@@ -416,15 +449,10 @@ export function MixRecur(cls) {return MixinRecur.get(cls)}
 
 export class MixinRecur extends o.Mixin {
   static make(cls) {
-    return class Recur extends cls {
-      get RunRef() {return RunRef}
+    return class Recur extends MixScheduleRun(cls) {
       get dyn() {return RUN_REF}
-
       running = false
-      shedRef = new this.RunRef(this, this.schedule)
-      runRef = new this.RunRef(this, this.run)
       shed = undefined
-
       onRun() {}
 
       run(tar, fun) {
@@ -450,13 +478,6 @@ export class MixinRecur extends o.Mixin {
         const {shed} = this
         if (shed) shed.enque(this.runRef.init())
         else this.run()
-      }
-
-      depth() {return 0}
-
-      deinit() {
-        this.shedRef.deinit()
-        this.runRef.deinit()
       }
     }
   }

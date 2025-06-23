@@ -20,7 +20,8 @@ WATCH ?= watchexec $(and $(CLEAR),-c) -r -d=1ms -n
 WATCH_SRC ?= $(WATCH) -e=mjs
 ESLINT ?= $(DENO_RUN) npm:eslint@8.47.0 --config .eslintrc --ext mjs .
 
-# This is a "function" that must be defined with "=", not ":=".
+# Should be defined with "=", not "?=" or ":=".
+# This makes it a macro and thus lazily executed.
 VER = $(shell jq -r '.version' < $(PKG))
 
 test_w:

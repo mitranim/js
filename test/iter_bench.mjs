@@ -6,6 +6,8 @@ import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
 import * as c from '../coll.mjs'
 
+class Nop {}
+
 /*
 At the time of writing, this doesn't seem to perform any better than an
 implementation of `span` that creates an array.
@@ -277,12 +279,12 @@ t.bench(function bench_map_dict_values_specialized() {l.reqArr(mapDictValuesSpec
 t.bench(function bench_map_dict_values_our_map() {l.reqArr(i.map(itc.numDict, l.inc))})
 t.bench(function bench_map_set_with_our_map() {l.reqArr(i.map(itc.numSet, l.inc))})
 
-itc.deoptCollHof(mapClsDumb)
-itc.deoptCollHof(mapClsClosure)
-itc.deoptCollHof(i.mapCls)
-t.bench(function bench_mapCls_array_dumb() {l.reqArr(mapClsDumb(itc.numArr, l.id))})
-t.bench(function bench_mapCls_array_closure() {l.reqArr(mapClsClosure(itc.numArr, l.id))})
-t.bench(function bench_mapCls_array_actual() {l.reqArr(i.mapCls(itc.numArr, l.id))})
+itc.deoptCollClsHof(mapClsDumb)
+itc.deoptCollClsHof(mapClsClosure)
+itc.deoptCollClsHof(i.mapCls)
+t.bench(function bench_mapCls_array_dumb() {l.reqArr(mapClsDumb(itc.numArr, Nop))})
+t.bench(function bench_mapCls_array_closure() {l.reqArr(mapClsClosure(itc.numArr, Nop))})
+t.bench(function bench_mapCls_array_actual() {l.reqArr(i.mapCls(itc.numArr, Nop))})
 
 itc.deoptSeqHof(mapCompactDumb)
 itc.deoptSeqHof(i.mapCompact)
@@ -776,8 +778,8 @@ function headFromValues(val) {return i.values(val)[0]}
 function isEven(val) {return !(val % 2)}
 
 function mapClsDumb(src, cls) {
-  src = i.valuesCopy(src)
   l.reqCls(cls)
+  src = i.valuesCopy(src)
   const len = src.length
   let ind = -1
   while (++ind < len) src[ind] = new cls(src[ind])

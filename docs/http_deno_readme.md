@@ -19,7 +19,7 @@ Also see [`http`](http_readme.md) for routing and cookies, and [`live_deno`](liv
 Simple example of a server that serves files from the current directory, automatically matching URL paths to HTML files:
 
 ```js
-import * as hd from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/http_deno.mjs'
+import * as hd from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/http_deno.mjs'
 
 // Finds files in the current folder, with no filtering.
 const DIRS = hd.Dirs.of(hd.dirRel(`.`))
@@ -43,15 +43,15 @@ Deno.serve({handler})
 The following APIs are exported but undocumented. Check [http_deno.mjs](../http_deno.mjs).
 
   * [`const EXT_TO_MIME_TYPE`](../http_deno.mjs#L11)
-  * [`function guessContentType`](../http_deno.mjs#L33)
-  * [`class DirBase`](../http_deno.mjs#L35)
-  * [`function dirAbs`](../http_deno.mjs#L70)
-  * [`class DirAbs`](../http_deno.mjs#L72)
-  * [`class DirRel`](../http_deno.mjs#L85)
-  * [`function dirRel`](../http_deno.mjs#L104)
-  * [`class DirRelFil`](../http_deno.mjs#L107)
-  * [`class Dirs`](../http_deno.mjs#L119)
-  * [`class HttpFileInfo`](../http_deno.mjs#L164)
-  * [`class HttpFileStream`](../http_deno.mjs#L180)
-  * [`class Fil`](../http_deno.mjs#L212)
-  * [`function isErrCancel`](../http_deno.mjs#L222)
+  * [`function guessContentType`](../http_deno.mjs#L34)
+  * [`class DirBase`](../http_deno.mjs#L38)
+  * [`function dirAbs`](../http_deno.mjs#L73)
+  * [`class DirAbs`](../http_deno.mjs#L75)
+  * [`class DirRel`](../http_deno.mjs#L88)
+  * [`function dirRel`](../http_deno.mjs#L107)
+  * [`class DirRelFil`](../http_deno.mjs#L110)
+  * [`class Dirs`](../http_deno.mjs#L122)
+  * [`class HttpFileInfo`](../http_deno.mjs#L167)
+  * [`class HttpFileStream`](../http_deno.mjs#L183)
+  * [`class Fil`](../http_deno.mjs#L215)
+  * [`function isErrCancel`](../http_deno.mjs#L225)

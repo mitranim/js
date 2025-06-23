@@ -582,6 +582,11 @@ t.test(function test_isRef_isObsRef_deref_derefAll() {
     t.eq(Object.keys(obs), [])
     t.eq(Reflect.ownKeys(obs), [])
 
+    t.no(ob.TAR in tar)
+    t.ok(ob.TAR in obs)
+    t.is(tar[ob.TAR], undefined)
+    t.is(obs[ob.TAR], tar)
+
     t.no(l.VAL in tar)
     t.ok(l.VAL in obs)
     t.is(tar[l.VAL], undefined)
@@ -618,7 +623,7 @@ t.test(function test_isRef_isObsRef_deref_derefAll() {
     const obs = ob.obsRef()
 
     t.eq(Object.keys(obs), [])
-    t.eq(Reflect.ownKeys(obs), [ob.QUE, l.VAL])
+    t.eq(Reflect.ownKeys(obs), [ob.QUE, ob.TAR])
 
     t.ok(l.isRef(obs))
     t.no(l.isRef(obs.val))
@@ -639,6 +644,40 @@ t.test(function test_isRef_isObsRef_deref_derefAll() {
 
     t.is(l.deref(obs), 10)
     t.is(l.derefAll(obs), 10)
+  })
+})
+
+// TODO consolidate with the test above.
+t.test(function test_deref_reset() {
+  t.test(function test_obsRef() {
+    const obs = ob.obsRef()
+    t.is(l.deref(obs), undefined)
+    t.is(l.reset(obs, 10), undefined)
+    t.is(l.deref(obs), 10)
+    t.is(l.reset(obs, 20), undefined)
+    t.is(l.deref(obs), 20)
+  })
+
+  t.test(function test_obs() {
+    const tar = l.Emp()
+    const obs = ob.obs(tar)
+
+    t.throws(() => l.reset(obs, 10), TypeError, `expected variant of isRec, got 10`)
+
+    t.is(l.deref(obs), tar)
+    t.own(tar, {})
+
+    t.is(l.reset(obs, {one: 10}), undefined)
+    t.is(l.deref(obs), tar)
+    t.own(tar, {one: 10})
+
+    t.is(l.reset(obs, {two: 20, three: 30}), undefined)
+    t.is(l.deref(obs), tar)
+    t.own(tar, {one: 10, two: 20, three: 30})
+
+    t.is(l.reset(obs, undefined), undefined)
+    t.is(l.deref(obs), tar)
+    t.own(tar, {one: 10, two: 20, three: 30})
   })
 })
 
@@ -1260,23 +1299,18 @@ await t.test(async function test_calc() {
     return obs0.val + obs1.val
   })
 
-  t.is(calc0[l.VAL], undefined)
+  t.is(calc0[ob.TAR], undefined)
   t.no(calc0.valid)
   t.is(runs0, 0)
 
   // When accessing the value, calculate on demand.
-  t.is(calc0.val, 30)
+  t.is(l.deref(calc0), 30)
 
   t.ok(calc0.valid)
   t.is(runs0, 1)
 
   // No redundant recalc.
-  t.is(calc0.val, 30)
-  t.ok(calc0.valid)
-  t.is(runs0, 1)
-
-  // No redundant recalc.
-  t.is(calc0.get(), 30)
+  t.is(l.deref(calc0), 30)
   t.ok(calc0.valid)
   t.is(runs0, 1)
 
@@ -1286,6 +1320,12 @@ await t.test(async function test_calc() {
   t.is(runs0, 1)
 
   // No redundant recalc.
+  t.is(calc0.get(), 30)
+  t.ok(calc0.valid)
+  t.is(runs0, 1)
+
+  // No redundant recalc.
+  t.is(calc0[ob.TAR], 30)
   t.is(calc0[l.VAL], 30)
   t.ok(calc0.valid)
   t.is(runs0, 1)
@@ -1299,7 +1339,7 @@ await t.test(async function test_calc() {
   testQueRef(que1, getShedRef(calc0.rec))
 
   // Must invalidate but not recalculate.
-  t.is(calc0[l.VAL], 30)
+  t.is(calc0[ob.TAR], 30)
   t.no(calc0.valid)
   t.is(runs0, 1)
 
@@ -1331,12 +1371,12 @@ await t.test(async function test_calc() {
   testQueEmpty(que1)
 
   // Must invalidate but not recalculate.
-  t.is(calc0[l.VAL], 25)
+  t.is(calc0[ob.TAR], 25)
   t.no(calc0.valid)
   t.is(runs0, 2)
 
   // Accessing the value must recalculate once.
-  t.is(calc0.get(), 12)
+  t.is(calc0[l.VAL], 12)
   t.ok(calc0.valid)
   t.is(runs0, 3)
 
@@ -1363,9 +1403,10 @@ await t.test(async function test_calc() {
 
   // No accidental rerun of accessed calc observable.
   t.is(runs0, 3)
+  t.is(calc0[ob.TAR], 12)
   t.is(calc0[l.VAL], 12)
 
-  t.is(calc1[l.VAL], undefined)
+  t.is(calc1[ob.TAR], undefined)
   t.no(calc1.valid)
   t.is(runs1, 0)
 
@@ -1373,7 +1414,7 @@ await t.test(async function test_calc() {
   testQueEmpty(calc0[ob.QUE])
 
   // Accessing the valid calculates on demand and ques up for future updates.
-  t.is(calc1.val, 24)
+  t.is(calc1[l.VAL], 24)
   t.ok(calc1.valid)
   t.is(runs1, 1)
 
@@ -1381,6 +1422,7 @@ await t.test(async function test_calc() {
 
   // No accidental rerun of accessed calc observable.
   t.is(runs0, 3)
+  t.is(calc0[ob.TAR], 12)
   t.is(calc0[l.VAL], 12)
 
   // No redundant recalc.
@@ -1406,6 +1448,7 @@ await t.test(async function test_calc() {
   // Must run and recalc immediately and flush the pending runners,
   // in this case the derived calc.
   t.is(runs0, 4)
+  t.is(calc0[ob.TAR], 18)
   t.is(calc0[l.VAL], 18)
 
   // ...Which is why it must also que up on all of its source observables.
@@ -1416,17 +1459,17 @@ await t.test(async function test_calc() {
   testQueEmpty(calc0[ob.QUE])
 
   // Must invalidate derived calc but not recalculate.
-  t.is(calc1[l.VAL], 24)
+  t.is(calc1[ob.TAR], 24)
   t.no(calc1.valid)
   t.is(runs1, 1)
 
   // No redundant recalc of first calc on further value access.
-  t.is(calc0.get(), 18)
+  t.is(l.deref(calc0), 18)
   t.ok(calc0.valid)
   t.is(runs0, 4)
 
   // Accessing derived calc runs it and calculates value on demand.
-  t.is(calc1.get(), 36)
+  t.is(l.deref(calc1), 36)
   t.ok(calc1.valid)
   t.is(runs1, 2)
 

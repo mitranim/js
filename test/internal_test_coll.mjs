@@ -81,6 +81,9 @@ the likelihood of deoptimization, which is useful for benchmarking.
 */
 function nop1() {}
 
+class Cls0 {}
+class Cls1 extends Array {}
+
 export function* gen(iter) {if (iter) for (const val of iter) yield val}
 
 export function deoptDictHof(fun) {
@@ -132,6 +135,34 @@ export function deoptCollHof(fun) {
   i.reify(fun(numMap.keys(), nop1))
   i.reify(fun(numMap.entries(), l.nop))
   i.reify(fun(numMap.entries(), nop1))
+}
+
+export function deoptCollClsHof(fun) {
+  // deoptListHof
+  i.reify(fun(numArr, Cls0))
+  i.reify(fun(numArr, Cls1))
+  i.reify(fun(numArgs, Cls0))
+  i.reify(fun(numArgs, Cls1))
+
+  // deoptSeqHof
+  i.reify(fun(numArr.values(), Cls0))
+  i.reify(fun(numArr.values(), Cls1))
+  i.reify(fun(numArr.keys(), Cls0))
+  i.reify(fun(numArr.keys(), Cls1))
+  i.reify(fun(gen(), Cls0))
+  i.reify(fun(gen(), Cls1))
+
+  // deoptCollHof
+  i.reify(fun(numDict, Cls0))
+  i.reify(fun(numDict, Cls1))
+  i.reify(fun(numMap, Cls0))
+  i.reify(fun(numMap, Cls1))
+  i.reify(fun(numMap.values(), Cls0))
+  i.reify(fun(numMap.values(), Cls1))
+  i.reify(fun(numMap.keys(), Cls0))
+  i.reify(fun(numMap.keys(), Cls1))
+  i.reify(fun(numMap.entries(), Cls0))
+  i.reify(fun(numMap.entries(), Cls1))
 }
 
 export function deoptNativeListHof(fun) {

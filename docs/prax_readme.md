@@ -8,25 +8,25 @@ Supports observables and reactivity via the module [`obs`](obs_readme.md).
 
 Short overview of features:
 
-  * Directly create DOM nodes.
-    * No string templates.
-    * No VDOM.
-    * Can instantiate with `new`.
-  * Convenient syntax. Nice-to-use in plain JS.
-    * No templates.
-    * No string parsing.
-    * No need for JSX.
-    * No need for a build system.
-  * Can use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
-    * Use [`dom_reg`](dom_reg_readme.md) for more convenient element registration.
-  * Built-in reactivity with [`obs`](obs_readme.md).
-  * Good for SSR/SPA hybrids.
+* Directly create DOM nodes.
+  * No string templates.
+  * No VDOM.
+  * Can instantiate with `new`.
+* Convenient syntax. Nice-to-use in plain JS.
+  * No templates.
+  * No string parsing.
+  * No need for JSX.
+  * No need for a build system.
+* Built-in reactivity with [`obs`](obs_readme.md).
+* Can use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.
+  * Use [`dom_reg`](dom_reg_readme.md) for more convenient element registration.
+* Good for SSR/SPA hybrids.
 
 Complemented by:
 
-  * [`dom_shim`](dom_shim_readme.md) for SSR.
-  * [`dom_reg`](dom_reg_readme.md) for registering custom elements in SSR.
-  * [`obs`](obs_readme.md) for observables and implicit reactivity for elements.
+* [`dom_shim`](dom_shim_readme.md) for SSR.
+* [`dom_reg`](dom_reg_readme.md) for registering custom elements in SSR.
+* [`obs`](obs_readme.md) for observables and implicit reactivity for elements.
 
 ## TOC
 
@@ -40,19 +40,23 @@ Complemented by:
 
 Rendering is done via `Ren`. You must create an instance, which should be a singleton. You can also subclass `Ren` and override individual methods to customize its behavior.
 
+For server-side rendering, see the section [SSR](#ssr) below.
+
 Browser example:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/prax.mjs'
 
 const {E} = p.Ren.main
 
-const elem = E(`div`, {id: `main`, class: `outer`},
-  E(`p`, {class: `inner`},
-    `hello `,
-    `world!`,
-  ),
-)
+const elem = E(`div`, {
+  id: `main`,
+  class: `outer`,
+  chi: E(`p`, {
+    class: `inner`
+    chi: [`hello `, `world!`],
+  }),
+})
 
 document.body.append(elem)
 
@@ -63,27 +67,17 @@ The following elements (not strings) have been appended:
 */
 ```
 
-For rendering to string, use `.outerHTML`:
-
-```js
-console.log(elem.outerHTML)
-
-/*
-<div id="main" class="outer"><p class="inner">hello world!</p></div>
-*/
-```
-
 Usage with custom elements:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_reg.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/prax.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_reg.mjs'
 
 const {E} = p.Ren.main
 
 class SomeLink extends dr.MixReg(HTMLAnchorElement) {
   init(href, text) {
-    return E(this, {href, class: `link`}, text)
+    return E(this, {href, class: `link`, chi: text || href})
   }
 }
 
@@ -95,8 +89,9 @@ document.body.append(
 Reactivity:
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/obs.mjs'
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/lang.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/prax.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/obs.mjs'
 
 const {E} = p.Ren.main
 const obs0 = ob.obs({val: `hello`})
@@ -108,17 +103,19 @@ The renderer specially detects and supports functions and observables.
 Any of the following will render the same message and update as needed.
 */
 
-E(document.body, {}, msg)
-E(document.body, {}, () => msg)
-E(document.body, {}, () => msg.val)
-E(document.body, {}, () => obs0.val + ` ` + obs1.val)
-E(document.body, {}, () => [obs0.val, ` `, obs1.val])
+E(document.body, {chi: msg})
+E(document.body, {chi: () => msg})
+E(document.body, {chi: () => msg.val})
+E(document.body, {chi: () => l.deref(msg)})
+E(document.body, {chi: () => obs0.val + ` ` + obs1.val})
+E(document.body, {chi: () => [obs0.val, ` `, obs1.val]})
 
-document.body.appendChild(E(`span`, {}, msg))
-document.body.appendChild(E(`span`, {}, () => msg))
-document.body.appendChild(E(`span`, {}, () => msg.val))
-document.body.appendChild(E(`span`, {}, () => obs0.val + ` ` + obs1.val))
-document.body.appendChild(E(`span`, {}, () => [obs0.val, ` `, obs1.val]))
+document.body.appendChild(E(`span`, {chi: msg}))
+document.body.appendChild(E(`span`, {chi: () => msg}))
+document.body.appendChild(E(`span`, {chi: () => msg.val}))
+document.body.appendChild(E(`span`, {chi: () => l.deref(msg)}))
+document.body.appendChild(E(`span`, {chi: () => obs0.val + ` ` + obs1.val}))
+document.body.appendChild(E(`span`, {chi: () => [obs0.val, ` `, obs1.val]}))
 
 /*
 These modifications automatically notify all observers monitoring the
@@ -137,23 +134,34 @@ setTimeout(() => {
 Remove all nodes. When the engine runs garbage collection, all observers will
 be automatically deinitialized and removed from observable queues.
 */
-E(document.body, {}, undefined)
+E(document.body, {chi: undefined})
 ```
+
+Functions and observables can be passed to `E` just about anywhere:
+* As the entire props.
+* As any individual prop.
+  * For props whose keys begin with `on`, functions are treated non-reactively and simply assigned to the element.
+* As child nodes. They can be freely mixed with non-reactive children.
+
+Prax encourages top-down rendering, bottom-up re-rendering. Render your elements once, then let the framework make updates in just the right places,
+by passing functions or observable references in place of props or child nodes.
 
 ### SSR
 
 For SSR (server-side rendering), Prax needs our lightweight DOM shim:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_global_shim.mjs'
 
 const ren = new p.Ren(dg.global)
 const {E} = ren
 
-const elem = E(`div`, {id: `main`, class: `outer`},
-  E(`p`, {class: `inner`}, `hello world!`),
-)
+const elem = E(`div`, {
+  id: `main`,
+  class: `outer`,
+  chi: E(`p`, {class: `inner`, chi: `hello world!`}),
+})
 
 console.log(elem.outerHTML)
 
@@ -165,40 +173,43 @@ console.log(elem.outerHTML)
 For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global `document` and pass it to `Ren`. The rest will just work.
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/prax.mjs'
 
 // Your bundler or importmap should choose the right one.
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_global_shim.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_global_native.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_global_shim.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_global_native.mjs'
 
 const ren = new p.Ren(dg.global)
 const {E} = ren
 
 // In both environments, this will be a DOM element.
 // In SSR, it will be shimmed.
-const elem = E(`div`, {id: `main`, class: `outer`},
-  E(`p`, {class: `inner`}, `hello world!`),
-)
+const elem = E(`div`, {
+  id: `main`,
+  class: `outer`,
+  chi: E(`p`, {class: `inner`, chi: `hello world!`}),
+})
 ```
 
 Rendering a complete document with doctype:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_global_shim.mjs'
 
 const ren = new p.Ren(dg.global)
 const {E} = ren
 
-const elem = E(`html`, {lang: `en`},
-  E(`head`, null,
-    E(`link`, {rel: `stylesheet`, href: `/styles/main.css`}),
-    E(`title`, null, `page title`),
-  ),
-  E(`body`, null,
-    E(`main`, {class: `main`}, `hello world!`),
-  ),
-)
+const elem = E(`html`, {
+  lang: `en`,
+  chi: [
+    E(`head`, {chi: [
+      E(`link`, {rel: `stylesheet`, href: `/styles/main.css`}),
+      E(`title`, {chi: `page title`}),
+    ]}),
+    E(`body`, {chi: E(`main`, {class: `main`, chi: `hello world!`})}),
+  ],
+})
 
 console.log(p.DOCTYPE_HTML + elem.outerHTML)
 
@@ -226,32 +237,39 @@ In non-browser environments, observers are invoked synchronously by default. Mod
 
 The following APIs are exported but undocumented. Check [prax.mjs](../prax.mjs).
 
-  * [`const PROP_REC`](../prax.mjs#L6)
-  * [`const PROP_KEYS`](../prax.mjs#L7)
-  * [`const NS_HTML`](../prax.mjs#L9)
-  * [`const NS_SVG`](../prax.mjs#L10)
-  * [`const NS_MATH_ML`](../prax.mjs#L11)
-  * [`const BOOL`](../prax.mjs#L19)
-  * [`const VOID`](../prax.mjs#L27)
-  * [`class Ren`](../prax.mjs#L33)
-  * [`function MixInitRun`](../prax.mjs#L380)
-  * [`class MixinInitRun`](../prax.mjs#L382)
-  * [`class RecPropFun`](../prax.mjs#L401)
-  * [`class RecPropRef`](../prax.mjs#L407)
-  * [`function MixRecNode`](../prax.mjs#L430)
-  * [`class MixinRecNode`](../prax.mjs#L432)
-  * [`function MixRecNodeFun`](../prax.mjs#L503)
-  * [`class MixinRecNodeFun`](../prax.mjs#L505)
-  * [`function MixRecNodeRef`](../prax.mjs#L530)
-  * [`class MixinRecNodeRef`](../prax.mjs#L532)
-  * [`class PropBui`](../prax.mjs#L609)
-  * [`const DOCTYPE_HTML`](../prax.mjs#L747)
-  * [`function isNodable`](../prax.mjs#L749)
-  * [`function reqNodable`](../prax.mjs#L750)
-  * [`function isDocument`](../prax.mjs#L752)
-  * [`function optDocument`](../prax.mjs#L760)
-  * [`function reqDocument`](../prax.mjs#L761)
-  * [`function isDomEnv`](../prax.mjs#L763)
-  * [`function optDomEnv`](../prax.mjs#L772)
-  * [`function reqDomEnv`](../prax.mjs#L773)
-  * [`function isNamespaced`](../prax.mjs#L775)
+  * [`const REC`](../prax.mjs#L6)
+  * [`const RECS`](../prax.mjs#L7)
+  * [`const NS_HTML`](../prax.mjs#L8)
+  * [`const NS_SVG`](../prax.mjs#L9)
+  * [`const NS_MATH_ML`](../prax.mjs#L10)
+  * [`const BOOL`](../prax.mjs#L18)
+  * [`const VOID`](../prax.mjs#L26)
+  * [`class Ren`](../prax.mjs#L32)
+  * [`function MixReiniter`](../prax.mjs#L392)
+  * [`class MixinReiniter`](../prax.mjs#L394)
+  * [`function MixRec`](../prax.mjs#L409)
+  * [`class MixinRec`](../prax.mjs#L411)
+  * [`function MixRecs`](../prax.mjs#L421)
+  * [`class MixinRecs`](../prax.mjs#L423)
+  * [`class RecMutFun`](../prax.mjs#L434)
+  * [`class RecPropFun`](../prax.mjs#L446)
+  * [`class RecBaseRef`](../prax.mjs#L463)
+  * [`class RecMutRef`](../prax.mjs#L483)
+  * [`class RecPropRef`](../prax.mjs#L487)
+  * [`function MixRecNode`](../prax.mjs#L495)
+  * [`class MixinRecNode`](../prax.mjs#L497)
+  * [`function MixRecNodeFun`](../prax.mjs#L568)
+  * [`class MixinRecNodeFun`](../prax.mjs#L570)
+  * [`function MixRecNodeRef`](../prax.mjs#L595)
+  * [`class MixinRecNodeRef`](../prax.mjs#L597)
+  * [`class PropBui`](../prax.mjs#L664)
+  * [`const DOCTYPE_HTML`](../prax.mjs#L794)
+  * [`function isNodable`](../prax.mjs#L796)
+  * [`function reqNodable`](../prax.mjs#L797)
+  * [`function isDocument`](../prax.mjs#L799)
+  * [`function optDocument`](../prax.mjs#L807)
+  * [`function reqDocument`](../prax.mjs#L808)
+  * [`function isDomEnv`](../prax.mjs#L810)
+  * [`function optDomEnv`](../prax.mjs#L819)
+  * [`function reqDomEnv`](../prax.mjs#L820)
+  * [`function isNamespaced`](../prax.mjs#L822)

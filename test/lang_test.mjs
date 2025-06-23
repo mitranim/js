@@ -726,6 +726,7 @@ t.test(function test_isRec() {
   t.no(l.isRec([]))
   t.no(l.isRec(new String()))
   t.no(l.isRec(gen()))
+  t.no(l.isRec(Promise.resolve())) // Special case.
 
   t.ok(l.isRec(/_/))
   t.ok(l.isRec({}))
@@ -988,13 +989,32 @@ t.test(function test_isGen() {
 t.test(function test_isCls() {
   t.no(l.isCls(undefined))
   t.no(l.isCls({}))
+  t.no(l.isCls([]))
   t.no(l.isCls(() => {}))
   t.no(l.isCls({}.toString))
   t.no(l.isCls(`str`))
 
+  t.no(l.isCls(l.id))
+  t.no(l.isCls(l.nop))
+  t.no(l.isCls(l.Emp))
+  t.no(l.isCls(function NotCls() {}))
+  t.no(l.isCls(Math))
+
   t.ok(l.isCls(Object))
-  t.ok(l.isCls(function Cls() {}))
+  t.ok(l.isCls(Array))
+  t.ok(l.isCls(Boolean))
+  t.ok(l.isCls(Number))
+  t.ok(l.isCls(String))
+  t.ok(l.isCls(Promise))
+
   t.ok(l.isCls(class Cls {}))
+  t.ok(l.isCls(class Cls extends l.Emp {}))
+  t.ok(l.isCls(class Cls extends Array {}))
+
+  // Known false positives. Unfortunate but seems like this would require
+  // special casing a variety of built-ins, which we do not want to do.
+  t.ok(l.isCls(Symbol))
+  t.ok(l.isCls(BigInt))
 })
 
 t.test(function test_isList() {
@@ -1481,10 +1501,17 @@ t.test(function test_reqInst() {
 })
 
 t.test(function test_optInst() {
+  /*
+  We don't bother validating the class argument. Engines throw when the
+  right-hand side of `instanceof` is not suitable. When the value argument is
+  not an object, there's no exception. But generally programmer errors like
+  failing to provide a class are detected very soon during development.
+
   t.test(function test_invalid() {
-    t.throws(l.optInst,           TypeError, `expected variant of isCls, got undefined`)
-    t.throws(() => l.optInst({}), TypeError, `expected variant of isCls, got undefined`)
+    t.throws(l.optInst,           TypeError, `expected variant of isFun, got undefined`)
+    t.throws(() => l.optInst({}), TypeError, `expected variant of isFun, got undefined`)
   })
+  */
 
   t.test(function test_rejected() {
     t.throws(() => l.optInst(`str`, Object), TypeError, `expected instance of Object, got "str"`)
@@ -2023,6 +2050,70 @@ t.test(function test_get() {
   t.is(l.get([], `toString`), Array.prototype.toString)
   t.is(l.get([10, 20, 30], 0), 10)
   t.is(l.get([10, 20, 30], 1), 20)
+})
+
+t.test(function test_isRef() {
+  t.no(l.isRef())
+  t.no(l.isRef(null))
+  t.no(l.isRef(false))
+  t.no(l.isRef(true))
+  t.no(l.isRef(10))
+  t.no(l.isRef(Symbol()))
+  t.no(l.isRef(`one`))
+  t.no(l.isRef({}))
+  t.no(l.isRef([]))
+  t.no(l.isRef(new WeakRef({})))
+  t.no(l.isRef(Promise.resolve()))
+  t.no(l.isRef(l.isRef))
+
+  t.ok(l.isRef({[l.VAL]: undefined}))
+  t.ok(l.isRef(inherit({[l.VAL]: undefined})))
+  t.ok(l.isRef({[l.VAL]: 10}))
+  t.ok(l.isRef(inherit({[l.VAL]: 10})))
+})
+
+t.test(function test_deref() {
+  function same(src) {t.is(l.deref(src), src)}
+
+  same()
+  same(null)
+  same(0)
+  same(10)
+  same(false)
+  same(`one`)
+  same({})
+  same([])
+  same(inherit({}))
+  same(inherit([]))
+
+  const val = 10
+  const ref0 = {[l.VAL]: val}
+  const ref1 = {[l.VAL]: ref0}
+  const ref2 = {[l.VAL]: ref1}
+
+  t.is(l.deref(ref2), ref1)
+  t.is(l.deref(ref1), ref0)
+  t.is(l.deref(ref0), val)
+
+  t.test(function test_derefAll() {
+    t.is(l.derefAll(ref2), val)
+    t.is(l.derefAll(ref1), val)
+    t.is(l.derefAll(ref0), val)
+    t.is(l.derefAll(val), val)
+  })
+})
+
+t.test(function test_reset() {
+  t.throws(() => l.reset(10), TypeError, `expected variant of isRef, got 10`)
+  t.throws(() => l.reset({}), TypeError, `expected variant of isRef, got {}`)
+
+  const tar = {[l.VAL]: undefined}
+
+  l.reset(tar, 10)
+  t.is(l.deref(tar), 10)
+
+  l.reset(tar, 20)
+  t.is(l.deref(tar), 20)
 })
 
 if (import.meta.main) console.log(`[test] ok!`)

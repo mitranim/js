@@ -167,8 +167,8 @@ export function isDict(val) {
   if (!isObj(val)) return false
   const pro = Object.getPrototypeOf(val)
   return isNil(pro) || (
-    pro === Object.prototype
-    && (!own.call(val, `constructor`) || enu.call(val, `constructor`))
+    pro === objPro &&
+    (!own.call(val, `constructor`) || enu.call(val, `constructor`))
   )
 }
 export function reqDict(val) {return isDict(val) ? val : throwErrFun(val, isDict)}
@@ -176,7 +176,9 @@ export function optDict(val) {return isNil(val) ? val : reqDict(val)}
 export function onlyDict(val) {return isDict(val) ? val : undefined}
 export function laxDict(val) {return isNil(val) ? Emp() : reqDict(val)}
 
-export function isRec(val) {return isObj(val) && !(Symbol.iterator in val)}
+export function isRec(val) {
+  return isObj(val) && !(Symbol.iterator in val) && !(val instanceof Promise)
+}
 export function reqRec(val) {return isRec(val) ? val : throwErrFun(val, isRec)}
 export function optRec(val) {return isNil(val) ? val : reqRec(val)}
 export function onlyRec(val) {return isRec(val) ? val : undefined}
@@ -260,20 +262,31 @@ export function reqGen(val) {return isGen(val) ? val : throwErrFun(val, isGen)}
 export function optGen(val) {return isNil(val) ? val : reqGen(val)}
 export function onlyGen(val) {return isGen(val) ? val : undefined}
 
-// TODO add `isErrCls`.
-export function isCls(val) {return isFun(val) && !!val.prototype}
+export function isCls(val) {
+  if (!isFun(val)) return false
+
+  let out = CLASSES.get(val)
+  if (isSome(out)) return out
+
+  const desc = Object.getOwnPropertyDescriptor(val, `prototype`)
+  out = !!desc && !desc?.writable
+  CLASSES.set(val, out)
+  return out
+}
+
 export function reqCls(val) {return isCls(val) ? val : throwErrFun(val, isCls)}
 export function optCls(val) {return isNil(val) ? val : reqCls(val)}
 export function onlyCls(val) {return isCls(val) ? val : undefined}
 
 // TODO tests.
-// export function isSubCls(sub, sup) {return isCls(sub) && (sub === sup || isInst(sub.prototype, sup))}
-
 export function isSubCls(sub, sup) {
-  return isFun(sub) && (sub === sup || Object.prototype.isPrototypeOf.call(sup, sub))
+  return (
+    isFun(sub) &&
+    isFun(sup) &&
+    (sub === sup || objPro.isPrototypeOf.call(sup, sub))
+  )
 }
 
-// TODO tests.
 export function reqSubCls(sub, sup) {
   if (isSubCls(sub, sup)) return sub
   throw TypeError(`expected subclass of ${show(sup)}, found ${show(sub)}`)
@@ -298,7 +311,7 @@ export function onlyVac(val) {return isVac(val) ? val : undefined}
 export function isScalar(val) {
   if (isObj(val)) {
     const fun = get(val, `toString`)
-    return isFun(fun) && fun !== Object.prototype.toString && fun !== Array.prototype.toString
+    return isFun(fun) && fun !== objPro.toString && fun !== arrPro.toString
   }
   return !(isNil(val) || isSym(val) || isFun(val))
 }
@@ -366,9 +379,20 @@ export function isInst(val, cls) {return isObj(val) && val instanceof cls}
 
 /* Assertions */
 
+export function opt(val, fun) {
+  reqValidator(fun)
+  return isNil(val) ? val : req(val, fun)
+}
+
 export function req(val, fun) {
   if (reqValidator(fun)(val)) return val
   throw errFun(val, fun)
+}
+
+export function only(val, fun) {return reqValidator(fun)(val) ? val : undefined}
+
+export function optOneOf(val, funs) {
+  return isNil(val) ? val : reqOneOf(val, funs)
 }
 
 export function reqOneOf(val, funs) {
@@ -376,33 +400,16 @@ export function reqOneOf(val, funs) {
   throw errOneOf(val, funs)
 }
 
-export function opt(val, fun) {
-  reqValidator(fun)
-  return isNil(val) ? val : req(val, fun)
-}
-
-export function optOneOf(val, funs) {
-  return isNil(val) ? val : reqOneOf(val, funs)
-}
+export function optInst(val, cls) {return isNil(val) ? val : reqInst(val, cls)}
 
 export function reqInst(val, cls) {
   if (isInst(val, cls)) return val
   throw errInst(val, cls)
 }
 
-export function optInst(val, cls) {
-  reqCls(cls)
-  return isNil(val) ? val : reqInst(val, cls)
-}
-
-export function only(val, fun) {return reqValidator(fun)(val) ? val : undefined}
-
 export function onlyInst(val, cls) {return isInst(val, cls) ? val : undefined}
 
 /* Conversions */
-
-export function deref(val) {return isRef(val) ? val[VAL] : val}
-export function derefAll(val) {while (val !== (val = deref(val))); return val}
 
 export function toInst(val, cls) {return isInst(val, cls) ? val : new cls(val)}
 export function toInstOpt(val, cls) {return isNil(val) ? val : toInst(val, cls)}
@@ -429,6 +436,10 @@ export function toTrueArr(val) {
 }
 
 /* Misc */
+
+export function reset(tar, val) {reqRef(tar)[VAL] = val}
+export function deref(val) {return isRef(val) ? val[VAL] : val}
+export function derefAll(val) {while (val !== (val = deref(val))); return val}
 
 export function is(one, two) {return one === two || (isNaN(one) && isNaN(two))}
 export function truthy(val) {return !!val}
@@ -486,23 +497,23 @@ export class Show extends Emp {
     if (isArr(src)) return this.arr(src)
     if (isDict(src)) return this.dict(src)
     if (isInst(src, WeakRef)) return this.weakRef(src, WeakRef.name)
-    if (isInst(src, Boolean)) return this.obj(src, Boolean.name)
-    if (isInst(src, Number)) return this.obj(src, Number.name)
-    if (isInst(src, String)) return this.obj(src, String.name)
-    if (isSet(src)) return this.obj(src, Set.name)
-    if (isMap(src)) return this.obj(src, Map.name)
-    return this.obj(src)
+    if (isInst(src, Boolean)) return this.comp(src, Boolean.name)
+    if (isInst(src, Number)) return this.comp(src, Number.name)
+    if (isInst(src, String)) return this.comp(src, String.name)
+    if (isSet(src)) return this.comp(src, Set.name)
+    if (isMap(src)) return this.comp(src, Map.name)
+    return this.comp(src)
   }
 
   str(src) {return JSON.stringify(src)}
   sym(src) {return src.toString()}
   bigInt(src) {return src.toString() + `n`}
-  fun(src) {return showFun(src)}
+  fun(src) {return this.comp(src)}
   arr(src) {return `[` + this.seq(src) + `]`}
   dict(src) {return `{` + this.fields(src) + `}`}
 
-  obj(src, name, ...extra) {
-    let out = `[object`
+  comp(src, name, ...extra) {
+    let out = `[` + typeof src
     out = spaced(out, this.name(src) || laxStr(name))
     for (const val of extra) out = spaced(out, val)
     out = spaced(out, this.scalarOpt(src))
@@ -525,8 +536,8 @@ export class Show extends Emp {
 
   weakRef(src, name) {
     const val = src.deref()
-    if (isNil(val)) return this.obj(src, name)
-    return this.obj(src, name, this.any(val))
+    if (isNil(val)) return this.comp(src, name)
+    return this.comp(src, name, this.any(val))
   }
 
   scalarOpt(src) {return isScalar(src) ? this.any(src.toString()) : ``}
@@ -570,7 +581,12 @@ export class Show extends Emp {
   }
 
   con(src) {return getCon(src)}
-  name(src) {return this.con(src)?.name || src?.[Symbol.toStringTag]}
+
+  name(src) {
+    if (isFun(src)) return src.name
+    return this.con(src)?.name || src?.[Symbol.toStringTag]
+  }
+
   cyclic(ind) {return `[cyclic ` + ind + `]`}
 
   cyclicOpt(val) {
@@ -609,8 +625,11 @@ export function round(val) {
 
 /* Internal */
 
-const own = Object.prototype.hasOwnProperty
-const enu = Object.prototype.propertyIsEnumerable
+const CLASSES = new WeakMap()
+const arrPro = Array.prototype
+const objPro = Object.prototype
+const own = objPro.hasOwnProperty
+const enu = objPro.propertyIsEnumerable
 
 function isFunType(val, name) {return isFun(val) && val.constructor.name === name}
 function instDesc(val) {return isFun(val) ? `instance of ${showFunName(val)} ` : ``}
@@ -687,9 +706,8 @@ export function convSynt(tar, src, msg) {
   throw errSynt(src, msg)
 }
 
-function showFun(val) {return `[function ${val.name || val}]`}
 function showFuns(funs) {return funs.map(showFunName).join(`, `)}
-export function showFunName(fun) {return fun.name || showFun(fun)}
+export function showFunName(fun) {return fun.name || show(fun)}
 
 function spaced(one, two) {return inf(one, ` `, two)}
 
@@ -723,6 +741,4 @@ function renderDate(val) {
   return val.toString()
 }
 
-export function recKeys(val) {
-  return isNil(val) ? [] : Object.keys(reqRec(val))
-}
+export function recKeys(val) {return isNil(val) ? [] : Object.keys(reqRec(val))}

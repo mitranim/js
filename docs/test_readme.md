@@ -63,7 +63,7 @@ Timing precision varies by JS engine and environment.
 Simple testing example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/test.mjs'
 
 t.test(function test_some_feature() {
   t.eq(someFunction(someInputs), `expected result`)
@@ -73,7 +73,7 @@ t.test(function test_some_feature() {
 Simple benchmarking example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/test.mjs'
 
 t.bench(function bench_some_feature() {
   someFunction(someInputs)
@@ -86,7 +86,7 @@ t.benches()
 Complex example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/test.mjs'
 
 // Optional CLI flag parsing.
 const cli = t.Args.os()
@@ -150,7 +150,7 @@ The following APIs are exported but undocumented. Check [test.mjs](../test.mjs).
   * [`function notEq`](../test.mjs#L596)
   * [`function own`](../test.mjs#L606)
   * [`function inst`](../test.mjs#L625)
-  * [`function optInst`](../test.mjs#L639)
+  * [`function instOpt`](../test.mjs#L639)
   * [`function throws`](../test.mjs#L652)
   * [`function msgThrowsCaught`](../test.mjs#L687)
   * [`function throwsGotErr`](../test.mjs#L705)

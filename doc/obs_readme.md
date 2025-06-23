@@ -55,17 +55,19 @@ The renderer has built-in support for observables and functions.
 Any of the following will render the same message and update as needed.
 */
 
-E(document.body, {}, msg)
-E(document.body, {}, () => msg)
-E(document.body, {}, () => msg.val)
-E(document.body, {}, () => obs0.val + ` ` + obs1.val)
-E(document.body, {}, () => [obs0.val, ` `, obs1.val])
+E(document.body, {chi: msg})
+E(document.body, {chi: () => msg})
+E(document.body, {chi: () => msg.val})
+E(document.body, {chi: () => l.deref(msg)})
+E(document.body, {chi: () => obs0.val + ` ` + obs1.val})
+E(document.body, {chi: () => [obs0.val, ` `, obs1.val]})
 
-document.body.appendChild(E(`span`, {}, msg))
-document.body.appendChild(E(`span`, {}, () => msg))
-document.body.appendChild(E(`span`, {}, () => msg.val))
-document.body.appendChild(E(`span`, {}, () => obs0.val + ` ` + obs1.val))
-document.body.appendChild(E(`span`, {}, () => [obs0.val, ` `, obs1.val]))
+document.body.appendChild(E(`span`, {chi: msg}))
+document.body.appendChild(E(`span`, {chi: () => msg}))
+document.body.appendChild(E(`span`, {chi: () => msg.val}))
+document.body.appendChild(E(`span`, {chi: () => l.deref(msg)}))
+document.body.appendChild(E(`span`, {chi: () => obs0.val + ` ` + obs1.val}))
+document.body.appendChild(E(`span`, {chi: () => [obs0.val, ` `, obs1.val]}))
 
 /*
 These modifications automatically notify all observers monitoring the
@@ -84,7 +86,7 @@ setTimeout(() => {
 Remove all nodes. When the engine runs garbage collection, all observers will
 be automatically deinitialized and removed from observable queues.
 */
-E(document.body, {}, undefined)
+E(document.body, {chi: undefined})
 ```
 
 For operations with side effects, you can use lower-level procedural tools such as `recur`. Takes a function and an argument (in any order), and invokes it in a reactive context; future modifications of any observables accessed during the call will rerun the function.
@@ -246,6 +248,22 @@ try {
 finally {
   shed.flush() // sum: 110
 }
+```
+
+### Classes
+
+Any class can become observable by wrapping the instance in `obs` straight in the constructor. Make sure to actually return the resulting object from the constructor.
+
+```js
+import * as ob from '{{featUrl obs}}'
+
+class MyCls {constructor() {return ob.obs(this)}}
+
+const val = new MyCls()
+
+val instanceof MyCls // true
+
+ob.isObsRef(val) // true
 ```
 
 ## Errors

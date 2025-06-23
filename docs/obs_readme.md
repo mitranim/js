@@ -40,8 +40,8 @@ Proxy-based observables via `obs`:
 Since the most common and important use of observables is UI updates, we start with a higher-level example that involves this library's DOM rendering module `prax`.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/obs.mjs'
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/prax.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/obs.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/prax.mjs'
 
 const obs0 = ob.obs({val: `hello`})
 const obs1 = ob.obsRef(`world`)
@@ -55,17 +55,19 @@ The renderer has built-in support for observables and functions.
 Any of the following will render the same message and update as needed.
 */
 
-E(document.body, {}, msg)
-E(document.body, {}, () => msg)
-E(document.body, {}, () => msg.val)
-E(document.body, {}, () => obs0.val + ` ` + obs1.val)
-E(document.body, {}, () => [obs0.val, ` `, obs1.val])
+E(document.body, {chi: msg})
+E(document.body, {chi: () => msg})
+E(document.body, {chi: () => msg.val})
+E(document.body, {chi: () => l.deref(msg)})
+E(document.body, {chi: () => obs0.val + ` ` + obs1.val})
+E(document.body, {chi: () => [obs0.val, ` `, obs1.val]})
 
-document.body.appendChild(E(`span`, {}, msg))
-document.body.appendChild(E(`span`, {}, () => msg))
-document.body.appendChild(E(`span`, {}, () => msg.val))
-document.body.appendChild(E(`span`, {}, () => obs0.val + ` ` + obs1.val))
-document.body.appendChild(E(`span`, {}, () => [obs0.val, ` `, obs1.val]))
+document.body.appendChild(E(`span`, {chi: msg}))
+document.body.appendChild(E(`span`, {chi: () => msg}))
+document.body.appendChild(E(`span`, {chi: () => msg.val}))
+document.body.appendChild(E(`span`, {chi: () => l.deref(msg)}))
+document.body.appendChild(E(`span`, {chi: () => obs0.val + ` ` + obs1.val}))
+document.body.appendChild(E(`span`, {chi: () => [obs0.val, ` `, obs1.val]}))
 
 /*
 These modifications automatically notify all observers monitoring the
@@ -84,7 +86,7 @@ setTimeout(() => {
 Remove all nodes. When the engine runs garbage collection, all observers will
 be automatically deinitialized and removed from observable queues.
 */
-E(document.body, {}, undefined)
+E(document.body, {chi: undefined})
 ```
 
 For operations with side effects, you can use lower-level procedural tools such as `recur`. Takes a function and an argument (in any order), and invokes it in a reactive context; future modifications of any observables accessed during the call will rerun the function.
@@ -92,8 +94,8 @@ For operations with side effects, you can use lower-level procedural tools such 
 The observer object returned by `recur` (instance of `ob.FunRecur`) is automatically deinitialized when garbage collected. Make sure to store it while you need it.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/obs.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/dom_reg.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/obs.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/dom_reg.mjs'
 
 const obs = ob.obs({msg: `hello world`})
 
@@ -114,7 +116,7 @@ setTimeout(() => {obs.msg = `welcome to the future`}, 1024)
 `recur` doesn't require an object, you can just pass a function:
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/obs.mjs'
 
 const obs = ob.obs({msg: `hello world`})
 
@@ -215,7 +217,7 @@ By default, it uses "task" scheduling (`ob.ShedTask.main`) in browsers, and "mic
 The synchronous scheduler `ShedSync` can be paused to briefly prevent synchronous observers from running, and resumed to flush them all at once.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/obs.mjs'
 
 const obs = ob.obs({one: 10, two: 20})
 
@@ -248,6 +250,22 @@ finally {
 }
 ```
 
+### Classes
+
+Any class can become observable by wrapping the instance in `obs` straight in the constructor. Make sure to actually return the resulting object from the constructor.
+
+```js
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/obs.mjs'
+
+class MyCls {constructor() {return ob.obs(this)}}
+
+const val = new MyCls()
+
+val instanceof MyCls // true
+
+ob.isObsRef(val) // true
+```
+
 ## Errors
 
 In non-browser environments, exceptions in async scheduler callbacks crash the process. In browsers, they may lead to silent failures. In all environments, you should define your own error handling callbacks, with the logic appropriate for your app, and provide them to async schedulers.
@@ -255,7 +273,7 @@ In non-browser environments, exceptions in async scheduler callbacks crash the p
 Note that synchronous exceptions, such as during any initial call to `ob.recur`, are _not_ caught this way. This is intentional.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.72/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/obs.mjs'
 
 ob.ShedMicro.main.onerror = console.error
 ob.ShedTask.main.onerror = console.error
@@ -302,49 +320,53 @@ The following APIs are exported but undocumented. Check [obs.mjs](../obs.mjs).
   * [`function setDefaultShed`](../obs.mjs#L23)
   * [`function getDefaultShed`](../obs.mjs#L24)
   * [`const PH`](../obs.mjs#L26)
-  * [`const QUE`](../obs.mjs#L27)
-  * [`function isRunner`](../obs.mjs#L29)
-  * [`function optRunner`](../obs.mjs#L30)
-  * [`function reqRunner`](../obs.mjs#L31)
-  * [`function isObs`](../obs.mjs#L33)
-  * [`function optObs`](../obs.mjs#L34)
-  * [`function reqObs`](../obs.mjs#L35)
-  * [`function isObsRef`](../obs.mjs#L37)
-  * [`function optObsRef`](../obs.mjs#L38)
-  * [`function reqObsRef`](../obs.mjs#L39)
-  * [`function isQue`](../obs.mjs#L41)
-  * [`function optQue`](../obs.mjs#L42)
-  * [`function reqQue`](../obs.mjs#L43)
-  * [`function obs`](../obs.mjs#L45)
-  * [`function getPh`](../obs.mjs#L46)
-  * [`function getQue`](../obs.mjs#L47)
-  * [`function recur`](../obs.mjs#L49)
-  * [`function recurSync`](../obs.mjs#L50)
-  * [`function recurMicro`](../obs.mjs#L51)
-  * [`function recurTask`](../obs.mjs#L52)
-  * [`function recurShed`](../obs.mjs#L54)
-  * [`function preferShed`](../obs.mjs#L60)
-  * [`function preferSync`](../obs.mjs#L61)
-  * [`function preferMicro`](../obs.mjs#L62)
-  * [`function preferTask`](../obs.mjs#L63)
-  * [`function nodeDepth`](../obs.mjs#L65)
-  * [`class WeakerRef`](../obs.mjs#L71)
-  * [`class RunRef`](../obs.mjs#L78)
-  * [`class Que`](../obs.mjs#L92)
-  * [`class ShardedQue`](../obs.mjs#L167)
-  * [`class ShedSync`](../obs.mjs#L186)
-  * [`class ShedAsync`](../obs.mjs#L208)
-  * [`class ShedMicro`](../obs.mjs#L259)
-  * [`class ShedTask`](../obs.mjs#L263)
-  * [`class ObsPh`](../obs.mjs#L277)
-  * [`class Obs`](../obs.mjs#L314)
-  * [`function obsRef`](../obs.mjs#L323)
-  * [`class ObsRef`](../obs.mjs#L330)
-  * [`class TypedObsRef`](../obs.mjs#L345)
-  * [`function calc`](../obs.mjs#L351)
-  * [`class ObsCalc`](../obs.mjs#L353)
-  * [`function MixRecur`](../obs.mjs#L415)
-  * [`class MixinRecur`](../obs.mjs#L417)
-  * [`class Recur`](../obs.mjs#L465)
-  * [`class FunRecur`](../obs.mjs#L467)
-  * [`class CalcRecur`](../obs.mjs#L484)
+  * [`const TAR`](../obs.mjs#L27)
+  * [`const QUE`](../obs.mjs#L28)
+  * [`function isRunner`](../obs.mjs#L30)
+  * [`function optRunner`](../obs.mjs#L31)
+  * [`function reqRunner`](../obs.mjs#L32)
+  * [`function isObs`](../obs.mjs#L34)
+  * [`function optObs`](../obs.mjs#L35)
+  * [`function reqObs`](../obs.mjs#L36)
+  * [`function isObsRef`](../obs.mjs#L38)
+  * [`function optObsRef`](../obs.mjs#L39)
+  * [`function reqObsRef`](../obs.mjs#L40)
+  * [`function isQue`](../obs.mjs#L42)
+  * [`function optQue`](../obs.mjs#L43)
+  * [`function reqQue`](../obs.mjs#L44)
+  * [`function obs`](../obs.mjs#L46)
+  * [`function getPh`](../obs.mjs#L47)
+  * [`function getTar`](../obs.mjs#L48)
+  * [`function getQue`](../obs.mjs#L49)
+  * [`function recur`](../obs.mjs#L51)
+  * [`function recurSync`](../obs.mjs#L52)
+  * [`function recurMicro`](../obs.mjs#L53)
+  * [`function recurTask`](../obs.mjs#L54)
+  * [`function recurShed`](../obs.mjs#L56)
+  * [`function preferShed`](../obs.mjs#L62)
+  * [`function preferSync`](../obs.mjs#L63)
+  * [`function preferMicro`](../obs.mjs#L64)
+  * [`function preferTask`](../obs.mjs#L65)
+  * [`function nodeDepth`](../obs.mjs#L67)
+  * [`class WeakerRef`](../obs.mjs#L73)
+  * [`class RunRef`](../obs.mjs#L80)
+  * [`class Que`](../obs.mjs#L94)
+  * [`class ShardedQue`](../obs.mjs#L170)
+  * [`class ShedSync`](../obs.mjs#L189)
+  * [`class ShedAsync`](../obs.mjs#L211)
+  * [`class ShedMicro`](../obs.mjs#L262)
+  * [`class ShedTask`](../obs.mjs#L266)
+  * [`class ObsPh`](../obs.mjs#L280)
+  * [`class Obs`](../obs.mjs#L327)
+  * [`function obsRef`](../obs.mjs#L336)
+  * [`class ObsRef`](../obs.mjs#L343)
+  * [`class TypedObsRef`](../obs.mjs#L357)
+  * [`function calc`](../obs.mjs#L363)
+  * [`class ObsCalc`](../obs.mjs#L365)
+  * [`function MixScheduleRun`](../obs.mjs#L415)
+  * [`class MixinScheduleRun`](../obs.mjs#L417)
+  * [`function MixRecur`](../obs.mjs#L448)
+  * [`class MixinRecur`](../obs.mjs#L450)
+  * [`class Recur`](../obs.mjs#L486)
+  * [`class FunRecur`](../obs.mjs#L488)
+  * [`class CalcRecur`](../obs.mjs#L505)

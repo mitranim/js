@@ -401,14 +401,16 @@ export class Element extends ElementParent {
 
   When creating an element via `document.createElement` or
   `document.createElementNS`, the DOM implementation determines which class to
-  use, makes an instance, and assigns the given local name to the instance. One
-  class, such as `HTMLElement`, may be used with multiple different local
-  names. In a native DOM API, built-in element classes can't be instantiated
-  via `new`, as there is no 1-1 mapping from classes to local names.
+  use, makes an instance, and assigns the given local name to the instance.
+  Instances of an element class, such as `HTMLElement`, may be created with
+  different local names. In a native DOM API, built-in element classes can't
+  be instantiated via `new`, as there is no 1-1 mapping from classes to local
+  names.
 
   Custom elements work differently. Any element class registered via
   `customElements` acquires a local name and its own custom name.
   In "autonomous" custom elements, local name and custom name are identical,
+  the custom name can be used
   and custom name doesn't need to be serialized. In "customized built-in"
   custom elements, the names are distinct, and custom name must be serialized
   via the "is" attribute. Unlike built-in elements, registered custom elements
@@ -548,9 +550,6 @@ export class Element extends ElementParent {
 
   toJSON() {return this.outerHTML}
 
-  // See explanation on `localName` getter.
-  get customName() {return this.constructor.customName}
-
   attrSet(key, val) {
     if (l.isNil(val)) this.removeAttribute(key)
     else this.setAttribute(key, val)
@@ -577,7 +576,7 @@ export class Element extends ElementParent {
   attrPrefix() {return this.attrIs() + this.attrXmlns()}
 
   attrIs() {
-    const is = this.customName
+    const is = this.constructor.customName
     if (!is || is === this.localName || this[ATTRIBUTES]?.has(`is`)) return ``
     return NamedNodeMap.attr(`is`, is)
   }
@@ -605,8 +604,8 @@ export class HTMLElement extends Element {
 
   outerHtml() {
     if (this.isVoid()) {
-      if (this.innerHTML) {
-        throw Error(`unexpected innerHTML in void element ${this.localName}`)
+      if (this.hasChildNodes()) {
+        throw Error(`unexpected child nodes in void element ${this.localName}`)
       }
       return `<` + this.tagString() + this.attrPrefix() + this.attrString() + ` />`
     }
