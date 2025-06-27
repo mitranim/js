@@ -63,7 +63,7 @@ Timing precision varies by JS engine and environment.
 Simple testing example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/test.mjs'
 
 t.test(function test_some_feature() {
   t.eq(someFunction(someInputs), `expected result`)
@@ -73,7 +73,7 @@ t.test(function test_some_feature() {
 Simple benchmarking example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/test.mjs'
 
 t.bench(function bench_some_feature() {
   someFunction(someInputs)
@@ -86,7 +86,7 @@ t.benches()
 Complex example:
 
 ```js
-import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.73/test.mjs'
+import * as t from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/test.mjs'
 
 // Optional CLI flag parsing.
 const cli = t.Args.os()
@@ -143,27 +143,27 @@ The following APIs are exported but undocumented. Check [test.mjs](../test.mjs).
   * [`function deopt`](../test.mjs#L479)
   * [`function benches`](../test.mjs#L489)
   * [`function ok`](../test.mjs#L510)
-  * [`function no`](../test.mjs#L548)
-  * [`function is`](../test.mjs#L559)
-  * [`function isnt`](../test.mjs#L575)
-  * [`function eq`](../test.mjs#L585)
-  * [`function notEq`](../test.mjs#L596)
-  * [`function own`](../test.mjs#L606)
-  * [`function inst`](../test.mjs#L625)
-  * [`function instOpt`](../test.mjs#L639)
-  * [`function throws`](../test.mjs#L652)
-  * [`function msgThrowsCaught`](../test.mjs#L687)
-  * [`function throwsGotErr`](../test.mjs#L705)
-  * [`function msgThrowsReturned`](../test.mjs#L722)
-  * [`function throwsFunMsg`](../test.mjs#L730)
-  * [`function throwsErrMsg`](../test.mjs#L735)
-  * [`function equal`](../test.mjs#L760)
-  * [`class Eq`](../test.mjs#L762)
-  * [`function now`](../test.mjs#L878)
-  * [`function nowAvg`](../test.mjs#L889)
-  * [`function isRunner`](../test.mjs#L898)
-  * [`function optRunner`](../test.mjs#L899)
-  * [`function reqRunner`](../test.mjs#L901)
-  * [`function isReporter`](../test.mjs#L906)
-  * [`function optReporter`](../test.mjs#L909)
-  * [`function reqReporter`](../test.mjs#L910)
+  * [`function no`](../test.mjs#L568)
+  * [`function is`](../test.mjs#L579)
+  * [`function isnt`](../test.mjs#L595)
+  * [`function eq`](../test.mjs#L605)
+  * [`function notEq`](../test.mjs#L616)
+  * [`function own`](../test.mjs#L626)
+  * [`function inst`](../test.mjs#L645)
+  * [`function instOpt`](../test.mjs#L659)
+  * [`function throws`](../test.mjs#L672)
+  * [`function msgThrowsCaught`](../test.mjs#L707)
+  * [`function throwsGotErr`](../test.mjs#L725)
+  * [`function msgThrowsReturned`](../test.mjs#L742)
+  * [`function throwsFunMsg`](../test.mjs#L750)
+  * [`function throwsErrMsg`](../test.mjs#L755)
+  * [`function equal`](../test.mjs#L780)
+  * [`class Eq`](../test.mjs#L782)
+  * [`function now`](../test.mjs#L898)
+  * [`function nowAvg`](../test.mjs#L909)
+  * [`function isRunner`](../test.mjs#L918)
+  * [`function optRunner`](../test.mjs#L919)
+  * [`function reqRunner`](../test.mjs#L921)
+  * [`function isReporter`](../test.mjs#L926)
+  * [`function optReporter`](../test.mjs#L929)
+  * [`function reqReporter`](../test.mjs#L930)

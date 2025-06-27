@@ -339,7 +339,7 @@ export function reqClearable(val) {return isClearable(val) ? val : throwErrFun(v
 export function optClearable(val) {return isNil(val) ? val : reqClearable(val)}
 export function onlyClearable(val) {return isClearable(val) ? val : undefined}
 
-export function isErr(val) {return isInst(val, Error)}
+export function isErr(val) {return isObj(val) && `message` in val && `stack` in val}
 export function reqErr(val) {return isErr(val) ? val : throwErrFun(val, isErr)}
 export function optErr(val) {return isNil(val) ? val : reqErr(val)}
 export function onlyErr(val) {return isErr(val) ? val : undefined}

@@ -20,5 +20,5 @@ try {
 catch (err) {
   console.error(err)
   document.title = msgFail
-  document.body.textContent = err.stack
+  document.body.textContent = err
 }

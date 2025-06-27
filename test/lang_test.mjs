@@ -1352,11 +1352,8 @@ t.test(function test_Emp() {
   testNpo(l.Emp())
   testNpo(new l.Emp())
 
-  t.throws(
-    () => new l.Emp() instanceof l.Emp,
-    TypeError,
-    `Function has non-object prototype 'null' in instanceof check`,
-  )
+  t.throws(() => new l.Emp() instanceof l.Emp, TypeError, `instanceof`)
+  t.throws(() => new l.Emp() instanceof l.Emp, TypeError, `prototype`)
 
   class Sub extends l.Emp {}
 

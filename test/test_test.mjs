@@ -9,7 +9,7 @@ class ErrUnreachable extends Error {get name() {return this.constructor.name}}
 function advanceTime() {
   const start = t.now()
   let cycles = -1
-  while (++cycles < 4096) if (t.now() > start) return
+  while (++cycles < 4096 * 4) if (t.now() > start) return
   throw Error(`failed to advance time after ${cycles} cycles`)
 }
 
@@ -187,7 +187,12 @@ t.test(function test_equal() {
   t.ok(t.equal(new URL(`https://example.com`), new URL(`https://example.com`)))
 })
 
-t.test(function test_now() {advanceTime()})
+t.test(function test_now() {
+  const start = t.now()
+  advanceTime()
+  const end = t.now()
+  t.ok(end > start)
+})
 
 t.test(function test_Run() {
   t.test(function test_reject_invalid() {

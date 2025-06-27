@@ -134,7 +134,7 @@ export class Node extends l.Emp {
 
   getRootNode() {
     const val = this.parentNode
-    if (!val) return this
+    if (!l.isObj(val)) return this
     if (`getRootNode` in val) return val.getRootNode()
     return val
   }

@@ -10,8 +10,8 @@ export class AssertError extends Error {
     super(msg, opt)
     if (opt?.skip) Error.captureStackTrace?.(this, opt.skip)
   }
-
   get name() {return this.constructor.name}
+  toString() {return this.message + `\n\n` + trace(this)}
 }
 
 export class InternalError extends AssertError {}
@@ -523,20 +523,40 @@ function optInfo(...val) {
   return joinParagraphs(`info:`, val)
 }
 
-
-function showErr(err) {return l.isInst(err, Error) ? mangleTrace(err.stack) : l.show(err)}
 function showInfo(val) {return l.isScalar(val) ? l.render(val) : l.show(val)}
 function showSimple(val) {return l.isStr(val) ? val : l.show(val)}
 function indent(val) {return `  ` + l.reqStr(val)}
+
+function showErr(err) {
+  if (!l.isErr(err)) return l.show(err)
+  return err.message + `\n\n` + mangleTrace(trace(err))
+}
+
+/*
+In `Error` instances, some engines include `.message` into `.stack`,
+some don't. We need predictable formatting.
+*/
+function trace({message, stack, name}) {
+  l.reqStr(message)
+  l.reqStr(stack)
+  name = l.laxStr(name)
+
+  return (
+    stripPreOpt(stack, message) ||
+    stripPreOpt(stack, name + `: ` + message) ||
+    stack
+  )
+}
 
 /*
 Special workaround _just_ for Chrome. At the time of writing, in Chrome 135,
 when logging errors which contain another error's trace in their message, the
 browser "helpfully" parses that trace out of the message, and inserts it right
-after the message, duplicating it. Which is then followed up by an assertion
-error's own trace, _with no separator_, resulting in an extra confusing triple
-trace, unless we mangle the original trace. Inserting our own separator also
-makes it easier to tell this trace apart from the trace of the assert error.
+after the message, duplicating it. Which is then followed up by the own trace
+of the current error (typically an assertion error) _with no separator_,
+resulting in an extra confusing triple trace, unless we mangle the original
+trace. Inserting our own separator also makes it easier to tell this trace
+apart from the trace of the assert error.
 */
 function mangleTrace(src) {
   return l.reqStr(src).replaceAll(/^[ ]{4}at /gm, `    @ `)
@@ -653,7 +673,7 @@ export function throws(fun, cls, msg) {
   if (!l.isFun(fun)) {
     throw TypeError(`expected function, got ${l.show(fun)}`)
   }
-  if (!l.isCls(cls) || !l.isSubCls(cls, Error)) {
+  if (!l.isCls(cls)) {
     throw TypeError(`expected error class, got ${l.show(cls)}`)
   }
   if (!l.isStr(msg) || !msg) {
@@ -908,3 +928,10 @@ export function isReporter(val) {
 }
 export function optReporter(val) {return l.opt(val, isReporter)}
 export function reqReporter(val) {return l.req(val, isReporter)}
+
+function stripPreOpt(src, pre) {
+  l.reqStr(src)
+  l.reqStr(pre)
+  if (src.startsWith(pre)) return src.slice(pre.length)
+  return undefined
+}

@@ -27,11 +27,19 @@ function serve() {
 async function respond(req) {
   const rou = new h.ReqRou(req)
 
-  return ld.withLiveClient(BRO.clientPath, await (
+  const res = await ld.withLiveClient(BRO.clientPath, await (
     (await BRO.res(rou)) ||
     (await DIRS.resolveSiteFileWithNotFound(req.url))?.res() ||
     rou.notFound()
   ))
+
+  /*
+  Without these headers, Safari uses low-resolution timestamps, breaking our
+  tests which rely on "high"-resolution timing.
+  */
+  res.headers.append(`cross-origin-opener-policy`, `same-origin`)
+  res.headers.append(`cross-origin-embedder-policy`, `require-corp`)
+  return res
 }
 
 function respondErr(err) {
