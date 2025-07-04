@@ -1802,7 +1802,7 @@ t.test(function test_CustomElementRegistry() {
   t.test(function test_invalid() {
     t.throws(() => reg.define(), TypeError, `expected variant of isCustomName, got undefined`)
     t.throws(() => reg.define(`one`, Empty), TypeError, `expected variant of isCustomName, got "one"`)
-    t.throws(() => reg.define(`one-two`, 10), TypeError, `expected variant of isCls, got 10`)
+    t.throws(() => reg.define(`one-two`, 10), TypeError, `expected variant of isFun, got 10`)
   })
 
   t.test(function test_redundant() {

@@ -933,7 +933,7 @@ export class CustomElementRegistry extends o.MixMain(l.Emp) {
 
   define(tag, cls, opt) {
     dr.reqCustomName(tag)
-    l.reqCls(cls)
+    l.reqFun(cls)
     l.optRec(opt)
 
     if (this.map.has(tag)) {

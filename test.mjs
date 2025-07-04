@@ -657,7 +657,7 @@ Asserts that the given value is either nil or an instance of the given class.
 The argument order matches `instanceof` and `l.isInst`.
 */
 export function instOpt(val, cls) {
-  l.reqCls(cls)
+  l.reqFun(cls)
   if (l.isNil(val)) return
   inst(val, cls)
 }

@@ -45,7 +45,7 @@ For server-side rendering, see the section [SSR](#ssr) below.
 Browser example:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/prax.mjs'
 
 const {E} = p.Ren.main
 
@@ -70,8 +70,8 @@ The following elements (not strings) have been appended:
 Usage with custom elements:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/prax.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/dom_reg.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/prax.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/dom_reg.mjs'
 
 const {E} = p.Ren.main
 
@@ -89,9 +89,9 @@ document.body.append(
 Reactivity:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/prax.mjs'
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/obs.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/prax.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/obs.mjs'
 
 const {E} = p.Ren.main
 const obs0 = ob.obs({val: `hello`})
@@ -151,10 +151,10 @@ by passing functions or observable references in place of props or child nodes.
 For SSR (server-side rendering), Prax needs our lightweight DOM shim:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/dom_global_shim.mjs'
 
-const ren = new p.Ren(dg.global)
+const ren = new p.Ren({env: dg.global})
 const {E} = ren
 
 const elem = E(`div`, {
@@ -170,16 +170,16 @@ console.log(elem.outerHTML)
 */
 ```
 
-For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global `document` and pass it to `Ren`. The rest will just work.
+For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global "environment" and pass it to `Ren`. The rest will just work.
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/prax.mjs'
 
-// Your bundler or importmap should choose the right one.
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/dom_global_shim.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/dom_global_native.mjs'
+// Your bundler or importmap needs to choose the right one.
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/dom_global_shim.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/dom_global_native.mjs'
 
-const ren = new p.Ren(dg.global)
+const ren = new p.Ren({env: dg.global})
 const {E} = ren
 
 // In both environments, this will be a DOM element.
@@ -194,10 +194,10 @@ const elem = E(`div`, {
 Rendering a complete document with doctype:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/dom_global_shim.mjs'
 
-const ren = new p.Ren(dg.global)
+const ren = new p.Ren({env: dg.global})
 const {E} = ren
 
 const elem = E(`html`, {

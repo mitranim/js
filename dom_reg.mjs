@@ -106,7 +106,7 @@ superclass with a known entry in the registry `CLS_TO_TAG`. If nothing is
 found, the result is nil.
 */
 export function clsLocalName(cls) {
-  l.reqCls(cls)
+  l.reqFun(cls)
   const out = l.onlyStr(cls.localName)
   if (out) return isPossiblyCustomName(out) ? undefined : out
 
@@ -201,7 +201,7 @@ export class Reg extends o.MixMain(l.Emp) {
 
   assoc(tag, cls) {
     reqCustomName(tag)
-    l.reqCls(cls)
+    l.reqFun(cls)
 
     const prevTag = this.clsToTag.get(cls)
     if (prevTag && prevTag !== tag) {

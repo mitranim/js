@@ -14,7 +14,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/obj.mjs'
 ```
 
 ## API
@@ -38,7 +38,7 @@ Similar to [#`patch`](#function-patch) but doesn't check for inherited and non-e
 
 ### `function patch`
 
-Links: [source](../obj.mjs#L15); [test/example](../test/obj_test.mjs#L156).
+Links: [source](../obj.mjs#L17); [test/example](../test/obj_test.mjs#L166).
 
 Signature: `(tar, src) => tar`.
 
@@ -57,12 +57,12 @@ When overriding inherited and non-enumerable properties is desirable, use [#`ass
 
 ### `function memGet`
 
-Links: [source](../obj.mjs#L143); [test/example](../test/obj_test.mjs#L741).
+Links: [source](../obj.mjs#L147); [test/example](../test/obj_test.mjs#L751).
 
 Takes a class and hacks its prototype, converting all non-inherited getters to lazy/memoizing versions of themselves that only execute _once_. The resulting value replaces the getter. Inherited getters are unaffected.
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/obj.mjs'
 
 class StructLax extends o.MixStruct(l.Emp) {}
 
@@ -86,7 +86,7 @@ ref
 
 ### `function MixStruct`
 
-Links: [source](../obj.mjs#L192); [test/example](../test/obj_test.mjs#L292).
+Links: [source](../obj.mjs#L196); [test/example](../test/obj_test.mjs#L302).
 
 Mixin for classes representing a "struct" / "model" / "record". Also see [#`MixStructLax`](#function-mixstructlax). Features:
 
@@ -111,8 +111,8 @@ Performance characteristics:
 * When the number of declared fields is significantly smaller than the number of provided fields, this tends to be faster than the aforementioned assignment functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/obj.mjs'
 
 class Person extends o.Struct {
   static spec = {
@@ -140,7 +140,7 @@ new Person({id: 10, name: `Mira`, slug: `mira`, gender: `female`})
 
 ### `function MixStructLax`
 
-Links: [source](../obj.mjs#L203); [test/example](../test/obj_test.mjs#L297).
+Links: [source](../obj.mjs#L207); [test/example](../test/obj_test.mjs#L307).
 
 Mixin for classes representing a "struct" / "model" / "record". Similar to [#`MixStruct`](#function-mixstruct), with additional support for undeclared fields.
 
@@ -155,8 +155,8 @@ Differences from [#`MixStruct`](#function-mixstruct):
 * Has slightly worse performance.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/obj.mjs'
 
 class Person extends o.StructLax {
   static spec = {
@@ -190,31 +190,32 @@ The following APIs are exported but undocumented. Check [obj.mjs](../obj.mjs).
   * [`function reqObjKey`](../obj.mjs#L4)
   * [`function isMut`](../obj.mjs#L6)
   * [`function reqMut`](../obj.mjs#L7)
-  * [`function pub`](../obj.mjs#L23)
-  * [`function priv`](../obj.mjs#L33)
-  * [`function final`](../obj.mjs#L43)
-  * [`function getter`](../obj.mjs#L53)
-  * [`function setter`](../obj.mjs#L55)
-  * [`function getSet`](../obj.mjs#L57)
-  * [`class DynVar`](../obj.mjs#L75)
-  * [`class TypedDynVar`](../obj.mjs#L93)
-  * [`class Cache`](../obj.mjs#L98)
-  * [`class WeakCache`](../obj.mjs#L116)
-  * [`class Mixin`](../obj.mjs#L118)
-  * [`class MemGet`](../obj.mjs#L145)
-  * [`const MAIN`](../obj.mjs#L149)
-  * [`function MixMain`](../obj.mjs#L156)
-  * [`class MixinMain`](../obj.mjs#L158)
-  * [`const SPEC`](../obj.mjs#L169)
-  * [`function isStruct`](../obj.mjs#L171)
-  * [`function structSpec`](../obj.mjs#L177)
-  * [`function structConstruct`](../obj.mjs#L184)
-  * [`function structMut`](../obj.mjs#L188)
-  * [`class MixinStruct`](../obj.mjs#L194)
-  * [`class MixinStructLax`](../obj.mjs#L205)
-  * [`function MixStructMut`](../obj.mjs#L214)
-  * [`class MixinStructMut`](../obj.mjs#L216)
-  * [`class StructSpec`](../obj.mjs#L224)
-  * [`class StructSpecLax`](../obj.mjs#L286)
-  * [`class FieldSpec`](../obj.mjs#L324)
-  * [`function descIn`](../obj.mjs#L353)
+  * [`function pub`](../obj.mjs#L27)
+  * [`function priv`](../obj.mjs#L37)
+  * [`function final`](../obj.mjs#L47)
+  * [`function getter`](../obj.mjs#L57)
+  * [`function setter`](../obj.mjs#L59)
+  * [`function getSet`](../obj.mjs#L61)
+  * [`class DynVar`](../obj.mjs#L79)
+  * [`class TypedDynVar`](../obj.mjs#L97)
+  * [`class Cache`](../obj.mjs#L102)
+  * [`class WeakCache`](../obj.mjs#L120)
+  * [`class Mixin`](../obj.mjs#L122)
+  * [`class MemGet`](../obj.mjs#L149)
+  * [`const MAIN`](../obj.mjs#L153)
+  * [`function MixMain`](../obj.mjs#L160)
+  * [`class MixinMain`](../obj.mjs#L162)
+  * [`const SPEC`](../obj.mjs#L173)
+  * [`function isStruct`](../obj.mjs#L175)
+  * [`function structSpec`](../obj.mjs#L181)
+  * [`function structConstruct`](../obj.mjs#L188)
+  * [`function structMut`](../obj.mjs#L192)
+  * [`class MixinStruct`](../obj.mjs#L198)
+  * [`class MixinStructLax`](../obj.mjs#L209)
+  * [`function MixStructMut`](../obj.mjs#L218)
+  * [`class MixinStructMut`](../obj.mjs#L220)
+  * [`class StructSpec`](../obj.mjs#L228)
+  * [`class StructSpecLax`](../obj.mjs#L289)
+  * [`class FieldSpec`](../obj.mjs#L327)
+  * [`function mutated`](../obj.mjs#L355)
+  * [`function descIn`](../obj.mjs#L364)

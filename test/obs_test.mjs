@@ -649,12 +649,14 @@ t.test(function test_isRef_isObsRef_deref_derefAll() {
 
 // TODO consolidate with the test above.
 t.test(function test_deref_reset() {
+  function testReset(obs, val) {t.is(l.reset(obs, val), val)}
+
   t.test(function test_obsRef() {
     const obs = ob.obsRef()
     t.is(l.deref(obs), undefined)
-    t.is(l.reset(obs, 10), undefined)
+    testReset(obs, 10)
     t.is(l.deref(obs), 10)
-    t.is(l.reset(obs, 20), undefined)
+    testReset(obs, 20)
     t.is(l.deref(obs), 20)
   })
 
@@ -667,15 +669,15 @@ t.test(function test_deref_reset() {
     t.is(l.deref(obs), tar)
     t.own(tar, {})
 
-    t.is(l.reset(obs, {one: 10}), undefined)
+    testReset(obs, {one: 10})
     t.is(l.deref(obs), tar)
     t.own(tar, {one: 10})
 
-    t.is(l.reset(obs, {two: 20, three: 30}), undefined)
+    testReset(obs, {two: 20, three: 30})
     t.is(l.deref(obs), tar)
     t.own(tar, {one: 10, two: 20, three: 30})
 
-    t.is(l.reset(obs, undefined), undefined)
+    testReset(obs, undefined)
     t.is(l.deref(obs), tar)
     t.own(tar, {one: 10, two: 20, three: 30})
   })

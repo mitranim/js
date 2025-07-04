@@ -201,7 +201,7 @@ export function mapMut(val, fun) {
 }
 
 export function mapCls(src, cls) {
-  l.reqCls(cls)
+  l.reqFun(cls)
   return map(src, function make(val) {return new cls(val)})
 }
 

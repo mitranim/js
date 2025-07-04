@@ -6,16 +6,20 @@ export function reqObjKey(val) {return isObjKey(val) ? val : l.throwErrFun(val, 
 export function isMut(val) {return l.isObj(val) && l.isFun(val.mut)}
 export function reqMut(val) {return isMut(val) ? val : l.throwErrFun(val, isMut)}
 
-export function assign(tar, src) {
+export function assign(tar, ...src) {
   l.reqRec(tar)
-  for (const key of l.recKeys(src)) tar[key] = src[key]
+  for (src of src) {
+    for (const key of l.recKeys(src)) tar[key] = src[key]
+  }
   return tar
 }
 
-export function patch(tar, src) {
+export function patch(tar, ...src) {
   l.reqRec(tar)
-  for (const key of l.recKeys(src)) {
-    if (canSet(tar, key)) tar[key] = src[key]
+  for (src of src) {
+    for (const key of l.recKeys(src)) {
+      if (canSet(tar, key)) tar[key] = src[key]
+    }
   }
   return tar
 }
@@ -226,7 +230,7 @@ export class StructSpec extends l.Emp {
 
   constructor(cls) {
     super()
-    this.cls = l.reqCls(cls)
+    this.cls = l.reqFun(cls)
     this.list = []
     this.dict = l.Emp()
     this.initFieldSpecs()
@@ -235,12 +239,11 @@ export class StructSpec extends l.Emp {
   initFieldSpecs() {
     const spec = l.optRec(this.cls.spec)
     if (!spec) return
-    for (const [key, desc] of descriptors(spec)) this.initField(key, desc)
+    for (const key of l.recKeys(spec)) this.initField(key, spec[key])
   }
 
-  initField(key, desc) {
+  initField(key, val) {
     const {cls, list, dict} = this
-    const val = desc.value
     if (l.isNil(val)) return
 
     if (!l.isFun(val)) {
@@ -329,8 +332,9 @@ export class FieldSpec extends l.Emp {
   }
 
   val(val, tar) {
-    try {return this.fun.call(tar, val)}
-    catch (err) {throw l.errTrans(err, TypeError, `invalid property ${l.show(this.key)}`)}
+    const {key} = this
+    try {return this.fun.call(tar, val, key)}
+    catch (err) {throw l.errTrans(err, TypeError, `invalid property ${l.show(key)}`)}
   }
 
   setFrom(tar, src) {return this.setVal(tar, src?.[this.key])}
@@ -346,6 +350,13 @@ export class FieldSpec extends l.Emp {
     if (mutated(src, val)) return
     tar[key] = this.val(val, tar)
   }
+}
+
+export function mutated(tar, src) {
+  return (
+    (isMut(tar) && (tar.mut(src), true)) ||
+    (isStruct(tar) && (structMut(tar, src), true))
+  )
 }
 
 /* Internal */
@@ -364,7 +375,7 @@ function descriptors(val) {
 }
 
 function memPatch(cls) {
-  const tar = l.reqCls(cls).prototype
+  const tar = l.reqFun(cls).prototype
 
   for (const [key, desc] of descriptors(tar)) {
     const {get} = desc
@@ -377,13 +388,6 @@ function memPatch(cls) {
   }
 
   return cls
-}
-
-function mutated(tar, src) {
-  return (
-    (isMut(tar) && (tar.mut(src), true)) ||
-    (isStruct(tar) && (structMut(tar, src), true))
-  )
 }
 
 function canSet(val, key) {return l.hasOwnEnum(val, key) || !(key in val)}

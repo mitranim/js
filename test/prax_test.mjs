@@ -275,6 +275,23 @@ t.test(function test_Ren_E_basic() {
     t.is(E(node, {three: undefined, chi: []}), node)
     eqm(node, `<span></span>`)
   })
+
+  /*
+  Unlike many other JS rendering frameworks, ours considers only nil and
+  empty strings to be truly empty. Booleans are rendered to string.
+  */
+  t.test(function test_falsy() {
+    eqm(E(`span`, {chi: undefined}), `<span></span>`)
+    eqm(E(`span`, {chi: null}), `<span></span>`)
+    eqm(E(`span`, {chi: ``}), `<span></span>`)
+
+    eqm(E(`span`, {chi: 0}), `<span>0</span>`)
+    eqm(E(`span`, {chi: NaN}), `<span>NaN</span>`)
+    eqm(E(`span`, {chi: false}), `<span>false</span>`)
+
+    // Not falsy but included for completeness.
+    eqm(E(`span`, {chi: true}), `<span>true</span>`)
+  })
 })
 
 t.test(function test_Ren_chi() {

@@ -599,13 +599,11 @@ t.test(function test_mapMut() {
 
 t.test(function test_mapCls() {
   const map = i.mapCls
-  const nonCls = () => {}
 
-  t.throws(() => map([]), TypeError, `expected variant of isCls, got undefined`)
-  t.throws(() => map([], `str`), TypeError, `expected variant of isCls, got "str"`)
-  t.throws(() => map([], 10), TypeError, `expected variant of isCls, got 10`)
-  t.throws(() => map([], {}), TypeError, `expected variant of isCls, got {}`)
-  t.throws(() => map([], nonCls), TypeError, `expected variant of isCls, got [function nonCls]`)
+  t.throws(() => map([]), TypeError, `expected variant of isFun, got undefined`)
+  t.throws(() => map([], `str`), TypeError, `expected variant of isFun, got "str"`)
+  t.throws(() => map([], 10), TypeError, `expected variant of isFun, got 10`)
+  t.throws(() => map([], {}), TypeError, `expected variant of isFun, got {}`)
 
   function test(src, cls, exp) {
     const out = map(src, cls)

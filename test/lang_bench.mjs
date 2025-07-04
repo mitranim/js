@@ -273,7 +273,7 @@ miscVals.forEach(l.isCls)
 t.bench(function bench_isCls_nil() {l.nop(l.isCls())})
 t.bench(function bench_isCls_miss() {l.nop(l.isCls(somePromNative))})
 t.bench(function bench_isCls_hit() {l.nop(l.isCls(l.isCls))})
-t.bench(function bench_reqCls_hit() {l.nop(l.reqCls(Object))})
+t.bench(function bench_reqCls_hit() {l.nop(l.reqFun(Object))})
 
 miscVals.forEach(l.isComp)
 t.bench(function bench_isComp_nil() {l.nop(l.isComp())})

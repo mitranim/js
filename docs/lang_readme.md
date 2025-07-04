@@ -113,19 +113,19 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 ```
 
 ## API
 
 ### `function isNil`
 
-Links: [source](../lang.mjs#L5); [test/example](../test/lang_test.mjs#L261).
+Links: [source](../lang.mjs#L7); [test/example](../test/lang_test.mjs#L261).
 
 True for `null` and `undefined`. Same as `value == null`. Incidentally, these are the only values that produce an exception when attempting to read a property: `null.someProperty`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 // Definition
 function isNil(value) {return value == null}
@@ -142,24 +142,24 @@ l.isNil(false)
 
 ### `function isSome`
 
-Links: [source](../lang.mjs#L10); [test/example](../test/lang_test.mjs#L269).
+Links: [source](../lang.mjs#L12); [test/example](../test/lang_test.mjs#L269).
 
 Inverse of [#`isNil`](#function-isnil). False for `null` and `undefined`, true for other values.
 
 ### `function isBool`
 
-Links: [source](../lang.mjs#L15); [test/example](../test/lang_test.mjs#L277).
+Links: [source](../lang.mjs#L17); [test/example](../test/lang_test.mjs#L277).
 
 Same as `typeof val === 'boolean'`.
 
 ### `function isNum`
 
-Links: [source](../lang.mjs#L21); [test/example](../test/lang_test.mjs#L286).
+Links: [source](../lang.mjs#L23); [test/example](../test/lang_test.mjs#L286).
 
 Same as `typeof val === 'number'`. True if the value is a primitive number, _including_ `NaN` and `±Infinity`. In most cases you should use [#`isFin`](#function-isfin) instead.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 l.isNum(1)
 // true
@@ -173,12 +173,12 @@ l.isNum(NaN)
 
 ### `function isFin`
 
-Links: [source](../lang.mjs#L27); [test/example](../test/lang_test.mjs#L298).
+Links: [source](../lang.mjs#L29); [test/example](../test/lang_test.mjs#L298).
 
 Same as ES2015's [`Number.isFinite`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isFinite). True if `val` is a primitive number and is _not_ `NaN` or `±Infinity`. In most cases you should prefer `isFin` over `isNum`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 l.isFin(1)
 // true
@@ -192,79 +192,79 @@ l.isFin(NaN)
 
 ### `function isFinNeg`
 
-Links: [source](../lang.mjs#L33); [test/example](../test/lang_test.mjs#L313).
+Links: [source](../lang.mjs#L35); [test/example](../test/lang_test.mjs#L313).
 
 True if the value is finite (via [#`isFin`](#function-isfin)) and < 0.
 
 ### `function isFinPos`
 
-Links: [source](../lang.mjs#L38); [test/example](../test/lang_test.mjs#L333).
+Links: [source](../lang.mjs#L40); [test/example](../test/lang_test.mjs#L333).
 
 True if the value is finite (via [#`isFin`](#function-isfin)) and > 0.
 
 ### `function isInt`
 
-Links: [source](../lang.mjs#L44); [test/example](../test/lang_test.mjs#L353).
+Links: [source](../lang.mjs#L46); [test/example](../test/lang_test.mjs#L353).
 
 True if the value is an integer: finite via [#`isFin`](#function-isfin), without a fractional part.
 
 ### `function isNat`
 
-Links: [source](../lang.mjs#L50); [test/example](../test/lang_test.mjs#L372).
+Links: [source](../lang.mjs#L52); [test/example](../test/lang_test.mjs#L372).
 
 True if the value is a natural number: integer >= 0. Also see [#`isIntPos`](#function-isintpos).
 
 ### `function isIntNeg`
 
-Links: [source](../lang.mjs#L56); [test/example](../test/lang_test.mjs#L391).
+Links: [source](../lang.mjs#L58); [test/example](../test/lang_test.mjs#L391).
 
 True if the value is integer < 0. Also see [#`isFinNeg`](#function-isfinneg).
 
 ### `function isIntPos`
 
-Links: [source](../lang.mjs#L61); [test/example](../test/lang_test.mjs#L410).
+Links: [source](../lang.mjs#L63); [test/example](../test/lang_test.mjs#L410).
 
 True if the value is integer > 0. Also see [#`isNat`](#function-isnat), [#`isFinPos`](#function-isfinpos).
 
 ### `function isNaN`
 
-Links: [source](../lang.mjs#L66); [test/example](../test/lang_test.mjs#L429).
+Links: [source](../lang.mjs#L68); [test/example](../test/lang_test.mjs#L429).
 
 Same as ES2015's [`Number.isNaN`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN). True if the value is _actually_ `NaN`. Doesn't coerce non-numbers to numbers, unlike global `isNaN`.
 
 ### `function isInf`
 
-Links: [source](../lang.mjs#L71); [test/example](../test/lang_test.mjs#L444).
+Links: [source](../lang.mjs#L73); [test/example](../test/lang_test.mjs#L444).
 
 True if the value is `-Infinity` or `Infinity`.
 
 ### `function isBigInt`
 
-Links: [source](../lang.mjs#L76); [test/example](../test/lang_test.mjs#L459).
+Links: [source](../lang.mjs#L78); [test/example](../test/lang_test.mjs#L459).
 
 True if the value is a primitive [`BigInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt). False for all other inputs, including `BigInt` object wrappers.
 
 ### `function isStr`
 
-Links: [source](../lang.mjs#L82); [test/example](../test/lang_test.mjs#L478).
+Links: [source](../lang.mjs#L84); [test/example](../test/lang_test.mjs#L478).
 
 Same as `typeof val === 'string'`. True if the value is a primitive string.
 
 ### `function isSym`
 
-Links: [source](../lang.mjs#L94); [test/example](../test/lang_test.mjs#L496).
+Links: [source](../lang.mjs#L96); [test/example](../test/lang_test.mjs#L496).
 
 Same as `typeof val === 'symbol'`. True if the value is a primitive symbol.
 
 ### `function isKey`
 
-Links: [source](../lang.mjs#L100); [test/example](../test/lang_test.mjs#L503).
+Links: [source](../lang.mjs#L102); [test/example](../test/lang_test.mjs#L503).
 
 True if the value is primitive and usable as a map key. True for all primitives excluding garbage values via [#`isJunk`](#function-isjunk).
 
 ### `function isRecKey`
 
-Links: [source](../lang.mjs#L105); [test/example](../test/lang_test.mjs#L523).
+Links: [source](../lang.mjs#L107); [test/example](../test/lang_test.mjs#L523).
 
 Short for "is record key".
 
@@ -274,19 +274,19 @@ Uses the term "record" for consistency with [#`isRec`](#function-isrec) which de
 
 ### `function isPk`
 
-Links: [source](../lang.mjs#L110); [test/example](../test/lang_test.mjs#L543).
+Links: [source](../lang.mjs#L112); [test/example](../test/lang_test.mjs#L543).
 
 True for objects that implement method `.pk` which must return a valid [#primary key](#function-ispk). This interface is used internally by [`Coll`](coll_readme.md#class-coll).
 
 ### `function isJunk`
 
-Links: [source](../lang.mjs#L115); [test/example](../test/lang_test.mjs#L564).
+Links: [source](../lang.mjs#L117); [test/example](../test/lang_test.mjs#L564).
 
 True for garbage values: [#nil](#function-isnil), [#NaN](#function-isnan), [#±Infinity](#function-isinf).
 
 ### `function isComp`
 
-Links: [source](../lang.mjs#L120); [test/example](../test/lang_test.mjs#L579).
+Links: [source](../lang.mjs#L122); [test/example](../test/lang_test.mjs#L579).
 
 True if the value is "composite" / "compound" / "complex". Opposite of [#`isPrim`](#function-isprim). Definition:
 
@@ -296,43 +296,43 @@ function isComp(val) {return isObj(val) || isFun(val)}
 
 ### `function isPrim`
 
-Links: [source](../lang.mjs#L125); [test/example](../test/lang_test.mjs#L593).
+Links: [source](../lang.mjs#L127); [test/example](../test/lang_test.mjs#L593).
 
 True if the value is a JS primitive: not an object, not a function. Opposite of [#`isComp`](#function-iscomp).
 
 ### `function isFun`
 
-Links: [source](../lang.mjs#L130); [test/example](../test/lang_test.mjs#L607).
+Links: [source](../lang.mjs#L132); [test/example](../test/lang_test.mjs#L607).
 
 Same as `typeof val === 'function'`. True if the value is any function, regardless of its type (arrow, async, generator, etc.).
 
 ### `function isFunSync`
 
-Links: [source](../lang.mjs#L135); [test/example](../test/lang_test.mjs#L631).
+Links: [source](../lang.mjs#L137); [test/example](../test/lang_test.mjs#L631).
 
 True if the input is a normal sync function. False for generator functions or async functions.
 
 ### `function isFunGen`
 
-Links: [source](../lang.mjs#L140); [test/example](../test/lang_test.mjs#L641).
+Links: [source](../lang.mjs#L142); [test/example](../test/lang_test.mjs#L641).
 
 True if the input is a sync generator function. False for normal sync functions and async functions.
 
 ### `function isFunAsync`
 
-Links: [source](../lang.mjs#L145); [test/example](../test/lang_test.mjs#L651).
+Links: [source](../lang.mjs#L147); [test/example](../test/lang_test.mjs#L651).
 
 True if the input is an async non-generator function. False for sync functions, generator functions, or async generator functions.
 
 ### `function isFunAsyncGen`
 
-Links: [source](../lang.mjs#L150); [test/example](../test/lang_test.mjs#L661).
+Links: [source](../lang.mjs#L152); [test/example](../test/lang_test.mjs#L661).
 
 True if the input is an async generator function. False for sync functions and async non-generator functions.
 
 ### `function isObj`
 
-Links: [source](../lang.mjs#L155); [test/example](../test/lang_test.mjs#L671).
+Links: [source](../lang.mjs#L157); [test/example](../test/lang_test.mjs#L671).
 
 Same as `typeof val === 'object' && val !== null`. True for any JS object: plain dict, array, various other classes. Doesn't include functions, even though JS functions are extensible objects.
 
@@ -342,7 +342,7 @@ Same as `typeof val === 'object' && val !== null`. True for any JS object: plain
 
 ### `function isDict`
 
-Links: [source](../lang.mjs#L166); [test/example](../test/lang_test.mjs#L703).
+Links: [source](../lang.mjs#L168); [test/example](../test/lang_test.mjs#L703).
 
 True for a "plain object" created via `{...}` or `Object.create(null)`. False for any other input, including instances of any class other than `Object`.
 
@@ -350,7 +350,7 @@ See [#`isRec`](#function-isrec) for a more general definition of a non-iterable 
 
 ### `function isRec`
 
-Links: [source](../lang.mjs#L179); [test/example](../test/lang_test.mjs#L721).
+Links: [source](../lang.mjs#L181); [test/example](../test/lang_test.mjs#L721).
 
 Short for "is record".
 
@@ -363,7 +363,7 @@ unmeasurable.
 
 ### `function isArr`
 
-Links: [source](../lang.mjs#L187); [test/example](../test/lang_test.mjs#L748).
+Links: [source](../lang.mjs#L189); [test/example](../test/lang_test.mjs#L748).
 
 Alias for [`Array.isArray`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray). Used internally for all array checks.
 
@@ -371,7 +371,7 @@ True if the value is an instance of [`Array`](https://developer.mozilla.org/en-U
 
 ### `function isTrueArr`
 
-Links: [source](../lang.mjs#L197); [test/example](../test/lang_test.mjs#L760).
+Links: [source](../lang.mjs#L199); [test/example](../test/lang_test.mjs#L760).
 
 Similar to [`Array.isArray`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray) and [#`isArr`](#function-isarr), but returns true only for instances of the _exact_ `Array` class, false for instances of subclasses.
 
@@ -379,91 +379,91 @@ At the time of writing, subclasses of `Array` suffer horrible performance penalt
 
 ### `function isReg`
 
-Links: [source](../lang.mjs#L203); [test/example](../test/lang_test.mjs#L775).
+Links: [source](../lang.mjs#L205); [test/example](../test/lang_test.mjs#L775).
 
 True if the value is an instance of [`RegExp`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp) or its subclass.
 
 ### `function isDate`
 
-Links: [source](../lang.mjs#L208); [test/example](../test/lang_test.mjs#L783).
+Links: [source](../lang.mjs#L210); [test/example](../test/lang_test.mjs#L783).
 
 True of value is an instance of [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date). Most of the time you should prefer [#`isValidDate`](#function-isvaliddate).
 
 ### `function isValidDate`
 
-Links: [source](../lang.mjs#L213); [test/example](../test/lang_test.mjs#L791).
+Links: [source](../lang.mjs#L215); [test/example](../test/lang_test.mjs#L791).
 
 True of value is an instance of [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) and its timestamp is [#finite](#function-isfin) rather than `NaN` or `Infinity`.
 
 ### `function isInvalidDate`
 
-Links: [source](../lang.mjs#L218); [test/example](../test/lang_test.mjs#L798).
+Links: [source](../lang.mjs#L220); [test/example](../test/lang_test.mjs#L798).
 
 True of value is an instance of [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) representing an invalid date whose timestamp is `NaN`.
 
 ### `function isSet`
 
-Links: [source](../lang.mjs#L223); [test/example](../test/lang_test.mjs#L805).
+Links: [source](../lang.mjs#L225); [test/example](../test/lang_test.mjs#L805).
 
 True if the value is an instance of [`Set`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set) or its subclass.
 
 ### `function isMap`
 
-Links: [source](../lang.mjs#L229); [test/example](../test/lang_test.mjs#L815).
+Links: [source](../lang.mjs#L231); [test/example](../test/lang_test.mjs#L815).
 
 True if the value is an instance of [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) or its subclass.
 
 ### `function isPromise`
 
-Links: [source](../lang.mjs#L235); [test/example](../test/lang_test.mjs#L825).
+Links: [source](../lang.mjs#L237); [test/example](../test/lang_test.mjs#L825).
 
 True if the value satisfies the ES2015 [promise interface](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
 
 ### `function isIter`
 
-Links: [source](../lang.mjs#L240); [test/example](../test/lang_test.mjs#L834).
+Links: [source](../lang.mjs#L242); [test/example](../test/lang_test.mjs#L834).
 
 True if the value satisfies the ES2015 [sync iterable interface](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols). For _iterator_ rather than _iterable_, use [#`isIterator`](#function-isiterator).
 
 ### `function isIterAsync`
 
-Links: [source](../lang.mjs#L245); [test/example](../test/lang_test.mjs#L860).
+Links: [source](../lang.mjs#L247); [test/example](../test/lang_test.mjs#L860).
 
 True if the value satisfies the ES2015 [async iterable interface](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of). For _iterator_ rather than _iterable_, use [#`isIteratorAsync`](#function-isiteratorasync).
 
 ### `function isIterator`
 
-Links: [source](../lang.mjs#L250); [test/example](../test/lang_test.mjs#L877).
+Links: [source](../lang.mjs#L252); [test/example](../test/lang_test.mjs#L877).
 
 True if the value satisfies the ES2015 [sync iterator interface](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols). For _iterable_ rather than _iterator_, use [#`isIter`](#function-isiter).
 
 ### `function isIteratorAsync`
 
-Links: [source](../lang.mjs#L255); [test/example](../test/lang_test.mjs#L903).
+Links: [source](../lang.mjs#L257); [test/example](../test/lang_test.mjs#L903).
 
 True if the value satisfies the ES2015 [async iterator interface](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of). For _iterable_ rather than _iterator_, use [#`isIterAsync`](#function-isiterasync).
 
 ### `function isGen`
 
-Links: [source](../lang.mjs#L260); [test/example](../test/lang_test.mjs#L929).
+Links: [source](../lang.mjs#L262); [test/example](../test/lang_test.mjs#L929).
 
 True if the value is a [#sync_iterator](#function-isiterator) created by calling a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator).
 
 ### `function isCls`
 
-Links: [source](../lang.mjs#L265); [test/example](../test/lang_test.mjs#L989).
+Links: [source](../lang.mjs#L267); [test/example](../test/lang_test.mjs#L989).
 
-True if the input is a function with a prototype, likely to be a class. False for arrow functions such as `() => {}`, which don't have a prototype.
+True if the input is a function with a prototype, suitable for `instanceof` checks. False for arrow functions such as `() => {}`, which don't have a prototype.
 
 ### `function isList`
 
-Links: [source](../lang.mjs#L295); [test/example](../test/lang_test.mjs#L1020).
+Links: [source](../lang.mjs#L297); [test/example](../test/lang_test.mjs#L1019).
 
 True for any array-like such as: `[]`, `arguments`, `TypedArray`, `NodeList`, etc. Used internally for most list checks. Note that _primitive strings are not considered lists_.
 
 ### `function isSeq`
 
-Links: [source](../lang.mjs#L301); [test/example](../test/lang_test.mjs#L1036).
+Links: [source](../lang.mjs#L303); [test/example](../test/lang_test.mjs#L1035).
 
 True for any of:
 
@@ -476,13 +476,13 @@ Many functions in `iter.mjs` support arbitrary data structures compatible with [
 
 ### `function isVac`
 
-Links: [source](../lang.mjs#L306); [test/example](../test/lang_test.mjs#L1059).
+Links: [source](../lang.mjs#L308); [test/example](../test/lang_test.mjs#L1058).
 
 Short for "is vacuous" or "is vacated". Could also be called "is falsy deep". True if the input is [#`falsy`](#function-falsy) or a [#list](#function-islist) where all values are vacuous, recursively. Does not iterate non-lists. Also see complementary function [#`vac`](#function-vac).
 
 ### `function isScalar`
 
-Links: [source](../lang.mjs#L311); [test/example](../test/lang_test.mjs#L1097).
+Links: [source](../lang.mjs#L313); [test/example](../test/lang_test.mjs#L1096).
 
 True for a value that could be considered a single scalar, rather than a collection / data structure. Currently this is equivalent to the concept of an _intentionally stringable_ value. In the future, we may consider renaming this function or splitting the concepts.
 
@@ -502,7 +502,7 @@ To include nil, use [#`isScalarOpt`](#function-isscalaropt).
 
 ### `function isRef`
 
-Links: [source](../lang.mjs#L347); [test/example](../test/lang_test.mjs#L2052).
+Links: [source](../lang.mjs#L349); [test/example](../test/lang_test.mjs#L2051).
 
 Defines a "reference" interface which is consistently across all modules in this library. A "reference" is something that can be [#`deref`](#function-deref) into an underlying value. Any object can implement this interface by providing a symbolic property `Symbol.for("val")`.
 
@@ -515,8 +515,8 @@ The names `deref` and `reset` for this interface are lifted from Clojure.
 Combined example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/obs.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/obs.mjs'
 
 l.isRef(10) // false
 l.isRef({}) // false
@@ -531,13 +531,13 @@ l.deref(obs) // 20
 
 ### `function isEmpty`
 
-Links: [source](../lang.mjs#L371); [test/example](../test/lang_test.mjs#L1182).
+Links: [source](../lang.mjs#L373); [test/example](../test/lang_test.mjs#L1181).
 
 True if the input is an empty collection such as list, set, map, or a primitive such as `null`. False for any other non-primitive. Treating primitives as "empty" is consistent with various functions in `iter.mjs` that operate on collections.
 
 ### `function isInst`
 
-Links: [source](../lang.mjs#L378); [test/example](../test/lang_test.mjs#L1134).
+Links: [source](../lang.mjs#L380); [test/example](../test/lang_test.mjs#L1133).
 
 Signature: `(val, Cls) => bool`.
 
@@ -545,20 +545,20 @@ Same as `instanceof` but _does not_ implicitly convert the operand to an object.
 
 ### `function opt`
 
-Links: [source](../lang.mjs#L382); [test/example](../test/lang_test.mjs#L1445).
+Links: [source](../lang.mjs#L384); [test/example](../test/lang_test.mjs#L1444).
 
 Short for "optional". If `val` is [#non_nil](#function-issome), uses [#`req`](#function-req) to validate it. Returns `val` as-is.
 
 ### `function req`
 
-Links: [source](../lang.mjs#L387); [test/example](../test/lang_test.mjs#L1386).
+Links: [source](../lang.mjs#L389); [test/example](../test/lang_test.mjs#L1385).
 
 Signature: `(val, test) => val` where `test: val => bool`.
 
 Short for "require". Minification-friendly assertion. If `!test(val)`, throws an informative `TypeError`. Otherwise, returns `val` as-is.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 l.req({one: `two`}, l.isObj)
 // {one: `two`}
@@ -569,7 +569,7 @@ l.req(`str`, l.isFun)
 
 ### `function only`
 
-Links: [source](../lang.mjs#L392); [test/example](../test/lang_test.mjs#L1539).
+Links: [source](../lang.mjs#L394); [test/example](../test/lang_test.mjs#L1538).
 
 Signature: `(val, test) => val` where `test: val => bool`.
 
@@ -577,13 +577,13 @@ Type filtering utility. If `val` satisfies the given test function, returns `val
 
 ### `function optInst`
 
-Links: [source](../lang.mjs#L403); [test/example](../test/lang_test.mjs#L1500).
+Links: [source](../lang.mjs#L405); [test/example](../test/lang_test.mjs#L1499).
 
 Short for "optional instance". If `val` is [#non_nil](#function-issome), uses [#`reqInst`](#function-reqinst) to validate it. Returns `val` as-is.
 
 ### `function reqInst`
 
-Links: [source](../lang.mjs#L405); [test/example](../test/lang_test.mjs#L1483).
+Links: [source](../lang.mjs#L407); [test/example](../test/lang_test.mjs#L1482).
 
 Signature: `(val, Cls) => val`.
 
@@ -591,7 +591,7 @@ Short for "require instance". Asserts that `val` is an instance of the given cla
 
 ### `function onlyInst`
 
-Links: [source](../lang.mjs#L410); [test/example](../test/lang_test.mjs#L1566).
+Links: [source](../lang.mjs#L412); [test/example](../test/lang_test.mjs#L1565).
 
 Signature: `(val, Cls) => val?`.
 
@@ -599,7 +599,7 @@ Type filtering utility. If `val` is an instance of `Cls`, returns `val` as-is. O
 
 ### `function render`
 
-Links: [source](../lang.mjs#L417); [test/example](../test/lang_test.mjs#L119).
+Links: [source](../lang.mjs#L419); [test/example](../test/lang_test.mjs#L119).
 
 Renders a value for user display. Counterpart to [#`show`](#function-show), which renders a value for debug purposes. Intended only for [#scalar](#function-isscalar) values. Rules:
 
@@ -609,7 +609,7 @@ Renders a value for user display. Counterpart to [#`show`](#function-show), whic
 
 ### `function renderLax`
 
-Links: [source](../lang.mjs#L430); [test/example](../test/lang_test.mjs#L152).
+Links: [source](../lang.mjs#L432); [test/example](../test/lang_test.mjs#L152).
 
 Renders a value for user display. Intended only for [#scalar](#function-isscalar) values. Unlike [#`render`](#function-render), this allows nil. Rules:
 
@@ -618,7 +618,7 @@ Renders a value for user display. Intended only for [#scalar](#function-isscalar
 
 ### `function toTrueArr`
 
-Links: [source](../lang.mjs#L432); [test/example](../test/lang_test.mjs#L207).
+Links: [source](../lang.mjs#L434); [test/example](../test/lang_test.mjs#L207).
 
 Idempotent conversion to a [#true array](#function-istruearr). Allowed inputs:
 
@@ -629,7 +629,7 @@ Idempotent conversion to a [#true array](#function-istruearr). Allowed inputs:
 
 ### `function reset`
 
-Links: [source](../lang.mjs#L440); [test/example](../test/lang_test.mjs#L2103).
+Links: [source](../lang.mjs#L442); [test/example](../test/lang_test.mjs#L2102).
 
 Replaces the current value of any [#reference](#function-isref) by setting its `Symbol.for("val")` property.
 
@@ -639,7 +639,7 @@ See [#`deref`](#function-deref) for the opposite operation: reading rather than 
 
 ### `function deref`
 
-Links: [source](../lang.mjs#L441); [test/example](../test/lang_test.mjs#L2072).
+Links: [source](../lang.mjs#L443); [test/example](../test/lang_test.mjs#L2071).
 
 Dereferences any [#reference](#function-isref). Returns non-references as-is.
 
@@ -649,14 +649,14 @@ See [#`reset`](#function-reset) for the opposite operation: writing rather than 
 
 ### `function is`
 
-Links: [source](../lang.mjs#L444); [test/example](../test/lang_test.mjs#L251).
+Links: [source](../lang.mjs#L452); [test/example](../test/lang_test.mjs#L251).
 
 Identity test: same as `===`, but considers `NaN` equal to `NaN`. Equivalent to [_SameValueZero_](https://www.ecma-international.org/ecma-262/6.0/#sec-samevaluezero) as defined by the language spec. Used internally for all identity tests.
 
 Note that [`Object.is`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) implements [_SameValue_](https://www.ecma-international.org/ecma-262/6.0/#sec-samevalue), which treats `-0` and `+0` as _distinct values_. This is typically undesirable. As a result, you should prefer `l.is` over `===` or `Object.is` unless you _know_ you intend to differentiate `-0` and `+0`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 l.is(1, '1')
 // false
@@ -667,36 +667,36 @@ l.is(NaN, NaN)
 
 ### `function truthy`
 
-Links: [source](../lang.mjs#L445); [test/example](../test/lang_test.mjs#L237).
+Links: [source](../lang.mjs#L453); [test/example](../test/lang_test.mjs#L237).
 
 Same as `!!` or `Boolean`. Sometimes useful with higher-order functions.
 
 ### `function falsy`
 
-Links: [source](../lang.mjs#L446); [test/example](../test/lang_test.mjs#L244).
+Links: [source](../lang.mjs#L454); [test/example](../test/lang_test.mjs#L244).
 
 Same as `!`. Sometimes useful with higher-order functions.
 
 ### `function nop`
 
-Links: [source](../lang.mjs#L447); [test/example](../test/lang_test.mjs#L1782).
+Links: [source](../lang.mjs#L455); [test/example](../test/lang_test.mjs#L1781).
 
 Empty function. Functional equivalent of `;` or `undefined`. Sometimes useful with higher-order functions.
 
 ### `function id`
 
-Links: [source](../lang.mjs#L448); [test/example](../test/lang_test.mjs#L1788).
+Links: [source](../lang.mjs#L456); [test/example](../test/lang_test.mjs#L1787).
 
 Identity function: returns its first argument unchanged. Sometimes useful with higher-order functions.
 
 ### `function val`
 
-Links: [source](../lang.mjs#L449); [test/example](../test/lang_test.mjs#L1795).
+Links: [source](../lang.mjs#L457); [test/example](../test/lang_test.mjs#L1794).
 
 Takes a value and creates a function that always returns that value. Sometimes useful with higher order functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 const constant = l.val(1)
 
@@ -709,32 +709,32 @@ constant(`this input is ignored`)
 
 ### `function panic`
 
-Links: [source](../lang.mjs#L450); [test/example](../test/lang_test.mjs#L1809).
+Links: [source](../lang.mjs#L458); [test/example](../test/lang_test.mjs#L1808).
 
 Same as `throw` but an expression rather than a statement. Also sometimes useful with higher-order functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 const x = someTest ? someValue : l.panic(Error(`unreachable`))
 ```
 
 ### `function vac`
 
-Links: [source](../lang.mjs#L453); [test/example](../test/lang_test.mjs#L1988).
+Links: [source](../lang.mjs#L461); [test/example](../test/lang_test.mjs#L1987).
 
 Complements [#`isVac`](#function-isvac). Returns `undefined` if the input is vacuous, otherwise returns the input as-is.
 
 ### `function bind`
 
-Links: [source](../lang.mjs#L454); [test/example](../test/lang_test.mjs#L1753).
+Links: [source](../lang.mjs#L462); [test/example](../test/lang_test.mjs#L1752).
 
 Like [`Function.prototype.bind`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind), but instead of taking `this` as an argument, takes it contextually. By default `this` is `undefined`. To set it, use `l.bind.call`.
 
 Returns a new function that represents [partial application](https://en.wikipedia.org/wiki/Partial_application) of the given function, a common tool in functional programming. When called, it joins arguments from both calls and invokes the original function. Think of it like splitting a function call in two, or more. Performance is inferior to closures; avoid in hotspots.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 const inc = l.bind(l.add, 1)
 
@@ -746,12 +746,12 @@ Note: we don't provide facilities for currying. Experience has shown it to be ex
 
 ### `function not`
 
-Links: [source](../lang.mjs#L456); [test/example](../test/lang_test.mjs#L1772).
+Links: [source](../lang.mjs#L464); [test/example](../test/lang_test.mjs#L1771).
 
 Returns a new function that negates the result of the given function, like a delayed `!`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 function eq(a, b) {return a === b}
 
@@ -766,24 +766,24 @@ function different(a, b) {return !eq(a, b)}
 
 ### `function hasOwn`
 
-Links: [source](../lang.mjs#L461); [test/example](../test/lang_test.mjs#L1199).
+Links: [source](../lang.mjs#L469); [test/example](../test/lang_test.mjs#L1198).
 
 Same as [`Object.prototype.hasOwnProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwnProperty) but shorter and safe to call on primitives. Always false for primitives.
 
 ### `function hasOwnEnum`
 
-Links: [source](../lang.mjs#L462); [test/example](../test/lang_test.mjs#L1213).
+Links: [source](../lang.mjs#L470); [test/example](../test/lang_test.mjs#L1212).
 
 Same as [`Object.prototype.propertyIsEnumerable`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/propertyIsEnumerable) but shorter and safe to call on primitives. Always false for primitives.
 
 ### `function hasInherited`
 
-Links: [source](../lang.mjs#L463); [test/example](../test/lang_test.mjs#L1227).
+Links: [source](../lang.mjs#L471); [test/example](../test/lang_test.mjs#L1226).
 
 Returns `true` if the target is [#non-primitive](#function-iscomp) and has the given property on its prototype. As a consequence, this returns `false` if the target is a primitive, or has the given property as an "own" property, either enumerable or not.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 l.hasInherited([10, 20, 30], `length`)
 // false
@@ -797,13 +797,13 @@ l.hasInherited([10, 20, 30], `toString`)
 
 ### `function hasMeth`
 
-Links: [source](../lang.mjs#L464); [test/example](../test/lang_test.mjs#L1266).
+Links: [source](../lang.mjs#L472); [test/example](../test/lang_test.mjs#L1265).
 
 True if the the given value has the given named method. Safe to call on primitives such as `null`. Always false for primitives.
 
 ### `function setProto`
 
-Links: [source](../lang.mjs#L473); [test/example](../test/lang_test.mjs#L1335).
+Links: [source](../lang.mjs#L481); [test/example](../test/lang_test.mjs#L1334).
 
 Workaround for bugs related to subclassing.
 
@@ -831,7 +831,7 @@ class Abort extends AbortController {
 
 ### `function Emp`
 
-Links: [source](../lang.mjs#L479); [test/example](../test/lang_test.mjs#L1351).
+Links: [source](../lang.mjs#L487); [test/example](../test/lang_test.mjs#L1350).
 
 Short for "empty". Hybrid function / superclass for empty objects.
 
@@ -857,7 +857,7 @@ val.constructor === Empty
 
 ### `function show`
 
-Links: [source](../lang.mjs#L482); [test/example](../test/lang_test.mjs#L20).
+Links: [source](../lang.mjs#L490); [test/example](../test/lang_test.mjs#L20).
 
 Renders a value for debug purposes. Counterpart to [#`render`](#function-render), which renders a value for user display. Convenient for interpolating things into error messages. Used internally in assertion functions such as [#`req`](#function-req). Approximate rules:
 
@@ -872,86 +872,86 @@ Renders a value for debug purposes. Counterpart to [#`render`](#function-render)
 
 ### `function add`
 
-Links: [source](../lang.mjs#L607); [test/example](../test/lang_test.mjs#L1852).
+Links: [source](../lang.mjs#L615); [test/example](../test/lang_test.mjs#L1851).
 
 Same as `+`.
 
 ### `function sub`
 
-Links: [source](../lang.mjs#L608); [test/example](../test/lang_test.mjs#L1858).
+Links: [source](../lang.mjs#L616); [test/example](../test/lang_test.mjs#L1857).
 
 Same as `-`.
 
 ### `function mul`
 
-Links: [source](../lang.mjs#L609); [test/example](../test/lang_test.mjs#L1864).
+Links: [source](../lang.mjs#L617); [test/example](../test/lang_test.mjs#L1863).
 
 Same as `*`.
 
 ### `function div`
 
-Links: [source](../lang.mjs#L610); [test/example](../test/lang_test.mjs#L1870).
+Links: [source](../lang.mjs#L618); [test/example](../test/lang_test.mjs#L1869).
 
 Same as `/`.
 
 ### `function rem`
 
-Links: [source](../lang.mjs#L611); [test/example](../test/lang_test.mjs#L1876).
+Links: [source](../lang.mjs#L619); [test/example](../test/lang_test.mjs#L1875).
 
 Same as `%`.
 
 ### `function lt`
 
-Links: [source](../lang.mjs#L612); [test/example](../test/lang_test.mjs#L1884).
+Links: [source](../lang.mjs#L620); [test/example](../test/lang_test.mjs#L1883).
 
 Same as `<`.
 
 ### `function gt`
 
-Links: [source](../lang.mjs#L613); [test/example](../test/lang_test.mjs#L1895).
+Links: [source](../lang.mjs#L621); [test/example](../test/lang_test.mjs#L1894).
 
 Same as `>`.
 
 ### `function lte`
 
-Links: [source](../lang.mjs#L614); [test/example](../test/lang_test.mjs#L1906).
+Links: [source](../lang.mjs#L622); [test/example](../test/lang_test.mjs#L1905).
 
 Same as `<=`.
 
 ### `function gte`
 
-Links: [source](../lang.mjs#L615); [test/example](../test/lang_test.mjs#L1917).
+Links: [source](../lang.mjs#L623); [test/example](../test/lang_test.mjs#L1916).
 
 Same as `>=`.
 
 ### `function neg`
 
-Links: [source](../lang.mjs#L616); [test/example](../test/lang_test.mjs#L1928).
+Links: [source](../lang.mjs#L624); [test/example](../test/lang_test.mjs#L1927).
 
 Arithmetic negation. Same as unary `-`.
 
 ### `function inc`
 
-Links: [source](../lang.mjs#L617); [test/example](../test/lang_test.mjs#L1940).
+Links: [source](../lang.mjs#L625); [test/example](../test/lang_test.mjs#L1939).
 
 Increments by `1`.
 
 ### `function dec`
 
-Links: [source](../lang.mjs#L618); [test/example](../test/lang_test.mjs#L1948).
+Links: [source](../lang.mjs#L626); [test/example](../test/lang_test.mjs#L1947).
 
 Decrements by `1`.
 
 ### `function round`
 
-Links: [source](../lang.mjs#L621); [test/example](../test/lang_test.mjs#L1956).
+Links: [source](../lang.mjs#L629); [test/example](../test/lang_test.mjs#L1955).
 
 Rounding half away from zero. Has one difference from [`Math.round`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round): when the number is negative and the fraction is exactly `.5`, this rounds away from zero. This behavior is more consistent with the default rounding function in many other languages, including Go.
 
 Examples:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 l.round(-12.5) // -13
 l.round(12.5) // 13
@@ -964,238 +964,239 @@ Math.round(12.5) // 13
 
 The following APIs are exported but undocumented. Check [lang.mjs](../lang.mjs).
 
-  * [`const VAL`](../lang.mjs#L1)
-  * [`function reqNil`](../lang.mjs#L6)
-  * [`function optNil`](../lang.mjs#L7)
-  * [`function onlyNil`](../lang.mjs#L8)
-  * [`function reqSome`](../lang.mjs#L11)
-  * [`function optSome`](../lang.mjs#L12)
-  * [`function onlySome`](../lang.mjs#L13)
-  * [`function reqBool`](../lang.mjs#L16)
-  * [`function optBool`](../lang.mjs#L17)
-  * [`function onlyBool`](../lang.mjs#L18)
-  * [`function laxBool`](../lang.mjs#L19)
-  * [`function reqNum`](../lang.mjs#L22)
-  * [`function optNum`](../lang.mjs#L23)
-  * [`function onlyNum`](../lang.mjs#L24)
-  * [`function laxNum`](../lang.mjs#L25)
-  * [`function reqFin`](../lang.mjs#L28)
-  * [`function optFin`](../lang.mjs#L29)
-  * [`function onlyFin`](../lang.mjs#L30)
-  * [`function laxFin`](../lang.mjs#L31)
-  * [`function reqFinNeg`](../lang.mjs#L34)
-  * [`function optFinNeg`](../lang.mjs#L35)
-  * [`function onlyFinNeg`](../lang.mjs#L36)
-  * [`function reqFinPos`](../lang.mjs#L39)
-  * [`function optFinPos`](../lang.mjs#L40)
-  * [`function onlyFinPos`](../lang.mjs#L41)
-  * [`function reqInt`](../lang.mjs#L45)
-  * [`function optInt`](../lang.mjs#L46)
-  * [`function onlyInt`](../lang.mjs#L47)
-  * [`function laxInt`](../lang.mjs#L48)
-  * [`function reqNat`](../lang.mjs#L51)
-  * [`function optNat`](../lang.mjs#L52)
-  * [`function onlyNat`](../lang.mjs#L53)
-  * [`function laxNat`](../lang.mjs#L54)
-  * [`function reqIntNeg`](../lang.mjs#L57)
-  * [`function optIntNeg`](../lang.mjs#L58)
-  * [`function onlyIntNeg`](../lang.mjs#L59)
-  * [`function reqIntPos`](../lang.mjs#L62)
-  * [`function optIntPos`](../lang.mjs#L63)
-  * [`function onlyIntPos`](../lang.mjs#L64)
-  * [`function reqNaN`](../lang.mjs#L67)
-  * [`function optNaN`](../lang.mjs#L68)
-  * [`function onlyNaN`](../lang.mjs#L69)
-  * [`function reqInf`](../lang.mjs#L72)
-  * [`function optInf`](../lang.mjs#L73)
-  * [`function onlyInf`](../lang.mjs#L74)
-  * [`function reqBigInt`](../lang.mjs#L77)
-  * [`function optBigInt`](../lang.mjs#L78)
-  * [`function onlyBigInt`](../lang.mjs#L79)
-  * [`function laxBigInt`](../lang.mjs#L80)
-  * [`function reqStr`](../lang.mjs#L83)
-  * [`function optStr`](../lang.mjs#L84)
-  * [`function onlyStr`](../lang.mjs#L85)
-  * [`function laxStr`](../lang.mjs#L86)
-  * [`function isValidStr`](../lang.mjs#L89)
-  * [`function reqValidStr`](../lang.mjs#L90)
-  * [`function optValidStr`](../lang.mjs#L91)
-  * [`function onlyValidStr`](../lang.mjs#L92)
-  * [`function reqSym`](../lang.mjs#L95)
-  * [`function optSym`](../lang.mjs#L96)
-  * [`function onlySym`](../lang.mjs#L97)
-  * [`function reqKey`](../lang.mjs#L101)
-  * [`function optKey`](../lang.mjs#L102)
-  * [`function onlyKey`](../lang.mjs#L103)
-  * [`function reqRecKey`](../lang.mjs#L106)
-  * [`function optRecKey`](../lang.mjs#L107)
-  * [`function onlyRecKey`](../lang.mjs#L108)
-  * [`function reqPk`](../lang.mjs#L111)
-  * [`function optPk`](../lang.mjs#L112)
-  * [`function onlyPk`](../lang.mjs#L113)
-  * [`function reqJunk`](../lang.mjs#L116)
-  * [`function optJunk`](../lang.mjs#L117)
-  * [`function onlyJunk`](../lang.mjs#L118)
-  * [`function reqComp`](../lang.mjs#L121)
-  * [`function optComp`](../lang.mjs#L122)
-  * [`function onlyComp`](../lang.mjs#L123)
-  * [`function reqPrim`](../lang.mjs#L126)
-  * [`function optPrim`](../lang.mjs#L127)
-  * [`function onlyPrim`](../lang.mjs#L128)
-  * [`function reqFun`](../lang.mjs#L131)
-  * [`function optFun`](../lang.mjs#L132)
-  * [`function onlyFun`](../lang.mjs#L133)
-  * [`function reqFunSync`](../lang.mjs#L136)
-  * [`function optFunSync`](../lang.mjs#L137)
-  * [`function onlyFunSync`](../lang.mjs#L138)
-  * [`function reqFunGen`](../lang.mjs#L141)
-  * [`function optFunGen`](../lang.mjs#L142)
-  * [`function onlyFunGen`](../lang.mjs#L143)
-  * [`function reqFunAsync`](../lang.mjs#L146)
-  * [`function optFunAsync`](../lang.mjs#L147)
-  * [`function onlyFunAsync`](../lang.mjs#L148)
-  * [`function reqFunAsyncGen`](../lang.mjs#L151)
-  * [`function optFunAsyncGen`](../lang.mjs#L152)
-  * [`function onlyFunAsyncGen`](../lang.mjs#L153)
-  * [`function reqObj`](../lang.mjs#L156)
-  * [`function optObj`](../lang.mjs#L157)
-  * [`function onlyObj`](../lang.mjs#L158)
-  * [`function isNpo`](../lang.mjs#L160)
-  * [`function reqNpo`](../lang.mjs#L161)
-  * [`function optNpo`](../lang.mjs#L162)
-  * [`function onlyNpo`](../lang.mjs#L163)
-  * [`function laxNpo`](../lang.mjs#L164)
-  * [`function reqDict`](../lang.mjs#L174)
-  * [`function optDict`](../lang.mjs#L175)
-  * [`function onlyDict`](../lang.mjs#L176)
-  * [`function laxDict`](../lang.mjs#L177)
-  * [`function reqRec`](../lang.mjs#L182)
-  * [`function optRec`](../lang.mjs#L183)
-  * [`function onlyRec`](../lang.mjs#L184)
-  * [`function laxRec`](../lang.mjs#L185)
-  * [`function reqArr`](../lang.mjs#L188)
-  * [`function optArr`](../lang.mjs#L189)
-  * [`function onlyArr`](../lang.mjs#L190)
-  * [`function laxArr`](../lang.mjs#L191)
-  * [`function reqTrueArr`](../lang.mjs#L198)
-  * [`function optTrueArr`](../lang.mjs#L199)
-  * [`function onlyTrueArr`](../lang.mjs#L200)
-  * [`function laxTrueArr`](../lang.mjs#L201)
-  * [`function reqReg`](../lang.mjs#L204)
-  * [`function optReg`](../lang.mjs#L205)
-  * [`function onlyReg`](../lang.mjs#L206)
-  * [`function reqDate`](../lang.mjs#L209)
-  * [`function optDate`](../lang.mjs#L210)
-  * [`function onlyDate`](../lang.mjs#L211)
-  * [`function reqValidDate`](../lang.mjs#L214)
-  * [`function optValidDate`](../lang.mjs#L215)
-  * [`function onlyValidDate`](../lang.mjs#L216)
-  * [`function reqInvalidDate`](../lang.mjs#L219)
-  * [`function optInvalidDate`](../lang.mjs#L220)
-  * [`function onlyInvalidDate`](../lang.mjs#L221)
-  * [`function reqSet`](../lang.mjs#L224)
-  * [`function optSet`](../lang.mjs#L225)
-  * [`function onlySet`](../lang.mjs#L226)
-  * [`function laxSet`](../lang.mjs#L227)
-  * [`function reqMap`](../lang.mjs#L230)
-  * [`function optMap`](../lang.mjs#L231)
-  * [`function onlyMap`](../lang.mjs#L232)
-  * [`function laxMap`](../lang.mjs#L233)
-  * [`function reqPromise`](../lang.mjs#L236)
-  * [`function optPromise`](../lang.mjs#L237)
-  * [`function onlyPromise`](../lang.mjs#L238)
-  * [`function reqIter`](../lang.mjs#L241)
-  * [`function optIter`](../lang.mjs#L242)
-  * [`function onlyIter`](../lang.mjs#L243)
-  * [`function reqIterAsync`](../lang.mjs#L246)
-  * [`function optIterAsync`](../lang.mjs#L247)
-  * [`function onlyIterAsync`](../lang.mjs#L248)
-  * [`function reqIterator`](../lang.mjs#L251)
-  * [`function optIterator`](../lang.mjs#L252)
-  * [`function onlyIterator`](../lang.mjs#L253)
-  * [`function reqIteratorAsync`](../lang.mjs#L256)
-  * [`function optIteratorAsync`](../lang.mjs#L257)
-  * [`function onlyIteratorAsync`](../lang.mjs#L258)
-  * [`function reqGen`](../lang.mjs#L261)
-  * [`function optGen`](../lang.mjs#L262)
-  * [`function onlyGen`](../lang.mjs#L263)
-  * [`function reqCls`](../lang.mjs#L277)
-  * [`function optCls`](../lang.mjs#L278)
-  * [`function onlyCls`](../lang.mjs#L279)
-  * [`function isSubCls`](../lang.mjs#L282)
-  * [`function reqSubCls`](../lang.mjs#L290)
-  * [`function reqList`](../lang.mjs#L296)
-  * [`function optList`](../lang.mjs#L297)
-  * [`function onlyList`](../lang.mjs#L298)
-  * [`function laxList`](../lang.mjs#L299)
-  * [`function reqSeq`](../lang.mjs#L302)
-  * [`function optSeq`](../lang.mjs#L303)
-  * [`function onlySeq`](../lang.mjs#L304)
-  * [`function reqVac`](../lang.mjs#L307)
-  * [`function optVac`](../lang.mjs#L308)
-  * [`function onlyVac`](../lang.mjs#L309)
-  * [`function reqScalar`](../lang.mjs#L318)
-  * [`function optScalar`](../lang.mjs#L319)
-  * [`function onlyScalar`](../lang.mjs#L320)
-  * [`function isScalarOpt`](../lang.mjs#L322)
-  * [`function reqScalarOpt`](../lang.mjs#L323)
-  * [`function optScalarOpt`](../lang.mjs#L324)
-  * [`function onlyScalarOpt`](../lang.mjs#L325)
-  * [`function isArrble`](../lang.mjs#L327)
-  * [`function reqArrble`](../lang.mjs#L328)
-  * [`function optArrble`](../lang.mjs#L329)
-  * [`function onlyArrble`](../lang.mjs#L330)
-  * [`function isEqable`](../lang.mjs#L332)
-  * [`function reqEqable`](../lang.mjs#L333)
-  * [`function optEqable`](../lang.mjs#L334)
-  * [`function onlyEqable`](../lang.mjs#L335)
-  * [`function isClearable`](../lang.mjs#L337)
-  * [`function reqClearable`](../lang.mjs#L338)
-  * [`function optClearable`](../lang.mjs#L339)
-  * [`function onlyClearable`](../lang.mjs#L340)
-  * [`function isErr`](../lang.mjs#L342)
-  * [`function reqErr`](../lang.mjs#L343)
-  * [`function optErr`](../lang.mjs#L344)
-  * [`function onlyErr`](../lang.mjs#L345)
-  * [`function optRef`](../lang.mjs#L348)
-  * [`function onlyRef`](../lang.mjs#L349)
-  * [`function reqRef`](../lang.mjs#L350)
-  * [`function isArrOf`](../lang.mjs#L352)
-  * [`function reqArrOf`](../lang.mjs#L358)
-  * [`function optArrOf`](../lang.mjs#L364)
-  * [`function optOneOf`](../lang.mjs#L394)
-  * [`function reqOneOf`](../lang.mjs#L398)
-  * [`function toInst`](../lang.mjs#L414)
-  * [`function toInstOpt`](../lang.mjs#L415)
-  * [`function renderOpt`](../lang.mjs#L423)
-  * [`function derefAll`](../lang.mjs#L442)
-  * [`function True`](../lang.mjs#L451)
-  * [`function False`](../lang.mjs#L452)
-  * [`function eq`](../lang.mjs#L466)
-  * [`class Show`](../lang.mjs#L484)
-  * [`function errType`](../lang.mjs#L645)
-  * [`function msgType`](../lang.mjs#L646)
-  * [`function errFun`](../lang.mjs#L648)
-  * [`function msgFun`](../lang.mjs#L649)
-  * [`function throwErrFun`](../lang.mjs#L650)
-  * [`function errConv`](../lang.mjs#L652)
-  * [`function errSynt`](../lang.mjs#L653)
-  * [`function msgConv`](../lang.mjs#L654)
-  * [`function errConvInst`](../lang.mjs#L656)
-  * [`function msgConvInst`](../lang.mjs#L657)
-  * [`function errInst`](../lang.mjs#L659)
-  * [`function msgInst`](../lang.mjs#L660)
-  * [`function errIn`](../lang.mjs#L662)
-  * [`function msgIn`](../lang.mjs#L663)
-  * [`function errImpl`](../lang.mjs#L665)
-  * [`function msgImpl`](../lang.mjs#L666)
-  * [`function errTrans`](../lang.mjs#L668)
-  * [`function errWrap`](../lang.mjs#L676)
-  * [`function errCause`](../lang.mjs#L681)
-  * [`function convType`](../lang.mjs#L699)
-  * [`function convSynt`](../lang.mjs#L704)
-  * [`function showFunName`](../lang.mjs#L710)
-  * [`function get`](../lang.mjs#L725)
-  * [`function getOwn`](../lang.mjs#L729)
-  * [`function reqGet`](../lang.mjs#L731)
-  * [`function recKeys`](../lang.mjs#L744)
+  * [`const VAL`](../lang.mjs#L3)
+  * [`function reqNil`](../lang.mjs#L8)
+  * [`function optNil`](../lang.mjs#L9)
+  * [`function onlyNil`](../lang.mjs#L10)
+  * [`function reqSome`](../lang.mjs#L13)
+  * [`function optSome`](../lang.mjs#L14)
+  * [`function onlySome`](../lang.mjs#L15)
+  * [`function reqBool`](../lang.mjs#L18)
+  * [`function optBool`](../lang.mjs#L19)
+  * [`function onlyBool`](../lang.mjs#L20)
+  * [`function laxBool`](../lang.mjs#L21)
+  * [`function reqNum`](../lang.mjs#L24)
+  * [`function optNum`](../lang.mjs#L25)
+  * [`function onlyNum`](../lang.mjs#L26)
+  * [`function laxNum`](../lang.mjs#L27)
+  * [`function reqFin`](../lang.mjs#L30)
+  * [`function optFin`](../lang.mjs#L31)
+  * [`function onlyFin`](../lang.mjs#L32)
+  * [`function laxFin`](../lang.mjs#L33)
+  * [`function reqFinNeg`](../lang.mjs#L36)
+  * [`function optFinNeg`](../lang.mjs#L37)
+  * [`function onlyFinNeg`](../lang.mjs#L38)
+  * [`function reqFinPos`](../lang.mjs#L41)
+  * [`function optFinPos`](../lang.mjs#L42)
+  * [`function onlyFinPos`](../lang.mjs#L43)
+  * [`function reqInt`](../lang.mjs#L47)
+  * [`function optInt`](../lang.mjs#L48)
+  * [`function onlyInt`](../lang.mjs#L49)
+  * [`function laxInt`](../lang.mjs#L50)
+  * [`function reqNat`](../lang.mjs#L53)
+  * [`function optNat`](../lang.mjs#L54)
+  * [`function onlyNat`](../lang.mjs#L55)
+  * [`function laxNat`](../lang.mjs#L56)
+  * [`function reqIntNeg`](../lang.mjs#L59)
+  * [`function optIntNeg`](../lang.mjs#L60)
+  * [`function onlyIntNeg`](../lang.mjs#L61)
+  * [`function reqIntPos`](../lang.mjs#L64)
+  * [`function optIntPos`](../lang.mjs#L65)
+  * [`function onlyIntPos`](../lang.mjs#L66)
+  * [`function reqNaN`](../lang.mjs#L69)
+  * [`function optNaN`](../lang.mjs#L70)
+  * [`function onlyNaN`](../lang.mjs#L71)
+  * [`function reqInf`](../lang.mjs#L74)
+  * [`function optInf`](../lang.mjs#L75)
+  * [`function onlyInf`](../lang.mjs#L76)
+  * [`function reqBigInt`](../lang.mjs#L79)
+  * [`function optBigInt`](../lang.mjs#L80)
+  * [`function onlyBigInt`](../lang.mjs#L81)
+  * [`function laxBigInt`](../lang.mjs#L82)
+  * [`function reqStr`](../lang.mjs#L85)
+  * [`function optStr`](../lang.mjs#L86)
+  * [`function onlyStr`](../lang.mjs#L87)
+  * [`function laxStr`](../lang.mjs#L88)
+  * [`function isValidStr`](../lang.mjs#L91)
+  * [`function reqValidStr`](../lang.mjs#L92)
+  * [`function optValidStr`](../lang.mjs#L93)
+  * [`function onlyValidStr`](../lang.mjs#L94)
+  * [`function reqSym`](../lang.mjs#L97)
+  * [`function optSym`](../lang.mjs#L98)
+  * [`function onlySym`](../lang.mjs#L99)
+  * [`function reqKey`](../lang.mjs#L103)
+  * [`function optKey`](../lang.mjs#L104)
+  * [`function onlyKey`](../lang.mjs#L105)
+  * [`function reqRecKey`](../lang.mjs#L108)
+  * [`function optRecKey`](../lang.mjs#L109)
+  * [`function onlyRecKey`](../lang.mjs#L110)
+  * [`function reqPk`](../lang.mjs#L113)
+  * [`function optPk`](../lang.mjs#L114)
+  * [`function onlyPk`](../lang.mjs#L115)
+  * [`function reqJunk`](../lang.mjs#L118)
+  * [`function optJunk`](../lang.mjs#L119)
+  * [`function onlyJunk`](../lang.mjs#L120)
+  * [`function reqComp`](../lang.mjs#L123)
+  * [`function optComp`](../lang.mjs#L124)
+  * [`function onlyComp`](../lang.mjs#L125)
+  * [`function reqPrim`](../lang.mjs#L128)
+  * [`function optPrim`](../lang.mjs#L129)
+  * [`function onlyPrim`](../lang.mjs#L130)
+  * [`function reqFun`](../lang.mjs#L133)
+  * [`function optFun`](../lang.mjs#L134)
+  * [`function onlyFun`](../lang.mjs#L135)
+  * [`function reqFunSync`](../lang.mjs#L138)
+  * [`function optFunSync`](../lang.mjs#L139)
+  * [`function onlyFunSync`](../lang.mjs#L140)
+  * [`function reqFunGen`](../lang.mjs#L143)
+  * [`function optFunGen`](../lang.mjs#L144)
+  * [`function onlyFunGen`](../lang.mjs#L145)
+  * [`function reqFunAsync`](../lang.mjs#L148)
+  * [`function optFunAsync`](../lang.mjs#L149)
+  * [`function onlyFunAsync`](../lang.mjs#L150)
+  * [`function reqFunAsyncGen`](../lang.mjs#L153)
+  * [`function optFunAsyncGen`](../lang.mjs#L154)
+  * [`function onlyFunAsyncGen`](../lang.mjs#L155)
+  * [`function reqObj`](../lang.mjs#L158)
+  * [`function optObj`](../lang.mjs#L159)
+  * [`function onlyObj`](../lang.mjs#L160)
+  * [`function isNpo`](../lang.mjs#L162)
+  * [`function reqNpo`](../lang.mjs#L163)
+  * [`function optNpo`](../lang.mjs#L164)
+  * [`function onlyNpo`](../lang.mjs#L165)
+  * [`function laxNpo`](../lang.mjs#L166)
+  * [`function reqDict`](../lang.mjs#L176)
+  * [`function optDict`](../lang.mjs#L177)
+  * [`function onlyDict`](../lang.mjs#L178)
+  * [`function laxDict`](../lang.mjs#L179)
+  * [`function reqRec`](../lang.mjs#L184)
+  * [`function optRec`](../lang.mjs#L185)
+  * [`function onlyRec`](../lang.mjs#L186)
+  * [`function laxRec`](../lang.mjs#L187)
+  * [`function reqArr`](../lang.mjs#L190)
+  * [`function optArr`](../lang.mjs#L191)
+  * [`function onlyArr`](../lang.mjs#L192)
+  * [`function laxArr`](../lang.mjs#L193)
+  * [`function reqTrueArr`](../lang.mjs#L200)
+  * [`function optTrueArr`](../lang.mjs#L201)
+  * [`function onlyTrueArr`](../lang.mjs#L202)
+  * [`function laxTrueArr`](../lang.mjs#L203)
+  * [`function reqReg`](../lang.mjs#L206)
+  * [`function optReg`](../lang.mjs#L207)
+  * [`function onlyReg`](../lang.mjs#L208)
+  * [`function reqDate`](../lang.mjs#L211)
+  * [`function optDate`](../lang.mjs#L212)
+  * [`function onlyDate`](../lang.mjs#L213)
+  * [`function reqValidDate`](../lang.mjs#L216)
+  * [`function optValidDate`](../lang.mjs#L217)
+  * [`function onlyValidDate`](../lang.mjs#L218)
+  * [`function reqInvalidDate`](../lang.mjs#L221)
+  * [`function optInvalidDate`](../lang.mjs#L222)
+  * [`function onlyInvalidDate`](../lang.mjs#L223)
+  * [`function reqSet`](../lang.mjs#L226)
+  * [`function optSet`](../lang.mjs#L227)
+  * [`function onlySet`](../lang.mjs#L228)
+  * [`function laxSet`](../lang.mjs#L229)
+  * [`function reqMap`](../lang.mjs#L232)
+  * [`function optMap`](../lang.mjs#L233)
+  * [`function onlyMap`](../lang.mjs#L234)
+  * [`function laxMap`](../lang.mjs#L235)
+  * [`function reqPromise`](../lang.mjs#L238)
+  * [`function optPromise`](../lang.mjs#L239)
+  * [`function onlyPromise`](../lang.mjs#L240)
+  * [`function reqIter`](../lang.mjs#L243)
+  * [`function optIter`](../lang.mjs#L244)
+  * [`function onlyIter`](../lang.mjs#L245)
+  * [`function reqIterAsync`](../lang.mjs#L248)
+  * [`function optIterAsync`](../lang.mjs#L249)
+  * [`function onlyIterAsync`](../lang.mjs#L250)
+  * [`function reqIterator`](../lang.mjs#L253)
+  * [`function optIterator`](../lang.mjs#L254)
+  * [`function onlyIterator`](../lang.mjs#L255)
+  * [`function reqIteratorAsync`](../lang.mjs#L258)
+  * [`function optIteratorAsync`](../lang.mjs#L259)
+  * [`function onlyIteratorAsync`](../lang.mjs#L260)
+  * [`function reqGen`](../lang.mjs#L263)
+  * [`function optGen`](../lang.mjs#L264)
+  * [`function onlyGen`](../lang.mjs#L265)
+  * [`function reqCls`](../lang.mjs#L279)
+  * [`function optCls`](../lang.mjs#L280)
+  * [`function onlyCls`](../lang.mjs#L281)
+  * [`function isSubCls`](../lang.mjs#L284)
+  * [`function reqSubCls`](../lang.mjs#L292)
+  * [`function reqList`](../lang.mjs#L298)
+  * [`function optList`](../lang.mjs#L299)
+  * [`function onlyList`](../lang.mjs#L300)
+  * [`function laxList`](../lang.mjs#L301)
+  * [`function reqSeq`](../lang.mjs#L304)
+  * [`function optSeq`](../lang.mjs#L305)
+  * [`function onlySeq`](../lang.mjs#L306)
+  * [`function reqVac`](../lang.mjs#L309)
+  * [`function optVac`](../lang.mjs#L310)
+  * [`function onlyVac`](../lang.mjs#L311)
+  * [`function reqScalar`](../lang.mjs#L320)
+  * [`function optScalar`](../lang.mjs#L321)
+  * [`function onlyScalar`](../lang.mjs#L322)
+  * [`function isScalarOpt`](../lang.mjs#L324)
+  * [`function reqScalarOpt`](../lang.mjs#L325)
+  * [`function optScalarOpt`](../lang.mjs#L326)
+  * [`function onlyScalarOpt`](../lang.mjs#L327)
+  * [`function isArrble`](../lang.mjs#L329)
+  * [`function reqArrble`](../lang.mjs#L330)
+  * [`function optArrble`](../lang.mjs#L331)
+  * [`function onlyArrble`](../lang.mjs#L332)
+  * [`function isEqable`](../lang.mjs#L334)
+  * [`function reqEqable`](../lang.mjs#L335)
+  * [`function optEqable`](../lang.mjs#L336)
+  * [`function onlyEqable`](../lang.mjs#L337)
+  * [`function isClearable`](../lang.mjs#L339)
+  * [`function reqClearable`](../lang.mjs#L340)
+  * [`function optClearable`](../lang.mjs#L341)
+  * [`function onlyClearable`](../lang.mjs#L342)
+  * [`function isErr`](../lang.mjs#L344)
+  * [`function reqErr`](../lang.mjs#L345)
+  * [`function optErr`](../lang.mjs#L346)
+  * [`function onlyErr`](../lang.mjs#L347)
+  * [`function optRef`](../lang.mjs#L350)
+  * [`function onlyRef`](../lang.mjs#L351)
+  * [`function reqRef`](../lang.mjs#L352)
+  * [`function isArrOf`](../lang.mjs#L354)
+  * [`function reqArrOf`](../lang.mjs#L360)
+  * [`function optArrOf`](../lang.mjs#L366)
+  * [`function optOneOf`](../lang.mjs#L396)
+  * [`function reqOneOf`](../lang.mjs#L400)
+  * [`function toInst`](../lang.mjs#L416)
+  * [`function toInstOpt`](../lang.mjs#L417)
+  * [`function renderOpt`](../lang.mjs#L425)
+  * [`function derefAll`](../lang.mjs#L444)
+  * [`function swap`](../lang.mjs#L446)
+  * [`function True`](../lang.mjs#L459)
+  * [`function False`](../lang.mjs#L460)
+  * [`function eq`](../lang.mjs#L474)
+  * [`class Show`](../lang.mjs#L492)
+  * [`function errType`](../lang.mjs#L653)
+  * [`function msgType`](../lang.mjs#L654)
+  * [`function errFun`](../lang.mjs#L656)
+  * [`function msgFun`](../lang.mjs#L657)
+  * [`function throwErrFun`](../lang.mjs#L658)
+  * [`function errConv`](../lang.mjs#L660)
+  * [`function errSynt`](../lang.mjs#L661)
+  * [`function msgConv`](../lang.mjs#L662)
+  * [`function errConvInst`](../lang.mjs#L664)
+  * [`function msgConvInst`](../lang.mjs#L665)
+  * [`function errInst`](../lang.mjs#L667)
+  * [`function msgInst`](../lang.mjs#L668)
+  * [`function errIn`](../lang.mjs#L670)
+  * [`function msgIn`](../lang.mjs#L671)
+  * [`function errImpl`](../lang.mjs#L673)
+  * [`function msgImpl`](../lang.mjs#L674)
+  * [`function errTrans`](../lang.mjs#L676)
+  * [`function errWrap`](../lang.mjs#L684)
+  * [`function errCause`](../lang.mjs#L689)
+  * [`function convType`](../lang.mjs#L707)
+  * [`function convSynt`](../lang.mjs#L712)
+  * [`function showFunName`](../lang.mjs#L718)
+  * [`function get`](../lang.mjs#L733)
+  * [`function getOwn`](../lang.mjs#L737)
+  * [`function reqGet`](../lang.mjs#L739)
+  * [`function recKeys`](../lang.mjs#L752)

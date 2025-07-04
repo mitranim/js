@@ -110,7 +110,7 @@ function testMut(fun) {
     t.throws(() => fun({}, []),       TypeError, `expected variant of isRec`)
   })
 
-  function mutate(tar, src) {t.is(fun(tar, src), tar)}
+  function mutate(tar, ...src) {t.is(fun(tar, ...src), tar)}
 
   t.test(function test_returns_target() {
     mutate({})
@@ -150,6 +150,16 @@ function testMut(fun) {
 
     mutate(tar, src)
     t.eq({...tar}, {one: 10})
+  })
+
+  t.test(function test_variadic() {
+    let tar = l.Emp()
+    mutate(tar, {one: 10}, {two: 20})
+    t.eq({...tar}, {one: 10, two: 20})
+
+    tar = l.Emp()
+    mutate(tar, {one: 10}, {two: 20}, {three: 30})
+    t.eq({...tar}, {one: 10, two: 20, three: 30})
   })
 }
 

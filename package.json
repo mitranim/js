@@ -1,7 +1,7 @@
 {
 	"name": "@mitranim/js",
 	"description": "The missing standard library for JS. The missing JS framework.",
-	"version": "0.1.74",
+	"version": "0.1.75",
 	"type": "module",
 	"repository": {"type": "git", "url": "https://github.com/mitranim/js.git"},
 	"license": "Unlicense"

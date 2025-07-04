@@ -154,7 +154,7 @@ For SSR (server-side rendering), Prax needs our lightweight DOM shim:
 import * as p from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_global_shim}}'
 
-const ren = new p.Ren(dg.global)
+const ren = new p.Ren({env: dg.global})
 const {E} = ren
 
 const elem = E(`div`, {
@@ -170,16 +170,16 @@ console.log(elem.outerHTML)
 */
 ```
 
-For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global `document` and pass it to `Ren`. The rest will just work.
+For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global "environment" and pass it to `Ren`. The rest will just work.
 
 ```js
 import * as p from '{{featUrl prax}}'
 
-// Your bundler or importmap should choose the right one.
+// Your bundler or importmap needs to choose the right one.
 import * as dg from '{{featUrl dom_global_shim}}'
 import * as dg from '{{featUrl dom_global_native}}'
 
-const ren = new p.Ren(dg.global)
+const ren = new p.Ren({env: dg.global})
 const {E} = ren
 
 // In both environments, this will be a DOM element.
@@ -197,7 +197,7 @@ Rendering a complete document with doctype:
 import * as p from '{{featUrl prax}}'
 import * as dg from '{{featUrl dom_global_shim}}'
 
-const ren = new p.Ren(dg.global)
+const ren = new p.Ren({env: dg.global})
 const {E} = ren
 
 const elem = E(`html`, {

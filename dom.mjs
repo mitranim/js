@@ -196,7 +196,7 @@ export function setText(tar, src) {
 export function ancestor(tar, cls) {return findAncestor(tar, clsTest(cls))}
 
 function clsTest(cls) {
-  l.reqCls(cls)
+  l.reqFun(cls)
   return function test(val) {return l.isInst(val, cls)}
 }
 

@@ -24,7 +24,7 @@ Also see [`http_deno`](http_deno_readme.md) for Deno HTTP servers, [`http_srv`](
 ## Usage
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/http.mjs'
 
 const reqBody = {msg: `hello world`}
 const resBody = await h.reqBui().to(`/api`).post().json(reqBody).fetchOkJson()
@@ -41,7 +41,7 @@ Signature: `(res: Response | Promise<Response>) => Promise<Response>`.
 Missing feature of the [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API). If the response is OK (HTTP code between 200 and 299, `.ok === true`), the resulting promise resolves to that response as-is. Otherwise the resulting promise is rejected with a descriptive [#`ErrHttp`](#class-errhttp) which includes the response status code, the response body (if any) as the error message, and the response itself for introspection if needed.
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/http.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/http.mjs'
 
 // If response is unsuccessful, this will throw `h.ErrHttp`.
 const res = await h.resOk(await fetch(someUrl, someOpt))
@@ -104,8 +104,8 @@ rou.groups // {key: `path`}
 Routing is imperative:
 
 ```js
-import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/http.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.74/lang.mjs'
+import * as h from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/http.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.75/lang.mjs'
 
 const nextPage = route(window.location)
 

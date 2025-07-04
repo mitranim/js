@@ -778,7 +778,7 @@ function headFromValues(val) {return i.values(val)[0]}
 function isEven(val) {return !(val % 2)}
 
 function mapClsDumb(src, cls) {
-  l.reqCls(cls)
+  l.reqFun(cls)
   src = i.valuesCopy(src)
   const len = src.length
   let ind = -1
@@ -787,6 +787,6 @@ function mapClsDumb(src, cls) {
 }
 
 function mapClsClosure(src, cls) {
-  l.reqCls(cls)
+  l.reqFun(cls)
   return i.map(src, function make(val) {return new cls(val)})
 }

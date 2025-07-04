@@ -1,3 +1,5 @@
+Error.stackTraceLimit = Infinity
+
 export const VAL = Symbol.for(`val`)
 
 /* Typing */
@@ -437,9 +439,15 @@ export function toTrueArr(val) {
 
 /* Misc */
 
-export function reset(tar, val) {reqRef(tar)[VAL] = val}
+export function reset(tar, val) {return reqRef(tar)[VAL] = val}
 export function deref(val) {return isRef(val) ? val[VAL] : val}
 export function derefAll(val) {while (val !== (val = deref(val))); return val}
+
+export function swap(tar, fun, ...src) {
+  const val = reqRef(tar)[VAL]
+  tar[VAL] = fun(val, ...src)
+  return val
+}
 
 export function is(one, two) {return one === two || (isNaN(one) && isNaN(two))}
 export function truthy(val) {return !!val}

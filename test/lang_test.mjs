@@ -991,14 +991,14 @@ t.test(function test_isCls() {
   t.no(l.isCls({}))
   t.no(l.isCls([]))
   t.no(l.isCls(() => {}))
+  t.no(l.isCls(l.Emp))
   t.no(l.isCls({}.toString))
   t.no(l.isCls(`str`))
+  t.no(l.isCls(Math))
 
   t.no(l.isCls(l.id))
   t.no(l.isCls(l.nop))
-  t.no(l.isCls(l.Emp))
   t.no(l.isCls(function NotCls() {}))
-  t.no(l.isCls(Math))
 
   t.ok(l.isCls(Object))
   t.ok(l.isCls(Array))
@@ -1011,8 +1011,7 @@ t.test(function test_isCls() {
   t.ok(l.isCls(class Cls extends l.Emp {}))
   t.ok(l.isCls(class Cls extends Array {}))
 
-  // Known false positives. Unfortunate but seems like this would require
-  // special casing a variety of built-ins, which we do not want to do.
+  // Known false positives.
   t.ok(l.isCls(Symbol))
   t.ok(l.isCls(BigInt))
 })
