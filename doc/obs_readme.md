@@ -5,6 +5,7 @@
 * Nice-to-use in plain JS. Doesn't rely on decorators, TS features, etc.
 * Easy to use in UI.
 * Automatic cleanup on GC via `FinalizationRegistry`.
+  * Requires ES2021 or higher.
 * Tiny with no external dependencies.
 
 Three types of observables are available:
@@ -129,6 +130,7 @@ setTimeout(() => {
 
   // You can stop the observer explicitly. But this is not required.
   // The library uses `FinalizationRegistry` for cleanup.
+  // Note that this requires `ES2021` or higher.
   if (false) rec.deinit()
 
   // We're done with this observer, let GC reclaim it.

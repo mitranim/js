@@ -1,4 +1,4 @@
-/* global Deno */
+/* global Deno, FinalizationRegistry */
 
 import * as l from './lang.mjs'
 import * as p from './path.mjs'

@@ -797,7 +797,7 @@ export class Eq extends Set {
     if (l.isInst(one, Date)) return equalCons(one, two) && one.valueOf() === two.valueOf()
     if (l.isDict(one)) return l.isDict(two) && this.equalRec(one, two)
     if (l.isDict(two)) return l.isDict(one) && this.equalRec(one, two)
-    if (l.isInst(one, WeakRef)) return equalCons(one, two) && this.equalRef(one, two)
+    if (l.isInst(one, l.WeakRef)) return equalCons(one, two) && this.equalRef(one, two)
     return equalCons(one, two) && this.equalRec(one, two)
   }
 

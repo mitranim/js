@@ -70,7 +70,7 @@ export function nodeDepth(val) {
   return out
 }
 
-export class WeakerRef extends WeakRef {
+export class WeakerRef extends l.WeakRef {
   expired = false
   deref() {return this.expired ? undefined : super.deref()}
   init() {return this.expired = false, this}
@@ -98,7 +98,7 @@ export class Que extends l.Emp {
   prev = new Set()
   next = new Set()
   refs = new WeakMap()
-  reg = new FinalizationRegistry(this.deque.bind(this))
+  reg = new l.FinalizationRegistry(this.deque.bind(this))
 
   constructor(src) {
     super()

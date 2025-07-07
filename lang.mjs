@@ -692,6 +692,22 @@ export function errCause(val) {
 }
 
 /*
+Memory-leaking sham of `WeakRef` for older browsers. Has no effect in:
+Deno 1+, Node 14.6+, any browser released after 2021-04.
+*/
+export const WeakRef = globalThis.WeakRef || class WeakRefSham extends Emp {
+  constructor(val) {super().val = reqComp(val)}
+  deref() {return this.val}
+}
+
+// Nop sham of `FinalizationRegistry`. See above for engine versions.
+export const FinalizationRegistry = globalThis.FinalizationRegistry || class FinalizationRegistrySham extends Emp {
+  constructor(fun) {super(), reqFun(fun)}
+  register() {}
+  unregister() {}
+}
+
+/*
 The feature is standard, but at the time of writing, has limited engine support.
 Many engines, including Chrome, do not report causes unless explicitly asked
 for, and Safari <15 does not support causes at all.

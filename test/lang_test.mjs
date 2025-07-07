@@ -2058,7 +2058,7 @@ t.test(function test_isRef() {
   t.no(l.isRef(`one`))
   t.no(l.isRef({}))
   t.no(l.isRef([]))
-  t.no(l.isRef(new WeakRef({})))
+  t.no(l.isRef(new l.WeakRef({})))
   t.no(l.isRef(Promise.resolve()))
   t.no(l.isRef(l.isRef))
 

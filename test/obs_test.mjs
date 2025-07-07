@@ -58,7 +58,7 @@ t.test(function test_RUN_REF() {
   t.throws(() => dyn.set(123), TypeError, `expected instance of RunRef, got 123`)
   t.is(dyn.get(), undefined)
 
-  t.throws(() => dyn.set(new WeakRef({})), TypeError, `expected instance of RunRef, got instance of WeakRef`)
+  t.throws(() => dyn.set(new l.WeakRef({})), TypeError, `expected instance of RunRef, got instance of WeakRef`)
   t.is(dyn.get(), undefined)
 
   t.throws(() => new ob.RunRef({}, 123), TypeError, `expected variant of isFun, got 123`)

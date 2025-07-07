@@ -20,8 +20,8 @@
     "ReadableStream": "readonly",
     "performance": "readonly",
     "crypto": "readonly",
-    "FinalizationRegistry": "readonly",
-    "WeakRef": "readonly",
+    // "FinalizationRegistry": "readonly",
+    // "WeakRef": "readonly",
   },
   "rules": {
     "no-restricted-globals": ["error",
