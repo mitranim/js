@@ -4,8 +4,8 @@ import * as l from './lang.mjs'
 import * as s from './str.mjs'
 import * as u from './url.mjs'
 import * as h from './http.mjs'
+import * as pt from './path.mjs'
 import * as io from './io_deno.mjs'
-import * as p from './path.mjs'
 
 // TODO move to a non-Deno-specific file.
 export const EXT_TO_MIME_TYPE = l.Emp()
@@ -18,7 +18,7 @@ EXT_TO_MIME_TYPE[`.jpeg`] = `image/jpeg`
 EXT_TO_MIME_TYPE[`.jpg`] = `image/jpeg`
 EXT_TO_MIME_TYPE[`.js`] = `application/javascript`
 EXT_TO_MIME_TYPE[`.json`] = `application/json`
-EXT_TO_MIME_TYPE[`.mjs`] = `application/javascript`
+EXT_TO_MIME_TYPE[`.mjs`] = EXT_TO_MIME_TYPE[`.js`]
 EXT_TO_MIME_TYPE[`.pdf`] = `application/pdf`
 EXT_TO_MIME_TYPE[`.png`] = `image/png`
 EXT_TO_MIME_TYPE[`.svg`] = `image/svg+xml`
@@ -32,7 +32,7 @@ EXT_TO_MIME_TYPE[`.woff`] = `font/woff`
 EXT_TO_MIME_TYPE[`.woff2`] = `font/woff2`
 
 export function guessContentType(val) {
-  return EXT_TO_MIME_TYPE[p.posix.ext(val).toLowerCase()]
+  return EXT_TO_MIME_TYPE[pt.ext(val).toLowerCase()]
 }
 
 export class DirBase extends l.Emp {
@@ -49,7 +49,7 @@ export class DirBase extends l.Emp {
     const info = await this.resolveFile(url)
     if (info) return info
 
-    if (p.posix.ext(url.pathname)) return undefined
+    if (pt.ext(url.pathname)) return undefined
 
     if (url.pathname.endsWith(`/`)) {
       return this.resolveFile(url.addPath(this.index))
@@ -73,13 +73,10 @@ export class DirBase extends l.Emp {
 export function dirAbs() {return new DirAbs()}
 
 export class DirAbs extends DirBase {
-  urlPathToFsPath(val) {
-    if (io.IS_WINDOWS) return unslashPre(toFsPathNorm(val))
-    return toFsPathNorm(val)
-  }
+  urlPathToFsPath(val) {return toFsPathNorm(val)}
 
   fsPathToUrlPath(val) {
-    if (io.paths.isAbs(val)) return slashPre(val)
+    if (pt.isAbs(val)) return slashPre(val)
     return undefined
   }
 }
@@ -90,7 +87,7 @@ export class DirRel extends DirBase {
 
   urlPathToFsPath(val) {
     val = unslashPre(toFsPathNorm(val))
-    if (this.testUrlPath(val)) return p.posix.join(this.base, val)
+    if (this.testUrlPath(val)) return pt.join(this.base, val)
     return undefined
   }
 
@@ -99,9 +96,9 @@ export class DirRel extends DirBase {
     return undefined
   }
 
-  fsPathRel(val) {return p.posix.strictRelTo(fsPathNorm(val), this.base)}
+  fsPathRel(val) {return pt.strictRelTo(fsPathNorm(val), this.base)}
   testUrlPath(val) {return l.isStr(val) && !hasDotDot(val)}
-  testFsPath(val) {return p.posix.isSubOf(fsPathNorm(val), this.base)}
+  testFsPath(val) {return pt.isSubOf(fsPathNorm(val), this.base)}
 }
 
 export function dirRel(base, fil) {return new DirRelFil(base, fil)}
@@ -236,7 +233,7 @@ paths and full URLs. After decoding the pathname, we always normalize it to
 Posix-style to simplify path testing in `DirRelFil`. On Windows, FS operations
 in Deno and Node work even with `/` instead of `\`.
 */
-function fsPathNorm(val) {return p.toPosix(val)}
+function fsPathNorm(val) {return pt.toPosix(val)}
 function toFsPathNorm(val) {return fsPathNorm(toFsPath(val))}
 function toFsPath(val) {return urlDec(toPathname(val))}
 

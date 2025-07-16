@@ -37,7 +37,6 @@ const numVecWithEntries = VecWithEntries.from(itc.numVec)
 
 function reverseUsingLodash(val) {return lo.reverse(i.valuesCopy(val))}
 function reverseUsingNative(val) {return i.valuesCopy(val).reverse()}
-function reverseUsingOurs(val) {return i.reverseMut(i.valuesCopy(val))}
 
 t.bench(function bench_arr_spread_native() {l.reqArr([...itc.numArgs])})
 t.bench(function bench_arr_gen_spread_native() {l.reqArr([...itc.gen(itc.numArgs)])})
@@ -439,10 +438,10 @@ copying the array, which is several times faster than the fastest reversal.
 */
 itc.deoptCollFun(reverseUsingLodash)
 itc.deoptCollFun(reverseUsingNative)
-itc.deoptCollFun(reverseUsingOurs)
+itc.deoptCollFun(i.reverse)
 t.bench(function bench_reverse_using_lodash() {l.nop(reverseUsingLodash(itc.numArr))})
 t.bench(function bench_reverse_using_native() {l.nop(reverseUsingNative(itc.numArr))})
-t.bench(function bench_reverse_using_ours() {l.nop(reverseUsingOurs(itc.numArr))})
+t.bench(function bench_reverse_using_ours() {l.nop(i.reverse(itc.numArr))})
 
 itc.deoptSeqHof(lo.groupBy)
 itc.deoptCollHof(i.group)

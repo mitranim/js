@@ -43,8 +43,19 @@ class TestShedMicro extends ob.ShedMicro {
 function head(src) {return [...src][0]}
 
 function after(ms) {
-  return new Promise(function init(done) {setTimeout(done, ms, true)})
+  return new Promise(function init(done) {setTimeout(done, ms)})
 }
+
+/*
+In Deno, `globalThis.gc` is available with `--v8-flags=--expose_gc`.
+
+In Bun, `Bun.gc` is always available, and `globalThis.gc` is available with
+`--expose-gc`. However, at the time of writing, our finalization tests tend
+to fail in Bun, because of differences in GC timing between V8 and JSC.
+It is also possible for our tests to pass under alternate conditions, like
+sometimes when remote inspection is enabled. For now though, we skip them.
+*/
+const gc = l.onlyFun(globalThis.gc)
 
 /* Test */
 
@@ -257,7 +268,7 @@ await t.test(async function test_Que() {
   and go frequently.
   */
   await t.test(async function test_finalization() {
-    if (!l.isFun(globalThis.gc)) return
+    if (!gc) return
 
     const que = new ob.Que()
 
@@ -473,7 +484,7 @@ function test_Recur_sync(shed) {
   */
   t.test(function test_no_infinite_cycle() {
     const obs = ob.obs({val: 10})
-    const que = ob.getPh(obs)[ob.QUE]
+    const que = ob.getQue(ob.getPh(obs))
     testQueEmpty(que)
 
     rec.onRun = function onRun() {return obs.val}
@@ -693,10 +704,10 @@ await t.test(async function test_obs() {
   const ph0 = ob.getPh(obs0)
   t.inst(ph0, ob.ObsPh)
 
-  const que0 = ph0[ob.QUE]
+  const que0 = ob.getQue(ph0)
   testQueEmpty(que0)
 
-  ph0[ob.QUE].enqueDyn()
+  ob.getQue(ph0).enqueDyn()
   testQueEmpty(que0)
 
   const tar1 = l.Emp()
@@ -706,10 +717,10 @@ await t.test(async function test_obs() {
   const ph1 = ob.getPh(obs1)
   t.inst(ph1, ob.ObsPh)
 
-  const que1 = ph1[ob.QUE]
+  const que1 = ob.getQue(ph1)
   testQueEmpty(que1)
 
-  ph1[ob.QUE].enqueDyn()
+  ob.getQue(ph1).enqueDyn()
   testQueEmpty(que1)
 
   let rec0 = new TestRecur({shed})
@@ -889,7 +900,7 @@ await t.test(async function test_obs() {
   t.eq(que0, new ob.Que([getShedRef(rec0)]))
   t.eq(que1, new ob.Que([getShedRef(rec1), getShedRef(rec0)]))
 
-  if (!l.isFun(globalThis.gc)) return
+  if (!gc) return
 
   t.eq(que0, new ob.Que([getShedRef(rec0)]))
   t.eq(que1, new ob.Que([getShedRef(rec0), getShedRef(rec1)]))
@@ -945,17 +956,15 @@ function testShedEmpty(shed) {
 }
 
 /*
-The function `globalThis.gc` is available with `--v8-flags=--expose_gc`.
-
 We use `FinalizationRegistry` to evict expired que entries.
-
 The following seems unreliable. May need adjustments in the future.
 */
 async function waitForGcAndFinalizers() {
-  globalThis.gc()
-  await after(1)
-  globalThis.gc()
-  await after(1)
+  let ind = -1
+  while (++ind < 2) {
+    gc()
+    await after(1)
+  }
 }
 
 await t.test(async function test_recur_sync() {
@@ -983,8 +992,8 @@ async function test_recurSync(tar, swap) {
   const obs0 = ob.obs({val: 3})
   const obs1 = ob.obsRef(5)
 
-  const que0 = ob.getPh(obs0)[ob.QUE]
-  const que1 = obs1[ob.QUE]
+  const que0 = ob.getQue(ob.getPh(obs0))
+  const que1 = ob.getQue(obs1)
 
   let runs = 0
   let val = undefined
@@ -1079,7 +1088,7 @@ async function test_recurSync(tar, swap) {
     testWeakerRef(getRunRef(rec), rec)
   })
 
-  if (!l.isFun(globalThis.gc)) return
+  if (!gc) return
 
   await t.test(async function test_finalization() {
     rec = undefined
@@ -1255,7 +1264,7 @@ await t.test(async function test_hierarchical_scheduling() {
   t.no(shed.scheduled)
   t.is(shed.timer, undefined)
 
-  if (!l.isFun(globalThis.gc)) return
+  if (!gc) return
 
   await t.test(async function test_finalization() {
     let tar4 = new Elem()
@@ -1263,8 +1272,8 @@ await t.test(async function test_hierarchical_scheduling() {
     let rec4_1 = recur(tar4, tar4.run1)
     testElem(tar4, 1, 1, 20, 31)
 
-    const que0 = ob.getPh(obs0)[ob.QUE]
-    const que1 = obs1[ob.QUE]
+    const que0 = ob.getQue(ob.getPh(obs0))
+    const que1 = ob.getQue(obs1)
 
     t.eq(que0, new ob.Que([getShedRef(rec4_0)]))
     t.eq(que1, new ob.Que([getShedRef(rec4_1)]))
@@ -1291,8 +1300,8 @@ await t.test(async function test_calc() {
   const obs0 = ob.obs({val: 10})
   const obs1 = ob.obsRef(20)
 
-  const que0 = ob.getPh(obs0)[ob.QUE]
-  const que1 = obs1[ob.QUE]
+  const que0 = ob.getQue(ob.getPh(obs0))
+  const que1 = ob.getQue(obs1)
 
   let runs0 = 0
 
@@ -1413,14 +1422,14 @@ await t.test(async function test_calc() {
   t.is(runs1, 0)
 
   // Nothing qued up until the derived calc is accessed.
-  testQueEmpty(calc0[ob.QUE])
+  testQueEmpty(ob.getQue(calc0))
 
   // Accessing the valid calculates on demand and ques up for future updates.
   t.is(calc1[l.VAL], 24)
   t.ok(calc1.valid)
   t.is(runs1, 1)
 
-  testQueRef(calc0[ob.QUE], getShedRef(calc1.rec))
+  testQueRef(ob.getQue(calc0), getShedRef(calc1.rec))
 
   // No accidental rerun of accessed calc observable.
   t.is(runs0, 3)
@@ -1458,7 +1467,7 @@ await t.test(async function test_calc() {
   testQueRef(que1, getShedRef(calc0.rec))
 
   // ...But the derived calc is not qued up until its value is observed.
-  testQueEmpty(calc0[ob.QUE])
+  testQueEmpty(ob.getQue(calc0))
 
   // Must invalidate derived calc but not recalculate.
   t.is(calc1[ob.TAR], 24)
@@ -1476,7 +1485,7 @@ await t.test(async function test_calc() {
   t.is(runs1, 2)
 
   // Recalc must que up derived calc for future updates.
-  testQueRef(calc0[ob.QUE], getShedRef(calc1.rec))
+  testQueRef(ob.getQue(calc0), getShedRef(calc1.rec))
 
   // No redundant recalc of derived calc.
   t.is(calc1.get(), 36)
@@ -1484,7 +1493,7 @@ await t.test(async function test_calc() {
   t.is(runs1, 2)
 
   // Must remain qued up for future updates.
-  testQueRef(calc0[ob.QUE], getShedRef(calc1.rec))
+  testQueRef(ob.getQue(calc0), getShedRef(calc1.rec))
 
   const shed = calc0.rec.shed
   let rec = new TestRecur({shed})
@@ -1497,8 +1506,8 @@ await t.test(async function test_calc() {
   }
   rec.run()
 
-  t.eq(calc0[ob.QUE], new ob.Que([getShedRef(calc1.rec), getShedRef(rec)]))
-  testQueRef(calc1[ob.QUE], getShedRef(rec))
+  t.eq(ob.getQue(calc0), new ob.Que([getShedRef(calc1.rec), getShedRef(rec)]))
+  testQueRef(ob.getQue(calc1), getShedRef(rec))
 
   // No redundant recalc of either calc.
   t.is(runs0, 4)
@@ -1529,13 +1538,13 @@ await t.test(async function test_calc() {
   t.is(runs0, 5)
   t.is(runs1, 3)
 
-  if (!l.isFun(globalThis.gc)) return
+  if (!gc) return
 
   calc1 = undefined
   rec = undefined
 
   await waitForGcAndFinalizers()
-  testQueEmpty(calc0[ob.QUE])
+  testQueEmpty(ob.getQue(calc0))
 })
 
 t.test(function test_calc_arg_swap() {

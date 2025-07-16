@@ -94,9 +94,12 @@ function uuidCryptoShort() {return crypto.randomUUID().replace(/-/g, ``)}
 
 const uuidArr = s.uuidArr()
 
+const strForwardSlash = Array(128).fill(`str`).join(`/`)
+const strBackwardSlash = Array(128).fill(`str`).join(`\\`)
+
 /* Bench */
 
-t.bench(function bench_walk() {for (const val of LONG_NARROW) l.nop(val)})
+t.bench(function bench_iter_chars() {for (const val of LONG_NARROW) l.nop(val)})
 
 t.bench(function bench_isBlank_regex_miss() {l.nop(isBlankRegex(LONG_NARROW))})
 t.bench(function bench_isBlank_regex_hit() {l.nop(isBlankRegex(LONG_BLANK))})
@@ -252,5 +255,8 @@ t.bench(function bench_san_num_2() {l.nop(s.san`one ${10} two ${20}`)})
 t.bench(function bench_san_num_3() {l.nop(s.san`one ${10} two ${20} three ${30}`)})
 
 t.bench(function bench_arrHex() {l.nop(s.arrHex(uuidArr))})
+
+t.bench(function bench_replaceAll_miss() {l.nop(s.replaceAll(strForwardSlash, `\\`, `/`))})
+t.bench(function bench_replaceAll_hit() {l.nop(s.replaceAll(strBackwardSlash, `\\`, `/`))})
 
 if (import.meta.main) t.deopt(), t.benches()

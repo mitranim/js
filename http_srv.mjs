@@ -1,17 +1,17 @@
 /*
 This module has tools relevant for HTTP servers, using only standard web APIs
-which are environment-independent and should work in service workers, Deno, and
-with polyfills also in Node. For tools relevant for HTTP clients, see
-`http.mjs`. For Deno-specific tools, see `http_deno.mjs`.
+which are environment-independent and should work in service workers, Deno,
+Bun, Node.
+
+For tools relevant for HTTP clients, see `http.mjs`.
+
+For Deno-specific tools, see `http_deno.mjs`.
 */
 
 import * as l from './lang.mjs'
 import * as h from './http.mjs'
 
-/*
-Orkaround for the insane DOM stream API which seems to
-provide NO WAY to make a reader-writer pair.
-*/
+// TODO see if replacing this with `TransformStream` makes any sense.
 export class WritableReadableStream extends ReadableStream {
   constructor(sig) {
     let ctr

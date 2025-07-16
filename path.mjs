@@ -1,58 +1,72 @@
 /*
-Various tools for FS paths like those used in Posix and Windows.
-Only string operations, no IO.
+Tools for operating on FS paths. Only string operations, no IO.
+Always normalizes to Posix-style paths. At the time of writing,
+all major JS engines allow to use Posix-style paths on Windows.
 
 Limitations:
-
-  * Not well tested. Expect to delete random files on your disk.
-  * No support for network paths starting with `\\`.
-  * No support for `file:` URLs.
-  * Performance has not been optimized or even benchmarked.
-  * No support for URL paths. Use `url.mjs` for that.
-
-This module is environment-independent and doesn't detect the current OS.
-Default OS-specific instance can be imported from OS-aware module,
-namely from `io_deno.mjs`.
+- Not completely well tested, especially on Windows.
+- No special support for `file:` URLs.
+- No special support for URL paths. Use `url.mjs` for that.
+- No special support for relative Windows paths with a volume, like `C:path`.
+- No special support for network paths starting with `\\`.
+- Performance has not been optimized or even benchmarked.
 */
 
 import * as l from './lang.mjs'
 import * as s from './str.mjs'
 
-export const SEP_WINDOWS = `\\`
-export const SEP_POSIX = `/`
+export const FS_SEP_WINDOWS = `\\`
+export const FS_SEP_POSIX = `/`
 
-/*
-Allows strings and custom stringable objects, such as file URLs supported by
-Node and Deno. Note that `Paths.prototype.toStr` currently doesn't support
-non-strings. We may change that later.
-*/
-export function isPath(val) {return l.isStr(val) || (l.isObj(val) && l.isScalar(val))}
+export function isPath(val) {return l.isStr(val) || l.isScalar(val)}
 export function reqPath(val) {return l.req(val, isPath)}
 export function optPath(val) {return l.opt(val, isPath)}
 
-export function toPosix(val) {return windows.replaceSep(val, posix.dirSep)}
+export function toPosix(val) {
+  return normInner(val).replace(/[/\\]/g, FS_SEP_POSIX)
+}
+
+export function toWindows(val) {
+  return normInner(val).replace(/[/\\]/g, FS_SEP_WINDOWS)
+}
+
+export function norm(...src) {return paths.norm(...src)}
+export function clean(...src) {return paths.clean(...src)}
+export function isRoot(...src) {return paths.isRoot(...src)}
+export function isCwdRel(...src) {return paths.isCwdRel(...src)}
+export function isAbs(...src) {return paths.isAbs(...src)}
+export function isRel(...src) {return paths.isRel(...src)}
+export function isRelExplicit(...src) {return paths.isRelExplicit(...src)}
+export function isRelImplicit(...src) {return paths.isRelImplicit(...src)}
+export function isDirLike(...src) {return paths.isDirLike(...src)}
+export function join(...src) {return paths.join(...src)}
+export function isSubOf(...src) {return paths.isSubOf(...src)}
+export function strictRelTo(...src) {return paths.strictRelTo(...src)}
+export function relTo(...src) {return paths.relTo(...src)}
+export function dirLike(...src) {return paths.dirLike(...src)}
+export function dir(...src) {return paths.dir(...src)}
+export function volume(...src) {return paths.volume(...src)}
+export function hasVolume(...src) {return paths.hasVolume(...src)}
+export function name(...src) {return paths.name(...src)}
+export function ext(...src) {return paths.ext(...src)}
+export function stem(...src) {return paths.stem(...src)}
+export function replaceSep(...src) {return paths.replaceSep(...src)}
 
 /*
-Collection of functions for manipulating FS paths. Base class used by
-OS-specific implementations. Why this is defined as a class:
-
-  * Makes it easy to share logic between Windows and Posix variants.
-    They use overrides without having to pass "options" between functions.
-
-  * Makes it possible to implement other variants with a few overrides.
-
-  * Makes it possible to monkey-patch.
-
-  * Subclasses may choose to be stateful.
-
-Default global instances are exported below.
+Collection of functions for manipulating FS paths. Defined as a class to make it
+possible to subclass and override default methods used by other methods. Also
+makes it possible to implement OS-specific versions, if that's ever going to be
+needed. Default global instance is exported below.
 */
 export class Paths extends l.Emp {
-  // "Directory separator".
-  get dirSep() {throw l.errImpl()}
+  // Preferred "directory separator".
+  get dirSep() {return FS_SEP_POSIX}
 
   // "Extension separator".
   get extSep() {return `.`}
+
+  // "Current working directory empty value".
+  get cwdEmp() {return ``}
 
   // "Current working directory relative path".
   get cwdRel() {return `.`}
@@ -60,82 +74,100 @@ export class Paths extends l.Emp {
   // "Parent directory relative path".
   get parRel() {return `..`}
 
-  // "Current working directory empty value".
-  get cwdEmp() {return ``}
+  // "Relative to current directory prefix".
+  get relPre() {return this.cwdRel + this.dirSep}
 
-  relPre() {return this.cwdRel + this.dirSep}
+  // "Relative to parent directory prefix".
+  get parRelPre() {return this.parRel + this.dirSep}
 
-  // "Volume".
-  vol() {return ``}
+  norm(val) {return normInner(val).replace(/[/\\]/g, this.dirSep)}
 
-  // "Has a volume".
-  hasVol(val) {return !!this.vol(val)}
+  // Limitations:
+  // - No support for collapsing `..`.
+  // - No support for collapsing inner `//`.
+  clean(val) {
+    val = this.norm(val)
+    if (this.isCwdRel(val)) return this.cwdEmp
+
+    const sep = this.dirSep
+    if (val === sep) return val
+
+    const vol = this.volume(val)
+    if (val === vol) return val
+
+    const root = vol + sep
+    if (val === root) return val
+
+    const len = sep.length
+    const dup = sep + sep
+    const pre = this.relPre
+
+    while (val.endsWith(sep) && val !== sep && val !== root) {
+      val = val.slice(0, -len)
+    }
+
+    if (val.startsWith(pre)) {
+      val = val.slice(pre.length)
+    }
+    else {
+      while (val.startsWith(dup)) val = val.slice(len)
+    }
+    return val
+  }
+
+  isRoot(val) {
+    val = this.norm(val)
+    const sep = this.dirSep
+    return (val === sep) || (val === (this.volume(val) + sep))
+  }
+
+  isCwdRel(val) {
+    val = this.norm(val)
+    return val === this.cwdEmp || val === this.cwdRel || val === this.relPre
+  }
 
   isAbs(val) {
-    val = this.toStr(val)
-    return this.hasVol(val) || val.startsWith(this.dirSep)
+    val = this.norm(val)
+    return this.hasVolume(val) || val.startsWith(this.dirSep)
   }
 
   isRel(val) {return !this.isAbs(val)}
 
   isRelExplicit(val) {
-    val = this.toStr(val)
-
+    val = this.norm(val)
     return (
-      false
-      || val === this.cwdRel
-      || val === this.parRel
-      || val.startsWith(this.cwdRel + this.dirSep)
-      || val.startsWith(this.parRel + this.dirSep)
+      val === this.cwdRel ||
+      val === this.parRel ||
+      val.startsWith(this.relPre) ||
+      val.startsWith(this.parRelPre)
     )
   }
 
   isRelImplicit(val) {
-    val = this.toStr(val)
+    val = this.norm(val)
     return !this.isAbs(val) && !this.isRelExplicit(val)
   }
 
   /*
-  True if the path ends with a directory separator. When this returns `true`,
-  the path definitely describes a directory. However, when this returns
-  `false`, the path may be valid either as a file path or as a directory path.
+  True if the path ends with a directory separator or describes the root of a
+  volume. When this returns `true`, the path definitely describes a directory.
+  However, when this returns `false` and the path is non-empty, it may be also
+  valid for files.
   */
   isDirLike(val) {
-    val = this.toStr(val)
-    return this.isCwdRel(val) || val.endsWith(this.dirSep)
-  }
-
-  isRoot(val) {
-    val = this.toStr(val)
-    if (val === this.dirSep) return true
-    const vol = this.vol(val)
-    return !!vol && (val === vol || val === vol + this.dirSep)
-  }
-
-  // "Is relative path to current working directory".
-  isCwdRel(val) {
-    val = this.toStr(val)
-    return val === this.cwdEmp || val === this.cwdRel || val === this.relPre()
-  }
-
-  clean(val) {return this.cleanPre(this.cleanSuf(val))}
-
-  cleanPre(val) {
-    val = this.toStr(val)
-    if (this.isCwdRel(val)) return this.cwdEmp
-    if (this.isAbs(val)) return val
-    return s.stripPre(val, this.relPre())
-  }
-
-  cleanSuf(val) {
-    val = this.toStr(val)
-    if (this.isRoot(val)) return val
-    return s.stripSuf(val, this.dirSep)
+    val = this.norm(val)
+    return (
+      val === this.cwdEmp ||
+      val === this.cwdRel ||
+      val === this.parRel ||
+      val.endsWith(this.dirSep) ||
+      !!val && val === this.volume(val)
+    )
   }
 
   // Missing feature: `..` flattening.
   join(base, ...vals) {
-    base = this.clean(l.laxStr(base))
+    base = this.clean(base)
 
     for (const src of vals) {
       const val = this.clean(src)
@@ -148,20 +180,15 @@ export class Paths extends l.Emp {
     return base
   }
 
-  // Needs a more specific name because this also returns true if the paths are
-  // equivalent.
+  // Needs a more specific name because this also returns true
+  // if the paths are equivalent.
   isSubOf(sub, sup) {
     sub = this.clean(sub)
     sup = this.clean(sup)
 
     return (
-      true
-      && (this.isAbs(sub) === this.isAbs(sup))
-      && (
-        false
-        || sub === sup
-        || sub.startsWith(this.dirLike(sup))
-      )
+      (this.isAbs(sub) === this.isAbs(sup)) &&
+      (sub === sup || sub.startsWith(this.dirLike(sup)))
     )
   }
 
@@ -214,90 +241,68 @@ export class Paths extends l.Emp {
   dirLike(val) {return s.optSuf(this.clean(val), this.dirSep)}
 
   dir(val) {
-    val = this.toStr(val)
+    val = this.norm(val)
 
     if (this.isCwdRel(val)) return this.cwdEmp
     if (val.endsWith(this.dirSep)) return this.clean(val)
 
     val = this.clean(val)
     if (this.isRoot(val)) return val
+    if (val === this.volume(val)) return val
 
     const ind = val.lastIndexOf(this.dirSep)
     return this.clean(val.slice(0, ind + this.dirSep.length))
   }
 
+  volume(val) {
+    val = this.norm(val)
+    return l.laxStr(l.laxStr(val).match(/^[A-Za-z]:/)?.[0])
+  }
+
+  hasVolume(val) {return !!this.volume(val)}
+
   /*
   Usually called "basename" in other libs.
   Returns the last dir or file name, including the extension if any.
   */
-  base(val) {
+  name(val) {
+    val = this.norm(val)
+    val = s.stripPre(val, this.volume(val))
     val = this.clean(val)
-    if (this.isRoot(val)) return val
-
-    const ind = val.lastIndexOf(this.dirSep)
-    return this.clean(val.slice(ind + this.dirSep.length))
+    const sep = this.dirSep
+    const ind = val.lastIndexOf(sep)
+    if (ind >= 0) return val.slice(ind + sep.length)
+    return val
   }
 
   // "Extension".
-  ext(val) {return ext(this.base(val), this.extSep)}
+  ext(val) {return extInner(this.name(val), this.extSep)}
 
-  // Returns the part of `base` without an extension.
-  name(val) {
-    val = this.base(val)
-    return s.stripSuf(val, ext(val, this.extSep))
+  // Returns the part of `name` without an extension.
+  stem(val) {
+    val = this.name(val)
+    return s.stripSuf(val, extInner(val, this.extSep))
   }
 
   replaceSep(val, sep) {
-    return s.replaceAll(this.toStr(val), this.dirSep, sep)
-  }
-
-  /*
-  More lax than `l.reqStr`, more strict than `l.render`. Not part of `lang.mjs`
-  because allowing only this set of inputs is relatively rare.
-  */
-  toStr(val) {
-    if (l.isStr(val)) return val
-    if (l.isInst(val, String)) return val.toString()
-    throw l.errConv(val, `string`)
+    return s.replaceAll(this.norm(val), this.dirSep, sep)
   }
 }
 
-export class PathsPosix extends Paths {
-  get dirSep() {return SEP_POSIX}
-}
-
-/*
-Known limitations:
-
-  * No support for `/`. We simply assume that all FS paths use `\`.
-  * No support for relative paths with a volume, like `C:path`.
-  * No support for network paths.
-*/
-export class PathsWindows extends Paths {
-  get dirSep() {return SEP_WINDOWS}
-
-  vol(val) {
-    const mat = this.toStr(val).match(/^[A-Za-z]:/)
-    return (mat && mat[0]) || ``
-  }
-
-  isDirLike(val) {
-    val = this.toStr(val)
-    return super.isDirLike(val) || val === this.vol(val)
-  }
-}
-
-/*
-Default global instances. The appropriate instance for the current OS must be
-chosen by OS-aware modules such as `io_deno.mjs`.
-*/
-export const posix = new PathsPosix()
-export const windows = new PathsWindows()
+const paths = new Paths()
+export default paths
 
 /* Internal */
 
+function normInner(val) {
+  if (l.isInst(val, URL)) return val.pathname
+  val = l.renderLax(val)
+  val = s.stripPre(val, `file://`)
+  return val
+}
+
 // Must be called ONLY on the file name, without the directory path.
-function ext(val, sep) {
+function extInner(val, sep) {
   l.reqStr(val)
   l.reqStr(sep)
   const ind = val.lastIndexOf(sep)

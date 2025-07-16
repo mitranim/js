@@ -680,16 +680,6 @@ three`,
   )
 })
 
-t.test(function test_isSubpath() {
-  t.no(s.isSubpath(`/one`, `/onetwo`))
-  t.no(s.isSubpath(`/one/two`, `/one`))
-  t.no(s.isSubpath(`/onetwo`, `/one`))
-
-  t.ok(s.isSubpath(`/`, `/`))
-  t.ok(s.isSubpath(`/one`, `/one`))
-  t.ok(s.isSubpath(`/one`, `/one/two`))
-})
-
 t.test(function test_spaced() {
   t.is(s.spaced(), ``)
   t.is(s.spaced(``, undefined, ``, null, ``), ``)

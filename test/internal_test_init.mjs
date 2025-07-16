@@ -32,23 +32,13 @@ t.bench(function bench_baseline() {})
 export async function testStream(src, exp) {t.is(await readFull(src), exp)}
 
 /*
-Defined in this file because it's used by multiple tests, and we don't want this
-anywhere in the public API. This is useful for testing, but violates the
-purpose of streams and should not be encouraged. Might move to `test.mjs`.
-
-Doesn't `for .. of` over the stream because at the time of writing
-it would work only in Deno, but not in Chrome where we also test.
+Defined in this file because it's used by multiple tests, and we don't want
+this anywhere in the public API. This is useful for testing, but violates
+the purpose of streams and should not be encouraged. Might move to `test.mjs`.
 */
 export async function readFull(src) {
-  const read = src.getReader()
   let out = ``
-
-  for (;;) {
-    const {value, done} = await read.read()
-    if (done) break
-    out += l.reqStr(chunkToStr(value))
-  }
-
+  for await (const val of src) out += l.reqStr(chunkToStr(val))
   return out
 }
 

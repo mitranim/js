@@ -31,8 +31,6 @@ t.test(function test_DirRelFil() {
 })
 
 t.test(function test_guessContentType() {
-  t.throws(() => hd.guessContentType(), TypeError, `unable to convert undefined to string`)
-  t.throws(() => hd.guessContentType(10), TypeError, `unable to convert 10 to string`)
   t.throws(() => hd.guessContentType({}), TypeError, `unable to convert {} to string`)
   t.throws(() => hd.guessContentType([]), TypeError, `unable to convert [] to string`)
 

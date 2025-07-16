@@ -72,7 +72,7 @@ await t.test(async function test_resOk() {
 
 t.test(function test_jsonDecode() {
   t.throws(() => h.jsonDecode(10), TypeError, `expected variant of isStr, got 10`)
-  t.throws(() => h.jsonDecode(`blah`), SyntaxError, `Unexpected token`)
+  t.throws(() => h.jsonDecode(`blah`), SyntaxError, `Unexpected`)
 
   t.is(h.jsonDecode(), undefined)
   t.is(h.jsonDecode(undefined), undefined)

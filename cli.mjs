@@ -4,7 +4,10 @@ import * as c from './coll.mjs'
 
 // Returns OS args in Deno and Node. Returns `[]` in other environemnts.
 export function args() {
-  return globalThis.Deno?.args ?? globalThis.process?.args ?? []
+  return l.laxArr(
+    l.onlyArr(globalThis.Deno?.args) ??
+    l.onlyArr(globalThis.process?.argv)
+  )
 }
 
 // Returns the OS arg at the given index, or undefined. Uses `args`.

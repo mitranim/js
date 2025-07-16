@@ -99,7 +99,7 @@ function entriesFromList(val) {
   return out
 }
 
-// Like `Object.entries` but much faster.
+// Like `Object.entries` but much faster in V8.
 function recEntries(src) {
   const out = Object.keys(src)
   const len = out.length
@@ -345,19 +345,7 @@ export function compareFin(one, two) {
 
 export function sort(val, fun) {return valuesCopy(val).sort(fun)}
 
-export function reverse(val) {return reverseMut(valuesCopy(val))}
-
-export function reverseMut(tar) {
-  l.reqArr(tar)
-  let ind0 = 0
-  let ind1 = tar.length - 1
-  while (ind0 < ind1) {
-    [tar[ind0], tar[ind1]] = [tar[ind1], tar[ind0]]
-    ind0++
-    ind1--
-  }
-  return tar
-}
+export function reverse(val) {return valuesCopy(val).reverse()}
 
 export function index(val, fun) {
   l.reqFun(fun)

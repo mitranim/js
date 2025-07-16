@@ -1,7 +1,7 @@
 import * as a from '../all.mjs'
 import * as io from '../io_deno.mjs'
 import * as cl from '../cli.mjs'
-import * as p from '../path.mjs'
+import * as pt from '../path.mjs'
 import * as u from './cmd_doc_util.mjs'
 
 const VER = (await io.readJson(`package.json`)).version
@@ -51,7 +51,7 @@ class Pkg extends u.Strict {
   get base() {return `https://cdn.jsdelivr.net/npm/@mitranim/js`}
   get ver() {return VER}
   get url() {return a.inter(this.base, `@`, this.ver)}
-  get readmeSrcPath() {return p.posix.join(DIR_DOC_SRC, `readme.md`)}
+  get readmeSrcPath() {return pt.join(DIR_DOC_SRC, `readme.md`)}
   get readmeSrcText() {return io.readText(this.readmeSrcPath).then(a.trim)}
   get readmeOutPath() {return `readme.md`}
   get readmeOutText() {return this.$readmeOutText()}
@@ -89,19 +89,19 @@ class Feat extends u.Strict {
   get codeHead() {return mdLink(this.codePath, this.docCodePath)}
   get codeText() {return io.readText(this.codePath)}
   get codeLines() {return this.$codeLines()}
-  get testPath() {return p.posix.join(DIR_TEST, a.str(this.name, `_test.mjs`))}
+  get testPath() {return pt.join(DIR_TEST, a.str(this.name, `_test.mjs`))}
   get docTestPath() {return a.urlJoin(`..`, this.testPath)}
   get testText() {return io.readText(this.testPath)}
   get testLines() {return this.$testLines()}
   get readmeName() {return a.str(this.name, `_readme.md`)}
-  get readmeSrcPath() {return p.posix.join(DIR_DOC_SRC, this.readmeName)}
+  get readmeSrcPath() {return pt.join(DIR_DOC_SRC, this.readmeName)}
   get readmeSrcText() {return io.readText(this.readmeSrcPath).then(a.trim)}
-  get readmeOutPath() {return p.posix.join(DIR_DOC_OUT, this.readmeName)}
+  get readmeOutPath() {return pt.join(DIR_DOC_OUT, this.readmeName)}
   get readmeOutText() {return this.$readmeOutText()}
   get idents() {return this.$idents()}
   get identTestLines() {return this.$identTestLines()}
   get url() {return this.pkg.url}
-  get selfUrl() {return p.posix.join(this.url, this.codePath)}
+  get selfUrl() {return pt.join(this.url, this.codePath)}
   get toc() {return this.$toc()}
   get tocDoc() {return this.$tocDoc()}
   get tocUndoc() {return this.$tocUndoc()}
@@ -243,7 +243,7 @@ class Ident extends u.Strict {
   get url() {return this.feat.url}
   get doc() {return this.$doc()}
   get docName() {return a.str(toDocName(this.name), `.md`)}
-  get docPath() {return p.posix.join(DIR_DOC_SRC, this.feat.name, this.docName)}
+  get docPath() {return pt.join(DIR_DOC_SRC, this.feat.name, this.docName)}
   get docHead() {return this.$docHead()}
   get docSrcText() {return io.readTextOpt(this.docPath).then(a.trim)}
   get docOutText() {return this.$docOutText()}

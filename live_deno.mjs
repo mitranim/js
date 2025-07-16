@@ -22,18 +22,18 @@ Simplified example of sending notifications to clients:
 import * as lc from './live_client.mjs'
 import * as l from './lang.mjs'
 import * as h from './http.mjs'
+import * as pt from './path.mjs'
 import * as hd from './http_deno.mjs'
 import * as hs from './http_srv.mjs'
 import * as io from './io_deno.mjs'
-import * as p from './path.mjs'
 
 export const LIVE_PATH = `/e8f2dcbe89994b14a1a1c59c2ea6eac7`
 
 export class LiveBroad extends hs.Broad {
   get basePath() {return LIVE_PATH}
-  get clientPath() {return p.posix.join(this.basePath, `live_client.mjs`)}
-  get eventsPath() {return p.posix.join(this.basePath, `events`)}
-  get sendPath() {return p.posix.join(this.basePath, `send`)}
+  get clientPath() {return pt.join(this.basePath, `live_client.mjs`)}
+  get eventsPath() {return pt.join(this.basePath, `events`)}
+  get sendPath() {return pt.join(this.basePath, `send`)}
 
   res(val) {
     const rou = h.toReqRou(val)

@@ -90,6 +90,61 @@ class Symboled extends l.Emp {
 
 const symboled = new Symboled()
 
+class CallableRegular extends l.Emp {call(...src) {return src}}
+const callableRegular = new CallableRegular()
+t.eq(callableRegular.call(10, 20), [10, 20])
+
+class CallablePh extends l.Emp {
+  constructor(tar) {super().tar = tar}
+
+  /* Special behaviors. */
+
+  apply(fun, _, args) {return fun.apply(this.tar, args)}
+  has(_, key) {return key === `name` || key in this.tar}
+  get(fun, key) {
+    const {tar} = this
+    if (key === `name` && !(key in tar)) return fun[key]
+    return tar[key]
+  }
+
+  /* Simple forwarding. */
+
+  set(_, key, val) {return this.tar[key] = val, true}
+  deleteProperty(_, key) {return delete this.tar[key]}
+  defineProperty(_, key, val) {return Reflect.defineProperty(this.tar, key, val), true}
+  ownKeys() {return Reflect.ownKeys(this.tar)}
+  getOwnPropertyDescriptor(_, key) {return Reflect.getOwnPropertyDescriptor(this.tar, key)}
+  isExtensible() {return Reflect.isExtensible(this.tar)}
+  preventExtensions() {return Reflect.preventExtensions(this.tar), true}
+  getPrototypeOf() {return Reflect.getPrototypeOf(this.tar)}
+  setPrototypeOf(_, val) {return Reflect.setPrototypeOf(this.tar, val), true}
+}
+
+class CallableByProxy extends l.Emp {
+  constructor() {
+    super()
+    return new Proxy(this.call, new CallablePh(this))
+  }
+  call(...src) {return src}
+}
+
+const callableByProxy = new CallableByProxy()
+
+t.eq(callableByProxy(10, 20), [10, 20])
+
+class CallableFun extends Function {
+  constructor() {
+    super(`...src`, `return this.call(...src)`)
+    return this.bind(this)
+  }
+
+  call(...src) {return src}
+}
+
+const callableFun = new CallableFun()
+
+t.eq(callableFun(10, 20), [10, 20])
+
 const someSymbol0 = Symbol.for(`some_symbol_0`)
 const someSymbol1 = Symbol.for(`some_symbol_1`)
 const someSymbol2 = Symbol.for(`some_symbol_0`) // Not a typo. See the test below.
@@ -568,5 +623,21 @@ for (const val of miscVals) swapperReceiving(l.nop, val)
 t.bench(function bench_swapper_receiving_obj_fun() {swapperReceiving(emptyNpo, l.nop)})
 t.bench(function bench_swapper_receiving_fun_obj() {swapperReceiving(l.nop, emptyNpo)})
 t.bench(function bench_swapper_receiving_fun_fun() {swapperReceiving(l.nop, l.nop)})
+
+// No special overhead.
+t.bench(function bench_callable_regular_construct() {l.nop(new CallableRegular())})
+t.bench(function bench_callable_regular_call() {l.nop(callableRegular.call(10, 20))})
+
+// Minor overhead (single digit nanoseconds).
+t.bench(function bench_callable_proxy_construct() {l.nop(new CallableByProxy())})
+
+// Minor overhead (10+ nanoseconds).
+t.bench(function bench_callable_proxy_call() {l.nop(callableByProxy.call(10, 20))})
+
+// Major overhead (270+ nanoseconds).
+t.bench(function bench_callable_fun_construct() {l.nop(new CallableFun())})
+
+// No special overhead.
+t.bench(function bench_callable_fun_call() {l.nop(callableFun.call(10, 20))})
 
 if (import.meta.main) t.deopt(), t.benches()

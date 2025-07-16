@@ -1041,7 +1041,9 @@ t.test(function test_isSeq() {
   t.no(l.isSeq({}))
   t.no(l.isSeq({length: 0}))
   t.no(l.isSeq(new Map()))
-  t.no(l.isSeq(new URLSearchParams()))
+
+  // False positive in Bun.
+  if (!globalThis.Bun) t.no(l.isSeq(new URLSearchParams()))
 
   t.ok(l.isSeq([]))
   t.ok(l.isSeq(args()))
@@ -1049,10 +1051,14 @@ t.test(function test_isSeq() {
   t.ok(l.isSeq(new String(``)))
   t.ok(l.isSeq(new Set()))
 
-  // TODO: currently not supported for technical reasons.
-  // Simplest way to implement an iterable in JS.
-  // Should also be considered a sequence.
-  // t.ok(l.isSeq({[Symbol.iterator]: unreachable}))
+  /*
+  Simplest way to implement an iterable in JS. Not considered a sequence because
+  that would require somehow differentiating it from "entries"-style iterables
+  such as `Map`, `Headers`, `URLSearchParams`, and it's unclear whether that's
+  possible without special-casing all the "known" ones.
+
+  t.ok(l.isSeq({[Symbol.iterator]: unreachable}))
+  */
 })
 
 t.test(function test_isVac() {

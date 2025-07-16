@@ -14,7 +14,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.76/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/obj.mjs'
 ```
 
 ## API
@@ -38,7 +38,7 @@ Similar to [#`patch`](#function-patch) but doesn't check for inherited and non-e
 
 ### `function patch`
 
-Links: [source](../obj.mjs#L17); [test/example](../test/obj_test.mjs#L166).
+Links: [source](../obj.mjs#L17); [test/example](../test/obj_test.mjs#L169).
 
 Signature: `(tar, src) => tar`.
 
@@ -57,12 +57,12 @@ When overriding inherited and non-enumerable properties is desirable, use [#`ass
 
 ### `function memGet`
 
-Links: [source](../obj.mjs#L147); [test/example](../test/obj_test.mjs#L751).
+Links: [source](../obj.mjs#L147); [test/example](../test/obj_test.mjs#L754).
 
 Takes a class and hacks its prototype, converting all non-inherited getters to lazy/memoizing versions of themselves that only execute _once_. The resulting value replaces the getter. Inherited getters are unaffected.
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.76/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/obj.mjs'
 
 class StructLax extends o.MixStruct(l.Emp) {}
 
@@ -86,35 +86,28 @@ ref
 
 ### `function MixStruct`
 
-Links: [source](../obj.mjs#L196); [test/example](../test/obj_test.mjs#L302).
+Links: [source](../obj.mjs#L196); [test/example](../test/obj_test.mjs#L305).
 
 Mixin for classes representing a "struct" / "model" / "record". Also see [#`MixStructLax`](#function-mixstructlax). Features:
 
 * Supports explicit specs with validation / transformation functions.
-
 * Can be instantiated or mutated from any [r](lang_readme.md#function-isrec) (any dict-like object); each field is validated by the user-defined spec.
-
 * Assigns and checks all declared fields when instantiating via `new`. Ignores undeclared fields.
-
 * Supports partial updates via the associated function `structMut` (not a method), which assigns and validates known fields provided in the input.
-
 * Supports deep mutation: when updating a struct, automatically detects sub-structs and mutates them, and invokes `.mut` on any object that implements this method.
-
 * Uses regular JS fields. Does not use getters / setters, proxies, private fields, non-enumerable fields, symbols, or anything else "strange". Declared fields are simply assigned via `=`.
 
 Performance characteristics:
 
-* The cost of instantiating or mutating depends only on declared fields, not on provided fields.
-
+* The cost of constructing or mutating depends only on declared fields, not on provided fields.
 * When the number of declared fields is similar to the number of provided fields, this tends to be slightly slower than `Object.assign` or [#`assign`](#function-assign).
-
 * When the number of declared fields is significantly smaller than the number of provided fields, this tends to be faster than the aforementioned assignment functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.76/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.76/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/obj.mjs'
 
-class Person extends o.Struct {
+class Person extends o.MixStruct(l.Emp) {
   static spec = {
     id: l.reqFin,
     name: l.reqStr,
@@ -131,34 +124,31 @@ new Person({name: `Mira`})
 
 // Satisfies the type check.
 new Person({id: 10, name: `Mira`})
-/* Person { id: 10, name: "Mira" } */
+/* Person {id: 10, name: "Mira"} */
 
 // Ignores undeclared fields.
 new Person({id: 10, name: `Mira`, slug: `mira`, gender: `female`})
-/* Person { id: 10, name: "Mira" } */
+/* Person {id: 10, name: "Mira"} */
 ```
 
 ### `function MixStructLax`
 
-Links: [source](../obj.mjs#L207); [test/example](../test/obj_test.mjs#L307).
+Links: [source](../obj.mjs#L207); [test/example](../test/obj_test.mjs#L310).
 
 Mixin for classes representing a "struct" / "model" / "record". Similar to [#`MixStruct`](#function-mixstruct), with additional support for undeclared fields.
 
 Differences from [#`MixStruct`](#function-mixstruct):
 
 * When instantiating via `new` or mutating via `structMut`, in addition to assigning and validating all declared fields, this also copies any undeclared fields present in the source data.
-
   * Behaves similarly to [#`patch`](#function-patch), and differently from `Object.assign` or [#`assign`](#function-assign). Avoids accidentally shadowing inherited or non-enumerable fields.
-
   * Just like for declared fields, supports deep mutation for undeclared fields.
-
 * Has slightly worse performance.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.76/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.76/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/obj.mjs'
 
-class Person extends o.StructLax {
+class Person extends o.MixStructLax(l.Emp) {
   static spec = {
     id: l.reqFin,
     name: l.reqStr,
@@ -175,11 +165,11 @@ new Person({name: `Mira`})
 
 // Satisfies the type check.
 new Person({id: 10, name: `Mira`})
-/* Person { id: 10, name: "Mira" } */
+/* Person {id: 10, name: "Mira"} */
 
 // Assigns undeclared fields in addition to declared fields.
 new Person({id: 10, name: `Mira`, slug: `mira`, gender: `female`})
-/* Person { id: 10, name: "Mira", slug: "mira", gender: "female" } */
+/* Person {id: 10, name: "Mira", slug: "mira", gender: "female"} */
 ```
 
 ### Undocumented

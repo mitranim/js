@@ -11,6 +11,7 @@ import * as l from './lang.mjs'
 import * as s from './str.mjs'
 import * as u from './url.mjs'
 import * as c from './coll.mjs'
+import * as pt from './path.mjs'
 
 export const GET = `GET`
 export const HEAD = `HEAD`
@@ -159,7 +160,7 @@ export class Rou extends l.Emp {
   }
 
   // Short for "prefix".
-  pre(val) {return s.isSubpath(val, this.url.pathname)}
+  pre(val) {return pt.isSubOf(this.url.pathname, val)}
 
   reqGroups() {
     const val = this.groups

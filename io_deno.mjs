@@ -1,12 +1,8 @@
 /* global Deno, FinalizationRegistry */
 
 import * as l from './lang.mjs'
-import * as p from './path.mjs'
+import * as pt from './path.mjs'
 import * as cl from './cli.mjs'
-
-export const IS_WINDOWS = l.reqStr(Deno.build.os) === `windows`
-export const SEP = IS_WINDOWS ? p.SEP_WINDOWS : p.SEP_POSIX
-export const paths = IS_WINDOWS ? p.windows : p.posix
 
 export function isErrNotFound(val) {return l.isInst(val, Deno.errors.NotFound)}
 
@@ -58,14 +54,14 @@ export async function readJson(path) {
 }
 
 export function writeFile(path, body, opt) {
-  p.reqPath(path)
+  pt.reqPath(path)
   l.optRec(opt)
   if (l.isStr(body)) return Deno.writeTextFile(path, body, opt)
   if (l.isInst(body, Uint8Array)) return Deno.writeFile(path, body, opt)
   throw TypeError(`unable to write ${l.show(path)}: file body must be either a string or a Uint8Array, got ${l.show(body)}`)
 }
 
-export function create(path) {return Deno.create(p.reqPath(path))}
+export function create(path) {return Deno.create(pt.reqPath(path))}
 
 export async function touch(path) {
   const info = await FileInfo.statOpt(path)
@@ -87,8 +83,8 @@ Needs a better name. Watches a path, converting all paths in each `Deno.FsEvent`
 from absolute to relative.
 */
 export async function* watchRel(base) {
-  l.req(base, paths.isAbs.bind(paths))
-  const toRel = path => paths.strictRelTo(path, base)
+  l.req(base, pt.isAbs)
+  const toRel = path => pt.strictRelTo(path, base)
 
   for await (const event of Deno.watchFs(base, {recursive: true})) {
     event.paths = event.paths.map(toRel)
@@ -106,7 +102,7 @@ export async function* filterWatch(iter, fun) {
 export class FileInfo extends l.Emp {
   constructor(stat, path) {
     super()
-    this.path = p.reqPath(path)
+    this.path = pt.reqPath(path)
     this.stat = l.reqRec(stat)
   }
 
@@ -117,7 +113,7 @@ export class FileInfo extends l.Emp {
   onlyDir() {return this.isDir() ? this : undefined}
 
   static async stat(path) {
-    return new this(await Deno.stat(p.reqPath(path)), path)
+    return new this(await Deno.stat(pt.reqPath(path)), path)
   }
 
   static async statOpt(path) {
@@ -192,7 +188,7 @@ export class FileStream extends ReadableStream {
   constructor(src, path) {
     super(src)
     this.src = l.reqInst(src, ReaderStreamSource)
-    this.path = p.optPath(path)
+    this.path = pt.optPath(path)
   }
 
   cancel() {return this.deinit(), super.cancel()}

@@ -30,8 +30,10 @@ await t.test(async function test_WritableReadableStream() {
 
     await t.throws(async () => src.getReader().read(), TypeError, `custom error text`)
 
-    // Deno and Chrome generate very different messages, this is the delta.
-    await t.throws(async () => src.write(``), TypeError, `enqueue`)
+    {
+      const msg = globalThis.Bun ? `already closed` : `enqueue`
+      await t.throws(async () => src.write(``), TypeError, msg)
+    }
 
     src.deinit()
   })
