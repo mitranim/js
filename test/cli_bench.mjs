@@ -10,4 +10,7 @@ t.bench(function bench_Flag() {l.nop(new cl.Flag(args))})
 t.bench(function bench_enc_static() {l.nop(enc.encode(cl.clearHard))})
 t.bench(function bench_enc_new() {l.nop(new TextEncoder().encode(cl.clearHard))})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

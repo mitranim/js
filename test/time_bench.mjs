@@ -73,4 +73,7 @@ t.bench(function bench_new_Sec_toString() {l.nop(new ti.Sec(1024).toString())})
 t.bench(function bench_sec_dur() {l.nop(sec.dur())})
 t.bench(function bench_new_Sec_dur() {l.nop(new ti.Sec(1024).dur())})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

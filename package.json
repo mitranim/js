@@ -1,16 +1,34 @@
 {
-	"name": "@mitranim/js",
-	"description": "The missing standard library for JS. The missing JS framework.",
-	"version": "0.1.77",
-	"type": "module",
-	"main": "./all.mjs",
-	"repository": {"type": "git", "url": "https://github.com/mitranim/js.git"},
-	"license": "Unlicense",
-	"exports": {
-		"./dom_global": {
-			"browser": "./dom_global_native.mjs",
-			"default": "./dom_global_shim.mjs"
-		},
-		"./*.mjs": "./*.mjs"
-	}
+  "name": "@mitranim/js",
+  "description": "The missing standard library for JS. The missing JS framework.",
+  "version": "0.1.78",
+  "type": "module",
+  "main": "./all.mjs",
+  "repository": {"type": "git", "url": "https://github.com/mitranim/js.git"},
+  "license": "Unlicense",
+  "exports": {
+    "./dom_global": {
+      "browser": "./dom_global_native.mjs",
+      "default": "./dom_global_shim.mjs"
+    },
+    "./io": {
+      "bun": "./io_bun.mjs",
+      "deno": "./io_deno.mjs"
+    },
+    "./http": {
+      "bun": "./http_bun.mjs",
+      "deno": "./http_deno.mjs"
+    },
+    "./*.mjs": "./*.mjs"
+  },
+  "imports": {
+    "#io": {
+      "bun": "./io_bun.mjs",
+      "deno": "./io_deno.mjs"
+    },
+    "#http": {
+      "bun": "./http_bun.mjs",
+      "deno": "./http_deno.mjs"
+    }
+  }
 }

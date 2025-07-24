@@ -7,40 +7,45 @@ PREC ?= $(if $(filter true,$(prec)),--prec,)
 ONCE ?= $(if $(filter true,$(once)),--once,)
 TEST ?= test/$(FEAT)_test.mjs $(VERB) $(RUN)
 BENCH ?= test/$(FEAT)_bench.mjs $(VERB) $(PREC) $(ONCE) $(RUN)
-CMD_SRV ?= test/cmd_srv.mjs
 CMD_DOC ?= doc/cmd_doc.mjs
-CMD_VER_INC ?= doc/cmd_ver_inc.mjs
 PKG ?= package.json
 HOOK_PRE_COMMIT_FILE ?= .git/hooks/pre-commit
 CLEAR ?= $(if $(filter false,$(clear)),, )
 CMD_CLEAR ?= $(and $(CLEAR),--clear)
-DENO_RUN ?= deno run -A --no-check --node-modules-dir=false --v8-flags=--expose_gc
-DENO_WATCH ?= $(DENO_RUN) --watch $(or $(CLEAR),--no-clear-screen)
+CMD_SRV ?= test/cmd_srv.mjs
 WATCH ?= watchexec $(and $(CLEAR),-c) -r -d=1ms -n
 WATCH_SRC ?= $(WATCH) -e=mjs
-ESLINT ?= $(DENO_RUN) npm:eslint@8.47.0 --config .eslintrc --ext mjs .
+ESLINT ?= bunx --bun eslint@9.31.0 --config .eslint.config.mjs --ignore-pattern=local .
+
+ifeq ($(engine),deno)
+	JS_RUN ?= deno run -A --no-check --node-modules-dir=false --v8-flags=--expose_gc
+else
+	JS_RUN ?= bun run
+endif
+
+JS_WATCH ?= $(JS_RUN) --watch $(or $(CLEAR),--no-clear-screen)
 
 # Should be defined with "=", not "?=" or ":=".
 # This makes it a macro and thus lazily executed.
 VER = $(shell jq -r '.version' < $(PKG))
 
 test_w:
-	$(DENO_WATCH) $(TEST) $(CMD_CLEAR)
+	$(JS_WATCH) $(TEST) $(CMD_CLEAR)
 
 test:
-	$(DENO_RUN) $(TEST)
+	$(JS_RUN) $(TEST)
 
 bench_w:
-	$(DENO_WATCH) $(BENCH) $(CMD_CLEAR)
+	$(JS_WATCH) $(BENCH) $(CMD_CLEAR)
 
 bench:
-	$(DENO_RUN) $(BENCH)
+	$(JS_RUN) $(BENCH)
 
 srv_w:
-	$(DENO_WATCH) $(CMD_SRV)
+	$(JS_WATCH) $(CMD_SRV)
 
 srv:
-	$(DENO_RUN) $(CMD_SRV)
+	$(JS_RUN) $(CMD_SRV) --live
 
 lint_w:
 	$(MAKE_CONC) lint_deno_w lint_eslint_w
@@ -60,10 +65,10 @@ lint_eslint:
 	$(ESLINT)
 
 doc_w:
-	$(DENO_WATCH) $(CMD_DOC) --watch $(CMD_CLEAR)
+	$(JS_WATCH) $(CMD_DOC) --watch $(CMD_CLEAR)
 
 doc:
-	$(DENO_RUN) $(CMD_DOC)
+	$(JS_RUN) $(CMD_DOC)
 
 watch:
 	$(MAKE_CONC) test_w lint_w doc_w

@@ -1,10 +1,13 @@
 import './internal_test_init.mjs'
-import * as lo from 'https://cdn.jsdelivr.net/npm/lodash-es/lodash.js'
 import * as itc from './internal_test_coll.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as i from '../iter.mjs'
 import * as c from '../coll.mjs'
+
+const lo = globalThis.Deno
+  ? (await import(`npm:lodash`)).default
+  : await import(`lodash`)
 
 class Nop {}
 
@@ -137,8 +140,13 @@ t.bench(function bench_entries_walk_map_entries_native() {for (const [key, val] 
 t.bench(function bench_slice_array_native() {l.reqArr(itc.numArr.slice())})
 t.bench(function bench_slice_array_lodash_slice() {l.reqArr(lo.slice(itc.numArr))})
 t.bench(function bench_slice_array_our_slice() {l.reqArr(i.slice(itc.numArr))})
+t.bench(function bench_slice_array_spread() {l.reqArr([...itc.numArr])})
 
 t.bench(function bench_slice_set_native_spread() {l.reqArr([...itc.numSet])})
+t.bench(function bench_slice_set_native_spread_keys() {l.reqArr([...itc.numSet.keys()])})
+t.bench(function bench_slice_set_native_spread_values() {l.reqArr([...itc.numSet.values()])})
+t.bench(function bench_slice_set_array_prototype_slice() {l.reqArr(Array.prototype.slice.call(itc.numSet))})
+t.bench(function bench_slice_set_array_inline_slice() {l.reqArr([].slice.call(itc.numSet))})
 t.bench(function bench_slice_set_our_slice() {l.reqArr(i.slice(itc.numSet))})
 
 t.bench(function bench_indexOf_native() {l.reqNat(itc.numArr.indexOf(701))})
@@ -577,7 +585,10 @@ t.bench(function bench_pickKeys_our_pickKeys() {l.reqRec(i.pickKeys(itc.numDict,
 t.bench(function bench_omitKeys_lodash_omit() {l.reqRec(lo.omit(itc.numDict, itc.knownKeys))})
 t.bench(function bench_omitKeys_our_omitKeys() {l.reqRec(i.omitKeys(itc.numDict, itc.knownKeys))})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}
 
 /* Util */
 

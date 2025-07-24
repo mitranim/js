@@ -141,8 +141,7 @@ export class Flag extends s.StrMap {
 /*
 Simple "env" map with support for parsing "env properties" strings. The parser
 supports comments with `#` but not `!`, doesn't support backslash escapes, and
-doesn't allow whitespace around `=`. Doesn't perform any IO; see `io_deno.mjs`
-→ `EnvMap` which is a subclass.
+doesn't allow whitespace around `=`. Doesn't perform any IO.
 */
 export class EnvMap extends c.Bmap {
   set(key, val) {return super.set(l.reqStr(key), l.render(val))}
@@ -215,17 +214,21 @@ export function arrClearHard() {
   return ARR_CLEAR_HARD ??= new TextEncoder().encode(TERM_ESC_CLEAR_HARD)
 }
 
-export async function timed(tag, fun) {
+export function timed(tag, fun) {
   const pre = tag ? s.san`[${tag}] ` : ``
   const start = performance.now()
+  const out = fun()
+  if (l.isPromise(out)) return timedAsync(out, pre, start)
+  const end = performance.now()
+  console.log(s.san`${pre}done in ${end - start} ms`)
+  return out
+}
 
-  try {
-    return await fun()
-  }
-  finally {
-    const end = performance.now()
-    console.log(s.san`${pre}done in ${end - start} ms`)
-  }
+async function timedAsync(out, pre, start) {
+  out = await out
+  const end = performance.now()
+  console.log(s.san`${pre}done in ${end - start} ms`)
+  return out
 }
 
 /* Internal */

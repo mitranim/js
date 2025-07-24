@@ -6,7 +6,7 @@
 * Cookie decoding and encoding.
 * URL-based routing for SSR and SPA apps.
 
-Also see {{featLink http_deno}} for Deno HTTP servers, {{featLink http_srv}} for generic tools for HTTP servers using native stream APIs, and {{featLink live_deno}} for live-reload tools for development.
+Also see {{featLink http_bun}} for Bun HTTP servers, {{featLink http_deno}} for Deno HTTP servers, and {{featLink http_live}} for live-reload tools for development.
 
 ## TOC
 

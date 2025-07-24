@@ -6,8 +6,8 @@ import * as l from '../lang.mjs'
 
 function args() {return arguments}
 function unreachable() {throw Error(`unreachable`)}
-function* gen() {unreachable()}
-async function* agen() {unreachable()}
+function* gen() {unreachable()} // eslint-disable-line require-yield
+async function* agen() {unreachable()} // eslint-disable-line require-yield
 const inherit = Object.create
 function True() {return true}
 function False() {return false}
@@ -1763,7 +1763,10 @@ t.test(function test_bind() {
   t.is(l.bind(l.add, 10, 20)(), l.add(10, 20))
 
   t.test(function test_bind_this() {
+    /* eslint-disable no-invalid-this */
     function self() {return this}
+    /* eslint-enable no-invalid-this */
+
     function test(ref) {t.is(l.bind.call(ref, self)(), ref)}
 
     test()

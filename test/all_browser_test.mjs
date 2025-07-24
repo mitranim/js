@@ -1,4 +1,4 @@
-/* eslint-env browser */
+/* global document */
 
 /*
 TODO: get testing and benching options from URL query parameters.

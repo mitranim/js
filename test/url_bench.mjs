@@ -1,4 +1,4 @@
-import * as iit from './internal_test_init.mjs'
+import './internal_test_init.mjs'
 import * as l from '../lang.mjs'
 import * as t from '../test.mjs'
 import * as u from '../url.mjs'
@@ -50,12 +50,10 @@ class Match extends l.Emp {
 
 /* Bench */
 
-if (iit.more) {
-  t.bench(function bench_encodeURIComponent_miss() {l.nop(encodeURIComponent(uriSafeLong))})
-  t.bench(function bench_encodeURIComponent_hit() {l.nop(encodeURIComponent(uriUnsafeLong))})
-  t.bench(function bench_decodeURIComponent_miss() {l.nop(decodeURIComponent(uriUnescapedLong))})
-  t.bench(function bench_decodeURIComponent_hit() {l.nop(decodeURIComponent(uriEscapedLong))})
-}
+t.bench(function bench_encodeURIComponent_miss() {l.nop(encodeURIComponent(uriSafeLong))})
+t.bench(function bench_encodeURIComponent_hit() {l.nop(encodeURIComponent(uriUnsafeLong))})
+t.bench(function bench_decodeURIComponent_miss() {l.nop(decodeURIComponent(uriUnescapedLong))})
+t.bench(function bench_decodeURIComponent_hit() {l.nop(decodeURIComponent(uriEscapedLong))})
 
 t.bench(function bench_new_query_empty_Params() {l.nop(new URLSearchParams())})
 t.bench(function bench_new_query_empty_Query() {l.nop(u.query())})
@@ -218,4 +216,7 @@ t.bench(function bench_url_long_withHref() {l.nop(decUrlLong.withHref(``))})
 
 t.bench(function bench_query_encode_idemp() {l.nop(encodeURI(searchEncLong))})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

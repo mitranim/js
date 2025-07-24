@@ -386,18 +386,7 @@ export function zip(src) {
   return out
 }
 
-export function setOf(...val) {return new Set(val)}
-
-export function setFrom(val) {return l.isSet(val) ? val : new Set(values(val))}
-
-export function setCopy(val) {return new Set(values(val))}
-
-export function mapOf(...val) {
-  const out = new Map()
-  let ind = 0
-  while (ind < val.length) out.set(val[ind++], val[ind++])
-  return out
-}
+export function toSet(val) {return l.isSet(val) ? val : new Set(values(val))}
 
 export function range(min, max) {
   min = l.laxInt(min)
@@ -447,7 +436,7 @@ export function pickKeys(val, keys) {
 // Antipattern, should probably remove.
 export function omitKeys(val, keys) {
   val = l.laxRec(val)
-  keys = setFrom(keys)
+  keys = toSet(keys)
   const out = l.Emp()
   for (const key of l.recKeys(val)) if (!keys.has(key)) out[key] = val[key]
   return out

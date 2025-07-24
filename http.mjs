@@ -1,16 +1,14 @@
-/* eslint-env browser */
-
 /*
-This module has tools mostly for client code such as browsers apps. For server
-code, see `http_srv.mjs`. The modules are split because browser apps are more
-sensitive to code size. Our code is compatible with tree shaking, but apps
-without a bundler or using `deno bundle` are still affected.
+This module contains tools intended mostly for client code such as browsers
+apps. For HTTP-adjacent tools intended for server code, see `io_shared.mjs`
+and the engine-specific modules such as `io_deno.mjs` and `io_bun.mjs`.
 */
 
 import * as l from './lang.mjs'
 import * as s from './str.mjs'
 import * as u from './url.mjs'
 import * as c from './coll.mjs'
+import * as d from './dom.mjs'
 import * as pt from './path.mjs'
 
 export const GET = `GET`
@@ -92,12 +90,6 @@ export function isStatusServerErr(val) {return l.isNat(val) && val >= 500 && val
 export function hasStatus(val, code) {return l.reqNat(code) === getStatus(val)}
 export function getStatus(val) {return l.get(val, `status`)}
 
-/*
-The built-in `AbortError` is not a separate class but an instance of
-`DOMException`. We're unable to detect it purely by `instanceof`.
-*/
-export function isErrAbort(val) {return l.isErr(val) && val.name === `AbortError`}
-
 export class ErrHttp extends Error {
   constructor(msg, status, res) {
     l.reqStr(msg)
@@ -112,22 +104,59 @@ export class ErrHttp extends Error {
   get name() {return this.constructor.name}
 }
 
+export function isErrAbort(val) {return val?.name === `AbortError`}
+
 /*
-Do not confuse this with the built-in `AbortError` thrown by `AbortSignal` and
-some other APIs. The built-in `AbortError` is an instance of `DOMException`
-rather than its own class. At the time of writing, the only built-in way to
-throw it is via `AbortSignal.prototype.throwIfAborted`, with very little
-browser support. Our own `AbortError` is an emulation. Our `isErrAbort` detects
-both types.
+`AbortController..abort`, called without arguments, constructs an instance of
+`DOMException` with the name `AbortError`. Its `.message` varies between JS
+engines. At the time of writing, in Bun, its `.stack` is Safari-style rather
+than V8-style; in other words, inconsistent with other errors. We define our
+own abort error class and use our own messages to ensure consistency.
+Our `isErrAbort` detects both error types.
 */
 export class AbortError extends Error {
-  constructor(msg) {super(l.renderLax(msg) || `signal has been aborted`)}
+  constructor(msg) {super(l.renderLax(msg) || `operation aborted`)}
   get name() {return this.constructor.name}
 }
 
+const lis = Symbol.for(`lis`)
+
+// Tool for parent-child cancelation; similar to Go contexts.
+export class Ctx extends AbortController {
+  constructor(sig) {
+    l.setProto(super(), new.target) // Safari bug workaround.
+    this[lis] = linkAbort(this, sig)
+  }
+
+  abort(err) {
+    this[lis]?.deinit()
+    super.abort(err ?? new AbortError())
+  }
+
+  deinit() {this.abort()}
+}
+
+export function linkAbort(abc, sig) {
+  l.reqInst(abc, AbortController)
+  l.optInst(sig, AbortSignal)
+  if (!sig) return undefined
+  if (sig.aborted) {
+    abc.abort(sig.reason ?? new AbortError())
+    return undefined
+  }
+  return new d.ListenRef(abc, sig, `abort`, onAbort, {once: true}).init()
+}
+
+/* eslint-disable no-invalid-this */
+function onAbort(eve) {this.abort(eve.target.reason ?? new AbortError())}
+/* eslint-enable no-invalid-this */
+
 export function toRou(val) {return l.toInst(val, Rou)}
 
-// Short for "router".
+/*
+Short for "router". A low-level procedural-style router suitable for SPA.
+See `ReqRou` for a router suitable for servers.
+*/
 export class Rou extends l.Emp {
   constructor(url) {
     super()
@@ -173,7 +202,10 @@ export class Rou extends l.Emp {
 
 export function toReqRou(val) {return l.toInst(val, ReqRou)}
 
-// Short for "request router".
+/*
+Short for "request router". A low-level procedural-style router
+intended for servers.
+*/
 export class ReqRou extends Rou {
   constructor(req) {
     l.reqInst(req, Request)
@@ -216,11 +248,7 @@ export class ReqRou extends Rou {
 
   empty() {return new Response()}
 
-  notFound() {
-    const pat = this.url.pathname
-    const met = this.req.method
-    return new Response(`not found: ${met} ${pat}`, {status: 404})
-  }
+  notFound() {return notFound(this.req.method, this.url.pathname)}
 
   notAllowed() {
     const pat = this.url.pathname
@@ -236,41 +264,10 @@ export class ReqRou extends Rou {
   }
 }
 
-// Short for "context". Supports subcontexts / trees, like Go context.
-export class Ctx extends AbortController {
-  constructor(sig) {
-    l.setProto(super(), new.target)
-    this[sigKey] = undefined
-    this.link(sig)
-  }
-
-  link(sig) {
-    this.unlink()
-    if (!l.optInst(sig, AbortSignal)) return this
-    if (sig.aborted) return this.deinit(sig.reason), this
-
-    this[sigKey] = sig
-    sig.addEventListener(`abort`, this, {once: true})
-    return this
-  }
-
-  unlink() {
-    const sig = this[sigKey]
-    if (sig) {
-      this[sigKey] = undefined
-      sig.removeEventListener(`abort`, this)
-    }
-    return this
-  }
-
-  handleEvent({type}) {if (type === `abort`) this.deinit(type)}
-  sub() {return new this.constructor(this.req.signal)}
-  abort(...val) {this.deinit(...val)}
-
-  deinit(...val) {
-    this.unlink()
-    super.abort(...val)
-  }
+export function notFound(path, meth) {
+  l.reqStr(path)
+  l.reqStr(meth)
+  return new Response(`not found: ${meth} ${path}`, {status: 404})
 }
 
 // Used internally by `Cookies`.
@@ -332,7 +329,7 @@ export class Cookie extends l.Emp {
   root() {return this.setPath(`/`)}
   expired() {return this.setValue(this.value || ``).setExpires().setMaxAge(0)}
   durable() {return this.setMaxAge(60 * 60 * 24 * 365 * 17)}
-  install() {return document.cookie = this.toString(), this}
+  install() {return globalThis.document.cookie = this.toString(), this}
 
   reset(val) {
     if (l.isNil(val)) return this
@@ -434,7 +431,6 @@ export class Cookies extends c.ClsColl {
 
 /* Internal */
 
-const sigKey = Symbol.for(`sig`)
 function tuple(...src) {return Object.freeze(src)}
 
 function isMethod(val) {return l.isValidStr(val)}

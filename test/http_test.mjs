@@ -1,4 +1,4 @@
-import './internal_test_init.mjs'
+import * as iti from './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as h from '../http.mjs'
@@ -276,11 +276,11 @@ t.test(function test_ReqRou() {
 })
 
 /*
-TODO: verify that all event listeners are "once", and that we remove the
-listener when unlinking.
+TODO:
+- Test GC-based cleanup. When child context is GC-d, event listener must be
+  removed from parent signal.
 */
-t.test(function test_Ctx() {
-  // This also indirectly checks that the constructor calls `.link`.
+await t.test(async function test_Ctx() {
   t.throws(() => new h.Ctx(`str`), TypeError, `expected instance of AbortSignal, got "str"`)
   t.throws(() => new h.Ctx({}), TypeError, `expected instance of AbortSignal, got instance of Object {}`)
 
@@ -290,58 +290,27 @@ t.test(function test_Ctx() {
   testCtxDeinit(val => val.abort())
   testCtxDeinit(val => val.deinit())
 
-  t.test(function test_link() {
-    t.throws(() => new h.Ctx().link(`str`), TypeError, `expected instance of AbortSignal, got "str"`)
+  t.test(function test_pre_abort() {
+    const abc = new AbortController()
+    abc.abort()
+    t.ok(abc.signal.aborted)
 
-    t.test(function test_pre_abort() {
-      const abc = new AbortController()
-      abc.abort()
-      t.ok(abc.signal.aborted)
-
-      const ctx = new h.Ctx()
-      t.no(ctx.signal.aborted)
-
-      t.is(ctx.link(abc.signal), ctx)
-      t.ok(ctx.signal.aborted)
-    })
-
-    t.test(function test_post_abort() {
-      const abc = new AbortController()
-      t.no(abc.signal.aborted)
-
-      const ctx = new h.Ctx()
-      t.no(ctx.signal.aborted)
-
-      t.is(ctx.link(abc.signal), ctx)
-      t.no(ctx.signal.aborted)
-
-      abc.abort()
-      t.ok(abc.signal.aborted)
-      t.ok(ctx.signal.aborted)
-    })
-
-    t.test(function test_replace() {
-      const ctx = new h.Ctx()
-      const abc0 = new AbortController()
-      const abc1 = new AbortController()
-
-      ctx.link(abc0.signal)
-      ctx.link(abc1.signal)
-
-      abc0.abort()
-      t.ok(abc0.signal.aborted)
-      t.no(ctx.signal.aborted)
-
-      abc1.abort()
-      t.ok(abc1.signal.aborted)
-      t.ok(ctx.signal.aborted)
-    })
-
-    testCtxUnlink(val => val.link())
+    const ctx = new h.Ctx(abc.signal)
+    t.ok(ctx.signal.aborted)
+    t.is(ctx.signal.reason, abc.signal.reason)
   })
 
-  t.test(function test_unlink() {
-    testCtxUnlink(val => val.unlink())
+  t.test(function test_post_abort() {
+    const abc = new AbortController()
+    t.no(abc.signal.aborted)
+
+    const ctx = new h.Ctx(abc.signal)
+    t.no(ctx.signal.aborted)
+
+    abc.abort()
+    t.ok(abc.signal.aborted)
+    t.ok(ctx.signal.aborted)
+    t.is(ctx.signal.reason, abc.signal.reason)
   })
 
   t.test(function test_deinit_idempotency() {
@@ -357,26 +326,36 @@ t.test(function test_Ctx() {
     ctx.deinit()
     t.ok(ctx.signal.aborted)
   })
+
+  if (!iti.gc) return
+
+  await t.test(async function test_gc_cleanup() {
+    const abc = new AbortController()
+
+    class Ctx extends h.Ctx {
+      abort() {throw Error(`unreachable`)}
+      deinit() {throw Error(`unreachable`)}
+    }
+
+    let ctx = new Ctx(abc.signal)
+    l.nop(ctx) // Shut up linters.
+    ctx = undefined
+    await iti.waitForGcAndFinalizers()
+
+    // If GC finalization doesn't work, this will abort the child context,
+    // which will immediately throw an "unreachable" error.
+    abc.abort()
+  })
 })
 
 function testCtxDeinit(fun) {
   const ctx = new h.Ctx()
   t.no(ctx.signal.aborted)
+  t.is(ctx.signal.reason, undefined)
 
   fun(ctx)
   t.ok(ctx.signal.aborted)
-}
-
-function testCtxUnlink(fun) {
-  const abc = new AbortController()
-  const ctx = new h.Ctx()
-
-  ctx.link(abc.signal)
-  fun(ctx)
-
-  abc.abort()
-  t.ok(abc.signal.aborted)
-  t.no(ctx.signal.aborted)
+  t.inst(ctx.signal.reason, h.AbortError)
 }
 
 /*

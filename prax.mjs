@@ -276,8 +276,25 @@ export class Ren extends o.MixMain(l.Emp) {
     }
 
     const chi = this.chi(tar, src)
-    this.clearChi(tar)
-    tar.append(...chi)
+    if (!chi.length) {
+      this.clearChi(tar)
+      return tar
+    }
+
+    let ind = 0
+    const nodes = tar.childNodes
+    const len = chi.length
+    while (ind < len && chi[ind] === nodes[ind]) ind++
+
+    if (ind > 0) {
+      let pos = nodes.length
+      while (--pos >= ind) nodes[pos]?.remove()
+      tar.append(...chi.slice(ind))
+    }
+    else {
+      this.clearChi(tar)
+      tar.append(...chi)
+    }
     return tar
   }
 
@@ -371,8 +388,7 @@ export class Ren extends o.MixMain(l.Emp) {
   /*
   Inefficient adapter for incorrectly-written code that renders SVG elements in
   the HTML namespace. Sometimes useful for migrating code from other rendering
-  systems. Can be avoided by creating elements with the correct namespace from
-  the start.
+  systems. Should be avoided by using `.S` for SVG.
   */
   alignNs(tar) {
     if (!isNamespaced(tar)) return tar

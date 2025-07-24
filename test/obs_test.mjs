@@ -1,4 +1,4 @@
-import './internal_test_init.mjs'
+import * as iti from './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as ob from '../obs.mjs'
@@ -41,21 +41,6 @@ class TestShedMicro extends ob.ShedMicro {
 }
 
 function head(src) {return [...src][0]}
-
-function after(ms) {
-  return new Promise(function init(done) {setTimeout(done, ms)})
-}
-
-/*
-In Deno, `globalThis.gc` is available with `--v8-flags=--expose_gc`.
-
-In Bun, `Bun.gc` is always available, and `globalThis.gc` is available with
-`--expose-gc`. However, at the time of writing, our finalization tests tend
-to fail in Bun, because of differences in GC timing between V8 and JSC.
-It is also possible for our tests to pass under alternate conditions, like
-sometimes when remote inspection is enabled. For now though, we skip them.
-*/
-const gc = l.onlyFun(globalThis.gc)
 
 /* Test */
 
@@ -268,7 +253,7 @@ await t.test(async function test_Que() {
   and go frequently.
   */
   await t.test(async function test_finalization() {
-    if (!gc) return
+    if (!iti.gc) return
 
     const que = new ob.Que()
 
@@ -284,13 +269,13 @@ await t.test(async function test_Que() {
     que.enque(ref1)
     t.eq(que, new ob.Que([ref0, ref1]))
 
-    await waitForGcAndFinalizers()
+    await iti.waitForGcAndFinalizers()
     t.eq(que, new ob.Que([ref0, ref1]))
 
     run0 = undefined
     run1 = undefined
 
-    await waitForGcAndFinalizers()
+    await iti.waitForGcAndFinalizers()
     testQueEmpty(que)
     t.is(ref0.deref(), undefined)
     t.is(ref1.deref(), undefined)
@@ -900,7 +885,7 @@ await t.test(async function test_obs() {
   t.eq(que0, new ob.Que([getShedRef(rec0)]))
   t.eq(que1, new ob.Que([getShedRef(rec1), getShedRef(rec0)]))
 
-  if (!gc) return
+  if (!iti.gc) return
 
   t.eq(que0, new ob.Que([getShedRef(rec0)]))
   t.eq(que1, new ob.Que([getShedRef(rec0), getShedRef(rec1)]))
@@ -918,7 +903,7 @@ await t.test(async function test_obs() {
   rec0 = undefined
   rec1 = undefined
 
-  await waitForGcAndFinalizers()
+  await iti.waitForGcAndFinalizers()
 
   testWeakerRef(shedRef0)
   testWeakerRef(runRef0)
@@ -955,18 +940,6 @@ function testShedEmpty(shed) {
   testQueEmpty(shed.ques[0])
 }
 
-/*
-We use `FinalizationRegistry` to evict expired que entries.
-The following seems unreliable. May need adjustments in the future.
-*/
-async function waitForGcAndFinalizers() {
-  let ind = -1
-  while (++ind < 2) {
-    gc()
-    await after(1)
-  }
-}
-
 await t.test(async function test_recur_sync() {
   t.throws(() => ob.recurSync(), TypeError, `expected at least one function, got undefined and undefined`)
   t.throws(() => ob.recurSync(10), TypeError, `expected at least one function, got 10 and undefined`)
@@ -998,6 +971,7 @@ async function test_recurSync(tar, swap) {
   let runs = 0
   let val = undefined
 
+  /* eslint-disable no-invalid-this */
   function run(arg) {
     t.is(this, tar)
     t.is(arg, tar)
@@ -1005,6 +979,7 @@ async function test_recurSync(tar, swap) {
     runs++
     val = obs0.val + obs1.val
   }
+  /* eslint-enable no-invalid-this */
 
   let rec = (
     swap
@@ -1088,11 +1063,11 @@ async function test_recurSync(tar, swap) {
     testWeakerRef(getRunRef(rec), rec)
   })
 
-  if (!gc) return
+  if (!iti.gc) return
 
   await t.test(async function test_finalization() {
     rec = undefined
-    await waitForGcAndFinalizers()
+    await iti.waitForGcAndFinalizers()
     testQueEmpty(que0)
     testQueEmpty(que1)
   })
@@ -1264,7 +1239,7 @@ await t.test(async function test_hierarchical_scheduling() {
   t.no(shed.scheduled)
   t.is(shed.timer, undefined)
 
-  if (!gc) return
+  if (!iti.gc) return
 
   await t.test(async function test_finalization() {
     let tar4 = new Elem()
@@ -1282,7 +1257,7 @@ await t.test(async function test_hierarchical_scheduling() {
     rec4_0 = undefined
     rec4_1 = undefined
 
-    await waitForGcAndFinalizers()
+    await iti.waitForGcAndFinalizers()
 
     testQueEmpty(que0)
     t.eq(que1, new ob.Que())
@@ -1538,12 +1513,12 @@ await t.test(async function test_calc() {
   t.is(runs0, 5)
   t.is(runs1, 3)
 
-  if (!gc) return
+  if (!iti.gc) return
 
   calc1 = undefined
   rec = undefined
 
-  await waitForGcAndFinalizers()
+  await iti.waitForGcAndFinalizers()
   testQueEmpty(ob.getQue(calc0))
 })
 
@@ -1554,23 +1529,27 @@ t.test(function test_calc_arg_swap() {
   let runs0 = 0
   let runs1 = 0
 
+  /* eslint-disable no-invalid-this */
   const calc0 = ob.calc(tar0, function run0(arg) {
     runs0++
     t.is(this, tar0)
     t.is(arg, tar0)
     return 10
   })
+  /* eslint-enable no-invalid-this */
 
   t.is(runs0, 0)
   t.is(calc0.get(), 10)
   t.is(runs0, 1)
 
+  /* eslint-disable no-invalid-this */
   const calc1 = ob.calc(function run1(arg) {
     runs1++
     t.is(this, tar1)
     t.is(arg, tar1)
     return 20
   }, tar1)
+  /* eslint-enable no-invalid-this */
 
   t.is(runs1, 0)
   t.is(calc1.val, 20)

@@ -89,4 +89,7 @@ t.bench(function bench_Cookies_from_string() {
   l.nop(new h.Cookies(`one=two; three=four; five=six`))
 })
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

@@ -127,9 +127,8 @@ export class Node extends l.Emp {
 
   set textContent(val) {
     val = l.render(val)
-    const nodes = this.childNodes
-    nodes.length = 0
-    if (val) nodes.push(val)
+    this.clearNodes()
+    if (val) this.childNodes.push(new Text(val))
   }
 
   getRootNode() {
@@ -243,7 +242,7 @@ export class Node extends l.Emp {
       by prepending nodes. Handling would overcomplicate the algorithm.
       */
       if (src !== cur) {
-        while (nodes[ind] !== cur && ind-- > 0) {}
+        while (nodes[ind] !== cur && ind-- > 0);
         ind++
       }
 
@@ -280,6 +279,12 @@ export class Node extends l.Emp {
     if (!isNode(val)) val = new Text(val)
     this[OWNER_DOCUMENT]?.adoptNode(val)
     return val
+  }
+
+  clearNodes() {
+    const nodes = this.childNodes
+    if (nodes.length) for (const node of nodes) node.parentNode = null
+    nodes.length = 0
   }
 }
 
@@ -494,9 +499,8 @@ export class Element extends ElementParent {
 
   set innerHTML(val) {
     val = l.render(val)
-    const nodes = this.childNodes
-    nodes.length = 0
-    if (val) nodes.push(new RawText(val))
+    this.clearNodes()
+    if (val) this.childNodes.push(new RawText(val))
   }
 
   get outerHTML() {
@@ -986,7 +990,10 @@ export class StylePh extends DictPh {
   deleteProperty(buf, key) {
     if (!l.isStr(key)) return true
     key = this.styleToCss(key)
-    if (key in buf) delete buf[key], this.enc()
+    if (key in buf) {
+      delete buf[key]
+      this.enc()
+    }
     return true
   }
 
@@ -1389,7 +1396,7 @@ function last(val) {return val?.[val.length - 1]}
 function hasLocalName(val, name) {return isElement(val) && val.localName ===  name}
 function errIllegal() {return TypeError(`illegal invocation`)}
 function norm(val) {return val ?? null}
-function notIncludes(val) {return !this.includes(val)}
+function notIncludes(val) {return !this.includes(val)} // eslint-disable-line no-invalid-this
 function split(val, sep) {return l.laxStr(val) ? val.split(l.reqSome(sep)) : []}
 function join(val) {return val.join(` `)}
 function lower(val) {return val.toLowerCase()}

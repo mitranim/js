@@ -90,4 +90,7 @@ t.bench(function bench_Ren_E_chi() {l.nop(E(`span`, {chi: `text`}))})
 t.bench(function bench_Ren_elem_props_chi() {l.nop(ren.elem(`span`, {class: `cls`, chi: `text`}))})
 t.bench(function bench_Ren_E_props_chi() {l.nop(E(`span`, {class: `cls`, chi: `text`}))})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

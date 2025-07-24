@@ -1,7 +1,6 @@
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
-import * as i from '../iter.mjs'
 import * as dr from '../dom_reg.mjs'
 import * as ds from '../dom_shim.mjs'
 
@@ -169,15 +168,15 @@ t.test(function test_Reg() {
     reg.reg(Cls1)
     reg.reg(Cls1)
 
-    t.eq(reg.tagToCls, i.mapOf(
-      `a-cls0`, Cls0,
-      `a-cls1`, Cls1,
-    ))
+    t.eq(
+      reg.tagToCls,
+      new Map().set(`a-cls0`, Cls0).set(`a-cls1`, Cls1),
+    )
 
-    t.eq(reg.clsToTag, i.mapOf(
-      Cls0, `a-cls0`,
-      Cls1, `a-cls1`,
-    ))
+    t.eq(
+      reg.clsToTag,
+      new Map().set(Cls0, `a-cls0`).set(Cls1, `a-cls1`),
+    )
 
     const defined = []
     const def = l.Emp()

@@ -10,7 +10,7 @@ function args() {return arguments}
 function arrgs(...val) {return val}
 function toArgs(val) {return args(...(val ?? []))}
 function unreachable() {throw Error(`unreachable`)}
-async function* agen() {unreachable()}
+async function* agen() {unreachable()} // eslint-disable-line require-yield
 function* copygen(val) {for (val of val) yield val}
 function fail() {unreachable()}
 class Arr extends Array {}
@@ -1128,18 +1128,11 @@ t.test(function test_zip() {
   })
 })
 
-t.test(function test_setOf() {
-  t.eq(i.setOf(), new Set())
-  t.eq(i.setOf(10, 20), new Set().add(10).add(20))
-  t.eq(i.setOf(10, 20, 30), new Set().add(10).add(20).add(30))
-  t.eq(i.setOf(10, 20, 30, 40), new Set().add(10).add(20).add(30).add(40))
-})
-
-t.test(function test_setFrom() {
-  testFunEmptySet(i.setFrom)
+t.test(function test_toSet() {
+  testFunEmptySet(i.toSet)
 
   t.test(function test_same_reference() {
-    function test(ref) {t.is(i.setFrom(ref), ref)}
+    function test(ref) {t.is(i.toSet(ref), ref)}
 
     test(new Set())
     test(new Set([10, 20, 30]))
@@ -1148,7 +1141,7 @@ t.test(function test_setFrom() {
   })
 
   t.test(function test_convert() {
-    function test(src, exp) {t.eq(i.setFrom(src), exp)}
+    function test(src, exp) {t.eq(i.toSet(src), exp)}
 
     testColls(
       [10, 20, 10, 30],
@@ -1156,30 +1149,6 @@ t.test(function test_setFrom() {
       function testColl(make) {test(make(), new Set([10, 20, 30]))},
     )
   })
-})
-
-// Delegates to `i.setFrom`. We only need to test the copying.
-t.test(function test_setCopy() {
-  testFunEmptySet(i.setCopy)
-
-  function test(src, exp) {
-    const out = i.setCopy(src)
-    t.isnt(src, out)
-    t.eq(out, exp)
-  }
-
-  testColls(
-    [10, 20, 10, 30],
-    {one: 10, two: 20, three: 10, four: 30},
-    function testColl(make) {test(make(), new Set([10, 20, 30]))},
-  )
-})
-
-t.test(function test_mapOf() {
-  t.eq(i.mapOf(), new Map())
-  t.eq(i.mapOf(10, 20), new Map().set(10, 20))
-  t.eq(i.mapOf(10, 20, 30), new Map().set(10, 20).set(30))
-  t.eq(i.mapOf(10, 20, 30, 40), new Map().set(10, 20).set(30, 40))
 })
 
 t.test(function test_range() {

@@ -139,4 +139,7 @@ t.bench(function bench_WeakMap_get_miss_fun() {l.nop(weakMap.get(l.nop))})
 t.bench(function bench_WeakMap_get_miss_obj() {l.nop(weakMap.get(vecEmpty))})
 t.bench(function bench_WeakMap_get_hit_obj() {l.nop(weakMap.get(weakMap))})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

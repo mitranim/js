@@ -259,4 +259,7 @@ t.bench(function bench_arrHex() {l.nop(s.arrHex(uuidArr))})
 t.bench(function bench_replaceAll_miss() {l.nop(s.replaceAll(strForwardSlash, `\\`, `/`))})
 t.bench(function bench_replaceAll_hit() {l.nop(s.replaceAll(strBackwardSlash, `\\`, `/`))})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

@@ -42,8 +42,13 @@ export class Query extends s.StrMap {
       const key = ind >= 0 ? this.dec(pair.slice(0, ind)) : pair
       const val = ind >= 0 ? this.dec(pair.slice(ind + 1)) : ``
 
-      if (found.has(key)) this.append(key, val)
-      else this.set(key, val), found.add(key)
+      if (found.has(key)) {
+        this.append(key, val)
+      }
+      else {
+        this.set(key, val)
+        found.add(key)
+      }
     }
 
     return this

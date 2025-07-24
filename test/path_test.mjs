@@ -11,18 +11,6 @@ t.test(function test_const() {
   t.is(p.default.parRelPre, `../`)
 })
 
-t.test(function test_isPath() {
-  t.no(p.isPath())
-  t.no(p.isPath({}))
-  t.no(p.isPath([]))
-
-  t.ok(p.isPath(10))
-  t.ok(p.isPath(true))
-  t.ok(p.isPath(``))
-  t.ok(p.isPath(`str`))
-  t.ok(p.isPath(new URL(`file:`)))
-})
-
 t.test(function test_norm() {
   function fail(src) {t.throws(() => p.norm(src), TypeError, `unable to convert ${l.show(src)} to string`)}
   function test(src, exp) {t.is(p.norm(src), exp, src)}
@@ -875,7 +863,7 @@ t.test(function test_dirLike() {
 
 t.test(function test_dir() {
   function fun(val) {return p.dir(val)}
-  function test(src, exp) {t.is(fun(src), exp), src}
+  function test(src, exp) {t.is(fun(src), exp, src)}
 
   test(``, ``)
   test(`.`, ``)

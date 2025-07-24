@@ -113,7 +113,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 ```
 
 ## API
@@ -125,7 +125,7 @@ Links: [source](../lang.mjs#L7); [test/example](../test/lang_test.mjs#L261).
 True for `null` and `undefined`. Same as `value == null`. Incidentally, these are the only values that produce an exception when attempting to read a property: `null.someProperty`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 // Definition
 function isNil(value) {return value == null}
@@ -159,7 +159,7 @@ Links: [source](../lang.mjs#L23); [test/example](../test/lang_test.mjs#L286).
 Same as `typeof val === 'number'`. True if the value is a primitive number, _including_ `NaN` and `±Infinity`. In most cases you should use [#`isFin`](#function-isfin) instead.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 l.isNum(1)
 // true
@@ -178,7 +178,7 @@ Links: [source](../lang.mjs#L29); [test/example](../test/lang_test.mjs#L298).
 Same as ES2015's [`Number.isFinite`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isFinite). True if `val` is a primitive number and is _not_ `NaN` or `±Infinity`. In most cases you should prefer `isFin` over `isNum`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 l.isFin(1)
 // true
@@ -502,7 +502,7 @@ To include nil, use [#`isScalarOpt`](#function-isscalaropt).
 
 ### `function isRef`
 
-Links: [source](../lang.mjs#L349); [test/example](../test/lang_test.mjs#L2057).
+Links: [source](../lang.mjs#L349); [test/example](../test/lang_test.mjs#L2060).
 
 Defines a "reference" interface which is consistently across all modules in this library. A "reference" is something that can be [#`deref`](#function-deref) into an underlying value. Any object can implement this interface by providing a symbolic property `Symbol.for("val")`.
 
@@ -515,8 +515,8 @@ The names `deref` and `reset` for this interface are lifted from Clojure.
 Combined example:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/obs.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/obs.mjs'
 
 l.isRef(10) // false
 l.isRef({}) // false
@@ -545,20 +545,20 @@ Same as `instanceof` but _does not_ implicitly convert the operand to an object.
 
 ### `function opt`
 
-Links: [source](../lang.mjs#L384); [test/example](../test/lang_test.mjs#L1450).
+Links: [source](../lang.mjs#L385); [test/example](../test/lang_test.mjs#L1450).
 
 Short for "optional". If `val` is [#non_nil](#function-issome), uses [#`req`](#function-req) to validate it. Returns `val` as-is.
 
 ### `function req`
 
-Links: [source](../lang.mjs#L389); [test/example](../test/lang_test.mjs#L1391).
+Links: [source](../lang.mjs#L390); [test/example](../test/lang_test.mjs#L1391).
 
 Signature: `(val, test) => val` where `test: val => bool`.
 
 Short for "require". Minification-friendly assertion. If `!test(val)`, throws an informative `TypeError`. Otherwise, returns `val` as-is.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 l.req({one: `two`}, l.isObj)
 // {one: `two`}
@@ -569,7 +569,7 @@ l.req(`str`, l.isFun)
 
 ### `function only`
 
-Links: [source](../lang.mjs#L394); [test/example](../test/lang_test.mjs#L1544).
+Links: [source](../lang.mjs#L395); [test/example](../test/lang_test.mjs#L1544).
 
 Signature: `(val, test) => val` where `test: val => bool`.
 
@@ -577,13 +577,13 @@ Type filtering utility. If `val` satisfies the given test function, returns `val
 
 ### `function optInst`
 
-Links: [source](../lang.mjs#L405); [test/example](../test/lang_test.mjs#L1505).
+Links: [source](../lang.mjs#L406); [test/example](../test/lang_test.mjs#L1505).
 
 Short for "optional instance". If `val` is [#non_nil](#function-issome), uses [#`reqInst`](#function-reqinst) to validate it. Returns `val` as-is.
 
 ### `function reqInst`
 
-Links: [source](../lang.mjs#L407); [test/example](../test/lang_test.mjs#L1488).
+Links: [source](../lang.mjs#L408); [test/example](../test/lang_test.mjs#L1488).
 
 Signature: `(val, Cls) => val`.
 
@@ -591,7 +591,7 @@ Short for "require instance". Asserts that `val` is an instance of the given cla
 
 ### `function onlyInst`
 
-Links: [source](../lang.mjs#L412); [test/example](../test/lang_test.mjs#L1571).
+Links: [source](../lang.mjs#L413); [test/example](../test/lang_test.mjs#L1571).
 
 Signature: `(val, Cls) => val?`.
 
@@ -599,7 +599,7 @@ Type filtering utility. If `val` is an instance of `Cls`, returns `val` as-is. O
 
 ### `function render`
 
-Links: [source](../lang.mjs#L419); [test/example](../test/lang_test.mjs#L119).
+Links: [source](../lang.mjs#L420); [test/example](../test/lang_test.mjs#L119).
 
 Renders a value for user display. Counterpart to [#`show`](#function-show), which renders a value for debug purposes. Intended only for [#scalar](#function-isscalar) values. Rules:
 
@@ -609,7 +609,7 @@ Renders a value for user display. Counterpart to [#`show`](#function-show), whic
 
 ### `function renderLax`
 
-Links: [source](../lang.mjs#L432); [test/example](../test/lang_test.mjs#L152).
+Links: [source](../lang.mjs#L433); [test/example](../test/lang_test.mjs#L152).
 
 Renders a value for user display. Intended only for [#scalar](#function-isscalar) values. Unlike [#`render`](#function-render), this allows nil. Rules:
 
@@ -618,7 +618,7 @@ Renders a value for user display. Intended only for [#scalar](#function-isscalar
 
 ### `function toTrueArr`
 
-Links: [source](../lang.mjs#L434); [test/example](../test/lang_test.mjs#L207).
+Links: [source](../lang.mjs#L435); [test/example](../test/lang_test.mjs#L207).
 
 Idempotent conversion to a [#true array](#function-istruearr). Allowed inputs:
 
@@ -629,7 +629,7 @@ Idempotent conversion to a [#true array](#function-istruearr). Allowed inputs:
 
 ### `function reset`
 
-Links: [source](../lang.mjs#L442); [test/example](../test/lang_test.mjs#L2108).
+Links: [source](../lang.mjs#L443); [test/example](../test/lang_test.mjs#L2111).
 
 Replaces the current value of any [#reference](#function-isref) by setting its `Symbol.for("val")` property.
 
@@ -639,7 +639,7 @@ See [#`deref`](#function-deref) for the opposite operation: reading rather than 
 
 ### `function deref`
 
-Links: [source](../lang.mjs#L443); [test/example](../test/lang_test.mjs#L2077).
+Links: [source](../lang.mjs#L444); [test/example](../test/lang_test.mjs#L2080).
 
 Dereferences any [#reference](#function-isref). Returns non-references as-is.
 
@@ -649,14 +649,14 @@ See [#`reset`](#function-reset) for the opposite operation: writing rather than 
 
 ### `function is`
 
-Links: [source](../lang.mjs#L452); [test/example](../test/lang_test.mjs#L251).
+Links: [source](../lang.mjs#L453); [test/example](../test/lang_test.mjs#L251).
 
 Identity test: same as `===`, but considers `NaN` equal to `NaN`. Equivalent to [_SameValueZero_](https://www.ecma-international.org/ecma-262/6.0/#sec-samevaluezero) as defined by the language spec. Used internally for all identity tests.
 
 Note that [`Object.is`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is) implements [_SameValue_](https://www.ecma-international.org/ecma-262/6.0/#sec-samevalue), which treats `-0` and `+0` as _distinct values_. This is typically undesirable. As a result, you should prefer `l.is` over `===` or `Object.is` unless you _know_ you intend to differentiate `-0` and `+0`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 l.is(1, '1')
 // false
@@ -667,36 +667,36 @@ l.is(NaN, NaN)
 
 ### `function truthy`
 
-Links: [source](../lang.mjs#L453); [test/example](../test/lang_test.mjs#L237).
+Links: [source](../lang.mjs#L454); [test/example](../test/lang_test.mjs#L237).
 
 Same as `!!` or `Boolean`. Sometimes useful with higher-order functions.
 
 ### `function falsy`
 
-Links: [source](../lang.mjs#L454); [test/example](../test/lang_test.mjs#L244).
+Links: [source](../lang.mjs#L455); [test/example](../test/lang_test.mjs#L244).
 
 Same as `!`. Sometimes useful with higher-order functions.
 
 ### `function nop`
 
-Links: [source](../lang.mjs#L455); [test/example](../test/lang_test.mjs#L1787).
+Links: [source](../lang.mjs#L456); [test/example](../test/lang_test.mjs#L1790).
 
 Empty function. Functional equivalent of `;` or `undefined`. Sometimes useful with higher-order functions.
 
 ### `function id`
 
-Links: [source](../lang.mjs#L456); [test/example](../test/lang_test.mjs#L1793).
+Links: [source](../lang.mjs#L457); [test/example](../test/lang_test.mjs#L1796).
 
 Identity function: returns its first argument unchanged. Sometimes useful with higher-order functions.
 
 ### `function val`
 
-Links: [source](../lang.mjs#L457); [test/example](../test/lang_test.mjs#L1800).
+Links: [source](../lang.mjs#L458); [test/example](../test/lang_test.mjs#L1803).
 
 Takes a value and creates a function that always returns that value. Sometimes useful with higher order functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 const constant = l.val(1)
 
@@ -709,32 +709,32 @@ constant(`this input is ignored`)
 
 ### `function panic`
 
-Links: [source](../lang.mjs#L458); [test/example](../test/lang_test.mjs#L1814).
+Links: [source](../lang.mjs#L459); [test/example](../test/lang_test.mjs#L1817).
 
 Same as `throw` but an expression rather than a statement. Also sometimes useful with higher-order functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 const x = someTest ? someValue : l.panic(Error(`unreachable`))
 ```
 
 ### `function vac`
 
-Links: [source](../lang.mjs#L461); [test/example](../test/lang_test.mjs#L1993).
+Links: [source](../lang.mjs#L462); [test/example](../test/lang_test.mjs#L1996).
 
 Complements [#`isVac`](#function-isvac). Returns `undefined` if the input is vacuous, otherwise returns the input as-is.
 
 ### `function bind`
 
-Links: [source](../lang.mjs#L462); [test/example](../test/lang_test.mjs#L1758).
+Links: [source](../lang.mjs#L465); [test/example](../test/lang_test.mjs#L1758).
 
 Like [`Function.prototype.bind`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind), but instead of taking `this` as an argument, takes it contextually. By default `this` is `undefined`. To set it, use `l.bind.call`.
 
 Returns a new function that represents [partial application](https://en.wikipedia.org/wiki/Partial_application) of the given function, a common tool in functional programming. When called, it joins arguments from both calls and invokes the original function. Think of it like splitting a function call in two, or more. Performance is inferior to closures; avoid in hotspots.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 const inc = l.bind(l.add, 1)
 
@@ -746,12 +746,12 @@ Note: we don't provide facilities for currying. Experience has shown it to be ex
 
 ### `function not`
 
-Links: [source](../lang.mjs#L464); [test/example](../test/lang_test.mjs#L1777).
+Links: [source](../lang.mjs#L467); [test/example](../test/lang_test.mjs#L1780).
 
 Returns a new function that negates the result of the given function, like a delayed `!`.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 function eq(a, b) {return a === b}
 
@@ -766,24 +766,24 @@ function different(a, b) {return !eq(a, b)}
 
 ### `function hasOwn`
 
-Links: [source](../lang.mjs#L469); [test/example](../test/lang_test.mjs#L1204).
+Links: [source](../lang.mjs#L473); [test/example](../test/lang_test.mjs#L1204).
 
 Same as [`Object.prototype.hasOwnProperty`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwnProperty) but shorter and safe to call on primitives. Always false for primitives.
 
 ### `function hasOwnEnum`
 
-Links: [source](../lang.mjs#L470); [test/example](../test/lang_test.mjs#L1218).
+Links: [source](../lang.mjs#L474); [test/example](../test/lang_test.mjs#L1218).
 
 Same as [`Object.prototype.propertyIsEnumerable`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/propertyIsEnumerable) but shorter and safe to call on primitives. Always false for primitives.
 
 ### `function hasInherited`
 
-Links: [source](../lang.mjs#L471); [test/example](../test/lang_test.mjs#L1232).
+Links: [source](../lang.mjs#L475); [test/example](../test/lang_test.mjs#L1232).
 
 Returns `true` if the target is [#non-primitive](#function-iscomp) and has the given property on its prototype. As a consequence, this returns `false` if the target is a primitive, or has the given property as an "own" property, either enumerable or not.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 l.hasInherited([10, 20, 30], `length`)
 // false
@@ -797,13 +797,13 @@ l.hasInherited([10, 20, 30], `toString`)
 
 ### `function hasMeth`
 
-Links: [source](../lang.mjs#L472); [test/example](../test/lang_test.mjs#L1271).
+Links: [source](../lang.mjs#L476); [test/example](../test/lang_test.mjs#L1271).
 
 True if the the given value has the given named method. Safe to call on primitives such as `null`. Always false for primitives.
 
 ### `function setProto`
 
-Links: [source](../lang.mjs#L481); [test/example](../test/lang_test.mjs#L1340).
+Links: [source](../lang.mjs#L485); [test/example](../test/lang_test.mjs#L1340).
 
 Workaround for bugs related to subclassing.
 
@@ -831,7 +831,7 @@ class Abort extends AbortController {
 
 ### `function Emp`
 
-Links: [source](../lang.mjs#L487); [test/example](../test/lang_test.mjs#L1356).
+Links: [source](../lang.mjs#L492); [test/example](../test/lang_test.mjs#L1356).
 
 Short for "empty". Hybrid function / superclass for empty objects.
 
@@ -857,7 +857,7 @@ val.constructor === Empty
 
 ### `function show`
 
-Links: [source](../lang.mjs#L490); [test/example](../test/lang_test.mjs#L20).
+Links: [source](../lang.mjs#L496); [test/example](../test/lang_test.mjs#L20).
 
 Renders a value for debug purposes. Counterpart to [#`render`](#function-render), which renders a value for user display. Convenient for interpolating things into error messages. Used internally in assertion functions such as [#`req`](#function-req). Approximate rules:
 
@@ -872,86 +872,86 @@ Renders a value for debug purposes. Counterpart to [#`render`](#function-render)
 
 ### `function add`
 
-Links: [source](../lang.mjs#L615); [test/example](../test/lang_test.mjs#L1857).
+Links: [source](../lang.mjs#L621); [test/example](../test/lang_test.mjs#L1860).
 
 Same as `+`.
 
 ### `function sub`
 
-Links: [source](../lang.mjs#L616); [test/example](../test/lang_test.mjs#L1863).
+Links: [source](../lang.mjs#L622); [test/example](../test/lang_test.mjs#L1866).
 
 Same as `-`.
 
 ### `function mul`
 
-Links: [source](../lang.mjs#L617); [test/example](../test/lang_test.mjs#L1869).
+Links: [source](../lang.mjs#L623); [test/example](../test/lang_test.mjs#L1872).
 
 Same as `*`.
 
 ### `function div`
 
-Links: [source](../lang.mjs#L618); [test/example](../test/lang_test.mjs#L1875).
+Links: [source](../lang.mjs#L624); [test/example](../test/lang_test.mjs#L1878).
 
 Same as `/`.
 
 ### `function rem`
 
-Links: [source](../lang.mjs#L619); [test/example](../test/lang_test.mjs#L1881).
+Links: [source](../lang.mjs#L625); [test/example](../test/lang_test.mjs#L1884).
 
 Same as `%`.
 
 ### `function lt`
 
-Links: [source](../lang.mjs#L620); [test/example](../test/lang_test.mjs#L1889).
+Links: [source](../lang.mjs#L626); [test/example](../test/lang_test.mjs#L1892).
 
 Same as `<`.
 
 ### `function gt`
 
-Links: [source](../lang.mjs#L621); [test/example](../test/lang_test.mjs#L1900).
+Links: [source](../lang.mjs#L627); [test/example](../test/lang_test.mjs#L1903).
 
 Same as `>`.
 
 ### `function lte`
 
-Links: [source](../lang.mjs#L622); [test/example](../test/lang_test.mjs#L1911).
+Links: [source](../lang.mjs#L628); [test/example](../test/lang_test.mjs#L1914).
 
 Same as `<=`.
 
 ### `function gte`
 
-Links: [source](../lang.mjs#L623); [test/example](../test/lang_test.mjs#L1922).
+Links: [source](../lang.mjs#L629); [test/example](../test/lang_test.mjs#L1925).
 
 Same as `>=`.
 
 ### `function neg`
 
-Links: [source](../lang.mjs#L624); [test/example](../test/lang_test.mjs#L1933).
+Links: [source](../lang.mjs#L630); [test/example](../test/lang_test.mjs#L1936).
 
 Arithmetic negation. Same as unary `-`.
 
 ### `function inc`
 
-Links: [source](../lang.mjs#L625); [test/example](../test/lang_test.mjs#L1945).
+Links: [source](../lang.mjs#L631); [test/example](../test/lang_test.mjs#L1948).
 
 Increments by `1`.
 
 ### `function dec`
 
-Links: [source](../lang.mjs#L626); [test/example](../test/lang_test.mjs#L1953).
+Links: [source](../lang.mjs#L632); [test/example](../test/lang_test.mjs#L1956).
 
 Decrements by `1`.
 
 ### `function round`
 
-Links: [source](../lang.mjs#L629); [test/example](../test/lang_test.mjs#L1961).
+Links: [source](../lang.mjs#L635); [test/example](../test/lang_test.mjs#L1964).
 
 Rounding half away from zero. Has one difference from [`Math.round`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round): when the number is negative and the fraction is exactly `.5`, this rounds away from zero. This behavior is more consistent with the default rounding function in many other languages, including Go.
 
 Examples:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/lang.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/lang.mjs'
 
 l.round(-12.5) // -13
 l.round(12.5) // 13
@@ -1163,42 +1163,44 @@ The following APIs are exported but undocumented. Check [lang.mjs](../lang.mjs).
   * [`function isArrOf`](../lang.mjs#L354)
   * [`function reqArrOf`](../lang.mjs#L360)
   * [`function optArrOf`](../lang.mjs#L366)
-  * [`function optOneOf`](../lang.mjs#L396)
-  * [`function reqOneOf`](../lang.mjs#L400)
-  * [`function toInst`](../lang.mjs#L416)
-  * [`function toInstOpt`](../lang.mjs#L417)
-  * [`function renderOpt`](../lang.mjs#L425)
-  * [`function derefAll`](../lang.mjs#L444)
-  * [`function swap`](../lang.mjs#L446)
-  * [`function True`](../lang.mjs#L459)
-  * [`function False`](../lang.mjs#L460)
-  * [`function eq`](../lang.mjs#L474)
-  * [`class Show`](../lang.mjs#L492)
-  * [`function errType`](../lang.mjs#L653)
-  * [`function msgType`](../lang.mjs#L654)
-  * [`function errFun`](../lang.mjs#L656)
-  * [`function msgFun`](../lang.mjs#L657)
-  * [`function throwErrFun`](../lang.mjs#L658)
-  * [`function errConv`](../lang.mjs#L660)
-  * [`function errSynt`](../lang.mjs#L661)
-  * [`function msgConv`](../lang.mjs#L662)
-  * [`function errConvInst`](../lang.mjs#L664)
-  * [`function msgConvInst`](../lang.mjs#L665)
-  * [`function errInst`](../lang.mjs#L667)
-  * [`function msgInst`](../lang.mjs#L668)
-  * [`function errIn`](../lang.mjs#L670)
-  * [`function msgIn`](../lang.mjs#L671)
-  * [`function errImpl`](../lang.mjs#L673)
-  * [`function msgImpl`](../lang.mjs#L674)
-  * [`function errTrans`](../lang.mjs#L676)
-  * [`function errWrap`](../lang.mjs#L684)
-  * [`function errCause`](../lang.mjs#L689)
-  * [`const WeakRef`](../lang.mjs#L698)
-  * [`const FinalizationRegistry`](../lang.mjs#L704)
-  * [`function convType`](../lang.mjs#L723)
-  * [`function convSynt`](../lang.mjs#L728)
-  * [`function showFunName`](../lang.mjs#L734)
-  * [`function get`](../lang.mjs#L749)
-  * [`function getOwn`](../lang.mjs#L753)
-  * [`function reqGet`](../lang.mjs#L755)
-  * [`function recKeys`](../lang.mjs#L768)
+  * [`function isInstOpt`](../lang.mjs#L381)
+  * [`function optOneOf`](../lang.mjs#L397)
+  * [`function reqOneOf`](../lang.mjs#L401)
+  * [`function toInst`](../lang.mjs#L417)
+  * [`function toInstOpt`](../lang.mjs#L418)
+  * [`function renderOpt`](../lang.mjs#L426)
+  * [`function derefAll`](../lang.mjs#L445)
+  * [`function swap`](../lang.mjs#L447)
+  * [`function True`](../lang.mjs#L460)
+  * [`function False`](../lang.mjs#L461)
+  * [`function eq`](../lang.mjs#L478)
+  * [`class Show`](../lang.mjs#L498)
+  * [`function errType`](../lang.mjs#L659)
+  * [`function msgType`](../lang.mjs#L660)
+  * [`function errFun`](../lang.mjs#L662)
+  * [`function msgFun`](../lang.mjs#L663)
+  * [`function throwErrFun`](../lang.mjs#L664)
+  * [`function errConv`](../lang.mjs#L666)
+  * [`function errSynt`](../lang.mjs#L667)
+  * [`function msgConv`](../lang.mjs#L668)
+  * [`function errConvInst`](../lang.mjs#L670)
+  * [`function msgConvInst`](../lang.mjs#L671)
+  * [`function errInst`](../lang.mjs#L673)
+  * [`function msgInst`](../lang.mjs#L674)
+  * [`function errIn`](../lang.mjs#L676)
+  * [`function msgIn`](../lang.mjs#L677)
+  * [`function errImpl`](../lang.mjs#L679)
+  * [`function msgImpl`](../lang.mjs#L680)
+  * [`function errTrans`](../lang.mjs#L682)
+  * [`function errWrap`](../lang.mjs#L690)
+  * [`function errCause`](../lang.mjs#L695)
+  * [`function errSkip`](../lang.mjs#L700)
+  * [`const WeakRef`](../lang.mjs#L710)
+  * [`const FinalizationRegistry`](../lang.mjs#L716)
+  * [`function convType`](../lang.mjs#L734)
+  * [`function convSynt`](../lang.mjs#L739)
+  * [`function showFunName`](../lang.mjs#L745)
+  * [`function get`](../lang.mjs#L760)
+  * [`function getOwn`](../lang.mjs#L764)
+  * [`function reqGet`](../lang.mjs#L766)
+  * [`function recKeys`](../lang.mjs#L779)

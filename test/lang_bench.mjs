@@ -155,6 +155,8 @@ function isPromiseInst(val) {return l.isInst(val, Promise)}
 
 function getPrototype(val) {return Object.getPrototypeOf(val)}
 
+const textEnc = new TextEncoder()
+
 const miscVals = [
   emptyStr,
   emptyArr,
@@ -178,6 +180,7 @@ const miscVals = [
   someNonEq1,
   shallow,
   symboled,
+  textEnc,
   Object.create(emptyArr),
   Object.create(l.Emp), // Not a typo. The object's prototype is the function.
 ]
@@ -640,4 +643,11 @@ t.bench(function bench_callable_fun_construct() {l.nop(new CallableFun())})
 // No special overhead.
 t.bench(function bench_callable_fun_call() {l.nop(callableFun.call(10, 20))})
 
-if (import.meta.main) t.deopt(), t.benches()
+// Not much difference in Deno or Node; much difference in Bun.
+t.bench(function bench_text_encoder_new() {new TextEncoder().encode()})
+t.bench(function bench_text_encoder_old() {textEnc.encode()})
+
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

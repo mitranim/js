@@ -378,6 +378,7 @@ export function isEmpty(val) {
 }
 
 export function isInst(val, cls) {return isObj(val) && val instanceof cls}
+export function isInstOpt(val, cls) {return !!optFun(cls) && isInst(val, cls)}
 
 /* Assertions */
 
@@ -459,12 +460,15 @@ export function panic(val) {if (isSome(val)) throw val}
 export function True() {return true}
 export function False() {return false}
 export function vac(val) {return isVac(val) ? undefined : val}
+
+/* eslint-disable no-invalid-this */
 export function bind(fun, ...args) {return reqFun(fun).bind(this, ...args)}
 
 export function not(fun) {
   reqFun(fun)
   return function not() {return !fun.apply(this, arguments)}
 }
+/* eslint-enable no-invalid-this */
 
 export function hasOwn(val, key) {return isComp(val) && own.call(val, key)}
 export function hasOwnEnum(val, key) {return isComp(val) && enu.call(val, key)}
@@ -484,8 +488,10 @@ export function setProto(tar, cls) {
   }
 }
 
+/* eslint-disable no-invalid-this */
 export function Emp() {return new.target && new.target !== Emp ? this : Object.create(null)}
 Emp.prototype = null
+/* eslint-enable no-invalid-this */
 
 export function show(val) {return new Show().any(val)}
 
@@ -691,18 +697,23 @@ export function errCause(val) {
   return val
 }
 
+export function errSkip(err, fun) {
+  reqFun(fun)
+  if (isNil(err) || fun(err)) return undefined
+  throw err
+}
+
 /*
-Memory-leaking sham of `WeakRef` for older browsers. Has no effect in:
-Deno 1+, Node 14.6+, any browser released after 2021-04.
+Memory-leaking sham of `WeakRef` for older browsers. Native `WeakRef` is
+available in: Deno 1+; Node 14.6+; any browser released after 2021-04.
 */
 export const WeakRef = globalThis.WeakRef || class WeakRefSham extends Emp {
-  constructor(val) {super().val = reqComp(val)}
+  constructor(val) {super().val = val}
   deref() {return this.val}
 }
 
 // Nop sham of `FinalizationRegistry`. See above for engine versions.
 export const FinalizationRegistry = globalThis.FinalizationRegistry || class FinalizationRegistrySham extends Emp {
-  constructor(fun) {super(), reqFun(fun)}
   register() {}
   unregister() {}
 }

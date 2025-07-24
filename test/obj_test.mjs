@@ -1,4 +1,3 @@
-/* eslint-disable getter-return */
 // deno-lint-ignore-file getter-return
 
 import './internal_test_init.mjs'

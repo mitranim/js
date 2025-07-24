@@ -1,12 +1,8 @@
-/* eslint-env browser */
+/* global document, EventSource */
 
 /*
 Client for "live reloading" in browsers.
-Served and fed by the broadcaster in `live_deno.mjs`.
-
-Limitations:
-
-  * Currently doesn't support `<base>`.
+Served and fed by the broadcaster in `http_live.mjs`.
 */
 
 export function main() {
@@ -103,6 +99,7 @@ export function main() {
     )
   }
 
+  /* eslint-disable no-invalid-this */
   function linkOnLoad() {
     this.onload = null
     this.onerror = null
@@ -111,6 +108,7 @@ export function main() {
       if (node !== this) node.remove()
     }
   }
+  /* eslint-enable no-invalid-this */
 
   function isPending(val) {return !!val.onload}
 

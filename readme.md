@@ -79,9 +79,10 @@ npm i -E @mitranim/js
   * [`prax`](docs/prax_readme.md): simple system for rendering DOM elements. React-inspired syntax, better semantics and performance.
   * [`obs`](docs/obs_readme.md): observables and reactivity.
   * [`http`](docs/http_readme.md): shortcuts for the fetch/Response APIs, URL routing, cookie decoding/encoding.
+  * [`http_bun`](docs/http_bun_readme.md): tools for HTTP servers running in Bun.
   * [`http_deno`](docs/http_deno_readme.md): tools for HTTP servers running in Deno.
-  * [`http_srv`](docs/http_srv_readme.md): streaming and broadcasting tools for generic HTTP servers.
-  * [`live_deno`](docs/live_deno_readme.md): tools for live-reloading in development.
+  * [`http_shared`](docs/http_shared_readme.md): streaming and broadcasting tools for generic HTTP servers.
+  * [`http_live`](docs/http_live_readme.md): tools for live-reloading in development.
   * [`cli`](docs/cli_readme.md): essential tools for CLI apps.
   * [`test`](docs/test_readme.md): tools for testing and benchmarking.
 

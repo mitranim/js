@@ -165,6 +165,7 @@ Features:
   * Support for dicts such as {key: 'value'} and {key: ['value']}.
   * Support for arbitrary iterators.
   * Parsing of bool and numeric values.
+  * Support for JSON encoding.
 */
 export class StrMap extends c.TypedMap {
   reqKey(key) {return l.reqStr(key)}
@@ -226,8 +227,13 @@ export class StrMap extends c.TypedMap {
   mutFromIter(src) {
     const repeat = new Set()
     for (const [key, val] of l.reqIter(src)) {
-      if (repeat.has(key)) this.appendAny(key, val)
-      else this.setAny(key, val), repeat.add(key)
+      if (repeat.has(key)) {
+        this.appendAny(key, val)
+      }
+      else {
+        this.setAny(key, val)
+        repeat.add(key)
+      }
     }
     return this
   }
@@ -329,7 +335,7 @@ export function stripPre(src, pre) {
 }
 
 export function stripPreAll(src, pre) {
-  while (src !== (src = stripPre(src, pre))) {}
+  while (src !== (src = stripPre(src, pre)));
   return src
 }
 
@@ -341,7 +347,7 @@ export function stripSuf(src, suf) {
 }
 
 export function stripSufAll(src, suf) {
-  while (src !== (src = stripSuf(src, suf))) {}
+  while (src !== (src = stripSuf(src, suf)));
   return src
 }
 
@@ -374,6 +380,7 @@ export function split(src, sep) {
 }
 
 // Tested indirectly through `Draft`. Needs to be simplified. Needs its own tests.
+/* eslint-disable no-invalid-this */
 export function splitMap(src, reg, fun) {
   src = l.laxStr(src)
   reqRegGlob(reg)
@@ -396,6 +403,7 @@ export function splitMap(src, reg, fun) {
   if (ind < src.length) buf.push(src.slice(ind))
   return buf
 }
+/* eslint-enable no-invalid-this */
 
 export function lines(val) {return split(val, /(?:\r\n|\r|\n)/g)}
 export function trimLines(val) {return l.laxStr(val).replace(/^\s+|\s+$/gm, ``)}

@@ -1,12 +1,7 @@
-/* eslint-env browser */
+/* global document*/
 
 import * as l from './lang.mjs'
 import * as o from './obj.mjs'
-
-export const DOM_EXISTS = !!(
-  typeof window === `object` && window &&
-  typeof document === `object` && document
-)
 
 export function isEvent(val) {return typeof Event === `function` && l.isInst(val, Event)}
 export function reqEvent(val) {return l.req(val, isEvent)}
@@ -38,98 +33,28 @@ export function isFile(val) {return typeof File === `function` && l.isInst(val, 
 export function reqFile(val) {return l.req(val, isFile)}
 export function optFile(val) {return l.opt(val, isFile)}
 
-export function isDomHandler(val) {return l.hasMeth(val, `handleEvent`)}
-export function reqDomHandler(val) {return l.req(val, isDomHandler)}
-export function optDomHandler(val) {return l.opt(val, isDomHandler)}
-
-export function mutDoc(head, body) {
-  DocHeadMut.main.mut(head)
-  DocBodyMut.main.mut(body)
-}
-
-export class DocHeadMut extends o.MixMain(WeakSet) {
-  get head() {return document.head}
-  get title() {return document.title}
-  set title(val) {document.title = val}
-
-  mut(src) {
-    l.reqInst(src, HTMLHeadElement)
-    const set = new Set(src.children)
-
-    for (const val of copy(this.head.children)) {
-      if (this.has(val) && !set.has(val)) val.remove()
-    }
-    for (const val of set) this.append(val)
-  }
-
-  append(val) {
-    if (val instanceof HTMLTitleElement) {
-      this.title = val.textContent
-    }
-    else {
-      this.add(val)
-      this.head.append(val)
-    }
-  }
-}
-
-export class DocBodyMut extends o.MixMain(l.Emp) {
-  get foc() {return DocFoc.main}
-  get doc() {return document}
-
-  mut(val) {
-    l.reqInst(val, HTMLBodyElement)
-    this.foc.stash()
-    this.doc.body = val
-    this.foc.pop()
-  }
-}
-
-/*
-Short for "document focus". Can stash/pop the path to the focused node, which is
-useful when replacing the document body. Array subclasses have performance
-issues, but this is not a bottleneck.
-*/
-export class DocFoc extends o.MixMain(Array) {
-  get doc() {return document}
-
-  clear() {this.length = 0}
-
-  pop() {try {this.apply()} finally {this.clear()}}
-
-  apply() {
-    let val = this.doc
-    for (const ind of this) if (!(val = val.childNodes[ind])) return
-    if (l.hasMeth(val, `focus`)) val.focus()
-  }
-
-  stash() {
-    this.clear()
-    let val = this.doc.activeElement
-    while (val && val.parentNode) {
-      this.push(indexOf(val.parentNode.childNodes, val))
-      val = val.parentNode
-    }
-    this.reverse()
-  }
-}
-
-function copy(val) {return Array.prototype.slice.call(val)}
-function indexOf(list, val) {return Array.prototype.indexOf.call(list, val)}
+// export class ChildDiff extends WeakSet {
+//   mut(tar, src) {
+//     reqNode(tar)
+//     src = new Set(l.optSeq(src))
+//     for (const val of tar.childNodes) {
+//       if (this.has(val) && !src.has(val)) val.remove()
+//     }
+//     for (const val of src) this.add(val)
+//     tar.append(...src)
+//   }
+// }
 
 export function eventKill(val) {
-  if (optEvent(val)) {
-    val.preventDefault()
-    eventStop(val)
-  }
-  return val
+  if (!optEvent(val)) return val
+  val.preventDefault()
+  return eventStop(val)
 }
 
 export function eventStop(val) {
-  if (optEvent(val)) {
-    val.stopPropagation()
-    val.stopImmediatePropagation()
-  }
+  if (!optEvent(val)) return val
+  val.stopPropagation()
+  val.stopImmediatePropagation()
   return val
 }
 
@@ -137,24 +62,64 @@ export function isEventModified(val) {
   return !!(optEvent(val) && (val.altKey || val.ctrlKey || val.metaKey || val.shiftKey))
 }
 
+export function eventDispatch(tar, typ, data) {
+  tar.dispatchEvent(new CustomEvent(l.reqStr(typ), {detail: data}))
+}
+
+export function eventListen(tar, typ, han, opt) {
+  l.reqObj(tar).addEventListener(l.reqStr(typ), l.reqComp(han), l.optDict(opt))
+  return function deinit() {tar.removeEventListener(typ, han, opt)}
+}
+
+export class ListenRef extends l.WeakRef {
+  constructor(tar, src, typ, fun, opt) {
+    super(tar)
+    this.src = new l.WeakRef(src)
+    this.typ = l.reqStr(typ)
+    this.fun = l.reqFun(fun)
+    this.opt = l.optRec(opt)
+    REG_DEINIT.register(tar, this)
+  }
+
+  handleEvent(eve) {
+    const tar = this.deref()
+    if (tar) this.fun.call(tar, eve)
+    else this.deinit()
+  }
+
+  init() {
+    this.deinit()
+    this.src.deref().addEventListener(this.typ, this, this.opt)
+    return this
+  }
+
+  deinit() {
+    this.src.deref()?.removeEventListener(this.typ, this, this.opt)
+  }
+}
+
+const REG_DEINIT = new l.FinalizationRegistry(function finalizeDeinit(val) {
+  if (l.isFun(val)) val()
+  else val.deinit()
+})
+
 export function nodeShow(val) {if (optNode(val) && val.hidden) val.hidden = false}
 export function nodeHide(val) {if (optNode(val) && !val.hidden) val.hidden = true}
 export function nodeRemove(val) {if (optNode(val)) val.remove()}
 export function nodeSel(val, sel) {return val.querySelector(l.reqStr(sel))}
 export function nodeSelAll(val, sel) {return val.querySelectorAll(l.reqStr(sel))}
-
 export function isConnected(val) {return isNode(val) && val.isConnected}
 export function isDisconnected(val) {return isNode(val) && !val.isConnected}
 
-export function addEvents(node, names, opt) {
-  reqDomHandler(node)
-  for (const name of l.reqArr(names)) node.addEventListener(name, node, opt)
-}
+// export function addEvents(node, names, opt) {
+//   reqDomHandler(node)
+//   for (const name of l.reqArr(names)) node.addEventListener(name, node, opt)
+// }
 
-export function removeEvents(node, names, opt) {
-  reqDomHandler(node)
-  for (const name of l.reqArr(names)) node.removeEventListener(name, node, opt)
-}
+// export function removeEvents(node, names, opt) {
+//   reqDomHandler(node)
+//   for (const name of l.reqArr(names)) node.removeEventListener(name, node, opt)
+// }
 
 export function copyToClipboard(src) {
   if (!(src = l.render(src))) return
@@ -175,8 +140,6 @@ export function copyToClipboard(src) {
   }
 }
 
-export function clipNode(val) {selectText(val), document.execCommand(`copy`)}
-
 export function selectText(val) {
   if (!optElement(val)) return
 
@@ -186,11 +149,6 @@ export function selectText(val) {
   else if (l.hasMeth(val, `setSelectionRange`)) {
     val.setSelectionRange(0, l.laxStr(val.value).length)
   }
-}
-
-export function setText(tar, src) {
-  reqNode(tar).textContent = l.renderLax(src)
-  return tar
 }
 
 export function ancestor(tar, cls) {return findAncestor(tar, clsTest(cls))}

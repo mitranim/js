@@ -8,7 +8,7 @@ Parser for CLI args. Features:
   * On-demand parsing of booleans and numbers.
 
 ```js
-const cli = cl.Flag.os()
-const args = cli.args
-const watch = cli.boolOpt(`w`)
+const flags = cl.Flag.os()
+const args = flags.args
+const watch = flags.boolOpt(`-w`)
 ```

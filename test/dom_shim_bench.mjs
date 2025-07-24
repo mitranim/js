@@ -116,4 +116,7 @@ t.bench(function bench_elem_make_complex() {l.nop(makeElemComplex())})
 t.bench(function bench_elem_outerHTML_complex() {l.nop(elemComplex.outerHTML)})
 t.bench(function bench_elem_make_outerHTML_complex() {l.nop(makeElemComplex().outerHTML)})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

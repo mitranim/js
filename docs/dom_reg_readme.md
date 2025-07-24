@@ -27,7 +27,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 // The mixin `MixReg` enables automatic registration on instantiation.
@@ -66,7 +66,7 @@ Apps which use server-side rendering and client-side upgrading of custom element
 Instead, use `dr.reg`, which is also used internally by `MixReg`. This is simply a shortcut for using the [#default registry](#class-reg) provided by this module.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   /*
@@ -89,13 +89,13 @@ console.log(elem.outerHTML)
 
 ### `function reg`
 
-Links: [source](../dom_reg.mjs#L143); [test/example](../test/dom_reg_test.mjs#L16).
+Links: [source](../dom_reg.mjs#L143); [test/example](../test/dom_reg_test.mjs#L15).
 
 Shortcut for calling `Reg.main.reg`. Takes a custom element class and idempotently registers it, automatically deriving the custom element tag name _and_ the base tag for `extends`.
 
 ### `class Reg`
 
-Links: [source](../dom_reg.mjs#L145); [test/example](../test/dom_reg_test.mjs#L22).
+Links: [source](../dom_reg.mjs#L145); [test/example](../test/dom_reg_test.mjs#L21).
 
 Registry for custom DOM element classes. Automatically derives tag name from class name, using salting when necessary to avoid collisions. Supports idempotent registration which can be safely called in an element constructor. Allows immediate registration, deferred registration, or a mix of those.
 
@@ -106,7 +106,7 @@ For browser-only code, prefer the mixin `MixReg` from the same module which is e
 Simple usage:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   /*
@@ -126,7 +126,7 @@ document.body.append(new Btn())
 You can unset the default definer to defer registration:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.77/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/dom_reg.mjs'
 
 dr.Reg.main.setDefiner()
 

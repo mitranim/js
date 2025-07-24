@@ -380,4 +380,7 @@ t.bench(function bench_array_walk_Array_values() {for (const val of numArray.val
 t.bench(function bench_array_walk_List_values() {for (const val of numList.values()) l.nop(val)})
 t.bench(function bench_array_walk_Arr_values() {for (const val of numArr.values()) l.nop(val)})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

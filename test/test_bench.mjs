@@ -11,4 +11,7 @@ t.bench(function bench_now() {t.now()})
 t.bench(function bench_Run_allow_empty() {run2.allow(filterEmpty)})
 t.bench(function bench_Run_allow_full() {run2.allow(filterFull)})
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

@@ -204,7 +204,10 @@ export class TimeRunner extends FinRunner {
 
     do {
       let rem = batch
-      do {runs++, fun()} while (rem-- > 0)
+      do {
+        runs++
+        fun()
+      } while (rem-- > 0)
 
       batch *= 2
       nows++

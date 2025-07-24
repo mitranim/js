@@ -400,8 +400,8 @@ function afterSig(ms, sig) {
     sig.addEventListener(`abort`, aborted, {once: true})
     const id = setTimeout(reached, ms)
 
-    function reached() {deinit(), done(true)}
-    function aborted() {deinit(), done(false)}
-    function deinit() {clearTimeout(id), sig.removeEventListener(`abort`, aborted)}
+    function reached() {deinit(); done(true)}
+    function aborted() {deinit(); done(false)}
+    function deinit() {clearTimeout(id); sig.removeEventListener(`abort`, aborted)}
   })
 }

@@ -1444,6 +1444,102 @@ t.test(function test_Ren_moving_children() {
   })
 })
 
+t.test(function test_Ren_replaceChi_preserve_prefix() {
+  class SomeElem extends env.HTMLElement {
+    static customName = `elem-ece9f0`
+    static {dr.reg(this)}
+    con = 0
+    dis = 0
+    connectedCallback() {this.con++}
+    disconnectedCallback() {this.dis++}
+  }
+
+  const tar = E(`div`)
+  const chi0 = new SomeElem()
+  const chi1 = new SomeElem()
+  const chi2 = new SomeElem()
+  const chi3 = new SomeElem()
+
+  env.document.body.appendChild(tar)
+
+  try {
+    E(tar, {chi: [chi0, chi1, chi2, chi3]})
+
+    t.is(chi0.con, 1)
+    t.is(chi1.con, 1)
+    t.is(chi2.con, 1)
+    t.is(chi3.con, 1)
+
+    t.is(chi0.dis, 0)
+    t.is(chi1.dis, 0)
+    t.is(chi2.dis, 0)
+    t.is(chi3.dis, 0)
+
+    E(tar, {chi: [chi0, chi1, chi2, chi3]})
+
+    t.is(chi0.con, 1)
+    t.is(chi1.con, 1)
+    t.is(chi2.con, 1)
+    t.is(chi3.con, 1)
+
+    t.is(chi0.dis, 0)
+    t.is(chi1.dis, 0)
+    t.is(chi2.dis, 0)
+    t.is(chi3.dis, 0)
+
+    E(tar, {chi: [chi0, chi1]})
+
+    t.is(chi0.con, 1)
+    t.is(chi1.con, 1)
+    t.is(chi2.con, 1)
+    t.is(chi3.con, 1)
+
+    t.is(chi0.dis, 0)
+    t.is(chi1.dis, 0)
+    t.is(chi2.dis, 1)
+    t.is(chi3.dis, 1)
+
+    E(tar, {chi: []})
+    t.no(tar.hasChildNodes())
+    t.is(tar.childNodes.length, 0)
+
+    t.is(chi0.con, 1)
+    t.is(chi1.con, 1)
+    t.is(chi2.con, 1)
+    t.is(chi3.con, 1)
+
+    t.is(chi0.dis, 1)
+    t.is(chi1.dis, 1)
+    t.is(chi2.dis, 1)
+    t.is(chi3.dis, 1)
+
+    E(tar, {chi: [chi0, chi1]})
+
+    t.is(chi0.con, 2)
+    t.is(chi1.con, 2)
+    t.is(chi2.con, 1)
+    t.is(chi3.con, 1)
+
+    t.is(chi0.dis, 1)
+    t.is(chi1.dis, 1)
+    t.is(chi2.dis, 1)
+    t.is(chi3.dis, 1)
+
+    E(tar, {chi: [chi0, chi3, chi2, chi1]})
+
+    t.is(chi0.con, 2)
+    t.is(chi1.con, 3)
+    t.is(chi2.con, 2)
+    t.is(chi3.con, 2)
+
+    t.is(chi0.dis, 1)
+    t.is(chi1.dis, 2)
+    t.is(chi2.dis, 1)
+    t.is(chi3.dis, 1)
+  }
+  finally {tar.remove()}
+})
+
 t.test(function test_Ren_mutText() {
   t.throws(() => ren.mutText(), TypeError, `expected variant of isNode, got undefined`)
 
@@ -1459,8 +1555,11 @@ t.test(function test_Ren_mutText() {
   t.is(ren.mutText(node, `three`), node)
   eqm(node, `<div class="one">three</div>`)
 
-  t.is(ren.mutText(node, new String(`<four></four>`)), node)
+  t.is(ren.mutText(node, `<four></four>`), node)
   eqm(node, `<div class="one">&lt;four&gt;&lt;/four&gt;</div>`)
+
+  t.is(ren.mutText(node, new String(`<five></five>`)), node)
+  eqm(node, `<div class="one">&lt;five&gt;&lt;/five&gt;</div>`)
 })
 
 t.test(function test_Ren_custom_element() {

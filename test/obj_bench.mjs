@@ -1,4 +1,3 @@
-/* eslint-disable getter-return */
 // deno-lint-ignore-file getter-return
 
 import './internal_test_init.mjs'
@@ -252,4 +251,7 @@ t.bench(function bench_define_properties_from_list() {
   for (const desc of descriptorList) Object.defineProperty(tar, desc.key, desc)
 })
 
-if (import.meta.main) t.deopt(), t.benches()
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
+}

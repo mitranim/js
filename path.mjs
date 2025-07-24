@@ -18,10 +18,6 @@ import * as s from './str.mjs'
 export const FS_SEP_WINDOWS = `\\`
 export const FS_SEP_POSIX = `/`
 
-export function isPath(val) {return l.isStr(val) || l.isScalar(val)}
-export function reqPath(val) {return l.req(val, isPath)}
-export function optPath(val) {return l.opt(val, isPath)}
-
 export function toPosix(val) {
   return normInner(val).replace(/[/\\]/g, FS_SEP_POSIX)
 }
@@ -49,6 +45,7 @@ export function volume(...src) {return paths.volume(...src)}
 export function hasVolume(...src) {return paths.hasVolume(...src)}
 export function name(...src) {return paths.name(...src)}
 export function ext(...src) {return paths.ext(...src)}
+export function hasExt(val) {return l.isStr(val) && /\.\w+$/.test(val)}
 export function stem(...src) {return paths.stem(...src)}
 export function replaceSep(...src) {return paths.replaceSep(...src)}
 

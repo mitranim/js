@@ -1,4 +1,4 @@
-/* eslint-env browser */
+/* global document, NodeList, HTMLCollection, DocumentFragment */
 
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'

@@ -1,7 +1,6 @@
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
-import * as i from '../iter.mjs'
 import * as cl from '../cli.mjs'
 
 // TODO test various methods.
@@ -12,29 +11,34 @@ t.test(function test_Flag() {
     t.eq(cli.args, expArgs)
   }
 
-  test([],                         i.mapOf(),                             [])
-  test([`-a`],                     i.mapOf(`-a`,    [``]),                [])
-  test([`-one`],                   i.mapOf(`-one`,  [``]),                [])
-  test([`--a`],                    i.mapOf(`--a`,   [``]),                [])
-  test([`--one`],                  i.mapOf(`--one`, [``]),                [])
-  test([`-one`, `two`],            i.mapOf(`-one`,  [`two`]),             [])
-  test([`-one=two`],               i.mapOf(`-one`,  [`two`]),             [])
-  test([`--one`, `two`],           i.mapOf(`--one`, [`two`]),             [])
-  test([`--one=two`],              i.mapOf(`--one`, [`two`]),             [])
-  test([`-=`],                     i.mapOf(`-`,     [``]),                [])
-  test([`--=`],                    i.mapOf(`--`,    [``]),                [])
-  test([`-=two`],                  i.mapOf(`-`,     [`two`]),             [])
-  test([`--=two`],                 i.mapOf(`--`,    [`two`]),             [])
-  test([`-one`, `two`, `three`],   i.mapOf(`-one`,  [`two`]),             [`three`])
-  test([`-one=two`, `three`],      i.mapOf(`-one`,  [`two`]),             [`three`])
-  test([`three`, `-one=two`],      i.mapOf(`-one`,  [`two`]),             [`three`])
-  test([`three`, `-one`, `two`],   i.mapOf(`-one`,  [`two`]),             [`three`])
-  test([`two`, `-one`],            i.mapOf(`-one`,  [``]),                [`two`])
-  test([`three`, `-one`, `--two`], i.mapOf(`-one`,  [``], `--two`, [``]), [`three`])
+  test([],                         new Map(),                                       [])
+  test([`-a`],                     new Map().set(`-a`,    [``]),                    [])
+  test([`-one`],                   new Map().set(`-one`,  [``]),                    [])
+  test([`--a`],                    new Map().set(`--a`,   [``]),                    [])
+  test([`--one`],                  new Map().set(`--one`, [``]),                    [])
+  test([`-one`, `two`],            new Map().set(`-one`,  [`two`]),                 [])
+  test([`-one=two`],               new Map().set(`-one`,  [`two`]),                 [])
+  test([`--one`, `two`],           new Map().set(`--one`, [`two`]),                 [])
+  test([`--one=two`],              new Map().set(`--one`, [`two`]),                 [])
+  test([`-=`],                     new Map().set(`-`,     [``]),                    [])
+  test([`--=`],                    new Map().set(`--`,    [``]),                    [])
+  test([`-=two`],                  new Map().set(`-`,     [`two`]),                 [])
+  test([`--=two`],                 new Map().set(`--`,    [`two`]),                 [])
+  test([`-one`, `two`, `three`],   new Map().set(`-one`,  [`two`]),                 [`three`])
+  test([`-one=two`, `three`],      new Map().set(`-one`,  [`two`]),                 [`three`])
+  test([`three`, `-one=two`],      new Map().set(`-one`,  [`two`]),                 [`three`])
+  test([`three`, `-one`, `two`],   new Map().set(`-one`,  [`two`]),                 [`three`])
+  test([`two`, `-one`],            new Map().set(`-one`,  [``]),                    [`two`])
+  test([`three`, `-one`, `--two`], new Map().set(`-one`,  [``]).set(`--two`, [``]), [`three`])
 
   test(
     [`-one`, `two`, `--three=four`, `-f`, `-s`, `seven`, `-e`, `nine`, `eleven`, `-e`, `ten`, `twelve`],
-    i.mapOf(`-one`, [`two`], `--three`, [`four`], `-f`, [``], `-s`, [`seven`], `-e`, [`nine`, `ten`]),
+    new Map()
+      .set(`-one`, [`two`])
+      .set(`--three`, [`four`])
+      .set(`-f`, [``])
+      .set(`-s`, [`seven`])
+      .set(`-e`, [`nine`, `ten`]),
     [`eleven`, `twelve`],
   )
 })

@@ -1,308 +1,168 @@
-/* global Deno, FinalizationRegistry */
+/*
+Compare `./io_bun.mjs`. The two modules should have the same shape.
+Consumer code should be able to import `./io` and have it automatically
+resolved to the engine-specific implementation.
+*/
+
+/* global Deno */
 
 import * as l from './lang.mjs'
 import * as pt from './path.mjs'
-import * as cl from './cli.mjs'
+
+export const ENV = globalThis.process.env
+
+export function cwd() {return Deno.cwd()}
+export function exit(...src) {return Deno.exit(...src)}
 
 export function isErrNotFound(val) {return l.isInst(val, Deno.errors.NotFound)}
+export function skipErrNotFound(val) {return l.errSkip(val, isErrNotFound)}
 
-// Defined for symmetry with `readTextOpt`.
-export function readText(path) {return Deno.readTextFile(path)}
-
-export async function readTextOpt(path) {
-  if (l.isNil(path)) return ``
-
-  try {
-    return await readText(path)
-  }
-  catch (err) {
-    if (isErrNotFound(err)) return ``
-    throw err
-  }
+export function validPath(val) {
+  if (l.isPrim(val)) return val
+  if (l.isInst(val, URL)) return val
+  return l.reqScalar(val).toString()
 }
 
-// Defined for symmetry with `readTextSyncOpt`.
-export function readTextSync(path) {return Deno.readTextFileSync(path)}
+export function readFileText(path) {return Deno.readTextFile(validPath(path))}
+export function readFileTextSync(path) {return Deno.readTextFileSync(validPath(path))}
 
-export function readTextSyncOpt(path) {
-  if (l.isNil(path)) return ``
+export function readFileBytes(path) {return Deno.readFile(path)}
+export function readFileBytesSync(path) {return Deno.readFileSync(path)}
 
-  try {
-    return Deno.readTextFileSync(path)
-  }
-  catch (err) {
-    if (isErrNotFound(err)) return ``
-    throw err
-  }
+export function readFileTextOpt(path) {
+  if (l.isNil(path)) return undefined
+  return readFileText(path).catch(skipErrNotFound)
 }
 
-export async function readTextCreate(path) {
-  try {
-    return await readText(path)
-  }
+export function readFileTextOptSync(path) {
+  if (l.isNil(path)) return undefined
+  try {return readFileTextSync(path)}
   catch (err) {
-    if (isErrNotFound(err)) {
-      await create(path)
-      return ``
-    }
+    if (isErrNotFound(err)) return undefined
     throw err
   }
-}
-
-export async function readJson(path) {
-  return JSON.parse(await readText(path))
 }
 
 export function writeFile(path, body, opt) {
-  pt.reqPath(path)
+  path = validPath(path)
   l.optRec(opt)
+  if (l.isNil(body)) return Deno.create(path)
   if (l.isStr(body)) return Deno.writeTextFile(path, body, opt)
   if (l.isInst(body, Uint8Array)) return Deno.writeFile(path, body, opt)
-  throw TypeError(`unable to write ${l.show(path)}: file body must be either a string or a Uint8Array, got ${l.show(body)}`)
+  if (l.isInst(body, ReadableStream)) return Deno.writeFile(path, body, opt)
+  throw TypeError(`unable to write ${l.show(path)}: file body must be [string | Uint8Array | ReadableStream], got ${l.show(body)}`)
 }
 
-export function create(path) {return Deno.create(pt.reqPath(path))}
+export function writeFileSync(path, body, opt) {
+  validPath(path)
+  l.optRec(opt)
+  if (l.isNil(body)) return Deno.createSync(path)
+  if (l.isStr(body)) return Deno.writeTextFileSync(path, body, opt)
+  if (l.isInst(body, Uint8Array)) return Deno.writeFileSync(path, body, opt)
+  throw TypeError(`unable to write ${l.show(path)}: file body must be [string | Uint8Array], got ${l.show(body)}`)
+}
 
-export async function touch(path) {
-  const info = await FileInfo.statOpt(path)
+export function remove(path) {return Deno.remove(path)}
+export function removeSync(path) {return Deno.removeSync(path)}
 
-  if (!info) {
-    await create(path)
-    return
+export async function exists(path) {return !!await statOpt(path)}
+export function existsSync(path) {return !!statOptSync(path)}
+
+export async function stat(path) {
+  return statNorm(await Deno.stat(validPath(path)))
+}
+
+export function statSync(path) {
+  return statNorm(Deno.statSync(validPath(path)))
+}
+
+export function statOpt(path) {
+  if (l.isNil(path) || path === ``) return undefined
+  return stat(path).catch(skipErrNotFound)
+}
+
+export function statOptSync(path) {
+  if (l.isNil(path) || path === ``) return undefined
+  try {return statSync(path)}
+  catch (err) {
+    if (isErrNotFound(err)) return undefined
+    throw err
   }
-
-  if (!info.isFile()) throw Error(`${l.show(path)} is not a file`)
 }
 
-export function cwd() {return Deno.cwd()}
+export function statNorm(src) {
+  if (!l.optRec(src)) return undefined
+
+  return {
+    isDir: src.isDirectory,
+    isFile: src.isFile,
+    isSymlink: src.isSymlink,
+    isBlockDevice: src.isBlockDevice,
+    isCharDevice: src.isCharDevice,
+    isSocket: src.isSocket,
+    isFifo: src.isFifo,
+    size: src.size,
+    mtime: src.mtime?.valueOf(),
+    atime: src.atime?.valueOf(),
+    birthtime: src.birthtime?.valueOf(),
+    ctime: src.ctime?.valueOf(),
+    uid: src.uid,
+    gid: src.gid,
+    dev: src.dev,
+    ino: src.ino,
+    rdev: src.rdev,
+    mode: src.mode,
+    nlink: src.nlink,
+    blksize: src.blksize,
+    blocks: src.blocks,
+  }
+}
+
+// Caller must eventually call `.cancel` on the stream.
+export async function fileReadStream(path) {
+  return (await Deno.open(path)).readable
+}
+
+// Caller must eventually call `.close` on the stream.
+export async function fileWriteStream(path) {
+  return (await Deno.open(path)).writable
+}
+
+export function mkdir(path, opt) {
+  return Deno.mkdir(validPath(path), l.reqRec(opt))
+}
+
+export function mkdirSync(path, opt) {
+  return Deno.mkdirSync(validPath(path), l.reqRec(opt))
+}
+
+export async function readDir(path) {
+  const out = []
+  for await (const val of Deno.readDir(validPath(path))) {
+    val.toString = toStringGetName
+    out.push(val)
+  }
+  return out
+}
+
+export function readDirSync(path) {
+  const out = [...Deno.readDirSync(validPath(path))]
+  for (const val of out) val.toString = toStringGetName
+  return out
+}
 
 export function watchCwd() {return watchRel(Deno.cwd())}
 
-/*
-Needs a better name. Watches a path, converting all paths in each `Deno.FsEvent`
-from absolute to relative.
-*/
 export async function* watchRel(base) {
   l.req(base, pt.isAbs)
-  const toRel = path => pt.strictRelTo(path, base)
-
-  for await (const event of Deno.watchFs(base, {recursive: true})) {
-    event.paths = event.paths.map(toRel)
-    yield event
+  const iter = Deno.watchFs(base, {recursive: true})
+  for await (const {kind: type, paths} of iter) {
+    for (const path of paths) yield {type, path: pt.strictRelTo(path, base)}
   }
 }
 
-export async function* filterWatch(iter, fun) {
-  l.reqFun(fun)
-  for await (const event of iter) {
-    if (event.paths.some(fun)) yield event
-  }
-}
+/* Internal */
 
-export class FileInfo extends l.Emp {
-  constructor(stat, path) {
-    super()
-    this.path = pt.reqPath(path)
-    this.stat = l.reqRec(stat)
-  }
-
-  isFile() {return this.stat.isFile}
-  isDir() {return this.stat.isDirectory}
-
-  onlyFile() {return this.isFile() ? this : undefined}
-  onlyDir() {return this.isDir() ? this : undefined}
-
-  static async stat(path) {
-    return new this(await Deno.stat(pt.reqPath(path)), path)
-  }
-
-  static async statOpt(path) {
-    if (l.isNil(path)) return undefined
-
-    try {
-      return await this.stat(path)
-    }
-    catch (err) {
-      if (isErrNotFound(err)) return undefined
-      throw err
-    }
-  }
-}
-
-export function isReader(val) {return l.hasMeth(val, `read`)}
-export function reqReader(val) {return l.req(val, isReader)}
-
-export function isCloser(val) {return l.hasMeth(val, `close`)}
-export function reqCloser(val) {return l.req(val, isCloser)}
-
-function optClose(val) {if (isCloser(val)) val.close()}
-
-// Adapter between `Deno.Reader` and standard `ReadableStream`.
-export class ReaderStreamSource extends l.Emp {
-  constructor(src) {
-    super()
-    this.src = reqReader(src)
-    this.closed = false
-  }
-
-  // Called by `ReadableStream` when data is requested.
-  async pull(ctr) {
-    const buf = new Uint8Array(this.size())
-
-    try {
-      const len = await this.src.read(buf)
-
-      if (l.isNil(len)) {
-        this.deinit()
-        ctr.close()
-      }
-      else {
-        ctr.enqueue(buf.subarray(0, len))
-      }
-    }
-    catch (err) {
-      this.deinit()
-      ctr.error(err)
-    }
-  }
-
-  // Called by `ReadableStream` when canceled.
-  cancel() {this.deinit()}
-
-  // Just for completeness.
-  close() {this.deinit()}
-
-  deinit() {
-    if (!this.closed) {
-      this.closed = true
-      optClose(this.src)
-    }
-  }
-
-  static async open(path) {return new this(await Deno.open(path))}
-
-  size() {return 4096 * 16}
-}
-
-export class FileStream extends ReadableStream {
-  constructor(src, path) {
-    super(src)
-    this.src = l.reqInst(src, ReaderStreamSource)
-    this.path = pt.optPath(path)
-  }
-
-  cancel() {return this.deinit(), super.cancel()}
-  close() {this.deinit()}
-  deinit() {this.src.deinit()}
-
-  static async open(path) {
-    return new this(await this.Source.open(path), path)
-  }
-
-  static get Source() {return ReaderStreamSource}
-}
-
-/*
-Concatenates inputs into one stream. Supported inputs:
-
-  * Nils.
-  * `ReadableStream` instances.
-  * `Uint8Array` instances.
-  * String values.
-  * Stringable primitives such as numbers.
-  * Stringable objects such as `URL` instances.
-
-Other inputs are rejected with an exception.
-
-This class uses only standard web APIs, nothing Deno-related. If we end up
-writing other stream tools, we'll move this to a dedicated module.
-*/
-export class ConcatStreamSource extends l.Emp {
-  constructor(...src) {
-    super()
-    this.src = src.map(this.usable, this).filter(l.id)
-    CancelRegistry.register(this, this.src)
-  }
-
-  async pull(ctr) {
-    try {await this.pullInternal(ctr)}
-    catch (err) {
-      this.deinit(err)
-      ctr.error(err)
-    }
-  }
-
-  async pullInternal(ctr) {
-    while (this.src.length) {
-      const src = this.src[0]
-      if (l.isNil(src)) {
-        this.src.shift()
-        continue
-      }
-
-      if (l.isInst(src, Uint8Array)) {
-        this.src.shift()
-        ctr.enqueue(src)
-        return
-      }
-
-      const {done, value} = await src.read()
-      if (done) {
-        this.src.shift()
-        continue
-      }
-
-      ctr.enqueue(value)
-      return
-    }
-
-    ctr.close()
-  }
-
-  cancel(why) {return this.deinit(why)}
-
-  deinit(why) {
-    for (const val of this.src) deinit(val, why)
-    this.src.length = 0
-  }
-
-  usable(val) {
-    if (l.isNil(val)) return val
-    if (l.isInst(val, ReadableStream)) return val.getReader()
-    if (l.isInst(val, Uint8Array)) return val
-    return new TextEncoder().encode(l.renderLax(val))
-  }
-
-  static stream(...val) {return new this.Stream(new this(...val))}
-  static get Stream() {return ReadableStream}
-}
-
-const CancelRegistry = new FinalizationRegistry(cancelMany)
-
-function cancelMany(src) {for (src of src) deinit(src)}
-
-// Readers implement only `.cancel`. However, as a policy, we always support
-// `.deinit` which is our "standard" deinitialization interface.
-function deinit(val, why) {
-  if (l.hasMeth(val, `cancel`)) val.cancel(why)
-  else if (l.hasMeth(val, `deinit`)) val.deinit(why)
-}
-
-export class EnvMap extends cl.EnvMap {
-  mutFromFile(path) {return this.mut(readTextSync(path))}
-  mutFromFileOpt(path) {return this.mut(readTextSyncOpt(path))}
-
-  deleteInstalled() {
-    for (const key of this.keys()) {
-      if (l.isSome(Deno.env.get(key))) this.delete(key)
-    }
-    return this
-  }
-
-  install() {
-    for (const [key, val] of this.entries()) {
-      Deno.env.set(l.reqStr(key), l.render(val))
-    }
-    return this
-  }
-}
+/* eslint-disable no-invalid-this */
+function toStringGetName() {return this.name}
+/* eslint-enable no-invalid-this */
