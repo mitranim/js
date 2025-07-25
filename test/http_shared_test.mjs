@@ -106,6 +106,24 @@ await t.test(async function test_concatStreams() {
   ], `onetwothreefour`)
 })
 
+t.test(function test_decodeAcceptEncoding() {
+  function test(src, exp) {t.eq(hs.decodeAcceptEncoding(src), exp, src)}
+
+  test(``, [])
+  test(`zstd`, [`zstd`])
+  test(`zstd;q=1.0`, [`zstd`])
+  test(`zstd; q=1.0`, [`zstd`])
+  test(`br`, [`br`])
+  test(`br;q=1.0`, [`br`])
+  test(`br; q=1.0`, [`br`])
+  test(`gzip`, [`gzip`])
+  test(`deflate`, [`deflate`])
+  test(`zstd, br`, [`zstd`, `br`])
+  test(`zstd, br, gzip`, [`zstd`, `br`, `gzip`])
+  test(`zstd, br, gzip, deflate`, [`zstd`, `br`, `gzip`, `deflate`])
+  test(`zstd;q=1.0, br;q=0.9, gzip;q=0.8, deflate;q=0.7`, [`zstd`, `br`, `gzip`, `deflate`])
+})
+
 function stream(src) {return new Response(src).body}
 
 if (import.meta.main) console.log(`[test] ok!`)

@@ -296,7 +296,7 @@ t.test(function test_Coll() {
     test([])
     test({})
     test({pk: 10})
-    test({pk() {return undefined}})
+    test({pk() {}})
   })
 
   t.test(function test_add() {

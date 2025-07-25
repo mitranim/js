@@ -11,4 +11,6 @@
 !/doc
 !/docs
 !/test
-/prompts.md
+!/misc
+/misc/*
+!/misc/*.mjs

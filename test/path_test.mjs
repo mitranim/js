@@ -5,8 +5,6 @@ import * as p from '../path.mjs'
 
 t.test(function test_const() {
   t.is(p.default.dirSep, `/`)
-  t.is(p.default.extSep, `.`)
-  t.is(p.default.cwdRel, `.`)
   t.is(p.default.relPre, `./`)
   t.is(p.default.parRelPre, `../`)
 })
@@ -262,6 +260,7 @@ t.test(function test_isDirLike() {
   function miss(val) {t.no(p.isDirLike(val), val)}
   function hit(val) {t.ok(p.isDirLike(val), val)}
 
+  miss(``)
   miss(`one`)
 
   miss(`/one`)
@@ -284,7 +283,6 @@ t.test(function test_isDirLike() {
   miss(`file:///one/two`)
   miss(`file:///one\\two`)
 
-  hit(``)
   hit(`.`)
   hit(`./`)
   hit(`..`)
@@ -1009,6 +1007,12 @@ t.test(function test_ext() {
   none(`\\.one`)
   none(`one\\.two`)
   none(`\\one\\.two`)
+
+  none(`one.two/`)
+  none(`one.two\\`)
+
+  none(`one/two.three/`)
+  none(`one\\two.three\\`)
 
   test(`..one`, `.one`)
 

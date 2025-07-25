@@ -1,8 +1,6 @@
 /* global Deno */
 
 import * as l from './lang.mjs'
-import * as s from './str.mjs'
-import * as h from './http.mjs'
 import * as io from './io_deno.mjs'
 import * as hs from './http_shared.mjs'
 export * from './http.mjs'
@@ -22,6 +20,7 @@ export function srvUrl({hostname, port}) {
 
 export class HttpFile extends hs.BaseHttpFile {
   info = undefined
+  body = undefined
 
   static async make(urlPath, fsPath) {
     l.reqScalar(urlPath)
@@ -35,30 +34,17 @@ export class HttpFile extends hs.BaseHttpFile {
     return out
   }
 
-  async res(opt) {
-    opt = this.opt(opt)
-    const file = await Deno.open(this.fsPath)
-    try {
-      const res = new Response(file.readable, opt)
-      this.setHeaders(res.headers)
-      return res
-    }
-    catch (err) {
-      file.close()
-      throw err
-    }
+  async response(opt) {
+    const {body, fsPath} = this
+    opt = await this.opt(opt)
+    return new this.Res((body ?? (await Deno.open(fsPath)).readable), opt)
   }
 
+  async bytes() {return this.body ??= await io.readFileBytes(this.fsPath)}
   stat() {return this.info}
+  statSync() {return this.info}
   onlyFile() {return this.info.isFile ? this : undefined}
   onlyDir() {return this.info.isDir ? this : undefined}
-
-  // Not used automatically. User code can opt in.
-  etag() {
-    const {size, mtime, birthtime} = this.info
-    const out = s.dashed(birthtime?.valueOf(), mtime?.valueOf(), size)
-    return out && (`W/` + h.jsonEncode(out))
-  }
 }
 
 export class HttpDir extends hs.BaseHttpDir {get HttpFile() {return HttpFile}}

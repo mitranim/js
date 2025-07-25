@@ -470,10 +470,10 @@ export function not(fun) {
 }
 /* eslint-enable no-invalid-this */
 
-export function hasOwn(val, key) {return isComp(val) && own.call(val, key)}
-export function hasOwnEnum(val, key) {return isComp(val) && enu.call(val, key)}
-export function hasInherited(val, key) {return isComp(val) && key in val && !own.call(val, key)}
-export function hasMeth(val, key) {return isComp(val) && key in val && isFun(val[key])}
+export function hasOwn(val, key) {return isRecKey(key) && isComp(val) && own.call(val, key)}
+export function hasOwnEnum(val, key) {return isRecKey(key) && isComp(val) && enu.call(val, key)}
+export function hasInherited(val, key) {return isRecKey(key) && isComp(val) && key in val && !own.call(val, key)}
+export function hasMeth(val, key) {return isRecKey(key) && isComp(val) && key in val && isFun(val[key])}
 
 export function eq(one, two) {
   if (is(one, two)) return true

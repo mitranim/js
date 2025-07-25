@@ -631,21 +631,21 @@ t.bench(function bench_swapper_receiving_fun_fun() {swapperReceiving(l.nop, l.no
 t.bench(function bench_callable_regular_construct() {l.nop(new CallableRegular())})
 t.bench(function bench_callable_regular_call() {l.nop(callableRegular.call(10, 20))})
 
-// Minor overhead (single digit nanoseconds).
+// Minor overhead (≈10+ nanoseconds).
 t.bench(function bench_callable_proxy_construct() {l.nop(new CallableByProxy())})
 
-// Minor overhead (10+ nanoseconds).
+// Minor overhead (≈10+ nanoseconds).
 t.bench(function bench_callable_proxy_call() {l.nop(callableByProxy.call(10, 20))})
 
-// Major overhead (270+ nanoseconds).
+// Major overhead (≈270+ nanoseconds in V8, ≈100h nanoseconds in JSC).
 t.bench(function bench_callable_fun_construct() {l.nop(new CallableFun())})
 
 // No special overhead.
 t.bench(function bench_callable_fun_call() {l.nop(callableFun.call(10, 20))})
 
-// Not much difference in Deno or Node; much difference in Bun.
-t.bench(function bench_text_encoder_new() {new TextEncoder().encode()})
-t.bench(function bench_text_encoder_old() {textEnc.encode()})
+// Little difference in V8; big difference in JSC.
+t.bench(function bench_text_encoder_new() {l.nop(new TextEncoder().encode(`test`))})
+t.bench(function bench_text_encoder_old() {l.nop(textEnc.encode(`test`))})
 
 if (import.meta.main) {
   t.deopt()

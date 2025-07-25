@@ -1,9 +1,6 @@
 /*
 Module for code shared between `http_bun.mjs` and `http_deno.mjs`.
 Code intended for browser apps should be placed in `http.mjs`.
-
-All code in this module must use only the standard web APIs
-available in all modern environments.
 */
 
 import * as l from './lang.mjs'
@@ -11,33 +8,42 @@ import * as s from './str.mjs'
 import * as h from './http.mjs'
 import * as pt from './path.mjs'
 
-// Consumer code can add types as needed.
-export const EXT_TO_MIME_TYPE = l.Emp()
-EXT_TO_MIME_TYPE[`.css`] = `text/css`
-EXT_TO_MIME_TYPE[`.gif`] = `image/gif`
-EXT_TO_MIME_TYPE[`.htm`] = `text/html`
-EXT_TO_MIME_TYPE[`.html`] = `text/html`
-EXT_TO_MIME_TYPE[`.ico`] = `image/x-icon`
-EXT_TO_MIME_TYPE[`.jpeg`] = `image/jpeg`
-EXT_TO_MIME_TYPE[`.jpg`] = `image/jpeg`
-EXT_TO_MIME_TYPE[`.js`] = `application/javascript`
-EXT_TO_MIME_TYPE[`.json`] = `application/json`
-EXT_TO_MIME_TYPE[`.mjs`] = EXT_TO_MIME_TYPE[`.js`]
-EXT_TO_MIME_TYPE[`.pdf`] = `application/pdf`
-EXT_TO_MIME_TYPE[`.png`] = `image/png`
-EXT_TO_MIME_TYPE[`.svg`] = `image/svg+xml`
-EXT_TO_MIME_TYPE[`.tif`] = `image/tiff`
-EXT_TO_MIME_TYPE[`.tiff`] = `image/tiff`
-EXT_TO_MIME_TYPE[`.txt`] = `text/plain`
-EXT_TO_MIME_TYPE[`.xml`] = `text/xml`
-EXT_TO_MIME_TYPE[`.zip`] = `application/zip`
-EXT_TO_MIME_TYPE[`.webp`] = `image/webp`
-EXT_TO_MIME_TYPE[`.woff`] = `font/woff`
-EXT_TO_MIME_TYPE[`.woff2`] = `font/woff2`
+let ENC
+
+// Consumer code can extend this as needed.
+export const EXT_TO_MIME_TYPE = {
+  __proto__: null,
+  [`.css`]: `text/css`,
+  [`.gif`]: `image/gif`,
+  [`.htm`]: `text/html`,
+  [`.html`]: `text/html`,
+  [`.ico`]: `image/x-icon`,
+  [`.jpeg`]: `image/jpeg`,
+  [`.jpg`]: `image/jpeg`,
+  [`.js`]: `application/javascript`,
+  [`.json`]: `application/json`,
+  [`.mjs`]: `application/javascript`,
+  [`.pdf`]: `application/pdf`,
+  [`.png`]: `image/png`,
+  [`.svg`]: `image/svg+xml`,
+  [`.tif`]: `image/tiff`,
+  [`.tiff`]: `image/tiff`,
+  [`.txt`]: `text/plain`,
+  [`.xml`]: `text/xml`,
+  [`.zip`]: `application/zip`,
+  [`.webp`]: `image/webp`,
+  [`.woff`]: `font/woff`,
+  [`.woff2`]: `font/woff2`,
+}
 
 export function guessContentType(val) {
   return EXT_TO_MIME_TYPE[pt.ext(val).toLowerCase()]
 }
+
+// Consumer code can add extensions as needed.
+export const COMPRESSABLE = new Set([
+  `.css`, `.htm`, `.html`, `.js`, `.json`, `.mjs`, `.svg`, `.txt`, `.xml`,
+])
 
 /*
 A readable stream that can be written to.
@@ -63,11 +69,9 @@ export class WritableReadableStream extends ReadableStream {
 }
 
 export class WritableReadableByteStream extends WritableReadableStream {
-  enc = undefined
-
   write(val) {
-    const enc = this.enc ??= new TextEncoder()
-    return super.write(enc.encode(val))
+    ENC ??= new TextEncoder()
+    return super.write(ENC.encode(val))
   }
 }
 
@@ -133,7 +137,8 @@ export class ConcatStreamSource extends l.Emp {
     if (l.isInst(val, Uint8Array)) return val
     val = l.renderLax(val)
     if (!val) return undefined
-    return enc.encode(val)
+    ENC ??= new TextEncoder()
+    return ENC.encode(val)
   }
 
   cancel(reason) {return this.deinit(reason)}
@@ -143,8 +148,6 @@ export class ConcatStreamSource extends l.Emp {
     this.src.length = 0
   }
 }
-
-const enc = new TextEncoder()
 
 function cancelOrDeinit(val, why) {
   if (l.hasMeth(val, `cancel`)) val.cancel(why)
@@ -215,6 +218,9 @@ function isErrAbort(val) {return val?.name === `AbortError`}
 function jsonEncode(src) {return JSON.stringify(src) ?? `null`}
 
 export class BaseHttpFile extends l.Emp {
+  get Head() {return Headers}
+  get Res() {return Response}
+
   constructor(urlPath, fsPath) {
     super()
     this.urlPath = l.reqValidStr(urlPath)
@@ -229,18 +235,14 @@ export class BaseHttpFile extends l.Emp {
 
   opt(opt) {
     l.optRec(opt)
-    const {status} = this
-    if (l.isNil(status) || opt && !(`status` in opt)) return opt
-    return {...opt, status}
-  }
-
-  setHeaders(head) {this.setType(head)}
-
-  setType(head) {
+    const status = opt?.status ?? this.status
+    const headers = l.toInst(opt?.headers, this.Head)
     const key = h.HEADER_NAME_CONTENT_TYPE
-    if (head.has(key)) return
-    const val = guessContentType(this.fsPath)
-    if (val) head.set(key, val)
+    if (!headers.has(key)) {
+      const val = guessContentType(this.fsPath)
+      if (val) headers.set(key, val)
+    }
+    return {...opt, status, headers}
   }
 }
 
@@ -304,31 +306,42 @@ export class BaseHttpDir extends l.Emp {
   }
 }
 
+/*
+A list of multiple "HTTP dirs" (see above) with an external interface similar to
+that of a single directory. Correctly handles some edge cases such as resolving
+existing files before falling back on 404. Supports caching, which should be
+used in production for directories containing fixed sets of static files.
+
+Minor implementation note. When caching is enabled, we could choose to cache
+the cases where a path doesn't match a file, eliminating the cost of iterating
+through directories and using IO. This would be suitable in the case of
+well-behaved clients which only request a closed set of known, referenced
+paths, which are nevertheless missing for one reason or another. But it would
+also leak RAM in the case of malicious clients requesting many different
+invented, imaginary paths, which would allow them to eventually OOM-crash the
+server. Various mitigations are possible, but they seem out of scope.
+*/
 export class HttpDirs extends Array {
-  resolve(path) {
-    return this.procure(function iter(dir) {return dir.resolve(path)})
-  }
+  cache = false
+  resolved = undefined
 
-  resolveFile(path) {
-    return this.procure(function iter(dir) {return dir.resolveFile(path)})
-  }
-
-  resolveSiteFile(path) {
-    return this.procure(function iter(dir) {return dir.resolveSiteFile(path)})
-  }
-
-  resolveNotFound(path) {
-    return this.procure(function iter(dir) {return dir.resolveNotFound(path)})
-  }
+  resolve(path) {return this.procure(resolve, path)}
+  resolveFile(path) {return this.procure(resolveFile, path)}
+  resolveSiteFile(path) {return this.procure(resolveSiteFile, path)}
+  resolveNotFound(path) {return this.procure(resolveNotFound, path)}
 
   async resolveSiteFileWithNotFound(path) {
     return (await this.resolveSiteFile(path)) || (await this.resolveNotFound(path))
   }
 
-  async procure(fun) {
+  async procure(fun, path) {
+    const out = this.resolved?.[path]
+    if (out) return out
     for (const dir of this) {
-      const out = await fun(dir)
-      if (out) return out
+      const file = await fun.call(dir, path)
+      if (!file) continue
+      if (this.cache) (this.resolved ??= l.Emp())[path] ??= file
+      return file
     }
     return undefined
   }
@@ -336,7 +349,12 @@ export class HttpDirs extends Array {
   static of(...src) {return super.of(...src.filter(l.isSome))}
 }
 
-function toFilterOpt(val) {return l.isNil(val) ? val : toFilter(val)}
+/* eslint-disable no-invalid-this */
+function resolve(...src) {return this.resolve(...src)}
+function resolveFile(...src) {return this.resolveFile(...src)}
+function resolveSiteFile(...src) {return this.resolveSiteFile(...src)}
+function resolveNotFound(...src) {return this.resolveNotFound(...src)}
+/* eslint-enable no-invalid-this */
 
 function toFilter(val) {
   if (l.isFun(val)) return val
@@ -344,6 +362,183 @@ function toFilter(val) {
   throw l.errConv(val, `filter: need function or RegExp`)
 }
 
+function toFilterOpt(val) {return l.isNil(val) ? val : toFilter(val)}
 export function slashPre(val) {return s.optPre(val, `/`)}
 export function unslashPre(val) {return l.reqStr(val).replace(/^[/\\]*/g, ``)}
 export function hasDotDot(val) {return l.laxStr(val).includes(`..`)}
+
+/*
+Usage:
+
+  etag(await httpFile.stat())
+  etag(httpFile.statSync())
+
+In Deno, `HttpFile..stat` and `HttpFile..statSync` don't use IO.
+*/
+export function etag(stat) {
+  const {size, mtime, birthtime} = l.reqRec(stat)
+  const out = s.dashed(birthtime?.valueOf(), mtime?.valueOf(), size)
+  return out && (`W/` + h.jsonEncode(out))
+}
+
+/*
+Parses an `accept-encoding` header, returning the list of encodings
+without their q-values.
+*/
+export function decodeAcceptEncoding(src) {
+  const out = s.split(src, `,`)
+  let ind = -1
+  while (++ind < out.length) {
+    let val = out[ind]
+    const charInd = val.indexOf(`;`)
+    if (charInd >= 0) val = val.slice(0, charInd) // Get rid of q-value, if any.
+    out[ind] = val.trim()
+  }
+  return out
+}
+
+const ZSTD_LVL = 100 // ZLIB.constants.ZSTD_c_compressionLevel
+const BRO_LVL = 1 // ZLIB.constants.BROTLI_PARAM_QUALITY
+let ZLIB
+
+/*
+Tool for compressing HTTP responses. Can be used for dynamically generated
+responses and for static files. Has opt-in support for RAM caching, which
+should be used in production when serving a small fixed set of static files.
+
+Our current implementation is technically vulnerable to a "thundering herd"
+scenario where multiple concurrent requests are asking for the same file which
+is not yet cached, which end up compressing multiple times concurrently, but
+this should be rare and the redundancy is not worth fixing.
+
+Compression of dynamically-generated responses is unnecessary in Deno,
+which performs it automatically. It's provided for Bun.
+*/
+export class HttpCompressor extends l.Emp {
+  get Res() {return Response}
+  cache = false
+  resolved = undefined
+
+  // Our preferred order.
+  algos = [`zstd`, `br`, `gzip`, `deflate`]
+
+  // See `./misc/compression.mjs` for comparison of algos, levels, engines.
+  strats = {
+    __proto__: null,
+    zstd:    {key: `zstdCompress`,   opt: {params: {[ZSTD_LVL]: 9}}},
+    br:      {key: `brotliCompress`, opt: {params: {[BRO_LVL]: 5}}},
+    gzip:    {key: `gzip`,           opt: {level: 8}},
+    deflate: {key: `deflate`,        opt: {level: 8}},
+  }
+
+  async fileResponse({req, file, compression}) {
+    l.reqInst(req, Request)
+    l.optInst(file, BaseHttpFile)
+    l.optRec(compression)
+    if (!file) return undefined
+
+    const path = l.reqStr(file.fsPath)
+    const body = await file.bytes()
+    const opt = await file.opt()
+    if (!COMPRESSABLE.has(pt.ext(path))) return new this.Res(body, opt)
+    return this.response({req, body, opt, path, compression})
+  }
+
+  async response({req, body, opt, path, compression}) {
+    l.reqInst(req, Request)
+    l.optStr(path)
+    l.optRec(opt)
+    l.optRec(compression)
+
+    const algos = this.requestEncodings(req)
+    if (!algos?.length) return new this.Res(body, opt)
+
+    /*
+    Import just before we need this. Avoid adding startup latency when this
+    feature is not used.
+
+    Available in Bun, Deno, Node. At the time of writing, according to various
+    sources, Deno and Node offload compression to background threads, while Bun
+    does not. In the future, we should probably implement and use a worker pool
+    in Bun.
+    */
+    ZLIB ??= await import(`node:zlib`)
+
+    const cache = path && this.cache
+      ? ((this.resolved ??= l.Emp())[path] ??= l.Emp())
+      : undefined
+
+    let algo
+    let promise
+
+    for (algo of algos) {
+      const cached = cache?.[algo]
+      if (cached) {
+        const {body, opt} = cached
+        return withContentEncoding(new this.Res(body, opt), algo)
+      }
+      promise = this.compress(body, algo, compression?.[algo])
+      if (promise) break
+    }
+
+    if (!promise) return new this.Res(body, opt)
+    body = l.reqInst((await promise), Uint8Array)
+    if (cache) cache[algo] = {body, opt}
+    return withContentEncoding(new this.Res(body, opt), algo)
+  }
+
+  /*
+  When an algo is not supported, this method must SYNCHRONOUSLY return nil.
+  This means it can't be defined as an async method. Subclasses which override
+  it must respect this requirement. Otherwise we'd have to `await` for each
+  algo check. The caller must import `ZLIB` before calling this method.
+  */
+  compress(body, algo, opt) {
+    l.reqStr(algo)
+    l.optRec(opt)
+
+    const strat = this.strats[algo]
+    if (!strat) return undefined
+
+    const {key, opt: optDef} = strat
+    const fun = l.optFun(ZLIB[key])
+    if (!fun) return undefined
+
+    if (opt) opt = {...optDef, ...opt}
+    else opt = optDef
+
+    const {promise, reject, resolve} = Promise.withResolvers()
+    function done(err, val) {if (err) {reject(err)} else {resolve(val)}}
+    fun(body, opt, done)
+    return promise
+  }
+
+  /*
+  For simplicity, we always use our algo order and ignore client-specified
+  q-values. In the future, we may consider respecting q-values, but it seems
+  like an edge case since browsers tend to just list the algorithms.
+  For example, Chrome 138 specifies `gzip, deflate, br, zstd`.
+  */
+  requestEncodings(req) {
+    const algos = decodeAcceptEncoding(req.headers.get(h.HEADER_NAME_ACCEPT_ENCODING))
+    if (!algos.length) return algos
+
+    /*
+    Minor note: we cannot write this as:
+
+      this.algos.filter(algos.includes, algos)
+
+    ...because `Array..includes` has an optional second parameter,
+    which is an index at which to start searching.
+    */
+    return this.algos.filter(includes, algos)
+  }
+}
+
+// eslint-disable-next-line no-invalid-this
+function includes(val) {return this.includes(val)}
+
+function withContentEncoding(res, algo) {
+  res.headers.set(`content-encoding`, l.reqStr(algo))
+  return res
+}

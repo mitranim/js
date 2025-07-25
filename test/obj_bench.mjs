@@ -1,11 +1,14 @@
 // deno-lint-ignore-file getter-return
 
 import './internal_test_init.mjs'
-import * as lo from 'https://cdn.jsdelivr.net/npm/lodash-es/lodash.js'
 import * as itc from './internal_test_coll.mjs'
 import * as t from '../test.mjs'
 import * as l from '../lang.mjs'
 import * as o from '../obj.mjs'
+
+const lo = globalThis.Deno
+  ? (await import(`npm:lodash`)).default
+  : await import(`lodash`)
 
 /* Global */
 
@@ -135,6 +138,7 @@ const descriptorList = [
 ]
 
 const empty = Object.freeze(Object.create(null))
+const resource = Function(`return {use() {}, deinit() {}}`)()
 
 /* Bench */
 
@@ -179,6 +183,11 @@ t.bench(function bench_Object_getPrototypeOf() {
   l.nop(Object.getPrototypeOf(shallowLax))
 })
 
+/*
+- Deno 2.4.2: our `assign` is far faster than the other options.
+- Bun 1.2.19: `Object.assign` is fastest by far (faster than the above).
+*/
+t.bench(function bench_assign_object_spread() {l.reqRec({...itc.numDict})})
 t.bench(function bench_assign_Object_assign() {l.reqRec(Object.assign(Object.create(null), itc.numDict))})
 t.bench(function bench_assign_lodash_assign() {l.reqRec(lo.assign(Object.create(null), itc.numDict))})
 t.bench(function bench_assign_our_assign() {l.reqRec(o.assign(Object.create(null), itc.numDict))})
@@ -249,6 +258,15 @@ t.bench(function bench_define_properties_from_dict() {
 t.bench(function bench_define_properties_from_list() {
   const tar = Object.create(null)
   for (const desc of descriptorList) Object.defineProperty(tar, desc.key, desc)
+})
+
+t.bench(function bench_deinit_resource_try_finally() {
+  try {resource.use()}
+  finally {resource.deinit()}
+})
+
+t.bench(function bench_deinit_resource_for_of() {
+  for (const _ of o.resource(resource));
 })
 
 if (import.meta.main) {

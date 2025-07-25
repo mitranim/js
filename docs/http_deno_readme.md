@@ -19,7 +19,7 @@ Also see [`http`](http_readme.md) for routing and cookies, [`http_bun`](http_bun
 Simple example of a server that serves files from the current directory, automatically matching URL paths to HTML files:
 
 ```js
-import * as hd from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/http_deno.mjs'
+import * as hd from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/http_deno.mjs'
 
 // Finds files in the current folder, with no filtering.
 const DIRS = hd.HttpDirs.of(new hd.HttpDir(`.`))
@@ -28,7 +28,7 @@ async function respond(req) {
   const path = new URL(req.url).pathname
 
   return (
-    (await DIRS.resolveSiteFileWithNotFound(path))?.res() ||
+    (await DIRS.resolveSiteFileWithNotFound(path))?.response() ||
     new Response(`not found`, {status: 404})
   )
 }
@@ -42,7 +42,7 @@ Deno.serve({handler: respond})
 
 The following APIs are exported but undocumented. Check [http_deno.mjs](../http_deno.mjs).
 
-  * [`function serve`](../http_deno.mjs#L11)
-  * [`function srvUrl`](../http_deno.mjs#L16)
-  * [`class HttpFile`](../http_deno.mjs#L23)
-  * [`class HttpDir`](../http_deno.mjs#L64)
+  * [`function serve`](../http_deno.mjs#L9)
+  * [`function srvUrl`](../http_deno.mjs#L14)
+  * [`class HttpFile`](../http_deno.mjs#L21)
+  * [`class HttpDir`](../http_deno.mjs#L50)

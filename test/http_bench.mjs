@@ -63,6 +63,8 @@ t.bench(function bench_request_with_prealloc_header_cls() {
   }))
 })
 
+t.bench(function bench_response_empty() {l.nop(new Response())})
+
 /*
 Our routing pattern encourages passing regexps to methods. This verifies that
 using a regexp literal doesn't have a huge instantiation cost. Regexp literals

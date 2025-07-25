@@ -204,14 +204,18 @@ export const TERM_ESC_CLEAR_SOFT = TERM_ESC_RESET
 // Clear screen AND scrollback.
 export const TERM_ESC_CLEAR_HARD = TERM_ESC_CUP + TERM_ESC_RESET + TERM_ESC_ERASE3
 
+let ENC
+
 let ARR_CLEAR_SOFT
 export function arrClearSoft() {
-  return ARR_CLEAR_SOFT ??= new TextEncoder().encode(TERM_ESC_CLEAR_SOFT)
+  ENC ??= new TextEncoder()
+  return ARR_CLEAR_SOFT ??= ENC.encode(TERM_ESC_CLEAR_SOFT)
 }
 
 let ARR_CLEAR_HARD
 export function arrClearHard() {
-  return ARR_CLEAR_HARD ??= new TextEncoder().encode(TERM_ESC_CLEAR_HARD)
+  ENC ??= new TextEncoder()
+  return ARR_CLEAR_HARD ??= ENC.encode(TERM_ESC_CLEAR_HARD)
 }
 
 export function timed(tag, fun) {

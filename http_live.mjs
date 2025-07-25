@@ -23,8 +23,9 @@ export function liveScript() {
 
 export class LiveBroad extends hs.Broad {
   get Stream() {return hs.WritableReadableByteStream}
+  get Res() {return Response}
 
-  res(req, path) {
+  response(req, path) {
     path = l.optStr(path) || u.toUrl(req.url).pathname
     if (path === LIVE_PATH_SCRIPT) return this.clientRes(req)
     if (path === LIVE_PATH_EVENTS) return this.eventsRes(req)
@@ -33,16 +34,16 @@ export class LiveBroad extends hs.Broad {
   }
 
   clientRes() {
-    return new Response(liveScript(), {headers: HEADERS_LIVE_SCRIPT})
+    return new this.Res(liveScript(), {headers: HEADERS_LIVE_SCRIPT})
   }
 
   eventsRes() {
-    return new Response(this.make(), {headers: HEADERS_LIVE_EVENT_STREAM})
+    return new this.Res(this.make(), {headers: HEADERS_LIVE_EVENT_STREAM})
   }
 
   async sendRes(req) {
     await this.writeEvent(await req.text())
-    return new Response()
+    return new this.Res()
   }
 
   onWriteErr(err) {
@@ -52,6 +53,8 @@ export class LiveBroad extends hs.Broad {
 }
 
 export class LiveClient extends l.Emp {
+  get Res() {return Response}
+
   constructor(src) {
     super()
     l.optRec(src)
@@ -68,8 +71,9 @@ export class LiveClient extends l.Emp {
   }
 
   addFile(file) {
+    if (l.isNil(file)) return undefined
     const {fsPath, urlPath} = l.reqInst(file, hs.BaseHttpFile)
-    this.files[l.reqStr(fsPath)] = l.reqStr(urlPath)
+    this.files[l.reqStr(fsPath)] ??= l.reqStr(urlPath)
     return file
   }
 
@@ -77,8 +81,8 @@ export class LiveClient extends l.Emp {
   fsPathToUrlPath(path) {return this.files[l.reqStr(path)]}
 
   withLiveScript(res) {
-    if (!isResHtml(res)) return res
-    return new Response(hs.concatStreams(res.body, this.script), res)
+    if (!isResHtmlText(res)) return res
+    return new this.Res(hs.concatStreams(res.body, this.script), res)
   }
 }
 
@@ -99,10 +103,11 @@ const HEADERS_LIVE_EVENT_STREAM = [
   [`transfer-encoding`, `utf-8`],
 ]
 
-export function isResHtml(res) {
+export function isResHtmlText(res) {
   return (
     l.isInst(res, Response) &&
-    matchContentType(res?.headers.get(h.HEADER_NAME_CONTENT_TYPE), h.MIME_TYPE_HTML)
+    !res.headers.get(h.HEADER_NAME_CONTENT_ENCODING) &&
+    matchContentType(res.headers.get(h.HEADER_NAME_CONTENT_TYPE), h.MIME_TYPE_HTML)
   )
 }
 

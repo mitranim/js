@@ -336,7 +336,10 @@ export class Comment extends CharacterData {
   toJSON() {return this.outerHTML}
 }
 
-// Non-standard class for internal use.
+/*
+Allows us to implement `.innerHTML = ...` without too much overhead.
+External code can use this to include arbitrary HTML into the DOM.
+*/
 export class RawText extends CharacterData {
   get innerHTML() {return this.data}
   set innerHTML(val) {this.data = val}
@@ -1274,24 +1277,25 @@ export class RadioNodeList extends Array {}
 
 /* Namespaces */
 
-const PH_GLOB = l.Emp()
+const PH_GLOB = {
+  __proto__: null,
 
-PH_GLOB.get = function get(tar, key) {
-  if (key in tar) return tar[key]
-  if (key in ds) return ds[key]
-  if (!l.isStr(key)) return undefined
+  get(tar, key) {
+    if (key in tar) return tar[key]
+    if (key in ds) return ds[key]
+    if (!l.isStr(key)) return undefined
 
-  const cls = (
-    !key.endsWith(`Element`)
-    ? undefined
-    : key.startsWith(`HTML`)
-    ? HTMLElement
-    : key.startsWith(`SVG`)
-    ? SVGElement
-    : Element
-  )
-
-  return cls && class Element extends cls {static get name() {return key}}
+    const cls = (
+      !key.endsWith(`Element`)
+      ? undefined
+      : key.startsWith(`HTML`)
+      ? HTMLElement
+      : key.startsWith(`SVG`)
+      ? SVGElement
+      : Element
+    )
+    return cls && class Element extends cls {static get name() {return key}}
+  },
 }
 
 export const global = new Proxy(l.Emp(), PH_GLOB)

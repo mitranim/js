@@ -28,7 +28,7 @@ async function respond(req) {
   const path = new URL(req.url).pathname
 
   return (
-    (await DIRS.resolveSiteFileWithNotFound(path))?.res() ||
+    (await DIRS.resolveSiteFileWithNotFound(path))?.response() ||
     new Response(`not found`, {status: 404})
   )
 }
@@ -42,7 +42,7 @@ Bun.serve({fetch: respond})
 
 The following APIs are exported but undocumented. Check [http_bun.mjs](../http_bun.mjs).
 
-  * [`function serve`](../http_bun.mjs#L10)
-  * [`function srvUrl`](../http_bun.mjs#L19)
-  * [`class HttpFile`](../http_bun.mjs#L21)
-  * [`class HttpDir`](../http_bun.mjs#L55)
+  * [`function serve`](../http_bun.mjs#L9)
+  * [`function srvUrl`](../http_bun.mjs#L18)
+  * [`class HttpFile`](../http_bun.mjs#L20)
+  * [`class HttpDir`](../http_bun.mjs#L49)

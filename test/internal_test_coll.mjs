@@ -33,6 +33,9 @@ export const numArgs = function() {return arguments}(...numArr)
 export const knownKeys = Object.keys(numArr.slice(0, numArr.length/2))
 export const numEntries = Object.entries(numDict)
 
+export const strArrSmall = makeNumArr(4).map(String)
+export const strSetSmall = new Set(strArrSmall)
+
 function makeNumArr(len) {
   const out = Array(len)
   let ind = -1

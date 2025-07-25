@@ -23,7 +23,7 @@
 CLI args:
 
 ```js
-import * as cl from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/cli.mjs'
+import * as cl from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/cli.mjs'
 
 const cli = cl.Flag.os()
 
@@ -34,7 +34,7 @@ console.log(...cli.args)
 Console clearing:
 
 ```js
-import * as cl from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/cli.mjs'
+import * as cl from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/cli.mjs'
 
 cl.emptty()
 ```
@@ -42,7 +42,7 @@ cl.emptty()
 Clearing the console only once, before running your code:
 
 ```js
-import 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.78/cli_emptty.mjs'
+import 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/cli_emptty.mjs'
 ```
 
 ## API
@@ -83,6 +83,6 @@ The following APIs are exported but undocumented. Check [cli.mjs](../cli.mjs).
   * [`const TERM_ESC_RESET`](../cli.mjs#L198)
   * [`const TERM_ESC_CLEAR_SOFT`](../cli.mjs#L202)
   * [`const TERM_ESC_CLEAR_HARD`](../cli.mjs#L205)
-  * [`function arrClearSoft`](../cli.mjs#L208)
-  * [`function arrClearHard`](../cli.mjs#L213)
-  * [`function timed`](../cli.mjs#L217)
+  * [`function arrClearSoft`](../cli.mjs#L210)
+  * [`function arrClearHard`](../cli.mjs#L216)
+  * [`function timed`](../cli.mjs#L221)

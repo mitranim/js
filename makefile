@@ -13,12 +13,14 @@ HOOK_PRE_COMMIT_FILE ?= .git/hooks/pre-commit
 CLEAR ?= $(if $(filter false,$(clear)),, )
 CMD_CLEAR ?= $(and $(CLEAR),--clear)
 CMD_SRV ?= test/cmd_srv.mjs
-WATCH ?= watchexec $(and $(CLEAR),-c) -r -d=1ms -n
+WATCH ?= watchexec $(and $(CLEAR),-c) -q -r -d=1ms -n
 WATCH_SRC ?= $(WATCH) -e=mjs
 ESLINT ?= bunx --bun eslint@9.31.0 --config .eslint.config.mjs --ignore-pattern=local .
 
 ifeq ($(engine),deno)
-	JS_RUN ?= deno run -A --no-check --node-modules-dir=false --v8-flags=--expose_gc
+	JS_RUN ?= deno run -A --no-check --quiet --v8-flags=--expose_gc
+else ifeq ($(engine),node)
+	JS_RUN ?= node
 else
 	JS_RUN ?= bun run
 endif
@@ -42,7 +44,7 @@ bench:
 	$(JS_RUN) $(BENCH)
 
 srv_w:
-	$(JS_WATCH) $(CMD_SRV)
+	$(JS_WATCH) $(CMD_SRV) --live
 
 srv:
 	$(JS_RUN) $(CMD_SRV) --live
@@ -56,7 +58,7 @@ lint_deno_w:
 	$(WATCH_SRC) -- $(MAKE) lint_deno
 
 lint_deno:
-	deno lint --rules-exclude=no-empty,require-yield,require-await,constructor-super,no-self-assign,no-this-alias
+	deno lint
 
 lint_eslint_w:
 	$(WATCH_SRC) -- $(MAKE) lint_eslint

@@ -1,7 +1,7 @@
 /*
 Tiny server for running tests in the browser.
 Serves files and performs live reloading.
-Compatible with Bun and Deno.
+Can run in both Bun and Deno.
 */
 
 import * as l from '../lang.mjs'
@@ -12,9 +12,15 @@ import * as io from '#io'
 
 const CLI = cl.Flag.os()
 const LIVE = CLI.boolOpt(`--live`)
+const CACHING = false // Toggle when debugging caching and compression.
 const DIR = new h.HttpDir(`.`)
+const DIRS = h.HttpDirs.of(DIR)
 const LIVE_BRO = l.vac(LIVE) && new hl.LiveBroad()
 const LIVE_CLI = l.vac(LIVE) && new hl.LiveClient()
+const COMPRESSOR = l.vac(CACHING) && new h.HttpCompressor()
+
+DIRS.cache = CACHING
+if (COMPRESSOR) COMPRESSOR.cache = CACHING
 
 function serve() {
   h.serve({port: 37285, onRequest, onError, onListen})
@@ -29,14 +35,15 @@ async function onRequest(req) {
   const path = new URL(req.url).pathname
 
   const res = await (
-    LIVE_BRO?.res(req, path) ||
-    (await serveFile(path)) ||
+    LIVE_BRO?.response(req, path) ||
+    (await serveFile(req, path)) ||
     h.notFound(req.method, path)
   )
 
   /*
-  Without these headers, Safari uses low-resolution timestamps,
-  breaking our tests which rely on "high"-resolution timing.
+  Without these headers, Safari uses low-resolution timestamps, breaking our
+  tests which rely on "high"-resolution timing, which is merely okay-resolution
+  to begin with.
   */
   res.headers.append(`cross-origin-opener-policy`, `same-origin`)
   res.headers.append(`cross-origin-embedder-policy`, `require-corp`)
@@ -51,12 +58,15 @@ function onError(err) {
   return new Response(msg, {status})
 }
 
-async function serveFile(path) {
-  const file = await DIR.resolveSiteFile(path)
+async function serveFile(req, path) {
+  const file = await DIRS.resolveSiteFile(path)
   if (!file) return undefined
-  if (!LIVE_CLI) return file.res()
-  LIVE_CLI.addFile(file)
-  return LIVE_CLI.withLiveScript(await file.res())
+  LIVE_CLI?.addFile(file)
+  const res = (
+    (await COMPRESSOR?.fileResponse({req, file})) ??
+    (await file.response())
+  )
+  return hl.withLiveScript(LIVE_CLI, res)
 }
 
 async function watch() {

@@ -16,6 +16,11 @@ class EqNever extends l.Emp {eq() {return false}}
 
 /* Test */
 
+t.test(function test_object_literal_proto_null() {
+  if (Object.getPrototypeOf({__proto__: null}) == null) return
+  console.warn(`[test] warning: current environment does not support null-prototyping via {__proto__: null}`)
+})
+
 // Tested first because used in most assertions.
 t.test(function test_show() {
   function test(src, exp) {t.is(l.show(src), exp)}
@@ -1223,15 +1228,35 @@ t.test(function test_hasOwnEnum() {
   t.ok(l.hasOwnEnum({toString: 10},          `toString`))
   t.no(l.hasOwnEnum(inherit({toString: 10}), `toString`))
 
-  t.ok(l.hasOwnEnum(inherit(null, {toString: {value: 10, enumerable: true}}), `toString`))
-  t.no(l.hasOwnEnum(inherit(null, {toString: {value: 10, enumerable: false}}), `toString`))
-  t.no(l.hasOwnEnum(inherit(inherit(null, {toString: {value: 10, enumerable: true}})), `toString`))
-  t.no(l.hasOwnEnum(inherit(inherit(null, {toString: {value: 10, enumerable: false}})), `toString`))
+  const one = inherit(null, {toString: {value: 10, enumerable: true}})
+  const two = inherit(null, {toString: {value: 10, enumerable: false}})
+
+  t.ok(l.hasOwnEnum(one, `toString`))
+  t.no(l.hasOwnEnum(two, `toString`))
+  t.no(l.hasOwnEnum(inherit(one), `toString`))
+  t.no(l.hasOwnEnum(inherit(two), `toString`))
+
+  {
+    const arr = [10, 20, 30]
+    t.eq(Object.keys(arr), [`0`, `1`, `2`])
+    t.eq(Reflect.ownKeys(arr), [`0`, `1`, `2`, `length`])
+
+    t.no(l.hasOwnEnum(arr, 0))
+    t.no(l.hasOwnEnum(arr, `length`))
+    t.ok(l.hasOwnEnum(arr, `0`))
+    t.ok(l.hasOwnEnum(arr, `1`))
+    t.ok(l.hasOwnEnum(arr, `2`))
+    t.no(l.hasOwnEnum(arr, `3`))
+    t.no(l.hasOwnEnum(inherit(arr), `0`))
+  }
 })
 
 t.test(function test_hasInherited() {
-  t.no(l.hasInherited(undefined,         `toString`))
-  t.ok(l.hasInherited(Object(undefined), `toString`))
+  t.no(l.hasInherited(undefined, `toString`))
+  t.no(l.hasInherited(null,      `toString`))
+  t.ok(l.hasInherited({},        `toString`))
+  t.no(l.hasInherited({},        undefined))
+  t.no(l.hasInherited({},        {}))
 
   t.no(l.hasInherited(10,         `toString`))
   t.ok(l.hasInherited(Object(10), `toString`))
@@ -1254,18 +1279,12 @@ t.test(function test_hasInherited() {
 
   t.no(l.hasInherited([10, 20, 30], 0))
   t.no(l.hasInherited([10, 20, 30], `0`))
-  t.ok(l.hasOwnEnum([10, 20, 30], 0))
-  t.ok(l.hasOwnEnum([10, 20, 30], `0`))
 
   t.no(l.hasInherited([10, 20, 30], 1))
   t.no(l.hasInherited([10, 20, 30], `1`))
-  t.ok(l.hasOwnEnum([10, 20, 30], 1))
-  t.ok(l.hasOwnEnum([10, 20, 30], `1`))
 
   t.no(l.hasInherited([10, 20, 30], 3))
   t.no(l.hasInherited([10, 20, 30], `3`))
-  t.no(l.hasOwnEnum([10, 20, 30], 3))
-  t.no(l.hasOwnEnum([10, 20, 30], `3`))
 })
 
 t.test(function test_hasMeth() {

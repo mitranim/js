@@ -33,18 +33,6 @@ export function isFile(val) {return typeof File === `function` && l.isInst(val, 
 export function reqFile(val) {return l.req(val, isFile)}
 export function optFile(val) {return l.opt(val, isFile)}
 
-// export class ChildDiff extends WeakSet {
-//   mut(tar, src) {
-//     reqNode(tar)
-//     src = new Set(l.optSeq(src))
-//     for (const val of tar.childNodes) {
-//       if (this.has(val) && !src.has(val)) val.remove()
-//     }
-//     for (const val of src) this.add(val)
-//     tar.append(...src)
-//   }
-// }
-
 export function eventKill(val) {
   if (!optEvent(val)) return val
   val.preventDefault()
@@ -67,7 +55,7 @@ export function eventDispatch(tar, typ, data) {
 }
 
 export function eventListen(tar, typ, han, opt) {
-  l.reqObj(tar).addEventListener(l.reqStr(typ), l.reqComp(han), l.optDict(opt))
+  l.reqObj(tar).addEventListener(l.reqStr(typ), l.reqComp(han), l.optRec(opt))
   return function deinit() {tar.removeEventListener(typ, han, opt)}
 }
 
@@ -110,16 +98,6 @@ export function nodeSel(val, sel) {return val.querySelector(l.reqStr(sel))}
 export function nodeSelAll(val, sel) {return val.querySelectorAll(l.reqStr(sel))}
 export function isConnected(val) {return isNode(val) && val.isConnected}
 export function isDisconnected(val) {return isNode(val) && !val.isConnected}
-
-// export function addEvents(node, names, opt) {
-//   reqDomHandler(node)
-//   for (const name of l.reqArr(names)) node.addEventListener(name, node, opt)
-// }
-
-// export function removeEvents(node, names, opt) {
-//   reqDomHandler(node)
-//   for (const name of l.reqArr(names)) node.removeEventListener(name, node, opt)
-// }
 
 export function copyToClipboard(src) {
   if (!(src = l.render(src))) return

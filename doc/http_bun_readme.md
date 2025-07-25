@@ -28,7 +28,7 @@ async function respond(req) {
   const path = new URL(req.url).pathname
 
   return (
-    (await DIRS.resolveSiteFileWithNotFound(path))?.res() ||
+    (await DIRS.resolveSiteFileWithNotFound(path))?.response() ||
     new Response(`not found`, {status: 404})
   )
 }

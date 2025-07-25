@@ -15,15 +15,19 @@ Limitations:
 import * as l from './lang.mjs'
 import * as s from './str.mjs'
 
-export const FS_SEP_WINDOWS = `\\`
-export const FS_SEP_POSIX = `/`
+export const SEP_WINDOWS = `\\`
+export const SEP_POSIX = `/`
+export const SEP_ENV = `:`
+export const EXT_SEP = `.`
+export const CWD_REL = `.`
+export const PAR_REL = `..`
 
 export function toPosix(val) {
-  return normInner(val).replace(/[/\\]/g, FS_SEP_POSIX)
+  return normBase(val).replace(/[/\\]/g, SEP_POSIX)
 }
 
 export function toWindows(val) {
-  return normInner(val).replace(/[/\\]/g, FS_SEP_WINDOWS)
+  return normBase(val).replace(/[/\\]/g, SEP_WINDOWS)
 }
 
 export function norm(...src) {return paths.norm(...src)}
@@ -45,7 +49,7 @@ export function volume(...src) {return paths.volume(...src)}
 export function hasVolume(...src) {return paths.hasVolume(...src)}
 export function name(...src) {return paths.name(...src)}
 export function ext(...src) {return paths.ext(...src)}
-export function hasExt(val) {return l.isStr(val) && /\.\w+$/.test(val)}
+export function hasExt(...src) {return paths.hasExt(...src)}
 export function stem(...src) {return paths.stem(...src)}
 export function replaceSep(...src) {return paths.replaceSep(...src)}
 
@@ -56,35 +60,23 @@ makes it possible to implement OS-specific versions, if that's ever going to be
 needed. Default global instance is exported below.
 */
 export class Paths extends l.Emp {
-  // Preferred "directory separator".
-  get dirSep() {return FS_SEP_POSIX}
-
-  // "Extension separator".
-  get extSep() {return `.`}
-
-  // "Current working directory empty value".
-  get cwdEmp() {return ``}
-
-  // "Current working directory relative path".
-  get cwdRel() {return `.`}
-
-  // "Parent directory relative path".
-  get parRel() {return `..`}
+  // Preferred directory separator.
+  get dirSep() {return SEP_POSIX}
 
   // "Relative to current directory prefix".
-  get relPre() {return this.cwdRel + this.dirSep}
+  get relPre() {return CWD_REL + this.dirSep}
 
   // "Relative to parent directory prefix".
-  get parRelPre() {return this.parRel + this.dirSep}
+  get parRelPre() {return PAR_REL + this.dirSep}
 
-  norm(val) {return normInner(val).replace(/[/\\]/g, this.dirSep)}
+  norm(val) {return normBase(val).replace(/[/\\]/g, this.dirSep)}
 
   // Limitations:
   // - No support for collapsing `..`.
   // - No support for collapsing inner `//`.
   clean(val) {
     val = this.norm(val)
-    if (this.isCwdRel(val)) return this.cwdEmp
+    if (this.isCwdRel(val)) return ``
 
     const sep = this.dirSep
     if (val === sep) return val
@@ -120,7 +112,7 @@ export class Paths extends l.Emp {
 
   isCwdRel(val) {
     val = this.norm(val)
-    return val === this.cwdEmp || val === this.cwdRel || val === this.relPre
+    return !val || val === CWD_REL || val === this.relPre
   }
 
   isAbs(val) {
@@ -133,8 +125,8 @@ export class Paths extends l.Emp {
   isRelExplicit(val) {
     val = this.norm(val)
     return (
-      val === this.cwdRel ||
-      val === this.parRel ||
+      val === CWD_REL ||
+      val === PAR_REL ||
       val.startsWith(this.relPre) ||
       val.startsWith(this.parRelPre)
     )
@@ -153,14 +145,20 @@ export class Paths extends l.Emp {
   */
   isDirLike(val) {
     val = this.norm(val)
-    return (
-      val === this.cwdEmp ||
-      val === this.cwdRel ||
-      val === this.parRel ||
+    return !!val && (
+      val === CWD_REL ||
+      val === PAR_REL ||
       val.endsWith(this.dirSep) ||
-      !!val && val === this.volume(val)
+      val === this.volume(val)
     )
   }
+
+  /*
+  Should append the directory separator if the path is non-empty and doesn't
+  already end with the separator. For other paths, including `.isCwdRel()`,
+  this should be a nop.
+  */
+  dirLike(val) {return s.optSuf(this.clean(val), this.dirSep)}
 
   // Missing feature: `..` flattening.
   join(base, ...vals) {
@@ -199,7 +197,7 @@ export class Paths extends l.Emp {
       throw Error(`unable to make ${l.show(sub)} strictly relative to ${l.show(sup)}: not a subpath`)
     }
 
-    if (sub === sup) return this.cwdEmp
+    if (sub === sup) return ``
     return s.stripPre(sub, this.dirLike(sup))
   }
 
@@ -225,22 +223,15 @@ export class Paths extends l.Emp {
 
     const preLen = supPath.length - len
     const sep = this.dirSep
-    const pre = preLen ? Array(preLen).fill(this.parRel).join(sep) : ``
+    const pre = preLen ? Array(preLen).fill(PAR_REL).join(sep) : ``
     const suf = subPath.slice(len)
     return s.inter(pre, sep, suf.join(sep))
   }
 
-  /*
-  Should append the directory separator if the path is non-empty and doesn't
-  already end with the separator. For other paths, including `.isCwdRel()`,
-  this should be a nop.
-  */
-  dirLike(val) {return s.optSuf(this.clean(val), this.dirSep)}
-
   dir(val) {
     val = this.norm(val)
 
-    if (this.isCwdRel(val)) return this.cwdEmp
+    if (this.isCwdRel(val)) return ``
     if (val.endsWith(this.dirSep)) return this.clean(val)
 
     val = this.clean(val)
@@ -273,17 +264,26 @@ export class Paths extends l.Emp {
   }
 
   // "Extension".
-  ext(val) {return extInner(this.name(val), this.extSep)}
+  ext(val) {
+    val = normBase(val)
+    if (
+      !val ||
+      val.endsWith(this.dirSep) ||
+      val.endsWith(SEP_POSIX) ||
+      val.endsWith(SEP_WINDOWS)
+    ) return ``
+    return l.laxStr(val.match(/[^/\\:](\.[a-z\d]+)$/i)?.[1])
+  }
+
+  hasExt(val) {return l.isStr(val) && /\.[a-z\d]+$/i.test(val)}
 
   // Returns the part of `name` without an extension.
   stem(val) {
     val = this.name(val)
-    return s.stripSuf(val, extInner(val, this.extSep))
+    return s.stripSuf(val, this.ext(val))
   }
 
-  replaceSep(val, sep) {
-    return s.replaceAll(this.norm(val), this.dirSep, sep)
-  }
+  replaceSep(val, sep) {return s.replaceAll(this.norm(val), this.dirSep, sep)}
 }
 
 const paths = new Paths()
@@ -291,17 +291,9 @@ export default paths
 
 /* Internal */
 
-function normInner(val) {
+function normBase(val) {
   if (l.isInst(val, URL)) return val.pathname
   val = l.renderLax(val)
   val = s.stripPre(val, `file://`)
   return val
-}
-
-// Must be called ONLY on the file name, without the directory path.
-function extInner(val, sep) {
-  l.reqStr(val)
-  l.reqStr(sep)
-  const ind = val.lastIndexOf(sep)
-  return ind > 0 ? val.slice(ind) : ``
 }

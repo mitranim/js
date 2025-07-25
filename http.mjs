@@ -19,12 +19,14 @@ export const PUT = `PUT`
 export const PATCH = `PATCH`
 export const DELETE = `DELETE`
 
-export const HEADER_NAME_CACHE_CONTROL = `cache-control`
-export const HEADER_NAME_CONTENT_TYPE = `content-type`
 export const HEADER_NAME_ACCEPT = `accept`
-export const HEADER_NAME_ETAG = `etag`
 export const HEADER_NAME_ORIGIN = `origin`
 export const HEADER_NAME_HOST = `host`
+export const HEADER_NAME_ETAG = `etag`
+export const HEADER_NAME_CACHE_CONTROL = `cache-control`
+export const HEADER_NAME_CONTENT_TYPE = `content-type`
+export const HEADER_NAME_ACCEPT_ENCODING = `accept-encoding`
+export const HEADER_NAME_CONTENT_ENCODING = `content-encoding`
 export const HEADER_NAME_CORS_CREDENTIALS = `access-control-allow-credentials`
 export const HEADER_NAME_CORS_HEADERS = `access-control-allow-headers`
 export const HEADER_NAME_CORS_METHODS = `access-control-allow-methods`
@@ -207,6 +209,8 @@ Short for "request router". A low-level procedural-style router
 intended for servers.
 */
 export class ReqRou extends Rou {
+  get Res() {return Response}
+
   constructor(req) {
     l.reqInst(req, Request)
     super(req.url)
@@ -217,7 +221,7 @@ export class ReqRou extends Rou {
   Example (depends on app semantics):
 
     if (rou.preflight()) {
-      return new Response(undefined, {headers: h.HEADERS_CORS_PROMISCUOUS})
+      return new this.Res(undefined, {headers: h.HEADERS_CORS_PROMISCUOUS})
     }
   */
   preflight() {return this.someMethod(HEAD, OPTIONS)}
@@ -246,14 +250,14 @@ export class ReqRou extends Rou {
 
   async eitherAsync(val, fun) {return (await val) || this.call(fun)}
 
-  empty() {return new Response()}
+  empty() {return new this.Res()}
 
-  notFound() {return notFound(this.req.method, this.url.pathname)}
+  notFound() {return notFound.call(this, this.req.method, this.url.pathname)}
 
   notAllowed() {
     const pat = this.url.pathname
     const met = this.req.method
-    return new Response(`method not allowed: ${met} ${pat}`, {status: 405})
+    return new this.Res(`method not allowed: ${met} ${pat}`, {status: 405})
   }
 
   call(fun) {return l.reqFun(fun).call(this, this)}
@@ -267,7 +271,8 @@ export class ReqRou extends Rou {
 export function notFound(path, meth) {
   l.reqStr(path)
   l.reqStr(meth)
-  return new Response(`not found: ${meth} ${path}`, {status: 404})
+  const Res = this.Res ?? Response // eslint-disable-line no-invalid-this
+  return new Res(`not found: ${meth} ${path}`, {status: 404})
 }
 
 // Used internally by `Cookies`.

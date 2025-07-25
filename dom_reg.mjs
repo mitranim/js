@@ -2,99 +2,104 @@ import * as l from './lang.mjs'
 import * as o from './obj.mjs'
 
 /*
-Represents a hidden part of native DOM implementations: mapping from element
-names to class names. The native DOM API doesn't expose such a registry, so we
-have to implement it ourselves.
+Part of the DOM spec not exposed by browser implementations: mapping from
+element names to class names. The DOM API doesn't seem to expose this.
 */
-export const TAG_TO_CLS = l.Emp()
-TAG_TO_CLS[`a`] = `HTMLAnchorElement`
-TAG_TO_CLS[`area`] = `HTMLAreaElement`
-TAG_TO_CLS[`audio`] = `HTMLAudioElement`
-TAG_TO_CLS[`base`] = `HTMLBaseElement`
-TAG_TO_CLS[`body`] = `HTMLBodyElement`
-TAG_TO_CLS[`br`] = `HTMLBRElement`
-TAG_TO_CLS[`button`] = `HTMLButtonElement`
-TAG_TO_CLS[`canvas`] = `HTMLCanvasElement`
-TAG_TO_CLS[`data`] = `HTMLDataElement`
-TAG_TO_CLS[`datalist`] = `HTMLDataListElement`
-TAG_TO_CLS[`details`] = `HTMLDetailsElement`
-TAG_TO_CLS[`dialog`] = `HTMLDialogElement`
-TAG_TO_CLS[`div`] = `HTMLDivElement`
-TAG_TO_CLS[`dl`] = `HTMLDListElement`
-TAG_TO_CLS[`embed`] = `HTMLEmbedElement`
-TAG_TO_CLS[`fieldset`] = `HTMLFieldSetElement`
-TAG_TO_CLS[`font`] = `HTMLFontElement`
-TAG_TO_CLS[`form`] = `HTMLFormElement`
-TAG_TO_CLS[`frame`] = `HTMLFrameElement`
-TAG_TO_CLS[`frameset`] = `HTMLFrameSetElement`
-TAG_TO_CLS[`head`] = `HTMLHeadElement`
-TAG_TO_CLS[`h1`] = `HTMLHeadingElement`
-TAG_TO_CLS[`h2`] = `HTMLHeadingElement`
-TAG_TO_CLS[`h3`] = `HTMLHeadingElement`
-TAG_TO_CLS[`h4`] = `HTMLHeadingElement`
-TAG_TO_CLS[`h5`] = `HTMLHeadingElement`
-TAG_TO_CLS[`h6`] = `HTMLHeadingElement`
-TAG_TO_CLS[`hr`] = `HTMLHRElement`
-TAG_TO_CLS[`html`] = `HTMLHtmlElement`
-TAG_TO_CLS[`iframe`] = `HTMLIFrameElement`
-TAG_TO_CLS[`img`] = `HTMLImageElement`
-TAG_TO_CLS[`input`] = `HTMLInputElement`
-TAG_TO_CLS[`label`] = `HTMLLabelElement`
-TAG_TO_CLS[`legend`] = `HTMLLegendElement`
-TAG_TO_CLS[`li`] = `HTMLLIElement`
-TAG_TO_CLS[`link`] = `HTMLLinkElement`
-TAG_TO_CLS[`map`] = `HTMLMapElement`
-TAG_TO_CLS[`marquee`] = `HTMLMarqueeElement`
-TAG_TO_CLS[`menu`] = `HTMLMenuElement`
-TAG_TO_CLS[`meta`] = `HTMLMetaElement`
-TAG_TO_CLS[`meter`] = `HTMLMeterElement`
-TAG_TO_CLS[`del`] = `HTMLModElement`
-TAG_TO_CLS[`ins`] = `HTMLModElement`
-TAG_TO_CLS[`object`] = `HTMLObjectElement`
-TAG_TO_CLS[`ol`] = `HTMLOListElement`
-TAG_TO_CLS[`optgroup`] = `HTMLOptGroupElement`
-TAG_TO_CLS[`option`] = `HTMLOptionElement`
-TAG_TO_CLS[`output`] = `HTMLOutputElement`
-TAG_TO_CLS[`p`] = `HTMLParagraphElement`
-TAG_TO_CLS[`param`] = `HTMLParamElement`
-TAG_TO_CLS[`picture`] = `HTMLPictureElement`
-TAG_TO_CLS[`pre`] = `HTMLPreElement`
-TAG_TO_CLS[`progress`] = `HTMLProgressElement`
-TAG_TO_CLS[`q`] = `HTMLQuoteElement`
-TAG_TO_CLS[`blockquote`] = `HTMLQuoteElement`
-TAG_TO_CLS[`script`] = `HTMLScriptElement`
-TAG_TO_CLS[`select`] = `HTMLSelectElement`
-TAG_TO_CLS[`slot`] = `HTMLSlotElement`
-TAG_TO_CLS[`source`] = `HTMLSourceElement`
-TAG_TO_CLS[`span`] = `HTMLSpanElement`
-TAG_TO_CLS[`style`] = `HTMLStyleElement`
-TAG_TO_CLS[`caption`] = `HTMLTableCaptionElement`
-TAG_TO_CLS[`th`] = `HTMLTableCellElement`
-TAG_TO_CLS[`td`] = `HTMLTableCellElement`
-TAG_TO_CLS[`col`] = `HTMLTableColElement`
-TAG_TO_CLS[`colgroup`] = `HTMLTableColElement`
-TAG_TO_CLS[`table`] = `HTMLTableElement`
-TAG_TO_CLS[`tr`] = `HTMLTableRowElement`
-TAG_TO_CLS[`tfoot`] = `HTMLTableSectionElement`
-TAG_TO_CLS[`thead`] = `HTMLTableSectionElement`
-TAG_TO_CLS[`tbody`] = `HTMLTableSectionElement`
-TAG_TO_CLS[`template`] = `HTMLTemplateElement`
-TAG_TO_CLS[`textarea`] = `HTMLTextAreaElement`
-TAG_TO_CLS[`time`] = `HTMLTimeElement`
-TAG_TO_CLS[`title`] = `HTMLTitleElement`
-TAG_TO_CLS[`track`] = `HTMLTrackElement`
-TAG_TO_CLS[`ul`] = `HTMLUListElement`
-TAG_TO_CLS[`video`] = `HTMLVideoElement`
-TAG_TO_CLS[`svg`] = `SVGSvgElement`
+export const TAG_TO_CLS = {
+  __proto__: null,
+  a: `HTMLAnchorElement`,
+  area: `HTMLAreaElement`,
+  audio: `HTMLAudioElement`,
+  base: `HTMLBaseElement`,
+  body: `HTMLBodyElement`,
+  br: `HTMLBRElement`,
+  button: `HTMLButtonElement`,
+  canvas: `HTMLCanvasElement`,
+  data: `HTMLDataElement`,
+  datalist: `HTMLDataListElement`,
+  details: `HTMLDetailsElement`,
+  dialog: `HTMLDialogElement`,
+  div: `HTMLDivElement`,
+  dl: `HTMLDListElement`,
+  embed: `HTMLEmbedElement`,
+  fieldset: `HTMLFieldSetElement`,
+  font: `HTMLFontElement`,
+  form: `HTMLFormElement`,
+  frame: `HTMLFrameElement`,
+  frameset: `HTMLFrameSetElement`,
+  head: `HTMLHeadElement`,
+  h1: `HTMLHeadingElement`,
+  h2: `HTMLHeadingElement`,
+  h3: `HTMLHeadingElement`,
+  h4: `HTMLHeadingElement`,
+  h5: `HTMLHeadingElement`,
+  h6: `HTMLHeadingElement`,
+  hr: `HTMLHRElement`,
+  html: `HTMLHtmlElement`,
+  iframe: `HTMLIFrameElement`,
+  img: `HTMLImageElement`,
+  input: `HTMLInputElement`,
+  label: `HTMLLabelElement`,
+  legend: `HTMLLegendElement`,
+  li: `HTMLLIElement`,
+  link: `HTMLLinkElement`,
+  map: `HTMLMapElement`,
+  marquee: `HTMLMarqueeElement`,
+  menu: `HTMLMenuElement`,
+  meta: `HTMLMetaElement`,
+  meter: `HTMLMeterElement`,
+  del: `HTMLModElement`,
+  ins: `HTMLModElement`,
+  object: `HTMLObjectElement`,
+  ol: `HTMLOListElement`,
+  optgroup: `HTMLOptGroupElement`,
+  option: `HTMLOptionElement`,
+  output: `HTMLOutputElement`,
+  p: `HTMLParagraphElement`,
+  param: `HTMLParamElement`,
+  picture: `HTMLPictureElement`,
+  pre: `HTMLPreElement`,
+  progress: `HTMLProgressElement`,
+  q: `HTMLQuoteElement`,
+  blockquote: `HTMLQuoteElement`,
+  script: `HTMLScriptElement`,
+  select: `HTMLSelectElement`,
+  slot: `HTMLSlotElement`,
+  source: `HTMLSourceElement`,
+  span: `HTMLSpanElement`,
+  style: `HTMLStyleElement`,
+  caption: `HTMLTableCaptionElement`,
+  th: `HTMLTableCellElement`,
+  td: `HTMLTableCellElement`,
+  col: `HTMLTableColElement`,
+  colgroup: `HTMLTableColElement`,
+  table: `HTMLTableElement`,
+  tr: `HTMLTableRowElement`,
+  tfoot: `HTMLTableSectionElement`,
+  thead: `HTMLTableSectionElement`,
+  tbody: `HTMLTableSectionElement`,
+  template: `HTMLTemplateElement`,
+  textarea: `HTMLTextAreaElement`,
+  time: `HTMLTimeElement`,
+  title: `HTMLTitleElement`,
+  track: `HTMLTrackElement`,
+  ul: `HTMLUListElement`,
+  video: `HTMLVideoElement`,
+  svg: `SVGSvgElement`,
+}
 
 /*
-Represents a hidden part of native DOM implementations: mapping from class names
-to element names. The native DOM API doesn't expose such a registry, so we have
-to implement it ourselves.
+Another part of the DOM spec not exposed by browser implementations:
+mapping from class names to element names.
 */
-export const CLS_TO_TAG = l.Emp()
-for (const [tag, cls] of Object.entries(TAG_TO_CLS)) {
-  CLS_TO_TAG[cls] = cls in CLS_TO_TAG ? undefined : tag
+export const CLS_TO_TAG = clsToTag(TAG_TO_CLS)
+
+function clsToTag(src) {
+  const out = l.Emp()
+  for (const [tag, cls] of Object.entries(src)) {
+    out[cls] = cls in out ? undefined : tag
+  }
+  return out
 }
 
 const RE_ELEM_CLS_NAME = /^(?:HTML|SVG)(\w*)Element$/

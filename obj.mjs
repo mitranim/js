@@ -359,6 +359,23 @@ export function mutated(tar, src) {
   )
 }
 
+export function* resource(val) {try {yield val} finally {deinit(val)}}
+
+export function* resources(...val) {
+  try {yield val} finally {for (val of val) deinit(val)}
+}
+
+export function deinit(val) {
+  if (!l.isComp(val)) return undefined
+  if (l.hasMeth(val, `deinit`)) return val.deinit()
+  if (l.hasMeth(val, `abort`)) return val.abort()
+  if (l.hasMeth(val, `close`)) return val.close()
+  if (l.hasMeth(val, `dispose`)) return val.dispose()
+  if (l.hasMeth(val, Symbol.dispose)) return val[Symbol.dispose]()
+  if (l.hasMeth(val, Symbol.disposeAsync)) return val[Symbol.disposeAsync]()
+  return undefined
+}
+
 /* Internal */
 
 export function descIn(tar, key) {

@@ -158,6 +158,9 @@ t.bench(function bench_includes_lodash() {l.reqBool(lo.includes(itc.numArr, 701)
 t.bench(function bench_includes_index_of() {l.reqBool(includesWithIndexOf(itc.numArr, 701))})
 t.bench(function bench_includes_our_includes() {l.reqBool(i.includes(itc.numArr, 701))})
 
+t.bench(function bench_includes_native_small_set() {l.reqBool(itc.strArrSmall.includes(3))})
+t.bench(function bench_includes_native_small_arr() {l.reqBool(itc.strSetSmall.has(3))})
+
 const includeValues = [0, 11, 101, 201, 301, 401, 501, 601, 701, 801, 901, 1001]
 t.bench(function bench_includes_mul_native() {for (const val of includeValues) l.reqBool(itc.numArr.includes(val))})
 t.bench(function bench_includes_mul_lodash() {for (const val of includeValues) l.reqBool(lo.includes(itc.numArr, val))})
@@ -585,10 +588,8 @@ t.bench(function bench_pickKeys_our_pickKeys() {l.reqRec(i.pickKeys(itc.numDict,
 t.bench(function bench_omitKeys_lodash_omit() {l.reqRec(lo.omit(itc.numDict, itc.knownKeys))})
 t.bench(function bench_omitKeys_our_omitKeys() {l.reqRec(i.omitKeys(itc.numDict, itc.knownKeys))})
 
-if (import.meta.main) {
-  t.deopt()
-  t.benches()
-}
+t.bench(function bench_set_from_arr_small() {l.nop(new Set(itc.strArrSmall))})
+t.bench(function bench_set_from_arr_large() {l.nop(new Set(itc.numArr))})
 
 /* Util */
 
@@ -799,4 +800,11 @@ function mapClsDumb(src, cls) {
 function mapClsClosure(src, cls) {
   l.reqFun(cls)
   return i.map(src, function make(val) {return new cls(val)})
+}
+
+/* Execution */
+
+if (import.meta.main) {
+  t.deopt()
+  t.benches()
 }

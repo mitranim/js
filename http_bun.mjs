@@ -1,8 +1,7 @@
 /* global Bun */
 
 import * as l from './lang.mjs'
-import * as s from './str.mjs'
-import * as h from './http.mjs'
+import * as io from './io_bun.mjs'
 import * as hs from './http_shared.mjs'
 export * from './http.mjs'
 export * from './http_shared.mjs'
@@ -21,6 +20,7 @@ export function srvUrl(srv) {return srv.url}
 export class HttpFile extends hs.BaseHttpFile {
   file = undefined
   info = undefined
+  body = undefined
 
   static async make(urlPath, fsPath) {
     l.reqScalar(urlPath)
@@ -34,22 +34,16 @@ export class HttpFile extends hs.BaseHttpFile {
     return out
   }
 
-  async res(opt) {
-    const res = new Response(this.file, this.opt(opt))
-    this.setHeaders(res.headers)
-    return res
+  async response(opt) {
+    const {body, file} = this
+    return new this.Res((body ?? file), await this.opt(opt))
   }
 
-  stat() {return this.info ??= this.file.stat()}
-  async onlyFile() {return (await this.stat()).isFile() ? this : undefined}
-  async onlyDir() {return (await this.stat()).isDirectory() ? this : undefined}
-
-  // Not used automatically. User code can opt in.
-  async etag() {
-    const {size, mtimeMs, birthtimeMs} = await this.file.stat()
-    const out = s.dashed(birthtimeMs?.valueOf(), mtimeMs?.valueOf(), size)
-    return out && (`W/` + h.jsonEncode(out))
-  }
+  async bytes() {return this.body ??= await this.file.bytes()}
+  async stat() {return this.info ??= io.statNorm(await this.file.stat())}
+  statSync() {return this.info ??= io.statNorm(io.statSync(this.fsPath))}
+  async onlyFile() {return (await this.stat()).isFile ? this : undefined}
+  async onlyDir() {return (await this.stat()).isDir ? this : undefined}
 }
 
 export class HttpDir extends hs.BaseHttpDir {get HttpFile() {return HttpFile}}
