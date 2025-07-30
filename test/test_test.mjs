@@ -16,8 +16,8 @@ function advanceTime() {
 // Tool for tracking call levels.
 class Track extends l.Emp {
   constructor() {super().lvl = 0}
-  inc() {return this.lvl += 1, this}
-  dec() {return this.lvl -= 1, this}
+  inc() {return (this.lvl += 1), this}
+  dec() {return (this.lvl -= 1), this}
   req(exp) {return t.is(this.lvl, exp), this}
 }
 
@@ -185,6 +185,15 @@ t.test(function test_equal() {
 
   t.no(t.equal(new URL(`https://example.com`), new URL(`https://example.comm`)))
   t.ok(t.equal(new URL(`https://example.com`), new URL(`https://example.com`)))
+
+  t.no(t.equal(
+    new Headers([[`one`, `two`]]),
+    new Headers([[`one`, `three`]]),
+  ))
+  t.ok(t.equal(
+    new Headers([[`one`, `two`]]),
+    new Headers([[`one`, `two`]]),
+  ))
 })
 
 t.test(function test_now() {

@@ -54,7 +54,7 @@ t.test(function test_Node_empty() {
 
 t.test(function test_owner_document() {
   function test(cls) {
-    const node = new cls()
+    const node = new cls(``)
     t.is(node.ownerDocument, null)
 
     ds.document.adoptNode(node)
@@ -101,7 +101,7 @@ t.test(function test_Node_hasChildNodes() {
 
 t.test(function test_Node_contains() {
   const tar = new ds.Node()
-  const one = new ds.Text()
+  const one = new ds.Text(``)
   const two = new ds.Text(`two`)
 
   t.no(tar.contains(one))
@@ -384,6 +384,19 @@ t.test(function test_Node_after() {
   tar.append(one, two, three, four)
   test(one, two, three, four)
 
+  /*
+  Native / standard DOM behavior:
+
+    new Text()             = new Text(``)        👍
+    new Text(undefined)    = new Text(``)        👍
+    new Text(null)         = new Text(`null`)    🤯
+
+    new Comment()          = new Comment(``)     👍
+    new Comment(undefined) = new Comment(``)     👍
+    new Comment(null)      = new Comment(`null`) 🤯
+
+  We can't abide this null insanity, so our check is stricter: no nil.
+  */
   failUnstringable(val => one.after(val))
 
   one.after()
@@ -715,25 +728,25 @@ function testCharacterData(Cls, fun) {
     valid(new Cls(src), l.render(src), exp)
 
     {
-      const tar = new Cls()
+      const tar = new Cls(``)
       tar.data = src
       valid(tar, l.render(src), exp)
     }
 
     {
-      const tar = new Cls()
+      const tar = new Cls(``)
       tar.nodeValue = src
       valid(tar, l.render(src), exp)
     }
 
     {
-      const tar = new Cls()
+      const tar = new Cls(``)
       tar.textContent = src
       valid(tar, l.render(src), exp)
     }
   }
 
-  valid(new Cls(), ``, ``)
+  valid(new Cls(``), ``, ``)
 
   test(``, ``)
   test(false, `false`)
@@ -744,120 +757,6 @@ function testCharacterData(Cls, fun) {
   test(`one`, `one`)
   test(new URL(`https://example.com`), `https://example.com/`)
   test(`<script>alert("hacked")</script>`, `&lt;script&gt;alert("hacked")&lt;/script&gt;`)
-}
-
-t.test(function test_NamedNodeMap() {
-  function make() {
-    return new ds.NamedNodeMap().set(`one`, `two`).set(`three`, `four`)
-  }
-
-  /*
-  These APIs are both inefficient and inconvenient. We implement them for
-  compatibility reasons, but none of our code relies on them, and application
-  code shouldn't need them either. Our implementation is not entirely
-  standards-compliant.
-  */
-  t.test(function test_standard_behaviors() {
-    t.test(function test_getNamedItem() {
-      test_NamedNodeMap_getNamedItem(make())
-    })
-
-    t.test(function test_setNamedItem() {
-      const tar = new ds.NamedNodeMap()
-
-      t.throws(() => tar.setNamedItem(), TypeError, `expected variant of isObj, got undefined`)
-      t.throws(() => tar.setNamedItem(10), TypeError, `expected variant of isObj, got 10`)
-
-      tar.setNamedItem({name: `one`, value: `two`})
-      tar.setNamedItem({name: `three`, value: `four`})
-
-      test_NamedNodeMap_getNamedItem(tar)
-    })
-
-    t.test(function test_removeNamedItem() {
-      const tar = make()
-      tar.setNamedItem({name: `five`, value: `six`})
-      tar.removeNamedItem(`five`)
-      test_NamedNodeMap_getNamedItem(tar)
-    })
-
-    t.test(function test_iter() {
-      const tar = make()
-      t.eq([...tar], [tar.getNamedItem(`one`), tar.getNamedItem(`three`)])
-      t.eq([...tar].map(val => val.name), [`one`, `three`])
-    })
-  })
-
-  t.test(function test_set() {
-    const tar = new ds.NamedNodeMap()
-
-    failUnstringable(val => tar.set(val, `str`))
-    failUnstringable(val => tar.set(`str`, val))
-
-    tar.set(`one`, 10)
-    tar.set(`two`, new URL(`https://example.com`))
-
-    t.eq([...tar.entries()], [[`one`, `10`], [`two`, `https://example.com/`]])
-  })
-
-  t.test(function test_toString() {
-    t.is(new ds.NamedNodeMap().toString(), ``)
-
-    t.is(make().toString(), ` one="two" three="four"`)
-
-    /*
-    At the moment, we escape attribute values, which often come from untrusted
-    sources, without validating attribute names which are assumed to be
-    hardcoded. In the future, we may also add validation of attribute names.
-
-    See comment on `ds.escapeAttr`.
-    */
-    t.is(
-      new ds.NamedNodeMap([[
-        `one`,
-        `"><script>alert("two")</script><span `
-      ]]).toString(),
-      ` one="&quot;&gt;&lt;script&gt;alert(&quot;two&quot;)&lt;/script&gt;&lt;span "`,
-    )
-  })
-
-  t.test(function test_item_mutation() {
-    const tar = make()
-    t.eq([...tar.entries()], [[`one`, `two`], [`three`, `four`]])
-
-    {
-      const item = tar.getNamedItem(`one`)
-      t.is(item.name, `one`)
-      t.is(item.value, `two`)
-
-      item.value = `five`
-      t.eq([...tar.entries()], [[`one`, `five`], [`three`, `four`]])
-    }
-
-    {
-      const item = tar.getNamedItem(`three`)
-      t.is(item.name, `three`)
-      t.is(item.value, `four`)
-
-      item.value = `six`
-      t.eq([...tar.entries()], [[`one`, `five`], [`three`, `six`]])
-    }
-  })
-})
-
-function test_NamedNodeMap_getNamedItem(tar) {
-  t.is(tar.getNamedItem(`five`), undefined)
-
-  function test(key, val) {
-    const item = tar.getNamedItem(key)
-
-    t.is(item.name, key)
-    t.is(item.value, val)
-    t.is(item.value, tar.get(key))
-  }
-
-  test(`one`, `two`)
-  test(`three`, `four`)
 }
 
 t.test(function test_Element_localName() {
@@ -1029,7 +928,7 @@ t.test(function test_Element_attributes() {
     t.no(tar.hasAttribute(`three`))
     t.is(tar.getAttribute(`three`), null)
 
-    t.eq(tar.attributes, new ds.NamedNodeMap())
+    t.eq(tar.domShim_attrs(), new ds.Attrs())
   }
 
   {
@@ -1041,7 +940,7 @@ t.test(function test_Element_attributes() {
     t.no(tar.hasAttribute(`three`))
     t.is(tar.getAttribute(`three`), null)
 
-    t.eq(tar.attributes, new ds.NamedNodeMap().set(`one`, `two`))
+    t.eq(tar.domShim_attrs(), new ds.Attrs().set(`one`, `two`))
   }
 
   {
@@ -1053,7 +952,7 @@ t.test(function test_Element_attributes() {
     t.ok(tar.hasAttribute(`three`))
     t.is(tar.getAttribute(`three`), `four`)
 
-    t.eq(tar.attributes, new ds.NamedNodeMap().set(`one`, `two`).set(`three`, `four`))
+    t.eq(tar.domShim_attrs(), new ds.Attrs().set(`one`, `two`).set(`three`, `four`))
   }
 
   {
@@ -1065,42 +964,42 @@ t.test(function test_Element_attributes() {
     t.ok(tar.hasAttribute(`three`))
     t.is(tar.getAttribute(`three`), `four`)
 
-    t.eq(tar.attributes, new ds.NamedNodeMap().set(`three`, `four`))
+    t.eq(tar.domShim_attrs(), new ds.Attrs().set(`three`, `four`))
   }
 
   {
     tar.removeAttribute(`three`)
-    t.eq(tar.attributes, new ds.NamedNodeMap())
+    t.eq(tar.domShim_attrs(), new ds.Attrs())
   }
 
   {
     t.ok(tar.toggleAttribute(`one`))
-    t.eq(tar.attributes, new ds.NamedNodeMap().set(`one`, ``))
+    t.eq(tar.domShim_attrs(), new ds.Attrs().set(`one`, ``))
   }
 
   {
     t.no(tar.toggleAttribute(`one`))
-    t.eq(tar.attributes, new ds.NamedNodeMap())
+    t.eq(tar.domShim_attrs(), new ds.Attrs())
   }
 
   {
     t.ok(tar.toggleAttribute(`one`, true))
-    t.eq(tar.attributes, new ds.NamedNodeMap().set(`one`, ``))
+    t.eq(tar.domShim_attrs(), new ds.Attrs().set(`one`, ``))
   }
 
   {
     t.ok(tar.toggleAttribute(`one`, true))
-    t.eq(tar.attributes, new ds.NamedNodeMap().set(`one`, ``))
+    t.eq(tar.domShim_attrs(), new ds.Attrs().set(`one`, ``))
   }
 
   {
     t.no(tar.toggleAttribute(`one`, false))
-    t.eq(tar.attributes, new ds.NamedNodeMap())
+    t.eq(tar.domShim_attrs(), new ds.Attrs())
   }
 
   {
     t.no(tar.toggleAttribute(`one`, false))
-    t.eq(tar.attributes, new ds.NamedNodeMap())
+    t.eq(tar.domShim_attrs(), new ds.Attrs())
   }
 })
 
@@ -1183,7 +1082,7 @@ t.test(function test_Element_dataset() {
 
   function test(own, attr) {
     t.own(tar.dataset, own)
-    t.is(tar.attributes.toString(), attr)
+    t.is(tar.domShim_attrs().toString(), attr)
   }
 
   test({}, ``)

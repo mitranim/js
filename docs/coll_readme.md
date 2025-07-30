@@ -26,7 +26,7 @@ Port and rework of https://github.com/mitranim/jol.
 ## Usage
 
 ```js
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/coll.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/coll.mjs'
 ```
 
 ## API
@@ -101,8 +101,8 @@ Links: [source](../coll.mjs#L100); [test/example](../test/coll_test.mjs#L218).
 Variant of [#`Bmap`](#class-bmap) with support for key and value checks. Subclasses must override methods `.reqKey` and `.reqVal`. These methods are automatically called by `.set`. Method `.reqKey` must validate and return the given key, and method `.reqVal` must validate and return the given value. Use type assertions provided by [`lang`](lang_readme.md).
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/lang.mjs'
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/coll.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/lang.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/coll.mjs'
 
 class StrNatMap extends c.TypedMap {
   reqKey(key) {return l.reqStr(key)}
@@ -242,7 +242,7 @@ Differences and advantages over `Array`:
 The overhead of the wrapper is insignificant.
 
 ```js
-import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/coll.mjs'
+import * as c from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/coll.mjs'
 
 console.log(new c.Vec())
 // Vec{Symbol(val): []}

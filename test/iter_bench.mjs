@@ -62,7 +62,8 @@ t.bench(function bench_keys_array_native_our_arr() {i.arrCopy(itc.numArr.keys())
 t.bench(function bench_keys_array_lodash() {l.reqArr(lo.keys(itc.numArr))})
 t.bench(function bench_keys_array_our_keys() {l.reqArr(i.keys(itc.numArr))})
 
-t.bench(function bench_keys_dict_native() {l.reqArr(Object.keys(itc.numDict))})
+t.bench(function bench_keys_dict_Object() {l.reqArr(Object.keys(itc.numDict))})
+t.bench(function bench_keys_dict_Reflect() {l.reqArr(Reflect.ownKeys(itc.numDict))})
 t.bench(function bench_keys_dict_lodash() {l.reqArr(lo.keys(itc.numDict))})
 t.bench(function bench_keys_dict_by_for_in() {l.reqArr(recKeysByForIn(itc.numDict))})
 t.bench(function bench_keys_dict_our_keys() {l.reqArr(i.keys(itc.numDict))})
@@ -104,7 +105,6 @@ t.bench(function bench_values_vec_our_values() {l.reqArr(i.values(itc.numVec))})
 
 t.bench(function bench_values_walk_array_as_is() {for (const val of itc.numArr) l.nop(val)})
 t.bench(function bench_values_walk_array_values_native() {for (const val of itc.numArr.values()) l.nop(val)})
-t.bench(function bench_values_walk_dict_by_for_in() {for (const key in itc.numDict) l.nop(itc.numDict[key])})
 t.bench(function bench_values_walk_map_values_native() {for (const val of itc.numMap.values()) l.nop(val)})
 t.bench(function bench_values_walk_set_direct() {for (const val of itc.numSet) l.nop(val)})
 t.bench(function bench_values_walk_set_forEach() {itc.numSet.forEach(l.nop)})
@@ -112,7 +112,8 @@ t.bench(function bench_values_walk_set_forEach() {itc.numSet.forEach(l.nop)})
 // Note: the behavior below is not entirely equivalent; lodash uses string keys.
 itc.deoptSeqHof(i.entries)
 itc.deoptSeqHof(lo.entries)
-t.bench(function bench_entries_array_native() {i.arr(itc.numArr.entries())})
+t.bench(function bench_entries_array_native_spread() {l.reqArr([...itc.numArr.entries()])})
+t.bench(function bench_entries_array_native_toArray() {l.reqArr(itc.numArr.entries().toArray())})
 t.bench(function bench_entries_array_lodash() {l.reqArr(lo.entries(itc.numArr))})
 t.bench(function bench_entries_array_our_entries() {l.reqArr(i.entries(itc.numArr))})
 
@@ -121,10 +122,12 @@ t.bench(function bench_entries_dict_lodash() {l.reqArr(lo.entries(itc.numDict))}
 t.bench(function bench_entries_dict_dumb() {l.reqArr(recEntriesDumb(itc.numDict))})
 t.bench(function bench_entries_dict_our_entries() {l.reqArr(i.entries(itc.numDict))})
 
-t.bench(function bench_entries_set_native() {i.arr(itc.numSet.entries())})
+t.bench(function bench_entries_set_native_spread() {l.reqArr([...itc.numSet.entries()])})
+t.bench(function bench_entries_set_native_toArray() {l.reqArr(itc.numSet.entries().toArray())})
 t.bench(function bench_entries_set_our_entries() {l.reqArr(i.entries(itc.numSet))})
 
-t.bench(function bench_entries_map_native() {i.arr(itc.numMap.entries())})
+t.bench(function bench_entries_map_native_spread() {l.reqArr([...itc.numMap.entries()])})
+t.bench(function bench_entries_map_native_toArray() {l.reqArr(itc.numMap.entries().toArray())})
 t.bench(function bench_entries_map_our_entries() {l.reqArr(i.entries(itc.numMap))})
 
 t.bench(function bench_entries_walk_array_inline() {
@@ -133,8 +136,43 @@ t.bench(function bench_entries_walk_array_inline() {
 })
 
 t.bench(function bench_entries_walk_array_entries_native() {for (const [key, val] of itc.numArr.entries()) l.nop(key, val)})
-t.bench(function bench_entries_walk_dict_by_for_in() {for (const key in itc.numDict) l.nop(key, itc.numDict[key])})
 t.bench(function bench_entries_walk_map_entries_native() {for (const [key, val] of itc.numMap.entries()) l.nop(key, val)})
+
+/*
+Despite being an algorithmic sin, iteration of dicts is an extremely common
+use case, especially in `prax.mjs` rendering.
+
+In V8 (Deno 2.4.2, V8 13), `Object.keys` into `for..of` tends to perform
+slightly better than `for..in`. In JSC (Bun 1.2.19), `Object.keys` on large-ish
+dicts tends to be massively slower than in V8, while `for..in` performs about
+as well as using `for..of` on keys in V8. We default to `Object.keys` because
+it's more correct. For example, for old "classes" created with `function` and
+direct assignment of methods to prototypes, the methods are enumerable and are
+visited by `for..in`, but not collected by `Object.keys`. This is unfortunate
+for our dict iteration performance in JSC.
+
+`Reflect.ownKeys` is slower in both engines, and usually undesirable anyway.
+When iterating a dict, the intended behavior is usually to only visit regular
+properties and skip symbolic properties.
+
+If we could reliably detect JSC, we might consider using `for..in` for dicts
+whose prototype is either null or `Object.prototype`. For the latter, the only
+way to accidentally inherit an enumerable property is due to extremely clumsy
+prototype pollution, and nobody does that to `Object.prototype` these days, or
+ever, due to high likelihood of breaking other code.
+
+That said, our tiny benchmarks in `prax_bench.mjs` show no difference in either
+engine when manually switching from `for..of` to `for..in` for prop iteration.
+JSC shows measurably better performance in either case, at the time of writing
+(Bun 1.2.19 vs Deno 2.4.2).
+*/
+t.bench(function bench_walk_dict_by_for_in() {for (const key in itc.numDict) l.nop(key, itc.numDict[key])})
+t.bench(function bench_walk_dict_by_for_of_keys_Object() {for (const key of l.recKeys(itc.numDict)) l.nop(key, itc.numDict[key])})
+t.bench(function bench_walk_dict_by_for_of_keys_Reflect() {for (const key of Reflect.ownKeys(itc.numDict)) l.nop(key, itc.numDict[key])})
+
+t.bench(function bench_walk_dict_small_by_for_in() {for (const key in itc.numDictSmall) l.nop(key, itc.numDictSmall[key])})
+t.bench(function bench_walk_dict_small_by_for_of_keys_Object() {for (const key of l.recKeys(itc.numDictSmall)) l.nop(key, itc.numDictSmall[key])})
+t.bench(function bench_walk_dict_small_by_for_of_keys_Reflect() {for (const key of Reflect.ownKeys(itc.numDictSmall)) l.nop(key, itc.numDictSmall[key])})
 
 // TODO deopt `i.slice` and `lo.slice`.
 t.bench(function bench_slice_array_native() {l.reqArr(itc.numArr.slice())})
@@ -400,10 +438,11 @@ t.bench(function bench_array_from_simple_ours_slice() {l.reqArr(i.slice(itc.numA
 t.bench(function bench_array_from_mapped_native() {l.reqArr(Array.from(itc.numArr, l.inc))})
 t.bench(function bench_array_from_mapped_ours() {l.reqArr(i.map(itc.numArr, l.inc))})
 
-t.bench(function bench_array_fill_native() {l.reqArr(Array(itc.size).fill(123))})
-t.bench(function bench_array_fill_repeat() {l.reqArr(repeat(itc.size, 123))})
+t.bench(function bench_array_fill_native() {l.reqArr(Array(itc.SIZE_BIG).fill(123))})
+t.bench(function bench_array_fill_repeat() {l.reqArr(repeat(itc.SIZE_BIG, 123))})
 
 itc.deoptNativeListHof(itc.numArr.forEach)
+itc.deoptNativeListHof(itc.numArrSub.forEach)
 itc.deoptCollHof(lo.each)
 itc.deoptListHof(arrayEachDumb)
 itc.deoptCollHof(i.each)
@@ -412,6 +451,18 @@ t.bench(function bench_each_array_native_forEach() {itc.numArr.forEach(l.nop)})
 t.bench(function bench_each_array_lodash_each() {lo.each(itc.numArr, l.nop)})
 t.bench(function bench_each_array_dumb() {arrayEachDumb(itc.numArr, l.nop)})
 t.bench(function bench_each_array_our_each() {i.each(itc.numArr, l.nop)})
+
+/*
+Subclasses of `Array` are very slow in Deno 2.4.2 (V8 13), and have been for
+years (many earlier versions). In Bun 1.2.19 (JSC), they tend to perform quite
+well, often very similar to plain arrays, and when not, the overhead is not
+particularly dramatic. Because of V8, we generally avoid subclassing `Array`.
+*/
+t.bench(function bench_each_array_sub_inline() {for (const val of itc.numArrSub) l.nop(val)})
+t.bench(function bench_each_array_sub_native_forEach() {itc.numArrSub.forEach(l.nop)})
+t.bench(function bench_each_array_sub_lodash_each() {lo.each(itc.numArrSub, l.nop)})
+t.bench(function bench_each_array_sub_dumb() {arrayEachDumb(itc.numArrSub, l.nop)})
+t.bench(function bench_each_array_sub_our_each() {i.each(itc.numArrSub, l.nop)})
 
 t.bench(function bench_each_entries_array_inline() {
   for (const [key, val] of itc.numArr.entries()) l.nop(key, val)
@@ -440,6 +491,7 @@ t.bench(function bench_each_map_inline() {for (const val of itc.numMap.values())
 t.bench(function bench_each_map_our_each() {i.each(itc.numMap, l.nop)})
 
 t.bench(function bench_each_vec_inline() {for (const val of itc.numVec) l.nop(val)})
+t.bench(function bench_each_vec_inline_toArray() {for (const val of itc.numVec.toArray()) l.nop(val)})
 t.bench(function bench_each_vec_our_each() {i.each(itc.numVec, l.nop)})
 
 /*
@@ -498,18 +550,18 @@ t.bench(function bench_long_transform1_with_our_eager() {
 
 t.bench(function bench_count_loop_inline_asc() {
   let ind = -1
-  while (++ind <= itc.size) l.nop(ind)
+  while (++ind <= itc.SIZE_BIG) l.nop(ind)
 })
 
 t.bench(function bench_count_loop_inline_desc() {
-  let rem = itc.size
+  let rem = itc.SIZE_BIG
   while (--rem > 0) l.nop(rem)
 })
 
-t.bench(function bench_count_loop_span_gen() {for (const val of genSpan(itc.size)) l.nop(val)})
-t.bench(function bench_count_loop_span_dumb() {for (const val of spanDumb(itc.size)) l.nop(val)})
-t.bench(function bench_count_loop_span_iter() {for (const val of new SpanIter(itc.size)) l.nop(val)})
-t.bench(function bench_count_loop_span_our_span() {for (const val of i.span(itc.size)) l.nop(val)})
+t.bench(function bench_count_loop_span_gen() {for (const val of genSpan(itc.SIZE_BIG)) l.nop(val)})
+t.bench(function bench_count_loop_span_dumb() {for (const val of spanDumb(itc.SIZE_BIG)) l.nop(val)})
+t.bench(function bench_count_loop_span_iter() {for (const val of new SpanIter(itc.SIZE_BIG)) l.nop(val)})
+t.bench(function bench_count_loop_span_our_span() {for (const val of i.span(itc.SIZE_BIG)) l.nop(val)})
 
 t.bench(function bench_zip_with_native() {l.reqRec(Object.fromEntries(itc.numEntries))})
 t.bench(function bench_zip_with_ours() {l.reqRec(i.zip(itc.numEntries))})

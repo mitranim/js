@@ -17,12 +17,11 @@ Also see [`http`](http_readme.md) for routing and cookies, [`http_bun`](http_bun
 
 The following APIs are exported but undocumented. Check [http_live.mjs](../http_live.mjs).
 
-  * [`const LIVE_PATH`](../http_live.mjs#L13)
-  * [`const LIVE_PATH_SCRIPT`](../http_live.mjs#L14)
-  * [`const LIVE_PATH_EVENTS`](../http_live.mjs#L15)
-  * [`const LIVE_PATH_SEND`](../http_live.mjs#L16)
-  * [`function liveScript`](../http_live.mjs#L20)
-  * [`class LiveBroad`](../http_live.mjs#L24)
-  * [`class LiveClient`](../http_live.mjs#L55)
-  * [`function withLiveScript`](../http_live.mjs#L89)
-  * [`function isResHtmlText`](../http_live.mjs#L106)
+  * [`const LIVE_PATH`](../http_live.mjs#L14)
+  * [`const LIVE_PATH_SCRIPT`](../http_live.mjs#L15)
+  * [`const LIVE_PATH_EVENTS`](../http_live.mjs#L16)
+  * [`const LIVE_PATH_SEND`](../http_live.mjs#L17)
+  * [`function liveScript`](../http_live.mjs#L21)
+  * [`class LiveBroad`](../http_live.mjs#L25)
+  * [`class LiveClient`](../http_live.mjs#L59)
+  * [`function isResHtmlText`](../http_live.mjs#L119)

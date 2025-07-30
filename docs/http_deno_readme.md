@@ -19,21 +19,56 @@ Also see [`http`](http_readme.md) for routing and cookies, [`http_bun`](http_bun
 Simple example of a server that serves files from the current directory, automatically matching URL paths to HTML files:
 
 ```js
-import * as hd from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/http_deno.mjs'
+import * as h from '@mitranim/js/http'
 
-// Finds files in the current folder, with no filtering.
-const DIRS = hd.HttpDirs.of(new hd.HttpDir(`.`))
+// Resolves files relatively to the current folder.
+const DIRS = h.HttpDirs.of(new h.HttpDir({fsPath: `.`}))
 
-async function respond(req) {
+h.serve({onRequest})
+
+async function onRequest(req) {
   const path = new URL(req.url).pathname
 
   return (
-    (await DIRS.resolveSiteFileWithNotFound(path))?.response() ||
+    (await serveFile(req, path)) ||
     new Response(`not found`, {status: 404})
   )
 }
 
-Deno.serve({handler: respond})
+async function serveFile(req, path) {
+  const file = await DIRS.resolveSiteFileWithNotFound(path)
+  return file?.response()
+}
+```
+
+For production, enable compression and caching:
+
+```js
+import * as h from '@mitranim/js/http'
+
+const DIRS = h.HttpDirs.of(new h.HttpDir({fsPath: `.`}))
+const COMP = new h.HttpCompressor()
+
+DIRS.setOpt({caching: true})
+
+h.serve({onRequest})
+
+async function onRequest(req) {
+  const path = new URL(req.url).pathname
+
+  return (
+    (await serveFile(req, path)) ||
+    new Response(`not found`, {status: 404})
+  )
+}
+
+async function serveFile(req, path) {
+  return h.fileResponse({
+    req,
+    file: await DIRS.resolveSiteFileWithNotFound(path),
+    compressor: COMP,
+  })
+}
 ```
 
 ## API
@@ -45,4 +80,4 @@ The following APIs are exported but undocumented. Check [http_deno.mjs](../http_
   * [`function serve`](../http_deno.mjs#L9)
   * [`function srvUrl`](../http_deno.mjs#L14)
   * [`class HttpFile`](../http_deno.mjs#L21)
-  * [`class HttpDir`](../http_deno.mjs#L50)
+  * [`class HttpDir`](../http_deno.mjs#L44)

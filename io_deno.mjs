@@ -1,7 +1,7 @@
 /*
-Compare `./io_bun.mjs`. The two modules should have the same shape.
-Consumer code should be able to import `./io` and have it automatically
-resolved to the engine-specific implementation.
+Compare `./io_bun.mjs`. The two modules should have the same interface.
+For consumer code, the pseudo-module `./io` should automatically resolve
+to the engine-specific implementation via `package.json`.`exports`.
 */
 
 /* global Deno */
@@ -12,16 +12,18 @@ import * as pt from './path.mjs'
 export const ENV = globalThis.process.env
 
 export function cwd() {return Deno.cwd()}
+
 export function exit(...src) {return Deno.exit(...src)}
 
 export function isErrNotFound(val) {return l.isInst(val, Deno.errors.NotFound)}
 export function skipErrNotFound(val) {return l.errSkip(val, isErrNotFound)}
 
 export function validPath(val) {
-  if (l.isPrim(val)) return val
+  if (l.isKey(val)) return val
   if (l.isInst(val, URL)) return val
   return l.reqScalar(val).toString()
 }
+export function validPathOpt(val) {return l.opt(val, validPath)}
 
 export function readFileText(path) {return Deno.readTextFile(validPath(path))}
 export function readFileTextSync(path) {return Deno.readTextFileSync(validPath(path))}
@@ -62,8 +64,8 @@ export function writeFileSync(path, body, opt) {
   throw TypeError(`unable to write ${l.show(path)}: file body must be [string | Uint8Array], got ${l.show(body)}`)
 }
 
-export function remove(path) {return Deno.remove(path)}
-export function removeSync(path) {return Deno.removeSync(path)}
+export function remove(path, opt) {return Deno.remove(path, opt)}
+export function removeSync(path, opt) {return Deno.removeSync(path, opt)}
 
 export async function exists(path) {return !!await statOpt(path)}
 export function existsSync(path) {return !!statOptSync(path)}
@@ -94,6 +96,7 @@ export function statNorm(src) {
   if (!l.optRec(src)) return undefined
 
   return {
+    __proto__: null,
     isDir: src.isDirectory,
     isFile: src.isFile,
     isSymlink: src.isSymlink,
@@ -129,12 +132,15 @@ export async function fileWriteStream(path) {
 }
 
 export function mkdir(path, opt) {
-  return Deno.mkdir(validPath(path), l.reqRec(opt))
+  return Deno.mkdir(validPath(path), l.optRec(opt))
 }
 
 export function mkdirSync(path, opt) {
-  return Deno.mkdirSync(validPath(path), l.reqRec(opt))
+  return Deno.mkdirSync(validPath(path), l.optRec(opt))
 }
+
+export function mkdirTemp(opt) {return Deno.makeTempDir(l.optRec(opt))}
+export function mkdirTempSync(opt) {return Deno.makeTempDirSync(l.optRec(opt))}
 
 export async function readDir(path) {
   const out = []
@@ -149,6 +155,14 @@ export function readDirSync(path) {
   const out = [...Deno.readDirSync(validPath(path))]
   for (const val of out) val.toString = toStringGetName
   return out
+}
+
+export function rename(prev, next) {
+  return Deno.rename(validPath(prev), validPath(next))
+}
+
+export function renameSync(prev, next) {
+  return Deno.renameSync(validPath(prev), validPath(next))
 }
 
 export function watchCwd() {return watchRel(Deno.cwd())}

@@ -50,39 +50,39 @@ export function isEventModified(val) {
   return !!(optEvent(val) && (val.altKey || val.ctrlKey || val.metaKey || val.shiftKey))
 }
 
-export function eventDispatch(tar, typ, data) {
-  tar.dispatchEvent(new CustomEvent(l.reqStr(typ), {detail: data}))
+export function eventDispatch({src, type, data}) {
+  src.dispatchEvent(new CustomEvent(l.reqStr(type), {detail: data}))
 }
 
-export function eventListen(tar, typ, han, opt) {
-  l.reqObj(tar).addEventListener(l.reqStr(typ), l.reqComp(han), l.optRec(opt))
-  return function deinit() {tar.removeEventListener(typ, han, opt)}
+export function eventListen({src, type, han, opt}) {
+  l.reqObj(src).addEventListener(l.reqStr(type), l.reqComp(han), l.optRec(opt))
+  return function deinit() {src.removeEventListener(type, han, opt)}
 }
 
 export class ListenRef extends l.WeakRef {
-  constructor(tar, src, typ, fun, opt) {
-    super(tar)
+  constructor({self, src, type, fun, opt}) {
+    super(self)
     this.src = new l.WeakRef(src)
-    this.typ = l.reqStr(typ)
+    this.type = l.reqStr(type)
     this.fun = l.reqFun(fun)
     this.opt = l.optRec(opt)
-    REG_DEINIT.register(tar, this)
+    REG_DEINIT.register(self, this)
   }
 
   handleEvent(eve) {
-    const tar = this.deref()
-    if (tar) this.fun.call(tar, eve)
+    const self = this.deref()
+    if (self) this.fun.call(self, eve)
     else this.deinit()
   }
 
   init() {
     this.deinit()
-    this.src.deref().addEventListener(this.typ, this, this.opt)
+    this.src.deref().addEventListener(this.type, this, this.opt)
     return this
   }
 
   deinit() {
-    this.src.deref()?.removeEventListener(this.typ, this, this.opt)
+    this.src.deref()?.removeEventListener(this.type, this, this.opt)
   }
 }
 
@@ -243,14 +243,14 @@ export class MixinChild extends o.Mixin {
         set parentNode(val) {this[PARENT_NODE] = val}
 
         getParent() {return this.parentNode}
-        setParent(val) {return this.parentNode = val, this}
+        setParent(val) {return (this.parentNode = val), this}
       }
     }
 
     if (desc.set) {
       return class ChildClsOnlyMethods extends cls {
         getParent() {return this.parentNode}
-        setParent(val) {return this.parentNode = val, this}
+        setParent(val) {return (this.parentNode = val), this}
       }
     }
 
@@ -266,7 +266,7 @@ export class MixinChild extends o.Mixin {
       set parentNode(val) {this[PARENT_NODE] = val}
 
       getParent() {return this.parentNode}
-      setParent(val) {return this.parentNode = val, this}
+      setParent(val) {return (this.parentNode = val), this}
     }
   }
 }
@@ -298,5 +298,17 @@ export class MixinChildCon extends o.Mixin {
         if (val.length) this.setParent(...val)
       }
     }
+  }
+}
+
+export class ChildDiff extends WeakSet {
+  apply(tar, src) {
+    reqNode(tar)
+    src = new Set(l.optSeq(src))
+    for (const val of tar.childNodes) {
+      if (this.has(val) && !src.has(val)) val.remove()
+    }
+    for (const val of src) this.add(val)
+    tar.append(...src)
   }
 }

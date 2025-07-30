@@ -102,7 +102,7 @@ export default [
       [`no-unused-vars`]: [`error`, {argsIgnorePattern: `^_`, varsIgnorePattern: `^_`}],
       [`no-useless-catch`]: `error`,
       [`no-useless-escape`]: `error`,
-      [`no-warning-comments`]: [`error`, {location: `anywhere`, terms: [`FIXME`]}],
+      [`no-warning-comments`]: [`error`, {location: `anywhere`, terms: [`F`+`I`+`X`+`M`+`E`]}],
       [`no-with`]: `error`,
       [`object-curly-spacing`]: [`error`, `never`],
       [`require-yield`]: `error`,

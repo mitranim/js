@@ -1,23 +1,33 @@
+/*
+Compare `./io_deno.mjs`. The two modules should have the same interface.
+For consumer code, the pseudo-module `./io` should automatically resolve
+to the engine-specific implementation via `package.json`.`exports`.
+*/
+
 // deno-lint-ignore-file no-process-global
 /* global Bun, process */
 
 import * as fs from 'node:fs'
 import * as fsp from 'node:fs/promises'
+import * as os from 'node:os'
 import * as l from './lang.mjs'
+import * as pt from './path.mjs'
 
 export const ENV = process.env
 
 export function cwd() {return process.cwd()}
+
 export function exit(...src) {return process.exit(...src)}
 
 export function isErrNotFound(val) {return val?.code === `ENOENT`}
 export function skipErrNotFound(val) {return l.errSkip(val, isErrNotFound)}
 
 export function validPath(val) {
-  if (l.isPrim(val)) return val
+  if (l.isKey(val)) return val
   if (l.isInst(val, URL)) return val
   return l.reqScalar(val).toString()
 }
+export function validPathOpt(val) {return l.opt(val, validPath)}
 
 export function readFileText(path) {return Bun.file(validPath(path)).text()}
 
@@ -61,10 +71,23 @@ export function writeFileSync(path, body, opt) {
   throw TypeError(`unable to write ${l.show(path)}: file body must be [string | Uint8Array], got ${l.show(body)}`)
 }
 
-export function remove(path) {return Bun(validPath(path)).delete()}
-export function removeSync(path) {return fs.unlinkSync(validPath(path))}
+// Directory removal is assumed to be always recursive.
+export function remove(path, opt) {
+  path = validPath(path)
+  l.optRec(opt)
+  if (opt?.recursive) return fsp.rmdir(path, opt)
+  return fsp.unlink(validPath(path), opt)
+}
 
-export function exists(path) {return Bun.file(validPath(path)).exists()}
+// Directory removal is assumed to be always recursive.
+export function removeSync(path, opt) {
+  path = validPath(path)
+  l.optRec(opt)
+  if (opt?.recursive) return fs.rmdirSync(path, opt)
+  return fs.unlinkSync(validPath(path))
+}
+
+export function exists(path) {return fs.exists(validPath(path))}
 export function existsSync(path) {return fs.existsSync(validPath(path))}
 
 export async function stat(path) {
@@ -95,6 +118,7 @@ export function statNorm(src) {
   if (!l.optRec(src)) return undefined
 
   return {
+    __proto__: null,
     isDir: src.isDirectory(),
     isFile: src.isFile(),
     isSymlink: src.isSymbolicLink(),
@@ -127,8 +151,27 @@ export function fileReadStream(path) {
 export function mkdir(path, opt) {return fsp.mkdir(validPath(path), opt)}
 export function mkdirSync(path, opt) {return fs.mkdirSync(validPath(path), opt)}
 
+export function mkdirTemp(opt) {return fsp.mkdtemp(tmpOpt(opt))}
+export function mkdirTempSync(opt) {return fs.mkdtempSync(tmpOpt(opt))}
+
+// Aims to align with Deno's default behavior.
+function tmpOpt(opt) {
+  l.optRec(opt)
+  const dir = validPathOpt(opt?.dir) ?? os.tmpdir()
+  const pre = l.optStr(opt?.prefix)
+  return pre ? pt.join(dir, pre) : pt.dirLike(dir)
+}
+
 export function readDir(path, opt) {return fsp.readdir(validPath(path), opt)}
 export function readDirSync(path, opt) {return fs.readdirSync(validPath(path), opt)}
+
+export function rename(prev, next) {
+  return fsp.rename(validPath(prev), validPath(next))
+}
+
+export function renameSync(prev, next) {
+  return fs.renameSync(validPath(prev), validPath(next))
+}
 
 // Defined for symmetry with `io_deno.mjs`.
 export function watchCwd() {return watchRel(`.`)}

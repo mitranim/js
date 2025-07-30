@@ -444,13 +444,18 @@ export function spaced(...val) {return joinOptLax(val, ` `)}
 
 export function dashed(...val) {return joinOptLax(val, `-`)}
 
-export function rndHex(len) {
-  if (!l.reqNat(len)) return ``
-  return arrHex(crypto.getRandomValues(new Uint8Array(len)))
+export function toByteArr(src) {
+  if (l.isInst(src, ArrayBuffer)) return new Uint8Array(src)
+  return l.reqInst(src, Uint8Array)
 }
 
-export function arrHex(src) {
-  l.reqInst(src, Uint8Array)
+export function rndHex(len) {
+  if (!l.reqNat(len)) return ``
+  return byteArrHex(crypto.getRandomValues(new Uint8Array(len)))
+}
+
+export function byteArrHex(src) {
+  src = toByteArr(src)
   let out = ``
   for (src of src) {
     if (src < 0x10) out += `0`
@@ -466,12 +471,12 @@ When unavailable, we fall back on `crypto.getRandomValues`.
 export function uuid() {
   return (
     globalThis.crypto?.randomUUID?.().replace(/-/g, ``) ??
-    arrHex(uuidArr())
+    byteArrHex(uuidByteArr())
   )
 }
 
 // https://en.wikipedia.org/wiki/Universally_unique_identifier
-export function uuidArr() {
+export function uuidByteArr() {
   // Standard web API, available in browsers, Deno, Node 18+.
   const val = crypto.getRandomValues(new Uint8Array(16))
 

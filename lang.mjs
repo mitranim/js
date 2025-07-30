@@ -440,9 +440,19 @@ export function toTrueArr(val) {
 
 /* Misc */
 
-export function reset(tar, val) {return reqRef(tar)[VAL] = val}
 export function deref(val) {return isRef(val) ? val[VAL] : val}
 export function derefAll(val) {while (val !== (val = deref(val))); return val}
+
+export function reset(tar, val) {
+  reqRef(tar)[VAL] = val
+  return tar
+}
+
+export function resetOpt(tar, val) {
+  reqRef(tar)
+  if (isSome(val)) tar[VAL] = val
+  return tar
+}
 
 export function swap(tar, fun, ...src) {
   const val = reqRef(tar)[VAL]

@@ -100,24 +100,25 @@ t.test(function test_jsonEncode() {
 })
 
 t.test(function test_ErrHttp() {
-  t.throws(() => new h.ErrHttp(10, 20), TypeError, `expected variant of isStr, got 10`)
-  t.throws(() => new h.ErrHttp(``, `str`), TypeError, `expected variant of isNat, got "str"`)
-  t.throws(() => new h.ErrHttp(``, 0, `str`), TypeError, `expected instance of Response, got "str"`)
+  t.throws(() => new h.ErrHttp(`msg`, 10), TypeError, `expected variant of isRec, got 10`)
+  t.throws(() => new h.ErrHttp(`msg`, `str`), TypeError, `expected variant of isRec, got "str"`)
 
-  t.is(new h.ErrHttp(``, 0).name, `ErrHttp`)
-  t.is(new h.ErrHttp(`one`, 0).message, `one`)
-  t.is(new h.ErrHttp(`one`, 20).message, `20: one`)
-})
+  t.is(new h.ErrHttp().name, `ErrHttp`)
+  t.is(new h.ErrHttp(`msg`).message, `msg`)
 
-t.test(function test_getStatus() {
-  t.is(h.getStatus(), undefined)
-  t.is(h.getStatus(Error()), undefined)
-  t.is(h.getStatus(new h.ErrHttp(``, 0)), 0)
-  t.is(h.getStatus(new h.ErrHttp(``, 400)), 400)
-  t.is(h.getStatus({}), undefined)
-  t.is(h.getStatus({status: 0}), 0)
-  t.is(h.getStatus({status: 400}), 400)
-  t.is(h.getStatus(new Response(``, {status: 400})), 400)
+  {
+    const err = new h.ErrHttp(`msg`, {status: 400})
+    t.is(err.message, `400: msg`)
+    t.is(err.status, 400)
+  }
+
+  {
+    const res = new Response(undefined, {status: 500})
+    const err = new h.ErrHttp(`msg`, {response: res})
+    t.is(err.message, `500: msg`)
+    t.is(err.status, 500)
+    t.is(err.res, res)
+  }
 })
 
 t.test(function test_hasStatus() {
@@ -133,10 +134,10 @@ t.test(function test_hasStatus() {
     test(Error())
   })
 
-  t.no(h.hasStatus(new h.ErrHttp(``, 0), 400))
+  t.no(h.hasStatus(new h.ErrHttp(``), 400))
   t.no(h.hasStatus(new Response(``, {status: 200}), 400))
 
-  t.ok(h.hasStatus(new h.ErrHttp(``, 400), 400))
+  t.ok(h.hasStatus(new h.ErrHttp(``, {status: 400}), 400))
   t.ok(h.hasStatus(new Response(``, {status: 400}), 400))
 })
 

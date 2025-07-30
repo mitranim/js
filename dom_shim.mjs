@@ -1,32 +1,43 @@
+/*
+Goal: a simple and reasonably fast subset of the DOM API needed for our
+`prax.mjs` renderer, and for consumer code wishing to use the most common
+parts of the DOM API in SSR. Full DOM compliance is undesirable because of
+complexity and overheads.
+*/
+
 import * as l from './lang.mjs'
 import * as o from './obj.mjs'
 import * as dr from './dom_reg.mjs'
 import * as p from './prax.mjs'
 import * as u from './url.mjs'
 import * as s from './str.mjs'
-import * as c from './coll.mjs'
 import * as ds from './dom_shim.mjs'
 
 /* Vars */
 
-export const REF = Symbol.for(`ref`)
+export const ARR = Symbol.for(`arr`)
+export const MAP = Symbol.for(`map`)
 export const DATA = Symbol.for(`data`)
+export const ELEM = Symbol.for(`elem`)
 export const NAME = Symbol.for(`name`)
+export const ATTRS = Symbol.for(`attrs`)
 export const VALUE = Symbol.for(`value`)
 export const STYLE = Symbol.for(`style`)
+export const BY_ID = Symbol.for(`byId`)
+export const BY_NAME = Symbol.for(`byName`)
 export const DOCTYPE = Symbol.for(`doctype`)
 export const DATASET = Symbol.for(`dataset`)
 export const PUBLIC_ID = Symbol.for(`publicId`)
 export const SYSTEM_ID = Symbol.for(`systemId`)
 export const CLASS_LIST = Symbol.for(`classList`)
 export const LOCAL_NAME = Symbol.for(`localName`)
-export const ATTRIBUTES = Symbol.for(`attributes`)
 export const PARENT_NODE = Symbol.for(`parentNode`)
 export const CHILD_NODES = Symbol.for(`childNodes`)
 export const NAMESPACE_URI = Symbol.for(`namespaceURI`)
 export const OWNER_DOCUMENT = Symbol.for(`ownerDocument`)
 export const IMPLEMENTATION = Symbol.for(`implementation`)
 export const DOCUMENT_ELEMENT = Symbol.for(`documentElement`)
+export const EMPTY_NODE_LIST = Object.freeze([])
 
 /* Interfaces */
 
@@ -106,13 +117,12 @@ export class Node extends l.Emp {
 
   get [Symbol.toStringTag]() {return this.constructor.name}
   get isConnected() {return isDocument(this.getRootNode())}
-  get parentElement() {return norm(l.only(this.parentNode, isElement))}
-  get childNodes() {return this[CHILD_NODES] ||= this.NodeList()}
-  set childNodes(val) {this[CHILD_NODES] = l.reqArr(val)}
+  get parentElement() {return norm(l.only(this[PARENT_NODE], isElement))}
+  get childNodes() {return this[CHILD_NODES] ??= this.domShim_childNodes()}
   get firstChild() {return norm(head(this[CHILD_NODES]))}
   get lastChild() {return norm(last(this[CHILD_NODES]))}
-  get previousSibling() {return this.siblingAt(-1)}
-  get nextSibling() {return this.siblingAt(1)}
+  get previousSibling() {return this.domShim_siblingAt(-1)}
+  get nextSibling() {return this.domShim_siblingAt(1)}
   get ownerDocument() {return norm(this[OWNER_DOCUMENT])}
   set ownerDocument(val) {this[OWNER_DOCUMENT] = optDocument(val)}
   get nodeName() {return null}
@@ -127,12 +137,12 @@ export class Node extends l.Emp {
 
   set textContent(val) {
     val = l.render(val)
-    this.clearNodes()
+    this.domShim_clearNodes()
     if (val) this.childNodes.push(new Text(val))
   }
 
   getRootNode() {
-    const val = this.parentNode
+    const val = this[PARENT_NODE]
     if (!l.isObj(val)) return this
     if (`getRootNode` in val) return val.getRootNode()
     return val
@@ -142,19 +152,15 @@ export class Node extends l.Emp {
 
   contains(val) {return !!this[CHILD_NODES]?.includes(val)}
 
-  remove() {
-    const par = this.parentNode
-    if (l.isObj(par) && `removeChild` in par) par.removeChild(this)
-    if (par) this.parentNode = null
-  }
-
   /*
   Intentional deviation: attempting to remove a missing child doesn't throw,
   but simply returns the missing node.
   */
   removeChild(val) {
-    const nodes = this.childNodes
-    const ind = indexOf(nodes, val)
+    const nodes = this[CHILD_NODES]
+    if (!nodes) return val
+
+    const ind = nodes.indexOf(val)
     if (!(ind >= 0)) return val
 
     nodes.splice(ind, 1)
@@ -165,13 +171,13 @@ export class Node extends l.Emp {
   /*
   All our node-inserting methods have one notable deviation from the standard:
   we append fragments like they were normal nodes, instead of stealing their
-  children. This is simpler, more performant, and serves our purposes well
-  enough. When traversing children for serialization, we treat fragments as
-  arrays of children, which we also traverse recursively.
+  children. This is simpler, faster, and serves our purposes well enough.
+  When traversing children for serialization, we treat fragments as arrays
+  of children, which we also traverse recursively.
   */
   appendChild(val) {
     reqNode(val)
-    remove(val)
+    removeOpt(val)
     this.childNodes.push(val)
     adopt(val, this)
     return val
@@ -182,17 +188,15 @@ export class Node extends l.Emp {
     reqNode(next)
 
     // May shift our children, must run first.
-    remove(next)
+    removeOpt(next)
 
     const nodes = this.childNodes
-    const ind = indexOf(nodes, prev)
+    const ind = nodes.indexOf(prev)
     if (!(ind >= 0)) {
       throw Error(`unable to replace missing child ${l.show(prev)}`)
     }
 
-    nodes[ind] = null
     adopt(prev, null)
-
     nodes[ind] = next
     adopt(next, this)
     return prev
@@ -203,37 +207,37 @@ export class Node extends l.Emp {
     reqNode(next)
 
     const nodes = this.childNodes
-    const ind = indexOf(nodes, prev)
+    const ind = nodes.indexOf(prev)
     if (!(ind >= 0)) {
       throw Error(`unable to insert before missing child ${l.show(prev)}`)
     }
 
-    remove(next)
+    removeOpt(next)
     nodes.splice(ind, 0, next)
     adopt(next, this)
     return next
   }
 
-  append(...val) {for (val of val) this.appendChild(this.valToNode(val))}
+  append(...val) {for (val of val) this.appendChild(this.domShim_valToNode(val))}
 
   prepend(...src) {
-    for (const val of src) remove(val)
-    src = src.map(this.valToNode, this)
+    for (const val of src) removeOpt(val)
+    src = src.map(this.domShim_valToNode, this)
     this.childNodes.unshift(...src)
     for (const val of src) adopt(val, this)
   }
 
   after(...src) {
-    const par = this.parentNode
+    const par = this[PARENT_NODE]
     if (!par) return
 
     const nodes = par.childNodes
-    let ind = indexOf(nodes, this)
+    let ind = nodes.indexOf(this)
     if (!(ind >= 0)) return
 
     let cur = this
     for (src of src) {
-      remove(src)
+      removeOpt(src)
 
       /*
       This code assumes that the DOM tree does not include elements with a
@@ -246,13 +250,15 @@ export class Node extends l.Emp {
         ind++
       }
 
-      cur = par.valToNode(src)
+      cur = par.domShim_valToNode(src)
       nodes.splice(ind, 0, cur)
       adopt(cur, par)
     }
   }
 
   /* Non-standard extensions. */
+
+  domShim_setParent(val) {this[PARENT_NODE] = val}
 
   /*
   TODO: use a structure with good combinatorial complexity for all relevant
@@ -261,29 +267,29 @@ export class Node extends l.Emp {
   shift / unshift / splice. However, at large sizes, their shift / unshift /
   splice can be horrendous. Benchmark first.
   */
-  NodeList() {return []}
+  domShim_childNodes() {return []}
 
-  siblingAt(off) {
+  domShim_siblingAt(off) {
     l.reqInt(off)
 
-    const nodes = this.parentNode?.childNodes
+    const nodes = this[PARENT_NODE]?.[CHILD_NODES]
     if (!nodes) return null
 
-    const ind = indexOf(nodes, this)
+    const ind = nodes.indexOf(this)
     return ind >= 0 ? norm(nodes[ind + off]) : null
   }
 
-  adoptDocument(doc) {return this[OWNER_DOCUMENT] = doc, this}
+  domShim_adoptDocument(doc) {return (this[OWNER_DOCUMENT] = doc), this}
 
-  valToNode(val) {
+  domShim_valToNode(val) {
     if (!isNode(val)) val = new Text(val)
     this[OWNER_DOCUMENT]?.adoptNode(val)
     return val
   }
 
-  clearNodes() {
+  domShim_clearNodes() {
     const nodes = this.childNodes
-    if (nodes.length) for (const node of nodes) node.parentNode = null
+    if (nodes.length) for (const node of nodes) node.domShim_setParent(null)
     nodes.length = 0
   }
 }
@@ -302,11 +308,7 @@ export class DocumentFragment extends ElementParent {
 }
 
 export class CharacterData extends Node {
-  constructor(val) {
-    super()
-    if (arguments.length) this.data = l.render(val)
-  }
-
+  constructor(val) {super().data = l.render(val)}
   get data() {return l.laxStr(this[DATA])}
   set data(val) {this[DATA] = l.render(val)}
   get textContent() {return this.data}
@@ -314,89 +316,42 @@ export class CharacterData extends Node {
   get nodeValue() {return this.data}
   set nodeValue(val) {this.data = val}
   get length() {return this.data.length}
-
+  get childNodes() {return EMPTY_NODE_LIST}
   appendChild() {throw errIllegal()}
   removeChild() {throw errIllegal()}
   replaceChild() {throw errIllegal()}
   insertBefore() {throw errIllegal()}
   append() {throw errIllegal()}
+  remove() {removeNode(this)}
 }
 
 export class Text extends CharacterData {
+  /* Standard behaviors. */
   get nodeType() {return Node.TEXT_NODE}
   get nodeName() {return `#text`}
+
+  /* Non-standard extensions. */
   get outerHTML() {return escapeText(this.data)}
-  toJSON() {return this.outerHTML}
 }
 
 export class Comment extends CharacterData {
+  /* Standard behaviors. */
   get nodeType() {return Node.COMMENT_NODE}
   get nodeName() {return `#comment`}
+
+  /* Non-standard extensions. */
   get outerHTML() {return `<!--` + escapeText(this.data) + `-->`}
-  toJSON() {return this.outerHTML}
 }
 
 /*
-Allows us to implement `.innerHTML = ...` without too much overhead.
-External code can use this to include arbitrary HTML into the DOM.
+Non-standard. Allows us to implement `.innerHTML = ...` with very little
+overhead, without the need to parse the input. External code can use this
+to include arbitrary text as raw HTML anywhere in the shim's DOM.
 */
 export class RawText extends CharacterData {
   get innerHTML() {return this.data}
   set innerHTML(val) {this.data = val}
   get outerHTML() {return this.data}
-}
-
-/*
-Note: `.parentNode` must be `NamedNodeMap`, otherwise reading and setting the
-value doesn't work. As a result, `document.createAttribute` is currently not
-fully implemented because the resulting attribute is not linked to a map.
-*/
-export class Attr extends Node {
-  constructor(key) {super()[NAME] = l.reqStr(key)}
-
-  get name() {return this[NAME]}
-  get value() {return l.laxStr(this.parentNode.get(this.name))}
-  set value(val) {this.parentNode.set(this.name, l.render(val))}
-  get nodeName() {return this.name}
-  get nodeType() {return Node.ATTRIBUTE_NODE}
-}
-
-export class NamedNodeMap extends Map {
-  /* Standard behaviors. */
-
-  getNamedItem(key) {return this.has(key) ? this.Attr(key) : undefined}
-  setNamedItem(val) {this.set(l.reqObj(val).name, val.value)}
-  removeNamedItem(key) {this.delete(key)}
-
-  // Extremely inefficient. Production code should never use this.
-  // In our rendering process, we simply iterate the map entries.
-  *[Symbol.iterator]() {
-    for (const key of this.keys()) yield this.getNamedItem(key)
-  }
-
-  /* Non-standard extensions. */
-
-  get(key) {return norm(super.get(key))}
-  set(key, val) {return super.set(l.render(key), l.render(val))}
-
-  Attr(key) {
-    const tar = new Attr(key)
-    tar.parentNode = this
-    return tar
-  }
-
-  toString() {
-    let out = ``
-    for (const [key, val] of this.entries()) {
-      out += this.constructor.attr(key, val)
-    }
-    return out
-  }
-
-  static attr(key, val) {
-    if (!key) return ``
-    return ` ` + l.reqStr(key) + `="` + escapeAttr(val) + `"`
-  }
 }
 
 export class Element extends ElementParent {
@@ -418,16 +373,15 @@ export class Element extends ElementParent {
   Custom elements work differently. Any element class registered via
   `customElements` acquires a local name and its own custom name.
   In "autonomous" custom elements, local name and custom name are identical,
-  the custom name can be used
   and custom name doesn't need to be serialized. In "customized built-in"
   custom elements, the names are distinct, and custom name must be serialized
   via the "is" attribute. Unlike built-in elements, registered custom elements
-  can be instantiated via `new`. Instantiating them via
-  `document.createElement` also works. In either case, the resulting instance
-  knows its local name and custom name, and can be correctly serialized.
+  can be instantiated via `new`. Instantiating them via `document.createElement`
+  also works. In either case, the resulting instance knows its local name and
+  custom name, and can be correctly serialized.
 
-  Our `dom_reg` assigns `localName` and `customName` to each registered class, as
-  static properties. Our shim classes rely on these properties.
+  Our `dom_reg` assigns `localName` and `customName` to each registered class,
+  as static properties. Our shim classes rely on these properties.
   */
   get localName() {return norm(this[LOCAL_NAME] ?? this.constructor.localName)}
   set localName(val) {this[LOCAL_NAME] = l.optStr(val)}
@@ -437,54 +391,17 @@ export class Element extends ElementParent {
   get namespaceURI() {return norm(this[NAMESPACE_URI])}
   set namespaceURI(val) {this[NAMESPACE_URI] = l.optStr(val)}
 
-  get parentNode() {return super.parentNode}
-
-  set parentNode(val) {
-    const con = `connectedCallback` in this
-    const dis = `disconnectedCallback` in this
-
-    if (!con && !dis) {
-      super.parentNode = val
-      return
-    }
-
-    const was = this.isConnected
-    super.parentNode = val
-    if (!was && con && this.isConnected) this.connectedCallback()
-    else if (was && dis && !this.isConnected) this.disconnectedCallback()
-  }
-
-  get attributes() {return this[ATTRIBUTES] ||= this.Attributes()}
-
   get id() {return l.laxStr(this.getAttribute(`id`))}
   set id(val) {this.setAttribute(`id`, val)}
 
-  get style() {return (this[STYLE] ||= this.Style()).pro}
+  get style() {return (this[STYLE] ??= new Style(this)).proxy}
+  set style(val) {this.setAttribute(`style`, l.renderLax(val))}
 
-  set style(val) {
-    if (l.isNil(val)) {
-      this.removeAttribute(`style`)
-      return
-    }
+  get dataset() {return (this[DATASET] ??= new Dataset(this)).proxy}
 
-    if (l.isStr(val)) {
-      this.setAttribute(`style`, val)
-      return
-    }
-
-    if (l.isRec(val)) {
-      this[STYLE] = val
-      this.removeAttribute(`style`)
-      return
-    }
-
-    this.style = l.render(val)
-  }
-
-  get dataset() {return (this[DATASET] ||= this.Dataset()).pro}
   get className() {return l.laxStr(this.getAttribute(`class`))}
   set className(val) {this.setAttribute(`class`, val)}
-  get classList() {return this[CLASS_LIST] ||= this.ClassList()}
+  get classList() {return this[CLASS_LIST] ??= new ClassList(this)}
 
   get hidden() {return this.hasAttribute(`hidden`)}
   set hidden(val) {this.toggleAttribute(`hidden`, l.laxBool(val))}
@@ -502,40 +419,32 @@ export class Element extends ElementParent {
 
   set innerHTML(val) {
     val = l.render(val)
-    this.clearNodes()
+    this.domShim_clearNodes()
     if (val) this.childNodes.push(new RawText(val))
   }
 
   get outerHTML() {
     const prev = OUTER_HTML.get()
     if (l.isNil(prev)) OUTER_HTML.set(this)
-    try {return this.outerHtml()}
+    try {return this.domShim_outerHtml()}
     finally {OUTER_HTML.set(prev)}
   }
 
-  hasAttribute(key) {return !!this[ATTRIBUTES]?.has(key)}
-  getAttribute(key) {return norm(this[ATTRIBUTES]?.get(key))}
-
-  removeAttribute(key) {
-    this[ATTRIBUTES]?.delete(key)
-
-    if (this.isStyleChange(key)) {
-      this[STYLE] = undefined
-    }
-    else if (this.isDatasetChange(key)) {
-      this[DATASET]?.attrDel(key)
-    }
-  }
+  hasAttribute(key) {return !!this[ATTRS]?.has(key)}
+  getAttribute(key) {return norm(this[ATTRS]?.get(key))}
 
   setAttribute(key, val) {
+    key = l.render(key)
     val = l.render(val)
-    this.attributes.set(key, val)
 
-    if (this.isStyleChange(key)) {
-      this[STYLE]?.dec()
+    const attrs = this.domShim_attrs()
+    attrs.set(key, val)
+
+    if (this.domShim_hasStyleChange(key)) {
+      this[STYLE]?.clearAndDecode(val)
     }
-    else if (this.isDatasetChange(key)) {
-      this[DATASET]?.attrSet(key, val)
+    else if (this.domShim_hasDatasetChange(key)) {
+      this[DATASET]?.setAttr(key, val)
     }
   }
 
@@ -548,48 +457,67 @@ export class Element extends ElementParent {
     return false
   }
 
-  /* Non-standard extensions. */
+  removeAttribute(key) {
+    this[ATTRS]?.delete(key)
 
-  Style() {return new StylePh(this)}
-  Dataset() {return new DatasetPh(this)}
-  ClassList() {return new ClassList(this)}
-  Attributes() {return new NamedNodeMap()}
-
-  toJSON() {return this.outerHTML}
-
-  attrSet(key, val) {
-    if (l.isNil(val)) this.removeAttribute(key)
-    else this.setAttribute(key, val)
+    if (this.domShim_hasStyleChange(key)) {
+      this[STYLE]?.clear()
+    }
+    else if (this.domShim_hasDatasetChange(key)) {
+      this[DATASET]?.deleteAttr(key)
+    }
   }
 
-  isStyleChange(key) {return key === `style` && STYLE in this}
+  remove() {removeNode(this)}
 
-  isDatasetChange(key) {return key.startsWith(`data-`) && DATASET in this}
+  /* Non-standard extensions. */
 
-  outerHtml() {
-    const tag = this.tagString()
+  domShim_setParent(val) {
+    const con = `connectedCallback` in this
+    const dis = `disconnectedCallback` in this
+
+    if (!con && !dis) {
+      super[PARENT_NODE] = val
+      return
+    }
+
+    const was = this.isConnected
+    super[PARENT_NODE] = val
+    if (!was && con && this.isConnected) this.connectedCallback()
+    else if (was && dis && !this.isConnected) this.disconnectedCallback()
+  }
+
+  // See the comment on `Attrs` for why we don't implement `.attributes`.
+  domShim_attrs() {return this[ATTRS] ??= new Attrs()}
+
+  domShim_hasStyleChange(key) {return key === `style` && STYLE in this}
+  domShim_hasDatasetChange(key) {return key.startsWith(`data-`) && DATASET in this}
+
+  domShim_outerHtml() {
+    const tag = l.laxStr(this.localName)
     if (!tag) throw Error(`missing localName on ${l.show(this)}`)
 
     return (
-      `<` + tag + this.attrPrefix() + this.attrString() + `>` +
+      `<` + tag + this.domShim_attrPrefix() + this.domShim_attrStr() + `>` +
       l.laxStr(this.innerHTML) +
       `</` + tag + `>`
     )
   }
 
-  isVoid() {return p.VOID.has(this.localName)}
-  tagString() {return l.laxStr(this.localName)}
-  attrString() {return l.laxStr(this[ATTRIBUTES]?.toString())}
-  attrPrefix() {return this.attrIs() + this.attrXmlns()}
+  domShim_isVoid() {return p.VOID.has(this.localName)}
+  domShim_attrStr() {return l.laxStr(this[ATTRS]?.toString())}
+  domShim_attrPrefix() {return this.domShim_attrIs() + this.domShim_attrXmlns()}
 
-  attrIs() {
+  domShim_attrIs() {
     const is = this.constructor.customName
-    if (!is || is === this.localName || this[ATTRIBUTES]?.has(`is`)) return ``
-    return NamedNodeMap.attr(`is`, is)
+    if (!is) return ``
+    if (is === this.localName) return ``
+    if (this[ATTRS]?.has(`is`)) return ``
+    return attr(`is`, is)
   }
 
-  attrXmlns() {
-    if (this[ATTRIBUTES]?.has(`xmlns`)) return ``
+  domShim_attrXmlns() {
+    if (this[ATTRS]?.has(`xmlns`)) return ``
 
     const chiNs = this[NAMESPACE_URI]
     if (!chiNs) return ``
@@ -597,32 +525,32 @@ export class Element extends ElementParent {
     const doc = this[OWNER_DOCUMENT]
     if (isHtmlDoc(doc)) return ``
 
-    const parNs = l.get(this.parentNode, `namespaceURI`)
-    if (parNs && parNs !== chiNs) return NamedNodeMap.attr(`xmlns`, chiNs)
+    const parNs = this[PARENT_NODE]?.[NAMESPACE_URI]
+    if (parNs && parNs !== chiNs) return attr(`xmlns`, chiNs)
 
     if (OUTER_HTML.get() !== this) return ``
-    return NamedNodeMap.attr(`xmlns`, chiNs)
+    return attr(`xmlns`, chiNs)
   }
 }
 
 export class HTMLElement extends Element {
-  get namespaceURI() {return super.namespaceURI || p.NS_HTML}
-  set namespaceURI(val) {super.namespaceURI = val}
+  get namespaceURI() {return this[NAMESPACE_URI] || p.NS_HTML}
+  set namespaceURI(val) {this[NAMESPACE_URI] = l.optStr(val)}
 
-  outerHtml() {
-    if (this.isVoid()) {
+  domShim_outerHtml() {
+    if (this.domShim_isVoid()) {
       if (this.hasChildNodes()) {
         throw Error(`unexpected child nodes in void element ${this.localName}`)
       }
-      return `<` + this.tagString() + this.attrPrefix() + this.attrString() + ` />`
+      return `<` + l.laxStr(this.localName) + this.domShim_attrPrefix() + this.domShim_attrStr() + ` />`
     }
-    return super.outerHtml()
+    return super.domShim_outerHtml()
   }
 }
 
 export class HTMLMetaElement extends HTMLElement {
   get httpEquiv() {return this.getAttribute(`http-equiv`)}
-  set httpEquiv(val) {this.attrSet(`http-equiv`, val)}
+  set httpEquiv(val) {this.setAttribute(`http-equiv`, val)}
 }
 
 export class HTMLAnchorElement extends HTMLElement {
@@ -759,11 +687,13 @@ Has various deviations from the standard. For example, in a standard
 Our implementation doesn't support any of that for now.
 */
 export class SVGElement extends Element {
-  get namespaceURI() {return super.namespaceURI || p.NS_SVG}
-  set namespaceURI(val) {super.namespaceURI = val}
+  get namespaceURI() {return this[NAMESPACE_URI] || p.NS_SVG}
+  set namespaceURI(val) {this[NAMESPACE_URI] = l.optStr(val)}
 }
 
 export class DocumentType extends Node {
+  /* Standard behaviors. */
+
   constructor(name, pub, sys) {
     super()
     this.name = l.reqStr(name)
@@ -783,7 +713,10 @@ export class DocumentType extends Node {
   get systemId() {return l.laxStr(this[SYSTEM_ID])}
   set systemId(val) {this[SYSTEM_ID] = l.optStr(val)}
 
-  // Non-standard.
+  remove() {removeNode(this)}
+
+  /* Non-standard extensions. */
+
   get outerHTML() {return `<!doctype ${l.reqStr(this.name)}>`}
 }
 
@@ -802,7 +735,7 @@ export class Document extends Node {
 
   set doctype(val) {
     if ((this[DOCTYPE] = optDocumentType(val))) {
-      remove(val)
+      removeOpt(val)
       adopt(val, this)
       val.ownerDocument = this
     }
@@ -812,7 +745,7 @@ export class Document extends Node {
 
   set documentElement(val) {
     if ((this[DOCUMENT_ELEMENT] = optElement(val))) {
-      remove(val)
+      removeOpt(val)
       adopt(val, this)
       val.ownerDocument = this
     }
@@ -824,36 +757,33 @@ export class Document extends Node {
   get body() {return norm(this.documentElement?.childNodes?.find(isBody))}
   set body(val) {this.documentElement?.replaceChild(val, this.body)}
 
-  get title() {return l.laxStr(this.titleNode()?.textContent)}
+  get title() {return l.laxStr(this.domShim_titleNode()?.textContent)}
 
   set title(val) {
-    const node = this.titleNode()
+    const node = this.domShim_titleNode()
     if (node) node.textContent = l.render(val)
   }
 
-  createAttribute(key) {return new Attr(key).adoptDocument(this)}
-
-  createAttributeNS(ns, key) {
-    l.reqStr(ns)
-    const tar = this.createAttribute(key)
-    if (ns !== this.namespaceURI) tar.namespaceURI = ns
-    return tar
-  }
-
-  createDocumentFragment() {return new DocumentFragment().adoptDocument(this)}
-  createTextNode(val) {return new Text(val).adoptDocument(this)}
-  createComment(val) {return new Comment(val).adoptDocument(this)}
+  createDocumentFragment() {return new DocumentFragment().domShim_adoptDocument(this)}
+  createTextNode(val) {return new Text(val).domShim_adoptDocument(this)}
+  createComment(val) {return new Comment(val).domShim_adoptDocument(this)}
 
   createElement(localName, opt) {
     l.reqStr(localName)
 
     const is = l.onlyStr(l.get(opt, `is`))
-    const cls = this.customElements.get(is || localName) || this.baseClassByTag(localName)
-    const tar = new cls()
 
-    tar.adoptDocument(this)
-    tar.localName = localName
+    const cls = (
+      this.customElements.get(is || localName) ||
+      this.domShim_baseClassByTag(localName)
+    )
+
+    const tar = new cls()
+    tar[LOCAL_NAME] = localName
+    const ns = this[NAMESPACE_URI]
+    if (ns) tar[NAMESPACE_URI] = ns
     if (is) tar.setAttribute(`is`, is)
+    this.adoptNode(tar)
     return tar
   }
 
@@ -861,38 +791,31 @@ export class Document extends Node {
     l.reqStr(ns)
     l.reqStr(localName)
 
-    const cls = this.baseClassByTag(localName)
+    const cls = this.domShim_baseClassByTag(localName)
     if (!cls) throw Error(`unable to find class for ${l.show(localName)}`)
 
     const tar = new cls()
+    tar[LOCAL_NAME] = localName
+    if (ns) tar[NAMESPACE_URI] = ns
     this.adoptNode(tar)
-    tar.localName = localName
-    tar.namespaceURI = ns
     return tar
   }
 
-  adoptNode(val) {val.adoptDocument?.(this)}
+  adoptNode(val) {val.domShim_adoptDocument?.(this)}
 
   /* Non-standard extensions. */
 
   get customElements() {return this.implementation.customElements}
-  titleNode() {return norm(this.head?.childNodes?.find(isTitle))}
-  baseClassByTag() {return Element}
+  domShim_titleNode() {return norm(this.head?.childNodes?.find(isTitle))}
+  domShim_baseClassByTag() {return Element}
 }
 
 export class HTMLDocument extends Document {
-  createElement(localName, opt) {
-    const tar = super.createElement(localName, opt)
-    tar.namespaceURI = p.NS_HTML
-    return tar
-  }
+  /* Non-standard extensions. */
 
-  createElementNS(ns, localName, opt) {
-    if (ns === p.NS_HTML) return this.createElement(localName, opt)
-    return super.createElementNS(ns, localName, opt)
-  }
+  get [NAMESPACE_URI]() {return p.NS_HTML}
 
-  baseClassByTag(tag) {
+  domShim_baseClassByTag(tag) {
     return global[l.reqStr(dr.TAG_TO_CLS[tag] || `HTMLElement`)]
   }
 }
@@ -954,69 +877,66 @@ export class CustomElementRegistry extends o.MixMain(l.Emp) {
   }
 }
 
-/* Non-standard classes */
+/* Non-standard classes. */
 
-export class DictPh extends l.Emp {
-  constructor(tar) {
-    super()
-    this.tar = l.reqInst(tar, Element)
-    this.buf = l.Emp()
-    this.pro = new Proxy(this.buf, this)
-    this.dec()
+/*
+Internal alternative to `NamedNodeMap`.
+
+We don't implement `NamedNodeMap`, `Attr`, or `Element..attributes`, because
+their API requires too many overheads and we don't need it. Our renderer in
+`prax.mjs` uses only element-level attribute manipulation, which avoids the
+overhead of `Attr` objects.
+*/
+export class Attrs extends Map {
+  get(key) {return norm(super.get(key))}
+  set(key, val) {return super.set(l.reqStr(key), l.reqStr(val))}
+
+  toString() {
+    let out = ``
+    for (const [key, val] of this) out += attr(key, val)
+    return out
   }
-
-  dec() {}
 }
 
-// Analogous to `CSSStyleDeclaration`.
-export class StylePh extends DictPh {
-  /* Proxy handler traps. */
+export class Style extends l.Emp {
+  get Ph() {return StylePh}
 
-  get(buf, key) {
-    if (!l.isStr(key) || key === `constructor`) return undefined
-    if (key === `cssText`) return l.laxStr(this.attrGet())
-    return l.laxStr(buf[this.styleToCss(key)])
+  constructor(elem) {
+    super()
+    this.elem = elem
+    this.dict = l.Emp()
+    this.proxy = new Proxy(this.dict, new this.Ph(this))
+    this.decode(this.getAttr())
   }
 
-  set(buf, key, val) {
-    if (key === `cssText`) {
-      this.attrSet(val)
-      this.clear()
-    }
-    else {
-      buf[this.styleToCss(key)] = l.render(val)
-      this.enc()
-    }
+  getAttr() {return this.elem[ATTRS]?.get(`style`)}
+
+  /*
+  We must avoid `Element..setAttribute` here, because it checks for changes
+  in the `style` attribute. It could make our operations cyclic.
+  */
+  setAttr(val) {
+    l.reqStr(val)
+    const {elem} = this
+    if (!val && !elem[ATTRS]?.has(`style`)) return false
+    elem.domShim_attrs().set(`style`, val)
     return true
   }
 
-  deleteProperty(buf, key) {
-    if (!l.isStr(key)) return true
-    key = this.styleToCss(key)
-    if (key in buf) {
-      delete buf[key]
-      this.enc()
-    }
-    return true
-  }
+  setAttrAndDecode(val) {if (this.setAttr(val)) this.decode(val)}
 
-  /* Non-traps. */
+  encodeAndSetAttr() {this.setAttr(this.encode())}
 
-  dec() {this.decode(this.attrGet())}
-  enc() {this.attrSet(this.encode())}
-  clear() {for (const key of l.recKeys(this.buf)) delete this.buf[key]}
-
-  attrGet() {return this.tar[ATTRIBUTES]?.get(`style`)}
-
-  attrSet(val) {
-    if (!val && !this.tar.attributes.has(`style`)) return
-    this.tar.attributes.set(`style`, val)
+  clearAndDecode(src) {
+    this.clear()
+    this.decode(src)
   }
 
   decode(src) {
-    if (!src) return
+    if (!l.optStr(src)) return
+    const {dict} = this
 
-    for (src of split(src.trim(), /;\s*/g)) {
+    for (src of s.split(src.trim(), /;\s*/g)) {
       const ind = src.indexOf(`:`)
       if (!(ind >= 0)) continue
 
@@ -1024,14 +944,14 @@ export class StylePh extends DictPh {
       if (!key) continue
 
       const val = src.slice(ind + 1).trimStart()
-      if (val) this.buf[key] = val
+      if (val) dict[key] = val
     }
   }
 
   encode() {
-    const {buf} = this
+    const {dict} = this
     let out = ``
-    for (const key of l.recKeys(buf)) out += this.encodePair(key, buf[key])
+    for (const key of l.recKeys(dict)) out += this.encodePair(key, dict[key])
     return out.trim()
   }
 
@@ -1040,72 +960,136 @@ export class StylePh extends DictPh {
     return ` ` + l.reqStr(key) + `: ` + l.reqStr(val) + `;`
   }
 
-  styleToCss(key) {return STYLE_TO_CSS.get(key)}
+  clear() {
+    const {dict} = this
+    for (const key of l.recKeys(dict)) delete dict[key]
+  }
 }
 
-class DatasetPh extends DictPh {
+// Subset of `CSSStyleDeclaration`.
+export class StylePh extends l.Emp {
+  constructor(style) {super().style = style}
+
   /* Proxy handler traps. */
 
-  set(buf, key, val) {
-    l.reqStr(key)
+  get(dict, key) {
+    if (!l.isStr(key) || key === `constructor`) return undefined
+    if (key === `cssText`) return l.laxStr(this.style.getAttr())
+    return l.laxStr(dict[this.styleToCss(key)])
+  }
+
+  set(dict, key, val) {
     val = l.render(val)
-
-    buf[key] = val
-    this.tar.attributes.set(this.camelToData(key), val)
-
+    if (key === `cssText`) {
+      this.style.setAttrAndDecode(val)
+    }
+    else {
+      dict[this.styleToCss(key)] = val
+      this.style.encodeAndSetAttr()
+    }
     return true
   }
 
-  deleteProperty(buf, key) {
-    l.reqStr(key)
-    delete buf[key]
-    this.tar.attributes.delete(this.camelToData(key))
+  deleteProperty(dict, key) {
+    if (!l.isStr(key)) return true
+    key = this.styleToCss(key)
+    if (key in dict) {
+      delete dict[key]
+      this.style.encodeAndSetAttr()
+    }
     return true
   }
 
   /* Non-traps. */
 
-  dec() {
-    const src = this.tar[ATTRIBUTES]
+  styleToCss(key) {return STYLE_TO_CSS.get(key)}
+}
+
+export class Dataset extends l.Emp {
+  get Ph() {return DatasetPh}
+
+  constructor(elem) {
+    super()
+    this.elem = elem
+    this.dict = l.Emp()
+    this.proxy = new Proxy(this.dict, new this.Ph(this))
+    this.decodeAttrs()
+  }
+
+  decodeAttrs() {
+    const src = this.elem[ATTRS]
     if (!src) return
-    for (const [key, val] of src.entries()) this.attrSet(key, val)
+    for (const [key, val] of src.entries()) this.setAttr(key, val)
   }
 
-  attrSet(key, val) {
+  setAttr(key, val) {
+    l.reqStr(val)
     key = this.dataToCamel(key)
-    if (key) this.buf[key] = l.reqStr(val)
+    if (key) this.dict[key] = val
   }
 
-  attrDel(key) {
+  deleteAttr(key) {
     key = this.dataToCamel(key)
-    if (key) delete this.buf[key]
+    if (key) delete this.dict[key]
   }
 
-  camelToData(key) {return CAMEL_TO_DATA.get(key)}
+  /*
+  Caution: we must avoid `Element..setAttribute` here,
+  because when it sees a change in a `data-` attribute,
+  it calls a method of this proxy handler, if present.
+  This would be a cyclic operation.
+  */
+  setCamel(key, val) {
+    val = l.render(val)
+    this.elem.domShim_attrs().set(this.camelToData(key), val)
+    this.dict[key] = val
+  }
+
+  deleteCamel(key) {
+    l.reqStr(key)
+    this.elem[ATTRS]?.delete(this.camelToData(key))
+    delete this.dict[key]
+  }
+
   dataToCamel(key) {return DATA_TO_CAMEL.get(key)}
+  camelToData(key) {return CAMEL_TO_DATA.get(key)}
+}
+
+export class DatasetPh extends l.Emp {
+  constructor(dataset) {super().dataset = dataset}
+
+  set(_, key, val) {
+    this.dataset.setCamel(key, val)
+    return true
+  }
+
+  deleteProperty(_, key) {
+    this.dataset.deleteCamel(key)
+    return true
+  }
 }
 
 /*
 Analogous to `DOMTokenList` but specialized for class manipulation.
-For technical reasons, this doesn't implement the normal JS "list interface".
-It implements only the getters/setters/methods specific to `DOMTokenList`
-and the various iterable interfaces.
+For simplicity, this doesn't implement the JS "list" interface.
+It implements only the getters / setters / methods specific to
+`DOMTokenList` and the various iterable interfaces.
 */
 export class ClassList extends l.Emp {
-  constructor(val) {super().ref = val}
+  constructor(val) {super()[ELEM] = val}
 
   /* Standard behaviors. */
 
-  get value() {return this.ref.className}
-  set value(val) {this.ref.className = val}
+  get value() {return this[ELEM].className}
+  set value(val) {this[ELEM].className = val}
 
-  item(ind) {return ind >= 0 ? norm(this.toArray()[ind]) : null}
-  contains(val) {return this.toArray().includes(val)}
+  item(ind) {return ind >= 0 ? norm(this.domShim_splitClassList()[ind]) : null}
+  contains(val) {return this.domShim_splitClassList().includes(val)}
 
   add(...val) {
     if (!val.length) return
 
-    const arr = this.toArray(val)
+    const arr = this.domShim_splitClassList(val)
     const len = arr.length
 
     for (val of val) {
@@ -1117,7 +1101,7 @@ export class ClassList extends l.Emp {
 
   remove(...src) {
     if (!src.length) return
-    this.value = join(this.toArray().filter(notIncludes, src))
+    this.value = join(this.domShim_splitClassList().filter(notIncludes, src))
   }
 
   replace(prev, next) {
@@ -1125,7 +1109,7 @@ export class ClassList extends l.Emp {
     next = l.render(next)
     if (prev === next) return true
 
-    const arr = this.toArray()
+    const arr = this.domShim_splitClassList()
     const ind = arr.indexOf(prev)
     if (!(ind >= 0)) return false
 
@@ -1142,28 +1126,16 @@ export class ClassList extends l.Emp {
   }
 
   toString() {return this.value}
-  keys() {return this.toArray().keys()}
-  values() {return this.toArray().values()}
-  entries() {return this.toArray().entries()}
-  forEach(...val) {return this.toArray().forEach(...val)}
-
-  /*
-  Technical note. In our shim, this object is iterable, but is not a list.
-  We avoid having a `.length` getter to prevent this object from being
-  accidentally mistaken for a list.
-  */
+  keys() {return this.domShim_splitClassList().keys()}
+  values() {return this.domShim_splitClassList().values()}
+  entries() {return this.domShim_splitClassList().entries()}
+  forEach(...val) {return this.domShim_splitClassList().forEach(...val)}
   [Symbol.iterator]() {return this.values()}
 
   /* Non-standard extensions. */
 
-  get ref() {return this[REF]}
-  set ref(val) {this[REF] = reqElement(val)}
-  toArray() {return split(this.value.trim(), /\s+/g)}
+  domShim_splitClassList() {return s.split(this.value.trim(), /\s+/g)}
 }
-
-const arrKey = Symbol.for(`arr`)
-const byIdKey = Symbol.for(`byId`)
-const byNameKey = Symbol.for(`byName`)
 
 /*
 Shim for the native interface `HTMLFormControlsCollection` used for the getter
@@ -1190,11 +1162,9 @@ We're not prepared to commit to such accuracy.
 export class HTMLFormControlsCollection extends l.Emp {
   /* Standard behaviors. */
 
-  namedItem(key) {
-    return norm(this[byIdKey]?.get(key) ?? this[byNameKey]?.get(key))
-  }
+  namedItem(key) {return norm(this[BY_ID]?.get(key) ?? this[BY_NAME]?.get(key))}
 
-  [Symbol.iterator]() {return (this[arrKey] ?? []).values()}
+  [Symbol.iterator]() {return (this[ARR] ??= []).values()}
 
   /* Non-standard extensions. */
 
@@ -1219,18 +1189,18 @@ export class HTMLFormControlsCollection extends l.Emp {
 
     if (!this.isControl(val)) return
 
-    const arr = tar[arrKey] ??= []
+    const arr = tar[ARR] ??= []
     arr.push(val)
 
     const id = val.id
     if (l.isValidStr(id)) {
-      const index = tar[byIdKey] ??= new FormControlMap()
+      const index = tar[BY_ID] ??= new FormControlMap()
       index.add(id, val)
     }
 
     const name = val.name
     if (l.isValidStr(name)) {
-      const index = tar[byNameKey] ??= new FormControlMap()
+      const index = tar[BY_NAME] ??= new FormControlMap()
       index.add(name, val)
     }
   }
@@ -1250,9 +1220,8 @@ export class HTMLFormControlsCollection extends l.Emp {
 }
 
 // For internal use.
-export class FormControlMap extends c.TypedMap {
-  reqKey(key) {return l.reqValidStr(key)}
-  reqVal(val) {return val}
+export class FormControlMap extends Map {
+  set(key, val) {return super.set(l.reqValidStr(key), val)}
 
   add(key, val) {
     l.reqValidStr(key)
@@ -1311,7 +1280,8 @@ Spec:
   https://html.spec.whatwg.org/multipage/syntax.html#syntax-ambiguous-ampersand
 
 In double-quoted attributes, the spec requires us to escape only double quotes
-and ambiguous ampersands. In practice, everyone escapes ampersands by default.
+and ambiguous ampersands. In practice, everyone escapes ampersands
+unconditionally.
 
 We align our escaping implementation with Chromium because we test our
 `.outerHTML` implementation against theirs. At some point, they were
@@ -1332,6 +1302,10 @@ Then they started escaping even more:
 At this point, their attribute escaping is a superset of element text escaping.
 This is not mandated by the spec, and not necessary for proper HTML parsers
 such as browsers.
+
+At the time of writing, Safari (version 18) still matches the older WebKit /
+Chromium behavior. As a result, our tests involving attribute escaping fail
+when compared against the native DOM implementation in Safar.
 */
 export function escapeAttr(src) {
   l.reqStr(src)
@@ -1386,6 +1360,10 @@ export class CAMEL_TO_DATA extends o.Cache {
   static make(val) {return camelToData(val)}
 }
 
+/*
+In addition to conversion, this filters by the `data-` prefix.
+When the prefix is missing, the output is empty.
+*/
 export class DATA_TO_CAMEL extends o.Cache {
   static make(val) {return dataToCamel(val)}
 }
@@ -1401,7 +1379,6 @@ function hasLocalName(val, name) {return isElement(val) && val.localName ===  na
 function errIllegal() {return TypeError(`illegal invocation`)}
 function norm(val) {return val ?? null}
 function notIncludes(val) {return !this.includes(val)} // eslint-disable-line no-invalid-this
-function split(val, sep) {return l.laxStr(val) ? val.split(l.reqSome(sep)) : []}
 function join(val) {return val.join(` `)}
 function lower(val) {return val.toLowerCase()}
 function isHead(val) {return hasLocalName(val, `head`)}
@@ -1413,9 +1390,15 @@ function isTableBody(val) {return hasLocalName(val, `tbody`)}
 function isTableFoot(val) {return hasLocalName(val, `tfoot`)}
 function isTableRow(val) {return hasLocalName(val, `tr`)}
 function isRemovable(val) {return l.isObj(val) && `remove` in val}
-function remove(val) {if (isRemovable(val)) val.remove()}
-function adopt(chi, par) {reqNode(chi).parentNode = par}
+function removeOpt(val) {if (isRemovable(val)) val.remove()}
+function adopt(chi, par) {chi.domShim_setParent(par)}
 function fromCharCode(val) {return val ? String.fromCharCode(val) : ``}
+
+function removeNode(val) {
+  const par = reqNode(val)[PARENT_NODE]
+  if (l.isObj(par) && `removeChild` in par) par.removeChild(val)
+  else val.domShim_setParent?.(null)
+}
 
 function appendTextContent(acc, src) {
   l.reqStr(acc)
@@ -1442,6 +1425,10 @@ function appendInnerHtmlRaw(acc, src) {
   return appendInnerHtml(acc, src)
 }
 
+function attr(key, val) {
+  return ` ` + l.reqStr(key) + `="` + escapeAttr(val) + `"`
+}
+
 /*
 Reference:
 
@@ -1459,7 +1446,7 @@ function dataToCamel(src) {
   l.reqStr(src)
 
   const pre = `data-`
-  if (!src.startsWith(pre)) return undefined
+  if (!src.startsWith(pre)) return ``
 
   const buf = src.slice(pre.length).split(`-`)
   let ind = 0
@@ -1474,15 +1461,6 @@ but we may have to differentiate them later.
 Suboptimal, should be cached.
 */
 function camelToKebab(val) {return val.split(/(?=[A-Z])/g).map(lower).join(`-`)}
-
-// Difference from `Array.prototype.indexOf`: supports `NaN`.
-function indexOf(src, val) {
-  l.reqArr(src)
-  const len = src.length
-  let ind = -1
-  while (++ind < len) if (l.is(src[ind], val)) return ind
-  return -1
-}
 
 // Duplicated from `iter.mjs` to avoid import.
 function count(src, fun) {

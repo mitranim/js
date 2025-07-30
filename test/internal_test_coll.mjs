@@ -6,35 +6,41 @@ import * as c from '../coll.mjs'
 Implementation notes.
 
 The "make" functions in this module should avoid calling native array methods.
-It should use only `Array(N)`, `.length`, and the bracket notation. This avoids
-accidental deoptimization or specialization of native methods. Some of our test
-modules unconditionally deoptimize them anyway, but we may want to make that
-optional.
+When creating arrays, we should use only `Array(N)`, `.length`, and the bracket
+notation. This avoids accidental deoptimization or specialization of native
+methods. Some of our test modules unconditionally deoptimize them anyway, but
+only when running `all_bench.mjs`. Directly running a specific benchmark file
+allows to opt out of that.
 
 We would prefer to freeze global values to prevent accidental misuse, but
 freezing arrays makes some native iteration methods dramatically slower.
 */
-export const size = 1024
+export const SIZE_BIG = 1024
+export const SIZE_SMALL = 8
+
+class SubArr extends Array {}
 
 export const arrEmpty = []
 export const arrShort = [10, 20, 30]
 export const arrShortNested = makeArrNested(arrShort)
 
-export const numArr = makeNumArr(size)
+export const numArr = makeNumArr(SIZE_BIG)
 export const numArrNested = makeArrNested(numArr)
+export const numArrSub = SubArr.from(numArr)
 
 export const dictArr = makeDictArr(numArr)
 export const mapArr = makeMapArr(numArr)
-export const numDict = makeNumDict(size)
+export const numDict = makeNumDict(SIZE_BIG)
 export const numSet = new Set(numArr)
 export const numVec = c.Vec.from(numArr)
-export const numMap = makeNumMap(size)
+export const numMap = makeNumMap(SIZE_BIG)
 export const numArgs = function() {return arguments}(...numArr)
 export const knownKeys = Object.keys(numArr.slice(0, numArr.length/2))
 export const numEntries = Object.entries(numDict)
 
-export const strArrSmall = makeNumArr(4).map(String)
+export const strArrSmall = makeNumArr(SIZE_SMALL).map(String)
 export const strSetSmall = new Set(strArrSmall)
+export const numDictSmall = makeNumDict(SIZE_SMALL)
 
 function makeNumArr(len) {
   const out = Array(len)

@@ -19,21 +19,56 @@ Also see {{featLink http}} for routing and cookies, {{featLink http_bun}} for Bu
 Simple example of a server that serves files from the current directory, automatically matching URL paths to HTML files:
 
 ```js
-import * as hd from '{{featUrl http_deno}}'
+import * as h from '@mitranim/js/http'
 
-// Finds files in the current folder, with no filtering.
-const DIRS = hd.HttpDirs.of(new hd.HttpDir(`.`))
+// Resolves files relatively to the current folder.
+const DIRS = h.HttpDirs.of(new h.HttpDir({fsPath: `.`}))
 
-async function respond(req) {
+h.serve({onRequest})
+
+async function onRequest(req) {
   const path = new URL(req.url).pathname
 
   return (
-    (await DIRS.resolveSiteFileWithNotFound(path))?.response() ||
+    (await serveFile(req, path)) ||
     new Response(`not found`, {status: 404})
   )
 }
 
-Deno.serve({handler: respond})
+async function serveFile(req, path) {
+  const file = await DIRS.resolveSiteFileWithNotFound(path)
+  return file?.response()
+}
+```
+
+For production, enable compression and caching:
+
+```js
+import * as h from '@mitranim/js/http'
+
+const DIRS = h.HttpDirs.of(new h.HttpDir({fsPath: `.`}))
+const COMP = new h.HttpCompressor()
+
+DIRS.setOpt({caching: true})
+
+h.serve({onRequest})
+
+async function onRequest(req) {
+  const path = new URL(req.url).pathname
+
+  return (
+    (await serveFile(req, path)) ||
+    new Response(`not found`, {status: 404})
+  )
+}
+
+async function serveFile(req, path) {
+  return h.fileResponse({
+    req,
+    file: await DIRS.resolveSiteFileWithNotFound(path),
+    compressor: COMP,
+  })
+}
 ```
 
 ## API

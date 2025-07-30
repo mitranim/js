@@ -2133,10 +2133,10 @@ t.test(function test_reset() {
 
   const tar = {[l.VAL]: undefined}
 
-  l.reset(tar, 10)
+  t.is(l.reset(tar, 10), tar)
   t.is(l.deref(tar), 10)
 
-  l.reset(tar, 20)
+  t.is(l.reset(tar, 20), tar)
   t.is(l.deref(tar), 20)
 })
 

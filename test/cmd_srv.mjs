@@ -12,15 +12,12 @@ import * as io from '#io'
 
 const CLI = cl.Flag.os()
 const LIVE = CLI.boolOpt(`--live`)
-const CACHING = false // Toggle when debugging caching and compression.
-const DIR = new h.HttpDir(`.`)
-const DIRS = h.HttpDirs.of(DIR)
 const LIVE_BRO = l.vac(LIVE) && new hl.LiveBroad()
-const LIVE_CLI = l.vac(LIVE) && new hl.LiveClient()
-const COMPRESSOR = l.vac(CACHING) && new h.HttpCompressor()
-
-DIRS.cache = CACHING
-if (COMPRESSOR) COMPRESSOR.cache = CACHING
+const LIVE_CLI = l.vac(LIVE) && new hl.LiveClient({hot: true})
+const CACHING = false // Toggle for manual debug.
+const DIR = new h.HttpDir({fsPath: `.`})
+const DIRS = h.HttpDirs.of(DIR).setOpt({caching: CACHING})
+const COMP = new h.HttpCompressor()
 
 function serve() {
   h.serve({port: 37285, onRequest, onError, onListen})
@@ -36,7 +33,14 @@ async function onRequest(req) {
 
   const res = await (
     LIVE_BRO?.response(req, path) ||
-    (await serveFile(req, path)) ||
+
+    (await h.fileResponse({
+      req,
+      file: await DIRS.resolve(path),
+      compressor: COMP,
+      liveClient: LIVE_CLI,
+    })) ||
+
     h.notFound(req.method, path)
   )
 
@@ -56,17 +60,6 @@ function onError(err) {
   const msg = err?.stack || String(err)
   const status = err?.status || 500
   return new Response(msg, {status})
-}
-
-async function serveFile(req, path) {
-  const file = await DIRS.resolveSiteFile(path)
-  if (!file) return undefined
-  LIVE_CLI?.addFile(file)
-  const res = (
-    (await COMPRESSOR?.fileResponse({req, file})) ??
-    (await file.response())
-  )
-  return hl.withLiveScript(LIVE_CLI, res)
 }
 
 async function watch() {

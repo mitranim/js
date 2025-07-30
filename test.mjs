@@ -388,8 +388,8 @@ export const conf = new class Conf extends l.Emp {
   get verb() {return this.#verb}
   set verb(val) {this.#verb = l.reqBool(val)}
 
-  setTestFilter(val) {return this.testFilter = toFilter(val), this}
-  setBenchFilter(val) {return this.benchFilter = toFilter(val), this}
+  setTestFilter(val) {return (this.testFilter = toFilter(val)), this}
+  setBenchFilter(val) {return (this.benchFilter = toFilter(val)), this}
 
   isTop() {return !this.run}
   verbLog(...val) {if (this.verb) console.log(...val)}
@@ -793,11 +793,13 @@ export class Eq extends Set {
   equalObj(one, two) {
     // Probably faster than letting `.equalList` compare them.
     if (l.isInst(one, String)) return equalCons(one, two) && one.valueOf() === two.valueOf()
+    if (l.isInst(one, Date)) return equalCons(one, two) && one.valueOf() === two.valueOf()
     if (l.isList(one)) return equalCons(one, two) && this.equalList(one, two)
     if (l.isSet(one)) return equalCons(one, two) && this.equalSet(one, two)
     if (l.isMap(one)) return equalCons(one, two) && this.equalMap(one, two)
     if (l.isInst(one, URL)) return equalCons(one, two) && one.href === two.href
-    if (l.isInst(one, Date)) return equalCons(one, two) && one.valueOf() === two.valueOf()
+    if (l.isInst(one, URLSearchParams)) return equalCons(one, two) && one.toString() === two.toString()
+    if (l.isInst(one, Headers)) return equalCons(one, two) && this.equalHeaders(one, two)
     if (l.isDict(one)) return l.isDict(two) && this.equalRec(one, two)
     if (l.isDict(two)) return l.isDict(one) && this.equalRec(one, two)
     if (l.isInst(one, l.WeakRef)) return equalCons(one, two) && this.equalRef(one, two)
@@ -831,6 +833,10 @@ export class Eq extends Set {
       if (!this.equal(val, Map.prototype.get.call(two, key))) return false
     }
     return true
+  }
+
+  equalHeaders(one, two) {
+    return this.equalList([...one.entries()], [...two.entries()])
   }
 
   equalRec(one, two) {

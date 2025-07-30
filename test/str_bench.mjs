@@ -254,7 +254,7 @@ t.bench(function bench_san_num_1() {l.nop(s.san`one ${10}`)})
 t.bench(function bench_san_num_2() {l.nop(s.san`one ${10} two ${20}`)})
 t.bench(function bench_san_num_3() {l.nop(s.san`one ${10} two ${20} three ${30}`)})
 
-t.bench(function bench_arrHex() {l.nop(s.arrHex(uuidArr))})
+t.bench(function bench_byteArrHex() {l.nop(s.byteArrHex(uuidArr))})
 
 t.bench(function bench_replaceAll_miss() {l.nop(s.replaceAll(strForwardSlash, `\\`, `/`))})
 t.bench(function bench_replaceAll_hit() {l.nop(s.replaceAll(strBackwardSlash, `\\`, `/`))})

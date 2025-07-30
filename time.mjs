@@ -39,12 +39,12 @@ export class Dur extends l.Emp {
     return this
   }
 
-  setYears(val) {return this.years = l.laxInt(val), this}
-  setMonths(val) {return this.months = l.laxInt(val), this}
-  setDays(val) {return this.days = l.laxInt(val), this}
-  setHours(val) {return this.hours = l.laxInt(val), this}
-  setMinutes(val) {return this.minutes = l.laxInt(val), this}
-  setSeconds(val) {return this.seconds = l.laxInt(val), this}
+  setYears(val) {return (this.years = l.laxInt(val)), this}
+  setMonths(val) {return (this.months = l.laxInt(val)), this}
+  setDays(val) {return (this.days = l.laxInt(val)), this}
+  setHours(val) {return (this.hours = l.laxInt(val)), this}
+  setMinutes(val) {return (this.minutes = l.laxInt(val)), this}
+  setSeconds(val) {return (this.seconds = l.laxInt(val)), this}
 
   withYears(val) {return this.clone().setYears(val)}
   withMonths(val) {return this.clone().setMonths(val)}

@@ -1,12 +1,13 @@
 {
   "name": "@mitranim/js",
-  "description": "The missing standard library for JS. The missing JS framework.",
-  "version": "0.1.79",
+  "description": "The missing \"standard library\" for JS, and a foundation for full-stack JS apps.",
+  "version": "0.1.80",
   "type": "module",
   "main": "./all.mjs",
   "repository": {"type": "git", "url": "https://github.com/mitranim/js.git"},
   "license": "Unlicense",
   "exports": {
+    ".": "./all.mjs",
     "./dom_global": {
       "browser": "./dom_global_native.mjs",
       "default": "./dom_global_shim.mjs"
@@ -16,6 +17,7 @@
       "deno": "./io_deno.mjs"
     },
     "./http": {
+      "browser": "http.mjs",
       "bun": "./http_bun.mjs",
       "deno": "./http_deno.mjs"
     },

@@ -11,7 +11,7 @@
 ## Usage
 
 ```js
-import * as d from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/dom.mjs'
+import * as d from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/dom.mjs'
 ```
 
 ## API
@@ -72,3 +72,4 @@ The following APIs are exported but undocumented. Check [dom.mjs](../dom.mjs).
   * [`class MixinChild`](../dom.mjs#L236)
   * [`function MixChildCon`](../dom.mjs#L291)
   * [`class MixinChildCon`](../dom.mjs#L293)
+  * [`class ChildDiff`](../dom.mjs#L304)

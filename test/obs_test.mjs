@@ -645,7 +645,7 @@ t.test(function test_isRef_isObsRef_deref_derefAll() {
 
 // TODO consolidate with the test above.
 t.test(function test_deref_reset() {
-  function testReset(obs, val) {t.is(l.reset(obs, val), val)}
+  function testReset(obs, val) {t.is(l.reset(obs, val), obs)}
 
   t.test(function test_obsRef() {
     const obs = ob.obsRef()
@@ -912,6 +912,13 @@ await t.test(async function test_obs() {
 
   testQueEmpty(que0)
   testQueEmpty(que1)
+})
+
+t.test(function test_obs_input_fallback() {
+  t.ok(l.isNpo(l.deref(ob.obs())))
+  t.ok(l.isNpo(l.deref(ob.obs(undefined))))
+  t.ok(l.isNpo(l.deref(ob.obs(null))))
+  t.isnt(l.deref(ob.obs()), l.deref(ob.obs()))
 })
 
 function testWeakerRef(ref, tar, exp) {

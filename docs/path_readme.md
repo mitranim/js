@@ -28,7 +28,7 @@ Known limitations:
 Using a specific implementation:
 
 ```js
-import * as pt from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.79/path.mjs'
+import * as pt from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/path.mjs'
 
 console.log(pt.join(`one`, `two`, `three.four`))
 // 'one/two/three.four'

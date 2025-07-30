@@ -5,9 +5,10 @@ serves its client script, maintains client connections, and broadcasts events.
 */
 
 import * as l from './lang.mjs'
-import * as h from './http.mjs'
+import * as o from './obj.mjs'
 import * as u from './url.mjs'
-import * as hs from './http_shared.mjs'
+import * as h from './http.mjs'
+import * as hs from './http_srv.mjs'
 import * as lc from './live_client.mjs'
 
 export const LIVE_PATH = `/e8f2dcbe89994b14a1a1c59c2ea6eac7`
@@ -52,44 +53,56 @@ export class LiveBroad extends hs.Broad {
   }
 }
 
+// Used for HMR.
+const LIVE_FILES = Symbol.for(`live_files`)
+
 export class LiveClient extends l.Emp {
   get Res() {return Response}
 
-  constructor(src) {
+  constructor(opt) {
     super()
-    l.optRec(src)
-    this.host = l.optScalar(src?.host)
-    this.files = l.Emp()
-    this.script = `<script type="module" src="${u.urlJoin(this.host, LIVE_PATH_SCRIPT)}"></script>`
+    const {hostname, port, hot, Res} = l.laxRec(opt)
+    const url = u.url(l.renderLax(hostname) || `http://localhost`).setPort(port)
+    this.hostname = url.hostname
+    this.port = l.optNat(port)
+    this.host = url.href
+    this.sendUrl = url.setPath(LIVE_PATH_SEND).href
+    this.hot = l.optBool(hot)
+    this.files = hot && l.onlyNpo(globalThis[LIVE_FILES]) || l.Emp()
+    this.script = `<script type="module" src="${url.setPath(LIVE_PATH_SCRIPT)}"></script>`
+    if (l.optCls(Res)) o.pub(this, `Res`, Res)
   }
 
   sendJson(val) {return this.send(h.jsonEncode(val))}
 
   send(val) {
-    const url = u.urlJoin(this.host, LIVE_PATH_SEND)
-    return fetch(url, {method: h.POST, body: val}).then(h.resOk)
+    return fetch(this.sendUrl, {method: h.POST, body: val}).then(h.resOk)
   }
 
   addFile(file) {
     if (l.isNil(file)) return undefined
-    const {fsPath, urlPath} = l.reqInst(file, hs.BaseHttpFile)
-    this.files[l.reqStr(fsPath)] ??= l.reqStr(urlPath)
+
+    const {fsPath, urlPath} = l.reqRec(file)
+    l.reqStr(fsPath)
+    l.reqStr(urlPath)
+
+    const {files, hot} = this
+    if (files[fsPath]) return file
+
+    this.files[fsPath] = urlPath
+    if (hot) globalThis[LIVE_FILES] = files
     return file
   }
 
   hasFile(path) {return l.reqStr(path) in this.files}
   fsPathToUrlPath(path) {return this.files[l.reqStr(path)]}
 
-  withLiveScript(res) {
+  liveResponse(res) {
     if (!isResHtmlText(res)) return res
     return new this.Res(hs.concatStreams(res.body, this.script), res)
   }
-}
 
-export function withLiveScript(cli, res) {
-  l.optInst(cli, LiveClient)
-  if (!cli) return res
-  return cli.withLiveScript(res)
+  liveHtml(html) {return l.reqStr(html) + `\n` + this.script}
 }
 
 const HEADERS_LIVE_SCRIPT = [

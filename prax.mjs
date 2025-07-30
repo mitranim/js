@@ -389,6 +389,8 @@ export class Ren extends o.MixMain(l.Emp) {
   Inefficient adapter for incorrectly-written code that renders SVG elements in
   the HTML namespace. Sometimes useful for migrating code from other rendering
   systems. Should be avoided by using `.S` for SVG.
+
+  TODO: use this only for the native DOM API, not for the shim.
   */
   alignNs(tar) {
     if (!isNamespaced(tar)) return tar
@@ -520,7 +522,7 @@ export class MixinRecNode extends o.Mixin {
       next = undefined
 
       constructor(ren, tar) {
-        super()
+        super(``)
         this.ren = ren
         this.tar = d.reqNode(tar)
       }
@@ -789,7 +791,7 @@ export class PropBui extends l.Emp {
   or to redefine them.
   */
 
-  frozen() {return this[FROZEN] = true, this}
+  frozen() {return (this[FROZEN] = true), this}
   snapshot(val) {return this.with(val).frozen()}
   mutable() {return this.mutableOuter().mutableInner()}
   mutableOuter() {return this[FROZEN] ? new this.constructor().with(this[l.VAL]) : this}

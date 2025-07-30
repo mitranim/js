@@ -687,8 +687,8 @@ t.test(function test_spaced() {
   t.is(s.spaced(10, 20, 30), `10 20 30`)
 })
 
-t.test(function test_arrHex() {
-  function test(src, exp) {t.is(s.arrHex(new Uint8Array(src)), exp)}
+t.test(function test_byteArrHex() {
+  function test(src, exp) {t.is(s.byteArrHex(new Uint8Array(src)), exp)}
 
   test(undefined, ``)
   test([], ``)

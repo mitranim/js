@@ -27,13 +27,13 @@ export function eqm2(val, native, shimmed) {
   else eqm(val, shimmed)
 }
 
-const ESC_SRC = `<one>&"</one>`
-
-// See comment on `ds.escapeAttr`.
-const ESC_OUT_ATTR = `&lt;one&gt;&amp;&quot;&lt;/one&gt;`
+const ESC_SRC = `<one>&\u00a0"</one>`
 
 // See comment on `ds.escapeText`.
-const ESC_OUT_TEXT = `&lt;one&gt;&amp;"&lt;/one&gt;`
+const ESC_OUT_ATTR = `&lt;one&gt;&amp;&nbsp;&quot;&lt;/one&gt;`
+
+// See comment on `ds.escapeText`.
+const ESC_OUT_TEXT = `&lt;one&gt;&amp;&nbsp;"&lt;/one&gt;`
 
 /* Test */
 
@@ -394,7 +394,15 @@ t.test(function test_serialization() {
 
     t.test(function test_normal_elems() {
       const node = E(`div`)
-      t.eq([...node.attributes], [])
+
+      if (ob.HAS_DOM) {
+        t.eq([...node.attributes], [])
+      }
+      else {
+        t.no(ds.ATTRS in node)
+        t.eq([...node.domShim_attrs()], [])
+      }
+
       t.eq([...node.childNodes], [])
 
       eqm(E(`div`), `<div></div>`)

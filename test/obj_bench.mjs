@@ -52,7 +52,7 @@ class NonEnumDefprop {
     })
   }
 
-  set(val) {return this.key = val, this}
+  set(val) {return (this.key = val), this}
   get() {return this.key}
 }
 
@@ -60,14 +60,14 @@ const keySym = Symbol.for(`key`)
 
 class NonEnumSym {
   constructor(val) {this[keySym] = val}
-  set(val) {return this[keySym] = val, this}
+  set(val) {return (this[keySym] = val), this}
   get() {return this[keySym]}
 }
 
 class NonEnumPriv {
   #val = undefined
   constructor(val) {this.#val = val}
-  set(val) {return this.#val = val, this}
+  set(val) {return (this.#val = val), this}
   get() {return this.#val}
 }
 

@@ -25,7 +25,7 @@ export function arrCopy(val) {
   throw l.errConv(val, `array`)
 }
 
-function toArray(val) {return l.reqArr(val.toArray())}
+function toArray(val) {return l.reqTrueArr(val.toArray())}
 
 function listToArr(val) {
   if (l.isTrueArr(val)) return val.slice()
@@ -57,7 +57,7 @@ export function keys(val) {
 
 export function values(val) {
   if (l.isTrueArr(val)) return val
-  if (l.isArrble(val)) return values(toArray(val))
+  if (l.isArrble(val)) return toArray(val)
   return valuesCopy(val)
 }
 
@@ -114,8 +114,8 @@ function hasIter(val) {return l.isList(val) ? some(val, hasIter) : l.isIterator(
 
 export function indexOf(src, val) {
   if (l.isNil(src)) return -1
-  src = l.reqList(src)
-
+  if (l.isArr(src) && !l.isNaN(val)) return src.indexOf(val)
+  l.reqList(src)
   const len = src.length
   let ind = -1
   while (++ind < len) if (l.is(src[ind], val)) return ind
@@ -192,7 +192,7 @@ export function each(val, fun) {
 export function map(val, fun) {return mapMut(valuesCopy(val), fun)}
 
 export function mapMut(val, fun) {
-  val = l.reqTrueArr(val)
+  l.reqTrueArr(val)
   l.reqFun(fun)
   const len = val.length
   let ind = -1

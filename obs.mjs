@@ -43,7 +43,9 @@ export function isQue(val) {return l.hasMeth(val, `enque`) && l.hasMeth(val, `fl
 export function optQue(val) {return l.opt(val, isQue)}
 export function reqQue(val) {return l.req(val, isQue)}
 
-export function obs(val) {return new Proxy(val, new ObsPh())}
+export function obs(val) {return new Proxy((val ?? l.Emp()), new ObsPh())}
+export function toObs(val) {return isObsRef(val) ? val : obs(val)}
+export function toObsOpt(val) {return l.isNil(val) ? val : toObs(val)}
 export function getPh(val) {return val?.[PH]}
 export function getTar(val) {return l.isObj(val) && TAR in val ? val[TAR] : val}
 export function getQue(val) {return val?.[QUE]}
@@ -73,7 +75,7 @@ export function nodeDepth(val) {
 export class WeakerRef extends l.WeakRef {
   expired = false
   deref() {return this.expired ? undefined : super.deref()}
-  init() {return this.expired = false, this}
+  init() {return (this.expired = false), this}
   deinit() {this.expired = true}
 }
 
@@ -472,7 +474,7 @@ export class MixinRecur extends o.Mixin {
         }
       }
 
-      setShed(val) {return this.shed = val, this}
+      setShed(val) {return (this.shed = val), this}
 
       schedule() {
         const {shed} = this

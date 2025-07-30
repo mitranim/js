@@ -191,22 +191,22 @@ export class Url extends l.Emp {
   get href() {return this.clean() + this.searchFull() + this.hashFull()}
   set href(val) {this.reset(val)}
 
-  setScheme(val) {return this.scheme = val, this}
-  setSlash(val) {return this.slash = val, this}
-  setUsername(val) {return this.username = val, this}
-  setPassword(val) {return this.password = val, this}
-  setHostname(val) {return this.hostname = val, this}
-  setPort(val) {return this.port = val, this}
-  setPathname(val) {return this.pathname = val, this}
-  setSearch(val) {return this.search = val, this}
-  setSearchParams(val) {return this.searchParams = val, this}
-  setQuery(val) {return this.query = val, this}
-  setHash(val) {return this.hash = val, this}
-  setHashExact(val) {return this[hashKey] = toHash(val), this}
-  setProtocol(val) {return this.protocol = val, this}
-  setHost(val) {return this.host = val, this}
-  setOrigin(val) {return this.origin = val, this}
-  setHref(val) {return this.href = val, this}
+  setScheme(val) {return (this.scheme = val), this}
+  setSlash(val) {return (this.slash = val), this}
+  setUsername(val) {return (this.username = val), this}
+  setPassword(val) {return (this.password = val), this}
+  setHostname(val) {return (this.hostname = val), this}
+  setPort(val) {return (this.port = val), this}
+  setPathname(val) {return (this.pathname = val), this}
+  setSearch(val) {return (this.search = val), this}
+  setSearchParams(val) {return (this.searchParams = val), this}
+  setQuery(val) {return (this.query = val), this}
+  setHash(val) {return (this.hash = val), this}
+  setHashExact(val) {return (this[hashKey] = toHash(val)), this}
+  setProtocol(val) {return (this.protocol = val), this}
+  setHost(val) {return (this.host = val), this}
+  setOrigin(val) {return (this.origin = val), this}
+  setHref(val) {return (this.href = val), this}
 
   withScheme(val) {return this.clone().setScheme(val)}
   withSlash(val) {return this.clone().setSlash(val)}
@@ -374,10 +374,10 @@ export class Loc extends Url {
   set title(val) {this[titleKey] = l.laxStr(val)}
 
   withState(val) {return this.clone().setState(val)}
-  setState(val) {return this.state = val, this}
+  setState(val) {return (this.state = val), this}
 
   withTitle(val) {return this.clone().setTitle(val)}
-  setTitle(val) {return this.title = val, this}
+  setTitle(val) {return (this.title = val), this}
 
   push() {
     this.history.pushState(this.state, this.title, this)

@@ -2,7 +2,7 @@
 
 import './internal_test_init.mjs'
 import * as t from '../test.mjs'
-import * as hs from '../http_shared.mjs'
+import * as hs from '../http_srv.mjs'
 
 t.test(function test_guessContentType() {
   t.throws(() => hs.guessContentType({}), TypeError, `unable to convert {} to string`)

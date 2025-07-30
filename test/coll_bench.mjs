@@ -110,8 +110,8 @@ t.bench(function bench_map_new_plain_dict() {
 t.bench(function bench_vec_empty_Array() {l.nop([])})
 t.bench(function bench_vec_empty_Vec() {l.nop(new c.Vec())})
 
-t.bench(function bench_vec_prealloc_Array() {l.nop(Array(itc.size))})
-t.bench(function bench_vec_prealloc_Vec() {l.nop(c.Vec.make(itc.size))})
+t.bench(function bench_vec_prealloc_Array() {l.nop(Array(itc.SIZE_BIG))})
+t.bench(function bench_vec_prealloc_Vec() {l.nop(c.Vec.make(itc.SIZE_BIG))})
 
 t.bench(function bench_vec_of_Array() {l.nop(Array.of(10, 20, 30, 40))})
 t.bench(function bench_vec_of_Vec() {l.nop(c.Vec.of(10, 20, 30, 40))})

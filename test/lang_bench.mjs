@@ -237,7 +237,23 @@ function swapperReturning(tar, fun) {
   return l.isFun(fun) ? [tar, fun] : [fun, tar]
 }
 
+const kwargNop = Function(`nop`, `
+  return function kwarg({one, two, three}) {nop(one), nop(two), nop(three)}
+`)(l.nop)
+
+const kwargSlower = Function(`nop`, `
+  return function kwarg({one, two, three}) {nop(one), nop(two), nop(three)}
+`)(l.show)
+
 /* Bench */
+
+// No measurable overhead in V8 and JSC. Might just be totally optimized away.
+t.bench(function bench_call_with_curly_named_parameters() {
+  kwargNop({one: 10, two: 20, three: 30})
+})
+t.bench(function bench_call_with_curly_named_parameters_slower() {
+  kwargSlower({one: 10, two: 20, three: 30})
+})
 
 t.bench(function bench_is_Object_is() {l.nop(Object.is(123, 456))})
 t.bench(function bench_is_globalThis_Object_is() {l.nop(globalThis.Object.is(123, 456))})
@@ -389,6 +405,16 @@ t.bench(function bench_isDict_miss_emp_sub() {l.nop(l.isDict(emptyEmpSub))})
 t.bench(function bench_isDict_hit_dict() {l.nop(l.isDict(emptyDict))})
 t.bench(function bench_isDict_hit_npo() {l.nop(l.isDict(emptyNpo))})
 
+miscVals.forEach(l.isNpo)
+t.bench(function bench_isNpo_nil() {l.nop(l.isNpo())})
+t.bench(function bench_isNpo_miss_prim() {l.nop(l.isNpo(`str`))})
+t.bench(function bench_isNpo_miss_fun() {l.nop(l.isNpo(l.isNpo))})
+t.bench(function bench_isNpo_miss_arr() {l.nop(l.isNpo(emptyArr))})
+t.bench(function bench_isNpo_miss_obj() {l.nop(l.isNpo(shallow))})
+t.bench(function bench_isNpo_miss_emp_sub() {l.nop(l.isNpo(emptyEmpSub))})
+t.bench(function bench_isNpo_miss_dict() {l.nop(l.isNpo(emptyDict))})
+t.bench(function bench_isNpo_hit_npo() {l.nop(l.isNpo(emptyNpo))})
+
 miscVals.forEach(l.isRec)
 t.bench(function bench_isRec_nil() {l.nop(l.isRec())})
 t.bench(function bench_isRec_miss() {l.nop(l.isRec(emptyArr))})
@@ -400,6 +426,17 @@ t.bench(function bench_isSeq_miss() {l.nop(l.isSeq(somePromNative))})
 t.bench(function bench_isSeq_hit_arr() {l.nop(l.isSeq(emptyArr))})
 t.bench(function bench_isSeq_hit_set() {l.nop(l.isSeq(emptySet))})
 t.bench(function bench_isSeq_hit_iter() {l.nop(l.isSeq(emptyIterSimple))})
+
+miscVals.forEach(l.isScalar)
+t.bench(function bench_isScalar_inst_nil() {l.nop(l.isScalar())})
+t.bench(function bench_isScalar_inst_miss_prim() {l.nop(l.isScalar(someSymbol0))})
+t.bench(function bench_isScalar_inst_miss_arr() {l.nop(l.isScalar(emptyArr))})
+t.bench(function bench_isScalar_inst_miss_dict() {l.nop(l.isScalar(emptyDict))})
+t.bench(function bench_isScalar_inst_miss_npo() {l.nop(l.isScalar(emptyNpo))})
+t.bench(function bench_isScalar_inst_miss_prom() {l.nop(l.isScalar(somePromNative))})
+t.bench(function bench_isScalar_inst_hit_prim_str() {l.nop(l.isScalar(someStr))})
+t.bench(function bench_isScalar_inst_hit_prim_num() {l.nop(l.isScalar(someFrac))})
+t.bench(function bench_isScalar_inst_hit_obj() {l.nop(l.isScalar(someDate))})
 
 miscVals.forEach(isPromiseInst)
 t.bench(function bench_isPromise_inst_nil() {l.nop(isPromiseInst())})

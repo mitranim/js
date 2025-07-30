@@ -1,7 +1,7 @@
 MAKEFLAGS := --silent --always-make
 MAKE_CONC := $(MAKE) -j 128 clear=$(or $(clear),false)
 RUN ?= $(and $(run),--run="$(run)")
-FEAT ?= $(or $(feat),all_deno)
+FEAT ?= $(or $(feat),all)
 VERB ?= $(if $(filter true,$(verb)),--verb,)
 PREC ?= $(if $(filter true,$(prec)),--prec,)
 ONCE ?= $(if $(filter true,$(once)),--once,)
@@ -27,8 +27,15 @@ endif
 
 JS_WATCH ?= $(JS_RUN) --watch $(or $(CLEAR),--no-clear-screen)
 
-# Should be defined with "=", not "?=" or ":=".
-# This makes it a macro and thus lazily executed.
+ifeq ($(engine),deno)
+	JS_WATCH_HOT ?= $(JS_RUN) --watch-hmr $(or $(CLEAR),--no-clear-screen)
+else ifeq ($(engine),node)
+	JS_WATCH_HOT ?= $(JS_WATCH)
+else
+	JS_WATCH_HOT ?= $(JS_WATCH) --hot
+endif
+
+# Defined with "=" for lazy execution.
 VER = $(shell jq -r '.version' < $(PKG))
 
 test_w:
@@ -44,7 +51,7 @@ bench:
 	$(JS_RUN) $(BENCH)
 
 srv_w:
-	$(JS_WATCH) $(CMD_SRV) --live
+	$(JS_WATCH_HOT) $(CMD_SRV) --live
 
 srv:
 	$(JS_RUN) $(CMD_SRV) --live

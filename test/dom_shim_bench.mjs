@@ -31,11 +31,11 @@ function makeElemComplex() {
   return val
 }
 
-const attrComplex = new ds.NamedNodeMap(elemComplex.attributes.entries())
+const attrComplex = new ds.Attrs(elemComplex[ds.ATTRS].entries())
 
-const style = new ds.StylePh(new ds.Element())
+const style = new ds.Style(new ds.Element())
 style.decode(`one: two; three: four; five: six`)
-t.eq(style.buf, {one: `two`, three: `four`, five: `six`})
+t.eq(style.dict, {one: `two`, three: `four`, five: `six`})
 
 const miscVals = [
   false,
@@ -72,8 +72,8 @@ t.bench(function bench_isElement_miss_dict() {l.nop(ds.isElement(someDict))})
 t.bench(function bench_isElement_miss_node() {l.nop(ds.isElement(someNode))})
 t.bench(function bench_isElement_hit() {l.nop(ds.isElement(elemSimple))})
 
-t.bench(function bench_document_baseClassByTag() {
-  l.nop(ds.document.baseClassByTag(`span`))
+t.bench(function bench_document_domShim_baseClassByTag() {
+  l.nop(ds.document.domShim_baseClassByTag(`span`))
 })
 
 t.bench(function bench_node_new_Node() {l.nop(new ds.Node())})
@@ -94,8 +94,8 @@ t.bench(function bench_document_createDocumentFragment() {l.nop(ds.document.crea
 
 t.bench(function bench_NamedNodeMap_toString() {l.nop(attrComplex.toString())})
 
-t.bench(function bench_StylePh_new() {l.nop(new ds.StylePh(elemSimple))})
-t.bench(function bench_StylePh_encode() {l.nop(style.encode())})
+t.bench(function bench_Style_new() {l.nop(new ds.Style(elemSimple))})
+t.bench(function bench_Style_encode() {l.nop(style.encode())})
 
 t.bench(function bench_new_Element_simple_with_localName() {
   new ds.Element().localName = `unknown`

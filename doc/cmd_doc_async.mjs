@@ -39,7 +39,7 @@ const FEATS = [
   [`http`, `shortcuts for the fetch/Response APIs, URL routing, cookie decoding/encoding.`],
   [`http_bun`, `tools for HTTP servers running in Bun.`],
   [`http_deno`, `tools for HTTP servers running in Deno.`],
-  [`http_shared`, `streaming and broadcasting tools for generic HTTP servers.`],
+  [`http_srv`, `streaming and broadcasting tools for generic HTTP servers.`],
   [`http_live`, `tools for live-reloading in development.`],
   [`cli`, `essential tools for CLI apps.`],
   [`test`, `tools for testing and benchmarking.`],

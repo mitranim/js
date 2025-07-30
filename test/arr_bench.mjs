@@ -45,19 +45,17 @@ reasons we don't provide `ClsArr`, even though we have `ClsVec`. (The main
 reason is the inability to override square-bracket get/set in a performant
 way.)
 
-We minimize these problems by automatically converting from array subclasses
-to "true" arrays. This introduces a predictable small overhead, which is MUCH
-lower than the overhead of calling `Array` methods on a subclass instance, and
-avoids semantic surprises.
+To avoid these performance gotchas, we avoid subclassing `Array`, and always
+demand "true" arrais in `Vec`. The tiny overhead of a wrapper object is MUCH
+lower than the overhead of iterating an input just to copy it. And see above
+for the semantic surprises.
 
-The following overrides are knowingly skipped:
+The following overrides are knowingly skipped.
+The testing was done in Deno with V8 9-ish.
 
-  * `.at`: skip because subclasses have normal performance. The native
-    implementation of `.at` is actually stupidly slow on true arrays as well as
-    subclasses, but that's not really our problem. (Native is tens of
-    nanoseconds; custom is single digit nanoseconds.)
-  * `.includes`: not worth the code. True arrays seem to employ weird caching in
-    V8 to "look good" in benchmarks. Subclasses don't have this caching, but
+  * `.at`: skip because subclasses have half-acceptable performance.
+  * `.includes`: not worth the code. True arrays seem to employ weird caching
+    in V8 to "look good" in benchmarks. Subclasses don't have this caching, but
     seem to perform well regardless.
   * `.indexOf`: same as `.includes`.
   * `.copyWithin`: not worth the code.
@@ -94,7 +92,7 @@ At the time of writing, this is a hidden threshold used by V8, where
 */
 const small = 16
 
-const half = (itc.size / 2) | 0
+const half = (itc.SIZE_BIG / 2) | 0
 const numMissing = l.reqNat(Number.MAX_SAFE_INTEGER - 1)
 const indFound = half + 1
 const numFound = numArray[indFound]
@@ -154,14 +152,14 @@ t.bench(function bench_array_prealloc_small_Array_length() {l.nop(new Array(0).l
 t.bench(function bench_array_prealloc_small_List_length() {l.nop(new List(0).length = small)})
 t.bench(function bench_array_prealloc_small_Arr_length() {l.nop(new a.Arr(0).length = small)})
 
-t.bench(function bench_array_prealloc_big_Array() {l.nop(new Array(itc.size))})
-t.bench(function bench_array_prealloc_big_List() {l.nop(new List(itc.size))})
-t.bench(function bench_array_prealloc_big_Arr() {l.nop(new a.Arr(itc.size))})
-t.bench(function bench_array_prealloc_big_Arr_make() {l.nop(a.Arr.make(itc.size))})
+t.bench(function bench_array_prealloc_big_Array() {l.nop(new Array(itc.SIZE_BIG))})
+t.bench(function bench_array_prealloc_big_List() {l.nop(new List(itc.SIZE_BIG))})
+t.bench(function bench_array_prealloc_big_Arr() {l.nop(new a.Arr(itc.SIZE_BIG))})
+t.bench(function bench_array_prealloc_big_Arr_make() {l.nop(a.Arr.make(itc.SIZE_BIG))})
 
-t.bench(function bench_array_prealloc_big_Array_length() {l.nop(new Array(0).length = itc.size)})
-t.bench(function bench_array_prealloc_big_List_length() {l.nop(new List(0).length = itc.size)})
-t.bench(function bench_array_prealloc_big_Arr_length() {l.nop(a.Arr.make(0).length = itc.size)})
+t.bench(function bench_array_prealloc_big_Array_length() {l.nop(new Array(0).length = itc.SIZE_BIG)})
+t.bench(function bench_array_prealloc_big_List_length() {l.nop(new List(0).length = itc.SIZE_BIG)})
+t.bench(function bench_array_prealloc_big_Arr_length() {l.nop(a.Arr.make(0).length = itc.SIZE_BIG)})
 
 t.bench(function bench_array_of_Array() {l.nop(Array.of(10, 20, 30, 40))})
 t.bench(function bench_array_of_List() {l.nop(List.of(10, 20, 30, 40))})
@@ -253,13 +251,13 @@ t.bench(function bench_array_concat_with_long_Array() {l.nop(numArray.concat(num
 t.bench(function bench_array_concat_with_long_List() {l.nop(numList.concat(numArray))})
 t.bench(function bench_array_concat_with_long_Arr() {l.nop(numArr.concat(numArray))})
 
-t.bench(function bench_array_fill_Array_simple() {l.nop(Array(itc.size).fill(numMissing))})
-t.bench(function bench_array_fill_List_simple() {l.nop(new List(itc.size).fill(numMissing))})
-t.bench(function bench_array_fill_Arr_simple() {l.nop(a.Arr.make(itc.size).fill(numMissing))})
+t.bench(function bench_array_fill_Array_simple() {l.nop(Array(itc.SIZE_BIG).fill(numMissing))})
+t.bench(function bench_array_fill_List_simple() {l.nop(new List(itc.SIZE_BIG).fill(numMissing))})
+t.bench(function bench_array_fill_Arr_simple() {l.nop(a.Arr.make(itc.SIZE_BIG).fill(numMissing))})
 
-t.bench(function bench_array_fill_Array_partial() {l.nop(Array(itc.size).fill(numMissing, small, half))})
-t.bench(function bench_array_fill_List_partial() {l.nop(new List(itc.size).fill(numMissing, small, half))})
-t.bench(function bench_array_fill_Arr_partial() {l.nop(a.Arr.make(itc.size).fill(numMissing, small, half))})
+t.bench(function bench_array_fill_Array_partial() {l.nop(Array(itc.SIZE_BIG).fill(numMissing, small, half))})
+t.bench(function bench_array_fill_List_partial() {l.nop(new List(itc.SIZE_BIG).fill(numMissing, small, half))})
+t.bench(function bench_array_fill_Arr_partial() {l.nop(a.Arr.make(itc.SIZE_BIG).fill(numMissing, small, half))})
 
 t.bench(function bench_array_flat_Array() {l.nop(numArray.flat(Infinity))})
 t.bench(function bench_array_flat_List() {l.nop(numList.flat(Infinity))})

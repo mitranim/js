@@ -51,7 +51,9 @@ t.test(function test_assign() {
   t.test(function test_shadowing() {
     t.test(function test_getters_and_setters() {
       {
-        const msg = globalThis.Bun ? `assign to readonly property` : `Cannot set property getter of #<Fat> which has only a getter`
+        const msg = globalThis.Bun || globalThis.safari
+          ? `assign to readonly property`
+          : `Cannot set property getter of #<Fat> which has only a getter`
         t.throws(() => o.assign(new Fat(), {getter: 10}), TypeError, msg)
       }
       t.throws(() => o.assign(new Fat(), {getterSetter: 10}), Error, `unreachable`)

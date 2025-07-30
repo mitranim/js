@@ -1,7 +1,9 @@
 /*
-This module contains tools intended mostly for client code such as browsers
-apps. For HTTP-adjacent tools intended for server code, see `io_shared.mjs`
-and the engine-specific modules such as `io_deno.mjs` and `io_bun.mjs`.
+HTTP tools shared by servers and clients.
+Server-specific tools are defined in:
+- `http_srv.mjs`
+- `http_bun.mjs`
+- `http_deno.mjs`
 */
 
 import * as l from './lang.mjs'
@@ -11,18 +13,25 @@ import * as c from './coll.mjs'
 import * as d from './dom.mjs'
 import * as pt from './path.mjs'
 
-export const GET = `GET`
-export const HEAD = `HEAD`
+/*
+The HTTP standard defines methods as case-sensitive. The `fetch` standard
+requires `fetch` to normalize a very small set of known methods to uppercase,
+and treat the rest as case-sensitive. `PATCH` is NOT on that list. Use these
+constants to avoid having to remember the details.
+*/
 export const OPTIONS = `OPTIONS`
-export const POST = `POST`
-export const PUT = `PUT`
-export const PATCH = `PATCH`
+export const HEAD = `HEAD`
+export const GET = `GET`
 export const DELETE = `DELETE`
+export const PUT = `PUT`
+export const POST = `POST`
+export const PATCH = `PATCH`
 
 export const HEADER_NAME_ACCEPT = `accept`
 export const HEADER_NAME_ORIGIN = `origin`
 export const HEADER_NAME_HOST = `host`
 export const HEADER_NAME_ETAG = `etag`
+export const HEADER_NAME_VARY = `vary`
 export const HEADER_NAME_CACHE_CONTROL = `cache-control`
 export const HEADER_NAME_CONTENT_TYPE = `content-type`
 export const HEADER_NAME_ACCEPT_ENCODING = `accept-encoding`
@@ -64,7 +73,7 @@ export async function resOk(res) {
   l.reqInst(res, Response)
   if (res.ok) return res
   const text = await res.text()
-  throw new ErrHttp((text || `unknown fetch error`), res.status, res)
+  throw new ErrHttp((text || `unknown fetch error`), {response: res})
 }
 
 export function jsonDecode(...src) {
@@ -73,32 +82,25 @@ export function jsonDecode(...src) {
 
 export function jsonEncode(...src) {return JSON.stringify(...src) ?? `null`}
 
-// True if given HTTP status code is between 100 and 199 inclusive.
 export function isStatusInfo(val) {return l.isNat(val) && val >= 100 && val <= 199}
-
-// True if given HTTP status code is between 200 and 299 inclusive.
 export function isStatusOk(val) {return l.isNat(val) && val >= 200 && val <= 299}
-
-// True if given HTTP status code is between 300 and 399 inclusive.
 export function isStatusRedir(val) {return l.isNat(val) && val >= 300 && val <= 399}
-
-// True if given HTTP status code is between 400 and 499 inclusive.
 export function isStatusClientErr(val) {return l.isNat(val) && val >= 400 && val <= 499}
-
-// True if given HTTP status code is between 500 and 599 inclusive.
 export function isStatusServerErr(val) {return l.isNat(val) && val >= 500 && val <= 599}
 
-// Usable on instances of `ErrHttp` and instances of `Response`.
-export function hasStatus(val, code) {return l.reqNat(code) === getStatus(val)}
-export function getStatus(val) {return l.get(val, `status`)}
+// Works on instances of `ErrHttp` and instances of `Response`.
+export function hasStatus(val, code) {return val?.status === l.reqNat(code)}
 
 export class ErrHttp extends Error {
-  constructor(msg, status, res) {
-    l.reqStr(msg)
-    l.reqNat(status)
-    l.optInst(res, Response)
+  constructor(msg, opt) {
+    msg = l.renderLax(msg)
+    l.optRec(opt)
 
-    super((status ? status + `: ` : ``) + msg)
+    const res = opt?.response
+    const status = l.optNat(res?.status) ?? l.optNat(opt?.status)
+    if (status) msg = status + `: ` + msg
+
+    super(msg, opt)
     this.status = status
     this.res = res
   }
@@ -106,15 +108,17 @@ export class ErrHttp extends Error {
   get name() {return this.constructor.name}
 }
 
-export function isErrAbort(val) {return val?.name === `AbortError`}
+export function isErrAbort(val) {
+  return l.isInst(val, AbortError) || val?.name === `AbortError`
+}
 
 /*
 `AbortController..abort`, called without arguments, constructs an instance of
 `DOMException` with the name `AbortError`. Its `.message` varies between JS
 engines. At the time of writing, in Bun, its `.stack` is Safari-style rather
-than V8-style; in other words, inconsistent with other errors. We define our
-own abort error class and use our own messages to ensure consistency.
-Our `isErrAbort` detects both error types.
+than V8-style, and thus inconsistent with other Bun errors. We define our own
+abort error class and use our own messages to ensure consistency. `isErrAbort`
+detects both error types.
 */
 export class AbortError extends Error {
   constructor(msg) {super(l.renderLax(msg) || `operation aborted`)}
@@ -146,7 +150,9 @@ export function linkAbort(abc, sig) {
     abc.abort(sig.reason ?? new AbortError())
     return undefined
   }
-  return new d.ListenRef(abc, sig, `abort`, onAbort, {once: true}).init()
+  return new d.ListenRef({
+    self: abc, src: sig, type: `abort`, fun: onAbort, opt: {once: true},
+  }).init()
 }
 
 /* eslint-disable no-invalid-this */
@@ -206,7 +212,8 @@ export function toReqRou(val) {return l.toInst(val, ReqRou)}
 
 /*
 Short for "request router". A low-level procedural-style router
-intended for servers.
+intended for servers. Placed here because in SSR / SPA hybrids,
+this is used in routing code shared between server and client.
 */
 export class ReqRou extends Rou {
   get Res() {return Response}
@@ -313,15 +320,15 @@ export class Cookie extends l.Emp {
     return this
   }
 
-  setName(val) {return this.name = optCookieName(val), this}
-  setValue(val) {return this.value = optCookieValue(val), this}
-  setPath(val) {return this.path = optCookieAttr(val), this}
-  setDomain(val) {return this.domain = optCookieAttr(val), this}
-  setExpires(val) {return this.expires = l.optValidDate(val), this}
-  setMaxAge(val) {return this.maxAge = l.optNat(val), this}
-  setSecure(val) {return this.secure = l.optBool(val), this}
-  setHttpOnly(val) {return this.httpOnly = l.optBool(val), this}
-  setSameSite(val) {return this.sameSite = optCookieAttr(val), this}
+  setName(val) {return (this.name = optCookieName(val)), this}
+  setValue(val) {return (this.value = optCookieValue(val)), this}
+  setPath(val) {return (this.path = optCookieAttr(val)), this}
+  setDomain(val) {return (this.domain = optCookieAttr(val)), this}
+  setExpires(val) {return (this.expires = l.optValidDate(val)), this}
+  setMaxAge(val) {return (this.maxAge = l.optNat(val)), this}
+  setSecure(val) {return (this.secure = l.optBool(val)), this}
+  setHttpOnly(val) {return (this.httpOnly = l.optBool(val)), this}
+  setSameSite(val) {return (this.sameSite = optCookieAttr(val)), this}
 
   setDomainSub(val) {
     if (l.isNil(val)) return this.setDomain()
@@ -334,7 +341,7 @@ export class Cookie extends l.Emp {
   root() {return this.setPath(`/`)}
   expired() {return this.setValue(this.value || ``).setExpires().setMaxAge(0)}
   durable() {return this.setMaxAge(60 * 60 * 24 * 365 * 17)}
-  install() {return globalThis.document.cookie = this.toString(), this}
+  install() {return (globalThis.document.cookie = this.toString()), this}
 
   reset(val) {
     if (l.isNil(val)) return this
