@@ -262,11 +262,10 @@ export class BaseHttpFile extends l.Emp {
 
   setOpt(opt) {
     if (!l.optRec(opt)) return this
-    const {info, text, bytes, caching} = opt
-    this.info = l.optRec(info)
-    this.text = l.optStr(text)
-    this.bytes = l.optInst(bytes, Uint8Array)
-    this.caching = l.optBool(caching)
+    if (`info` in opt) this.info = l.optRec(opt.info)
+    if (`text` in opt) this.text = l.optStr(opt.text)
+    if (`bytes` in opt) this.bytes = l.optInst(opt.bytes, Uint8Array)
+    if (`caching` in opt) this.caching = l.optBool(opt.caching)
     return this
   }
 
@@ -441,8 +440,7 @@ export class HttpDirs extends Array {
 
   setOpt(opt) {
     if (!l.optRec(opt)) return this
-    const {caching} = opt
-    this.caching = l.optBool(caching)
+    if (`caching` in opt) this.caching = l.optBool(opt.caching)
     return this
   }
 

@@ -27,7 +27,7 @@
 Example mockup for a pushstate link.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/dom_reg.mjs'
 
 // Immediately ready for use. Tag is automatically set to `a-btn`.
 // The mixin `MixReg` enables automatic registration on instantiation.
@@ -66,7 +66,7 @@ Apps which use server-side rendering and client-side upgrading of custom element
 Instead, use `dr.reg`, which is also used internally by `MixReg`. This is simply a shortcut for using the [#default registry](#class-reg) provided by this module.
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   /*
@@ -106,7 +106,7 @@ For browser-only code, prefer the mixin `MixReg` from the same module which is e
 Simple usage:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/dom_reg.mjs'
 
 class Btn extends HTMLButtonElement {
   /*
@@ -126,7 +126,7 @@ document.body.append(new Btn())
 You can unset the default definer to defer registration:
 
 ```js
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/dom_reg.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/dom_reg.mjs'
 
 dr.Reg.main.setDefiner()
 

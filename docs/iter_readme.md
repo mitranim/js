@@ -83,7 +83,7 @@ Port and rework of https://github.com/mitranim/fpx.
 ## Usage
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/iter.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/iter.mjs'
 ```
 
 ## Perf
@@ -310,8 +310,8 @@ Signature: `(Iter<A>, {new(A): B}) => B[]`.
 Similar to [#`map`](#function-map), but instead of taking an arbitrary function, takes a class and calls it with `new` for each element.
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/iter.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/obj.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/iter.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/obj.mjs'
 
 class Model extends o.Dict {pk() {return this.id}}
 class Person extends Model {}
@@ -637,8 +637,8 @@ Similar to [#`map`](#function-map) but for dicts.
 * The mapping function receives only one argument: each value.
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/iter.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/lang.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/iter.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/lang.mjs'
 
 i.mapDict({one: 10, two: 20}, l.inc)
 // {one: 11, two: 21}
@@ -659,8 +659,8 @@ Similar to [#`filter`](#function-filter) but for dicts.
 * The mapping function receives each value.
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/iter.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/lang.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/iter.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/lang.mjs'
 
 i.pick({one: -20, two: -10, three: 10, four: 20}, l.isFinPos)
 // {three: 10, four: 20}
@@ -681,8 +681,8 @@ Similar to [#`reject`](#function-reject) but for dicts.
 * The mapping function receives each value.
 
 ```js
-import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/iter.mjs'
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/lang.mjs'
+import * as i from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/iter.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/lang.mjs'
 
 i.omit({one: -20, two: -10, three: 10, four: 20}, l.isFinPos)
 // {one: -20, two: -10}

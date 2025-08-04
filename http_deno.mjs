@@ -27,7 +27,7 @@ export class HttpFile extends hs.BaseHttpFile {
     if (!info?.isFile) return undefined
 
     const out = new this(opt)
-    out.info = info
+    out.setOpt({info})
     return out
   }
 

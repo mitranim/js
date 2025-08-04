@@ -23,7 +23,7 @@ Written carefully and with benchmarks, but doesn't claim to be optimal at what i
 Example case conversion:
 
 ```js
-import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.80/str.mjs'
+import * as s from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.81/str.mjs'
 
 s.words(`oneTwoThree`).title().snake() === `One_Two_Three`
 
