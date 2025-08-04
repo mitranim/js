@@ -10,17 +10,18 @@ import * as hl from '../http_live.mjs'
 import * as h from '#http'
 import * as io from '#io'
 
+const PORT = 37285
 const CLI = cl.Flag.os()
 const LIVE = CLI.boolOpt(`--live`)
 const LIVE_BRO = l.vac(LIVE) && new hl.LiveBroad()
-const LIVE_CLI = l.vac(LIVE) && new hl.LiveClient({hot: true})
+const LIVE_CLI = l.vac(LIVE) && new hl.LiveClient({port: PORT, hot: true})
 const CACHING = false // Toggle for manual debug.
 const DIR = new h.HttpDir({fsPath: `.`})
 const DIRS = h.HttpDirs.of(DIR).setOpt({caching: CACHING})
 const COMP = new h.HttpCompressor()
 
 function serve() {
-  h.serve({port: 37285, onRequest, onError, onListen})
+  h.serve({port: PORT, onRequest, onError, onListen})
 }
 
 function onListen(srv) {

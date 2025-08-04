@@ -214,8 +214,13 @@ References:
 */
 function eventSourceLine(val) {return `data: ` + l.reqStr(val) + `\n\n`}
 
-export async function fileResponse({req, file, resOpt, compressor, liveClient: live}) {
+export async function fileResponse(opt) {
+  const {req, file, resOpt, compressor, liveClient: live} = l.reqRec(opt)
+
   if (!file) return undefined
+
+  let res = await file.notModifiedResponse({req, resOpt})
+  if (res) return res
 
   if (live) {
     live.addFile(file)
@@ -224,11 +229,12 @@ export async function fileResponse({req, file, resOpt, compressor, liveClient: l
     }
   }
 
-  let res
-  if (compressor && file.isCompressible()) {
+  if (compressor) {
     res = await file.compressedResponse({req, compressor, resOpt})
+    if (res) return res
   }
-  return res ?? file.response(resOpt)
+
+  return file.response(resOpt)
 }
 
 /*
@@ -276,6 +282,10 @@ export class BaseHttpFile extends l.Emp {
   getText() {return this.text}
   getBytes() {return this.bytes}
 
+  // TODO: consider generating strong hash-based etags when caching is enabled.
+  async getEtag() {return this.etag ??= this.getEtagSync(await this.getInfo())}
+  getEtagSync(info) {return this.etag ??= etag(info ?? this.info)}
+
   isHtml() {
     const {fsPath} = this
     return fsPath.endsWith(`.html`) || fsPath.endsWith(`.htm`)
@@ -285,13 +295,31 @@ export class BaseHttpFile extends l.Emp {
 
   resOpt(opt) {
     l.optRec(opt)
-    const type = guessContentType(this.fsPath)
-    if (!type) return opt
 
-    opt ??= l.Emp()
-    opt.headers = l.toInst(opt.headers, this.Head)
-    opt.headers.set(h.HEADER_NAME_CONTENT_TYPE, type)
+    const type = guessContentType(this.fsPath)
+    const etag = this.getEtagSync()
+    if (!type && !etag) return opt
+
+    /*
+    Avoid mutating the input. Avoids edge case issues and allows callers to
+    freely mutate the output. No measurable overhead when the input is nil.
+    */
+    opt = o.assign(l.Emp(), opt)
+
+    const head = opt.headers = l.toInst(opt.headers, this.Head)
+    if (type) head.set(h.HEADER_NAME_CONTENT_TYPE, type)
+    if (etag) head.set(h.HEADER_NAME_ETAG, etag)
     return opt
+  }
+
+  async notModifiedResponse({req, resOpt}) {
+    const etag = await this.getEtag()
+    if (!etag) return undefined
+    if (etag !== req.headers.get(`if-none-match`)) return undefined
+
+    const opt = l.laxRec(this.resOpt(resOpt))
+    opt.status = 304
+    return new this.Res(undefined, opt)
   }
 
   /*
@@ -306,6 +334,8 @@ export class BaseHttpFile extends l.Emp {
   disk IO on cache hits.
   */
   async compressedResponse({req, compressor: comp, resOpt}) {
+    if (!comp) return undefined
+
     const {caching, compressed} = this
     const algos = comp.requestEncodings(req)
     if (!algos?.length) return undefined
@@ -538,13 +568,10 @@ export function slashPre(val) {return s.optPre(val, `/`)}
 export function unslashPre(val) {return l.reqStr(val).replace(/^[/\\]*/g, ``)}
 export function hasDotDot(val) {return l.laxStr(val).includes(`..`)}
 
-/*
-Usage:
-
-  etag(someHttpFile.info)
-*/
+// Normally accessed via `BaseHttpFile..getEtagSync`.
 export function etag(info) {
-  const {size, mtime, birthtime} = l.reqRec(info)
+  if (!l.optRec(info)) return ``
+  const {size, mtime, birthtime} = info
   const out = s.dashed(birthtime?.valueOf(), mtime?.valueOf(), size)
   return out && (`W/` + h.jsonEncode(out))
 }
