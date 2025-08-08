@@ -30,37 +30,44 @@ function onListen(srv) {
 }
 
 async function onRequest(req) {
-  const path = new URL(req.url).pathname
+  const {pathname} = new URL(req.url)
+  const {method} = req
 
   const res = await (
-    LIVE_BRO?.response(req, path) ||
+    ((method === h.HEAD || method === h.OPTIONS) && new Response()) ||
+
+    LIVE_BRO?.response({req, pathname}) ||
 
     (await h.fileResponse({
       req,
-      file: await DIRS.resolve(path),
+      file: await DIRS.resolve(pathname),
       compressor: COMP,
       liveClient: LIVE_CLI,
     })) ||
 
-    h.notFound(req.method, path)
+    h.notFound({method, pathname})
   )
+
+  const head = res.headers
 
   /*
   Without these headers, Safari uses low-resolution timestamps, breaking our
   tests which rely on "high"-resolution timing, which is merely okay-resolution
   to begin with.
   */
-  res.headers.append(`cross-origin-opener-policy`, `same-origin`)
-  res.headers.append(`cross-origin-embedder-policy`, `require-corp`)
-  return res
+  head.append(`cross-origin-opener-policy`, `same-origin`)
+  head.append(`cross-origin-embedder-policy`, `require-corp`)
+  return cors(res)
 }
 
 function onError(err) {
-  if (h.isErrAbort(err)) return new Response()
+  if (h.isErrAbort(err)) {
+    return new Response(undefined, {headers: h.HEADERS_CORS_PROMISCUOUS})
+  }
   console.error(err)
   const msg = err?.stack || String(err)
   const status = err?.status || 500
-  return new Response(msg, {status})
+  return new Response(msg, {status, headers: h.HEADERS_CORS_PROMISCUOUS})
 }
 
 async function watch() {
@@ -69,6 +76,12 @@ async function watch() {
     if (!path) continue
     LIVE_BRO.writeEventJson({type, path})
   }
+}
+
+function cors(res) {
+  const head = res.headers
+  for (const [key, val] of h.HEADERS_CORS_PROMISCUOUS) head.append(key, val)
+  return res
 }
 
 if (import.meta.main) {

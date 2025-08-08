@@ -99,7 +99,6 @@ export function main() {
     )
   }
 
-  /* eslint-disable no-invalid-this */
   function linkOnLoad() {
     this.onload = null
     this.onerror = null
@@ -108,7 +107,6 @@ export function main() {
       if (node !== this) node.remove()
     }
   }
-  /* eslint-enable no-invalid-this */
 
   function isPending(val) {return !!val.onload}
 

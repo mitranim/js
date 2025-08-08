@@ -9,9 +9,35 @@ import * as s from './str.mjs'
 import * as h from './http.mjs'
 import * as pt from './path.mjs'
 
-let ENC
+export const HEADER_NAME_ACCEPT_ENCODING = `accept-encoding`
+export const HEADER_NAME_CONTENT_ENCODING = `content-encoding`
+export const HEADER_NAME_CORS_CREDENTIALS = `access-control-allow-credentials`
+export const HEADER_NAME_CORS_HEADERS = `access-control-allow-headers`
+export const HEADER_NAME_CORS_METHODS = `access-control-allow-methods`
+export const HEADER_NAME_CORS_ORIGIN = `access-control-allow-origin`
+export const HEADER_NAME_ETAG = `etag`
+export const HEADER_NAME_HOST = `host`
+export const HEADER_NAME_IF_MODIFIED_SINCE = `if-modified-since`
+export const HEADER_NAME_IF_NONE_MATCH = `if-none-match`
+export const HEADER_NAME_LAST_MODIFIED = `last-modified`
+export const HEADER_NAME_ORIGIN = `origin`
+export const HEADER_NAME_VARY = `vary`
 
-// Consumer code can extend this as needed.
+export const HEADERS_CORS_PROMISCUOUS = tuple(
+  tuple(HEADER_NAME_CORS_ORIGIN, `*`),
+  tuple(HEADER_NAME_CORS_METHODS, h.GET),
+  tuple(HEADER_NAME_CORS_METHODS, h.HEAD),
+  tuple(HEADER_NAME_CORS_METHODS, h.OPTIONS),
+  tuple(HEADER_NAME_CORS_METHODS, h.POST),
+  tuple(HEADER_NAME_CORS_METHODS, h.PUT),
+  tuple(HEADER_NAME_CORS_METHODS, h.PATCH),
+  tuple(HEADER_NAME_CORS_METHODS, h.DELETE),
+  tuple(HEADER_NAME_CORS_HEADERS, h.HEADER_NAME_CONTENT_TYPE),
+  tuple(HEADER_NAME_CORS_HEADERS, h.HEADER_NAME_CACHE_CONTROL),
+  tuple(HEADER_NAME_CORS_CREDENTIALS, `true`),
+)
+
+// Consumer code can mutate this as needed.
 export const EXT_TO_MIME_TYPE = {
   __proto__: null,
   [`.css`]: `text/css`,
@@ -45,6 +71,8 @@ export function guessContentType(val) {
 export const COMPRESSIBLE = new Set([
   `.css`, `.htm`, `.html`, `.js`, `.json`, `.mjs`, `.svg`, `.txt`, `.xml`,
 ])
+
+let ENC // Internal. Tiny savings in JSC.
 
 /*
 A readable stream that can be written to.
@@ -166,18 +194,20 @@ of `Uint8Array`, either via `.pipeThrough(new TextEncoderStream())`, or by
 subclassing the broadcaster and overriding its client `.Stream` type with
 `WritableReadableByteStream`. See `LiveBroad` which does the latter.
 */
-export class Broad extends Set {
+export class Broad extends l.Emp {
   get Stream() {return WritableReadableStream}
+  clients = new Set()
 
   make() {
-    const out = new this.Stream({cancel: () => {this.delete(out)}})
-    this.add(out)
+    const {clients} = this
+    const out = new this.Stream({cancel: () => {clients.delete(out)}})
+    clients.add(out)
     return out
   }
 
   write(val) {
     const buf = []
-    for (const wri of this) buf.push(this.writeTo(wri, val))
+    for (const wri of this.clients) buf.push(this.writeTo(wri, val))
     return Promise.all(buf)
   }
 
@@ -188,7 +218,7 @@ export class Broad extends Set {
   async writeTo(wri, val) {
     try {await wri.write(val)}
     catch (err) {
-      this.delete(wri)
+      this.clients.delete(wri)
       wri.deinit()
       this.onWriteErr(err, wri)
     }
@@ -200,8 +230,9 @@ export class Broad extends Set {
   }
 
   deinit() {
-    for (const wri of this) {
-      this.delete(wri)
+    const {clients} = this
+    for (const wri of clients) {
+      clients.delete(wri)
       wri.deinit()
     }
   }
@@ -215,26 +246,25 @@ References:
 function eventSourceLine(val) {return `data: ` + l.reqStr(val) + `\n\n`}
 
 export async function fileResponse(opt) {
-  const {req, file, resOpt, compressor, liveClient: live} = l.reqRec(opt)
+  const {file, compressor, liveClient: live} = l.reqRec(opt)
 
   if (!file) return undefined
 
-  let res = await file.notModifiedResponse({req, resOpt})
+  live?.addFile(file)
+
+  let res = await file.notModifiedResponse(opt)
   if (res) return res
 
-  if (live) {
-    live.addFile(file)
-    if (file.isHtml()) {
-      file.setOpt({text: live.liveHtml(await file.getText())})
-    }
+  if (live && file.isHtml()) {
+    file.setOpt({text: live.liveHtml(await file.getText())})
   }
 
   if (compressor) {
-    res = await file.compressedResponse({req, compressor, resOpt})
+    res = await file.compressedResponse(opt)
     if (res) return res
   }
 
-  return file.response(resOpt)
+  return file.response(opt)
 }
 
 /*
@@ -283,7 +313,10 @@ export class BaseHttpFile extends l.Emp {
   getBytes() {return this.bytes}
 
   // TODO: consider generating strong hash-based etags when caching is enabled.
-  async getEtag() {return this.etag ??= this.getEtagSync(await this.getInfo())}
+  async getEtag() {
+    return this.etag ??= this.getEtagSync(this.info ?? await this.getInfo())
+  }
+
   getEtagSync(info) {return this.etag ??= etag(info ?? this.info)}
 
   isHtml() {
@@ -308,22 +341,32 @@ export class BaseHttpFile extends l.Emp {
 
     const head = opt.headers = l.toInst(opt.headers, this.Head)
     if (type) head.set(h.HEADER_NAME_CONTENT_TYPE, type)
-    if (etag) head.set(h.HEADER_NAME_ETAG, etag)
+    if (etag) head.set(HEADER_NAME_ETAG, etag)
     return opt
   }
 
-  async notModifiedResponse({req, resOpt}) {
-    const etag = await this.getEtag()
-    if (!etag) return undefined
-    if (etag !== req.headers.get(`if-none-match`)) return undefined
+  // Used internally by `fileResponse`.
+  async notModifiedResponse(opt) {
+    const {req} = l.reqRec(opt)
+    const head = req.headers
 
-    const opt = l.laxRec(this.resOpt(resOpt))
-    opt.status = 304
-    return new this.Res(undefined, opt)
+    const etag = head.get(HEADER_NAME_IF_NONE_MATCH)
+    if (etag && etag === await this.getEtag()) return notModRes(this, opt)
+
+    let since = head.get(HEADER_NAME_IF_MODIFIED_SINCE)
+    if (!since) return undefined
+
+    since = Math.trunc(Date.parse(since) / 1000)
+    if (!since) return undefined
+
+    const info = this.info ?? await this.getInfo()
+    const mtime = Math.trunc(info?.mtime / 1000)
+    if (mtime <= since) return notModRes(this, opt)
+    return undefined
   }
 
   /*
-  For internal use by `fileResponse`. Should be called only when the compressor
+  Used internally by `fileResponse`. Should be called only when the compressor
   is actually available, and only for known compressible file formats.
 
   Internal note: we read files fully, instead of piping them through compression
@@ -333,12 +376,15 @@ export class BaseHttpFile extends l.Emp {
   RAM caching for static files, where caching the full content allows to skip
   disk IO on cache hits.
   */
-  async compressedResponse({req, compressor: comp, resOpt}) {
+  async compressedResponse(opt) {
+    const {req, compressor: comp} = l.reqRec(opt)
     if (!comp) return undefined
 
     const {caching, compressed} = this
     const algos = comp.requestEncodings(req)
     if (!algos?.length) return undefined
+
+    const Res = opt.Res ?? this.Res
 
     let algo
     let body
@@ -348,7 +394,7 @@ export class BaseHttpFile extends l.Emp {
       const prev = compressed?.[algo]
       if (prev) {
         const {body, opt} = prev
-        return new this.Res(body, opt)
+        return new Res(body, opt)
       }
 
       body ??= await this.getBody()
@@ -364,16 +410,41 @@ export class BaseHttpFile extends l.Emp {
     */
     if (!bodyOut) return undefined
 
-    const opt = l.laxRec(await this.resOpt(resOpt))
-    opt.headers = l.toInst(opt.headers, this.Head)
-    opt.headers.set(h.HEADER_NAME_CONTENT_ENCODING, algo)
-    opt.headers.set(h.HEADER_NAME_VARY, h.HEADER_NAME_ACCEPT_ENCODING)
+    const resOpt = l.laxRec(await this.resOpt(opt.resOpt))
+    resOpt.headers = l.toInst(resOpt.headers, this.Head)
+    resOpt.headers.set(HEADER_NAME_CONTENT_ENCODING, algo)
+    resOpt.headers.set(HEADER_NAME_VARY, HEADER_NAME_ACCEPT_ENCODING)
 
     if (caching) {
-      (this.compressed ??= l.Emp())[algo] = {body: bodyOut, opt}
+      (this.compressed ??= l.Emp())[algo] = {body: bodyOut, opt: resOpt}
     }
-    return new this.Res(bodyOut, opt)
+    return new Res(bodyOut, resOpt)
   }
+
+  /*
+  Optional caching-related header for production. Unlike the etag header,
+  we don't set this by default, because it causes browsers to treat the
+  file as briefly immutable and use their own RAM or disk cache, without
+  revalidation requests, breaking file updates in development.
+  */
+  setLastModified(head) {
+    l.reqInst(head, Headers)
+
+    const mtime = this.info?.mtime
+    if (!mtime) return
+
+    const date = l.toInst(mtime, Date)
+    if (!date.valueOf()) return
+
+    head.set(HEADER_NAME_LAST_MODIFIED, date.toUTCString())
+  }
+}
+
+function notModRes(file, opt) {
+  const resOpt = l.laxRec(file.resOpt(opt?.resOpt))
+  resOpt.status = 304
+  const Res = opt?.Res ?? file.Res
+  return new Res(undefined, resOpt)
 }
 
 export class BaseHttpDir extends l.Emp {
@@ -552,10 +623,8 @@ export class HttpDirs extends Array {
   }
 }
 
-/* eslint-disable no-invalid-this */
 function resolve(...src) {return this.resolve(...src)}
 function resolveSiteFile(...src) {return this.resolveSiteFile(...src)}
-/* eslint-enable no-invalid-this */
 
 function toFilter(val) {
   if (l.isFun(val)) return val
@@ -621,12 +690,13 @@ export class HttpCompressor extends l.Emp {
     const {algos, opts, Res} = l.laxRec(opt)
     this.algos = l.optArr(algos) ?? COMPRESSION_ALGOS
     this.opts = l.optNpo(opts) ?? COMPRESSION_OPTS
-    if (l.optCls(Res)) o.pub(this, `Res`, Res)
+    if (l.optCls(Res)) o.priv(this, `Res`, Res)
   }
 
-  async response({req, body, resOpt}) {
+  async response({req, body, resOpt, Res}) {
+    Res ??= this.Res
     const algos = this.requestEncodings(req)
-    if (!algos?.length) return new this.Res(body, resOpt)
+    if (!algos?.length) return new Res(body, resOpt)
 
     let algo
     let bodyOut
@@ -637,10 +707,10 @@ export class HttpCompressor extends l.Emp {
       if (bodyOut) break
     }
 
-    if (!bodyOut) return new this.Res(body, resOpt)
+    if (!bodyOut) return new Res(body, resOpt)
 
-    const res = new this.Res(bodyOut, resOpt)
-    res.headers.set(h.HEADER_NAME_CONTENT_ENCODING, algo)
+    const res = new Res(bodyOut, resOpt)
+    res.headers.set(HEADER_NAME_CONTENT_ENCODING, algo)
     return res
   }
 
@@ -733,7 +803,7 @@ export class HttpCompressor extends l.Emp {
   For example, Chrome 138 specifies `gzip, deflate, br, zstd`.
   */
   requestEncodings(req) {
-    const algos = decodeAcceptEncoding(req.headers.get(h.HEADER_NAME_ACCEPT_ENCODING))
+    const algos = decodeAcceptEncoding(req.headers.get(HEADER_NAME_ACCEPT_ENCODING))
     if (!algos.length) return algos
 
     /*
@@ -748,10 +818,16 @@ export class HttpCompressor extends l.Emp {
   }
 }
 
-// eslint-disable-next-line no-invalid-this
 function includes(val) {return this.includes(val)}
 
-// Promisification of Node-style callbacks.
+/*
+Promisification of Node-style callbacks. Unlike its own `promisify`,
+this supports nil functions. When the function is missing, the output
+is synchronously nil.
+
+At the time of writing, Deno doesn't support Zstd, lacking `zlib.zstdCompress`
+and `zlib.zstdDecompress`, and this lets us skip them.
+*/
 function promiseCall(fun, ...args) {
   l.optFun(fun)
   if (!fun) return undefined
@@ -801,3 +877,5 @@ export class DecompressionStreamPolyfill extends StreamPolyfillBase {
     throw Error(`unable to create stream for decompression algorithm ${algo}`)
   }
 }
+
+function tuple(...src) {return Object.freeze(src)}

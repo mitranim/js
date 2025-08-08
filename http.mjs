@@ -27,19 +27,14 @@ export const PUT = `PUT`
 export const POST = `POST`
 export const PATCH = `PATCH`
 
+/*
+Should include only headers likely to be used by browser apps.
+Server-only headers should be placed in `http_srv.mjs`.
+Note that `cache-control` is used in responses _and_ requests.
+*/
 export const HEADER_NAME_ACCEPT = `accept`
-export const HEADER_NAME_ORIGIN = `origin`
-export const HEADER_NAME_HOST = `host`
-export const HEADER_NAME_ETAG = `etag`
-export const HEADER_NAME_VARY = `vary`
 export const HEADER_NAME_CACHE_CONTROL = `cache-control`
 export const HEADER_NAME_CONTENT_TYPE = `content-type`
-export const HEADER_NAME_ACCEPT_ENCODING = `accept-encoding`
-export const HEADER_NAME_CONTENT_ENCODING = `content-encoding`
-export const HEADER_NAME_CORS_CREDENTIALS = `access-control-allow-credentials`
-export const HEADER_NAME_CORS_HEADERS = `access-control-allow-headers`
-export const HEADER_NAME_CORS_METHODS = `access-control-allow-methods`
-export const HEADER_NAME_CORS_ORIGIN = `access-control-allow-origin`
 
 export const MIME_TYPE_TEXT = `text/plain`
 export const MIME_TYPE_HTML = `text/html`
@@ -53,20 +48,6 @@ export const HEADER_JSON = tuple(HEADER_NAME_CONTENT_TYPE, MIME_TYPE_JSON)
 
 export const HEADER_JSON_ACCEPT = tuple(HEADER_NAME_ACCEPT, MIME_TYPE_JSON)
 export const HEADERS_JSON_INOUT = tuple(HEADER_JSON, HEADER_JSON_ACCEPT)
-
-export const HEADERS_CORS_PROMISCUOUS = tuple(
-  tuple(HEADER_NAME_CORS_ORIGIN, `*`),
-  tuple(HEADER_NAME_CORS_METHODS, GET),
-  tuple(HEADER_NAME_CORS_METHODS, HEAD),
-  tuple(HEADER_NAME_CORS_METHODS, OPTIONS),
-  tuple(HEADER_NAME_CORS_METHODS, POST),
-  tuple(HEADER_NAME_CORS_METHODS, PUT),
-  tuple(HEADER_NAME_CORS_METHODS, PATCH),
-  tuple(HEADER_NAME_CORS_METHODS, DELETE),
-  tuple(HEADER_NAME_CORS_CREDENTIALS, `true`),
-  tuple(HEADER_NAME_CORS_HEADERS, HEADER_NAME_CONTENT_TYPE),
-  tuple(HEADER_NAME_CORS_HEADERS, HEADER_NAME_CACHE_CONTROL),
-)
 
 export async function resOk(res) {
   if (l.isPromise(res)) res = await res
@@ -125,27 +106,28 @@ export class AbortError extends Error {
   get name() {return this.constructor.name}
 }
 
-const lis = Symbol.for(`lis`)
+const LIS = Symbol.for(`lis`)
 
 // Tool for parent-child cancelation; similar to Go contexts.
 export class Ctx extends AbortController {
   constructor(sig) {
     l.setProto(super(), new.target) // Safari bug workaround.
-    this[lis] = linkAbort(this, sig)
+    this[LIS] = linkAbort(this, sig)
   }
 
   abort(err) {
-    this[lis]?.deinit()
+    this[LIS]?.deinit()
+    this[LIS] = undefined
     super.abort(err ?? new AbortError())
   }
 
-  deinit() {this.abort()}
+  deinit() {if (!this.aborted) this.abort()}
 }
 
 export function linkAbort(abc, sig) {
-  l.reqInst(abc, AbortController)
+  l.optInst(abc, AbortController)
   l.optInst(sig, AbortSignal)
-  if (!sig) return undefined
+  if (!abc || !sig) return undefined
   if (sig.aborted) {
     abc.abort(sig.reason ?? new AbortError())
     return undefined
@@ -155,9 +137,7 @@ export function linkAbort(abc, sig) {
   }).init()
 }
 
-/* eslint-disable no-invalid-this */
 function onAbort(eve) {this.abort(eve.target.reason ?? new AbortError())}
-/* eslint-enable no-invalid-this */
 
 export function toRou(val) {return l.toInst(val, Rou)}
 
@@ -224,19 +204,7 @@ export class ReqRou extends Rou {
     this.req = req
   }
 
-  /*
-  Example (depends on app semantics):
-
-    if (rou.preflight()) {
-      return new this.Res(undefined, {headers: h.HEADERS_CORS_PROMISCUOUS})
-    }
-  */
   preflight() {return this.someMethod(HEAD, OPTIONS)}
-
-  match(met, pat) {return this.method(met) && this.pat(pat)}
-  found(fun) {return this.either(fun, this.notFound)}
-  methods(fun) {return this.either(fun, this.notAllowed)}
-
   get(pat) {return this.match(GET, pat)}
   head(pat) {return this.match(HEAD, pat)}
   options(pat) {return this.match(OPTIONS, pat)}
@@ -245,8 +213,17 @@ export class ReqRou extends Rou {
   patch(pat) {return this.match(PATCH, pat)}
   delete(pat) {return this.match(DELETE, pat)}
 
+  match(met, pat) {return this.method(met) && this.pat(pat)}
+  methods(fun) {return this.either(fun, this.notAllowed)}
   method(val) {return this.req.method === reqMethod(val)}
   someMethod(...val) {return val.some(this.method, this)}
+  empty() {return new this.Res()}
+  found(fun) {return this.either(fun, this.notFound)}
+
+  notFound() {
+    const {req: {method}, url: {pathname}, Res} = this
+    return notFound({method, pathname, Res})
+  }
 
   either(fun, def) {
     const val = this.call(fun)
@@ -256,10 +233,6 @@ export class ReqRou extends Rou {
   }
 
   async eitherAsync(val, fun) {return (await val) || this.call(fun)}
-
-  empty() {return new this.Res()}
-
-  notFound() {return notFound.call(this, this.req.method, this.url.pathname)}
 
   notAllowed() {
     const pat = this.url.pathname
@@ -275,11 +248,11 @@ export class ReqRou extends Rou {
   }
 }
 
-export function notFound(path, meth) {
-  l.reqStr(path)
-  l.reqStr(meth)
-  const Res = this.Res ?? Response // eslint-disable-line no-invalid-this
-  return new Res(`not found: ${meth} ${path}`, {status: 404})
+export function notFound({method, pathname, Res}) {
+  l.reqStr(method)
+  l.reqStr(pathname)
+  Res ??= Response
+  return new Res(`not found: ${method} ${pathname}`, {status: 404})
 }
 
 // Used internally by `Cookies`.

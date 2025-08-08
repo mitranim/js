@@ -1378,7 +1378,7 @@ function last(val) {return val?.[val.length - 1]}
 function hasLocalName(val, name) {return isElement(val) && val.localName ===  name}
 function errIllegal() {return TypeError(`illegal invocation`)}
 function norm(val) {return val ?? null}
-function notIncludes(val) {return !this.includes(val)} // eslint-disable-line no-invalid-this
+function notIncludes(val) {return !this.includes(val)}
 function join(val) {return val.join(` `)}
 function lower(val) {return val.toLowerCase()}
 function isHead(val) {return hasLocalName(val, `head`)}

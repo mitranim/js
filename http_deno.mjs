@@ -32,8 +32,10 @@ export class HttpFile extends hs.BaseHttpFile {
   }
 
   async response(opt) {
+    l.optRec(opt)
+    const Res = opt?.Res ?? this.Res
     const body = this.bytes ?? this.text ?? (await Deno.open(this.fsPath)).readable
-    return new this.Res(body, await this.resOpt(opt))
+    return new Res(body, await this.resOpt(opt?.resOpt))
   }
 
   async getBytes() {return this.bytes ??= await io.readFileBytes(this.fsPath)}

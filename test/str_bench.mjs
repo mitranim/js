@@ -92,7 +92,7 @@ Safari versions at the time of this writing.
 */
 function uuidCryptoShort() {return crypto.randomUUID().replace(/-/g, ``)}
 
-const uuidArr = s.uuidArr()
+const uuidArr = s.uuidByteArr()
 
 const strForwardSlash = Array(128).fill(`str`).join(`/`)
 const strBackwardSlash = Array(128).fill(`str`).join(`\\`)
@@ -158,7 +158,7 @@ t.bench(function bench_join_spaced_current() {l.nop(s.spaced(...multi))})
 // `Math.random` is unsuitable for cryptography but very fast. It makes a decent
 // baseline benchmark for other "random" functions.
 t.bench(function bench_rnd_Math_random() {l.nop(Math.random())})
-t.bench(function bench_rnd_uuidArr() {l.nop(s.uuidArr())})
+t.bench(function bench_rnd_uuidArr() {l.nop(s.uuidByteArr())})
 
 t.bench(function bench_rnd_str_Math_random() {l.nop(Math.random().toString())})
 t.bench(function bench_rnd_str_rndHex() {l.nop(s.rndHex(16))})

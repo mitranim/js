@@ -471,14 +471,12 @@ export function True() {return true}
 export function False() {return false}
 export function vac(val) {return isVac(val) ? undefined : val}
 
-/* eslint-disable no-invalid-this */
 export function bind(fun, ...args) {return reqFun(fun).bind(this, ...args)}
 
 export function not(fun) {
   reqFun(fun)
   return function not() {return !fun.apply(this, arguments)}
 }
-/* eslint-enable no-invalid-this */
 
 export function hasOwn(val, key) {return isRecKey(key) && isComp(val) && own.call(val, key)}
 export function hasOwnEnum(val, key) {return isRecKey(key) && isComp(val) && enu.call(val, key)}
@@ -498,10 +496,8 @@ export function setProto(tar, cls) {
   }
 }
 
-/* eslint-disable no-invalid-this */
 export function Emp() {return new.target && new.target !== Emp ? this : Object.create(null)}
 Emp.prototype = null
-/* eslint-enable no-invalid-this */
 
 export function show(val) {return new Show().any(val)}
 

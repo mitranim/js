@@ -26,11 +26,18 @@ export class LiveBroad extends hs.Broad {
   get Stream() {return hs.WritableReadableByteStream}
   get Res() {return Response}
 
-  response(req, path) {
-    path = l.optStr(path) || u.toUrl(req.url).pathname
-    if (path === LIVE_PATH_SCRIPT) return this.clientRes(req)
-    if (path === LIVE_PATH_EVENTS) return this.eventsRes(req)
-    if (path === LIVE_PATH_SEND) return this.sendRes(req)
+  constructor(opt) {
+    l.optRec(opt)
+    super()
+    const Res = l.optCls(opt?.Res)
+    if (Res) o.priv(this, `Res`, Res)
+  }
+
+  response({req, pathname}) {
+    pathname = l.optStr(pathname) || u.toUrl(req.url).pathname
+    if (pathname === LIVE_PATH_SCRIPT) return this.clientRes(req)
+    if (pathname === LIVE_PATH_EVENTS) return this.eventsRes(req)
+    if (pathname === LIVE_PATH_SEND) return this.sendRes(req)
     return undefined
   }
 
@@ -70,14 +77,12 @@ export class LiveClient extends l.Emp {
     this.hot = l.optBool(hot)
     this.files = hot && l.onlyNpo(globalThis[LIVE_FILES]) || l.Emp()
     this.script = `<script type="module" src="${url.setPath(LIVE_PATH_SCRIPT)}"></script>`
-    if (l.optCls(Res)) o.pub(this, `Res`, Res)
+    if (l.optCls(Res)) o.priv(this, `Res`, Res)
   }
+
+  send(val) {return fetch(this.sendUrl, {method: h.POST, body: val}).then(h.resOk)}
 
   sendJson(val) {return this.send(h.jsonEncode(val))}
-
-  send(val) {
-    return fetch(this.sendUrl, {method: h.POST, body: val}).then(h.resOk)
-  }
 
   addFile(file) {
     if (l.isNil(file)) return undefined
@@ -95,6 +100,7 @@ export class LiveClient extends l.Emp {
   }
 
   hasFile(path) {return l.reqStr(path) in this.files}
+
   fsPathToUrlPath(path) {return this.files[l.reqStr(path)]}
 
   liveResponse(res) {
@@ -106,12 +112,12 @@ export class LiveClient extends l.Emp {
 }
 
 const HEADERS_LIVE_SCRIPT = [
-  ...h.HEADERS_CORS_PROMISCUOUS,
+  ...hs.HEADERS_CORS_PROMISCUOUS,
   [h.HEADER_NAME_CONTENT_TYPE, `application/javascript`],
 ]
 
 const HEADERS_LIVE_EVENT_STREAM = [
-  ...h.HEADERS_CORS_PROMISCUOUS,
+  ...hs.HEADERS_CORS_PROMISCUOUS,
   [h.HEADER_NAME_CONTENT_TYPE, `text/event-stream`],
   [`transfer-encoding`, `utf-8`],
 ]

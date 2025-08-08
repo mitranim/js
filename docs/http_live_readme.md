@@ -23,5 +23,5 @@ The following APIs are exported but undocumented. Check [http_live.mjs](../http_
   * [`const LIVE_PATH_SEND`](../http_live.mjs#L17)
   * [`function liveScript`](../http_live.mjs#L21)
   * [`class LiveBroad`](../http_live.mjs#L25)
-  * [`class LiveClient`](../http_live.mjs#L59)
-  * [`function isResHtmlText`](../http_live.mjs#L119)
+  * [`class LiveClient`](../http_live.mjs#L66)
+  * [`function isResHtmlText`](../http_live.mjs#L125)

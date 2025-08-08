@@ -380,7 +380,6 @@ export function split(src, sep) {
 }
 
 // Tested indirectly through `Draft`. Needs to be simplified. Needs its own tests.
-/* eslint-disable no-invalid-this */
 export function splitMap(src, reg, fun) {
   src = l.laxStr(src)
   reqRegGlob(reg)
@@ -403,7 +402,6 @@ export function splitMap(src, reg, fun) {
   if (ind < src.length) buf.push(src.slice(ind))
   return buf
 }
-/* eslint-enable no-invalid-this */
 
 export function lines(val) {return split(val, /(?:\r\n|\r|\n)/g)}
 export function trimLines(val) {return l.laxStr(val).replace(/^\s+|\s+$/gm, ``)}

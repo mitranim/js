@@ -80,4 +80,4 @@ The following APIs are exported but undocumented. Check [http_bun.mjs](../http_b
   * [`function serve`](../http_bun.mjs#L9)
   * [`function srvUrl`](../http_bun.mjs#L18)
   * [`class HttpFile`](../http_bun.mjs#L20)
-  * [`class HttpDir`](../http_bun.mjs#L46)
+  * [`class HttpDir`](../http_bun.mjs#L48)

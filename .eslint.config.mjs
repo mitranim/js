@@ -77,7 +77,6 @@ export default [
       [`no-import-assign`]: `error`,
       [`no-inner-declarations`]: `error`,
       [`no-invalid-regexp`]: `error`,
-      [`no-invalid-this`]: [`error`, {capIsConstructor: false}],
       [`no-irregular-whitespace`]: `error`,
       [`no-misleading-character-class`]: `error`,
       [`no-mixed-spaces-and-tabs`]: `error`,
@@ -110,7 +109,17 @@ export default [
       [`use-isnan`]: `error`,
       [`valid-typeof`]: `error`,
 
-      // [`quotes`]: [`error`, `backtick`], // Doesn't work properly.
+      // Doesn't work properly.
+      // [`quotes`]: [`error`, `backtick`],
+
+      /*
+      There used to be a time and place for this rule. However, it can also lead
+      to pitfalls. There are cases when separating a context object from a method
+      is correct and useful, and enforcing "no this" can lead to mistakes, such
+      as accidentally closuring an object which is meant to be referenced weakly
+      via `WeakRef`.
+      */
+      // [`no-invalid-this`]: [`error`, {capIsConstructor: false}],
     },
   },
   {

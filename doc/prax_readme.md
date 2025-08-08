@@ -15,7 +15,7 @@ Short overview of features:
 * Convenient syntax. Nice-to-use in plain JS.
   * No templates.
   * No string parsing.
-  * No need for JSX.
+  * No need for JSX. (Compatible with it.)
   * No need for a build system.
 * Built-in reactivity with {{featLink obs}}.
 * Can use native [custom elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) for state.

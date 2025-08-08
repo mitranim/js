@@ -80,4 +80,4 @@ The following APIs are exported but undocumented. Check [http_deno.mjs](../http_
   * [`function serve`](../http_deno.mjs#L9)
   * [`function srvUrl`](../http_deno.mjs#L14)
   * [`class HttpFile`](../http_deno.mjs#L21)
-  * [`class HttpDir`](../http_deno.mjs#L44)
+  * [`class HttpDir`](../http_deno.mjs#L46)

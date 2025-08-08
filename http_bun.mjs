@@ -33,8 +33,10 @@ export class HttpFile extends hs.BaseHttpFile {
   }
 
   async response(opt) {
+    l.optRec(opt)
+    const Res = opt?.Res ?? this.Res
     const body = this.bytes ?? this.text ?? this.getBunFile()
-    return new this.Res(body, await this.resOpt(opt))
+    return new Res(body, await this.resOpt(opt?.resOpt))
   }
 
   async getBytes() {return this.bytes ??= await this.getBunFile().bytes()}

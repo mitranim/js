@@ -177,6 +177,4 @@ export async function* watchRel(base) {
 
 /* Internal */
 
-/* eslint-disable no-invalid-this */
 function toStringGetName() {return this.name}
-/* eslint-enable no-invalid-this */

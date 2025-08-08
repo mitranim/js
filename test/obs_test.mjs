@@ -978,7 +978,6 @@ async function test_recurSync(tar, swap) {
   let runs = 0
   let val = undefined
 
-  /* eslint-disable no-invalid-this */
   function run(arg) {
     t.is(this, tar)
     t.is(arg, tar)
@@ -986,7 +985,6 @@ async function test_recurSync(tar, swap) {
     runs++
     val = obs0.val + obs1.val
   }
-  /* eslint-enable no-invalid-this */
 
   let rec = (
     swap
@@ -1536,27 +1534,23 @@ t.test(function test_calc_arg_swap() {
   let runs0 = 0
   let runs1 = 0
 
-  /* eslint-disable no-invalid-this */
   const calc0 = ob.calc(tar0, function run0(arg) {
     runs0++
     t.is(this, tar0)
     t.is(arg, tar0)
     return 10
   })
-  /* eslint-enable no-invalid-this */
 
   t.is(runs0, 0)
   t.is(calc0.get(), 10)
   t.is(runs0, 1)
 
-  /* eslint-disable no-invalid-this */
   const calc1 = ob.calc(function run1(arg) {
     runs1++
     t.is(this, tar1)
     t.is(arg, tar1)
     return 20
   }, tar1)
-  /* eslint-enable no-invalid-this */
 
   t.is(runs1, 0)
   t.is(calc1.val, 20)
