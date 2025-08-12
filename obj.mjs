@@ -87,7 +87,7 @@ export class DynVar extends l.Emp {
     return prev
   }
 
-  with(val, fun, ...src) {
+  run(val, fun, ...src) {
     const prev = this.swap(val)
     try {return fun(...src)}
     finally {this.swap(prev)}
@@ -367,12 +367,12 @@ export function* resources(...val) {
 
 export function deinit(val) {
   if (!l.isComp(val)) return undefined
+  if (l.hasMeth(val, l.DISPOSE)) return val[l.DISPOSE]()
+  if (l.hasMeth(val, l.ASYNC_DISPOSE)) return val[l.ASYNC_DISPOSE]()
   if (l.hasMeth(val, `deinit`)) return val.deinit()
-  if (l.hasMeth(val, `abort`)) return val.abort()
-  if (l.hasMeth(val, `close`)) return val.close()
   if (l.hasMeth(val, `dispose`)) return val.dispose()
-  if (l.hasMeth(val, Symbol.dispose)) return val[Symbol.dispose]()
-  if (l.hasMeth(val, Symbol.disposeAsync)) return val[Symbol.disposeAsync]()
+  if (l.hasMeth(val, `close`)) return val.close()
+  if (l.hasMeth(val, `abort`)) return val.abort()
   return undefined
 }
 

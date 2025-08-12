@@ -1,7 +1,7 @@
 {
   "name": "@mitranim/js",
   "description": "The missing \"standard library\" for JS, and a foundation for full-stack JS apps.",
-  "version": "0.1.83",
+  "version": "0.1.84",
   "type": "module",
   "main": "./all.mjs",
   "repository": {"type": "git", "url": "https://github.com/mitranim/js.git"},

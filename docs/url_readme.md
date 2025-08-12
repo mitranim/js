@@ -95,7 +95,7 @@ Various issues:
 Import:
 
 ```js
-import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/url.mjs'
+import * as u from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/url.mjs'
 ```
 
 Example parsing:
@@ -444,20 +444,20 @@ The following APIs are exported but undocumented. Check [url.mjs](../url.mjs).
   * [`const RE_PATHNAME`](../url.mjs#L20)
   * [`const RE_HASH`](../url.mjs#L21)
   * [`function toUrlOpt`](../url.mjs#L28)
-  * [`function loc`](../url.mjs#L351)
-  * [`function toLoc`](../url.mjs#L352)
-  * [`class Loc`](../url.mjs#L362)
-  * [`const stateKey`](../url.mjs#L426)
-  * [`const titleKey`](../url.mjs#L427)
-  * [`const schemeKey`](../url.mjs#L429)
-  * [`const slashKey`](../url.mjs#L430)
-  * [`const usernameKey`](../url.mjs#L431)
-  * [`const passwordKey`](../url.mjs#L432)
-  * [`const hostnameKey`](../url.mjs#L433)
-  * [`const portKey`](../url.mjs#L434)
-  * [`const pathnameKey`](../url.mjs#L435)
-  * [`const queryKey`](../url.mjs#L436)
-  * [`const hashKey`](../url.mjs#L437)
-  * [`function urlParse`](../url.mjs#L439)
-  * [`function queryDec`](../url.mjs#L499)
-  * [`function queryEnc`](../url.mjs#L505)
+  * [`function loc`](../url.mjs#L350)
+  * [`function toLoc`](../url.mjs#L351)
+  * [`class Loc`](../url.mjs#L361)
+  * [`const stateKey`](../url.mjs#L425)
+  * [`const titleKey`](../url.mjs#L426)
+  * [`const schemeKey`](../url.mjs#L428)
+  * [`const slashKey`](../url.mjs#L429)
+  * [`const usernameKey`](../url.mjs#L430)
+  * [`const passwordKey`](../url.mjs#L431)
+  * [`const hostnameKey`](../url.mjs#L432)
+  * [`const portKey`](../url.mjs#L433)
+  * [`const pathnameKey`](../url.mjs#L434)
+  * [`const queryKey`](../url.mjs#L435)
+  * [`const hashKey`](../url.mjs#L436)
+  * [`function urlParse`](../url.mjs#L438)
+  * [`function queryDec`](../url.mjs#L498)
+  * [`function queryEnc`](../url.mjs#L504)

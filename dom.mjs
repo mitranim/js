@@ -81,9 +81,8 @@ export class ListenRef extends l.WeakRef {
     return this
   }
 
-  deinit() {
-    this.src.deref()?.removeEventListener(this.type, this, this.opt)
-  }
+  deinit() {this.src.deref()?.removeEventListener(this.type, this, this.opt)}
+  [l.DISPOSE]() {this.deinit()}
 }
 
 const REG_DEINIT = new l.FinalizationRegistry(function finalizeDeinit(val) {
@@ -197,7 +196,7 @@ export function prevSibling(tar, cls) {return findPrevSibling(tar, clsTest(cls))
 Takes a DOM node class and returns a subclass with various shortcuts for DOM
 inspection and manipulation.
 */
-export function MixNode(val) {return MixinNode.get(val)}
+export function MixNode(cls) {return MixinNode.get(cls)}
 
 export class MixinNode extends o.Mixin {
   static make(cls) {
@@ -231,7 +230,7 @@ In addition to properties, we provide methods, because:
 
 - Methods may return `this`, which is convenient for chaining.
 */
-export function MixChild(val) {return MixinChild.get(val)}
+export function MixChild(cls) {return MixinChild.get(cls)}
 
 export class MixinChild extends o.Mixin {
   static make(cls) {
@@ -288,14 +287,14 @@ only child-to-parent relations, not parent-to-child. The latter become
 available only after attaching the newly initialized children to the parent,
 which is out of scope for this mixin.
 */
-export function MixChildCon(val) {return MixinChildCon.get(val)}
+export function MixChildCon(cls) {return MixinChildCon.get(cls)}
 
 export class MixinChildCon extends o.Mixin {
   static make(cls) {
     return class ChildCon extends MixChild(cls) {
-      constructor(...val) {
+      constructor(...src) {
         super()
-        if (val.length) this.setParent(...val)
+        if (src.length) this.setParent(...src)
       }
     }
   }

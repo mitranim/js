@@ -648,7 +648,9 @@ export class HTMLOptionElement extends HTMLElement {
   set selected(val) {this.toggleAttribute(`selected`, l.laxBool(val))}
 }
 
-export class HTMLFieldSetElement extends HTMLElement {}
+export class HTMLFieldSetElement extends HTMLElement {
+  get elements() {return new HTMLFormControlsCollection(this)}
+}
 
 export class HTMLFormElement extends HTMLElement {
   get elements() {return new HTMLFormControlsCollection(this)}

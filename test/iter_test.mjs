@@ -276,8 +276,12 @@ function testValues(fun, backref) {
   // `isIter`, we treat the object as a struct rather than an iterable.
   test({values}, [values])
 
-  // When the method `.values` is present and the object implements `isIter`,
-  // we use the method `.values`, prioritizing values over key-value pairs.
+  /*
+  To be true to the name of `values` and `valuesCopy`, we prioritize the method
+  `.values` on iterators which implement it. This makes a difference on `Map`,
+  `URLSearchParams`, `Headers`, and other iterators which use `.entries` as
+  their default form of iteration.
+  */
   test({values, [Symbol.iterator]: l.nop}, [10, 20])
 }
 

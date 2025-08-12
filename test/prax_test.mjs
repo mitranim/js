@@ -292,6 +292,41 @@ t.test(function test_Ren_E_basic() {
     // Not falsy but included for completeness.
     eqm(E(`span`, {chi: true}), `<span>true</span>`)
   })
+
+  t.test(function test_function() {
+    function Nil() {}
+    function Prim() {return `one`}
+    function Elem(chi) {return E(`one`, {chi})}
+
+    t.is(E(Nil), undefined)
+    t.is(E(Prim), `one`)
+    eqm(E(Elem, `two`), `<one>two</one>`)
+
+    /*
+    In principle, we can detect classes and call them with `new`, and used to
+    do just that. But that's actually not very useful for custom DOM elements.
+    Their constructors are supposed to be nullary. Custom elements included in
+    HTML are first constructed as regular elements. When user code registers
+    the corresponding classes, they're constructed _again_, invoking the new
+    user-defined constructors, with 0 arguments. Non-nullary constructors are
+    okay for SPA, where elements are never "upgraded", but can be inconvenient
+    in SSR / SPA hybrids, where the constructor needs to detect the calling
+    mode by checking `.isConnected`. In addition, when subclassing an element
+    class which already has a non-nullary constructor, the subclass needs to
+    pass inputs to `super` regardless of the mode, and it quickly gets murky.
+
+    Alternatively, we could treat `E(cls, src)` as `E(new cls(), src)`.
+    However, this causes a dangerous difference in semantics between how
+    we call functions and classes, and leads to bugs when refactoring code
+    and converting between the two types.
+
+    So for now, we simply don't support `new` in `E` calls. User code should
+    define its own initialization methods (suggested name: `.init`) and call
+    them explicitly.
+    */
+    class Cls {}
+    t.throws(() => E(Cls), TypeError, `new`)
+  })
 })
 
 t.test(function test_Ren_chi() {

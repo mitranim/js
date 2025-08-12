@@ -77,6 +77,7 @@ export class WeakerRef extends l.WeakRef {
   deref() {return this.expired ? undefined : super.deref()}
   init() {return (this.expired = false), this}
   deinit() {this.expired = true}
+  [l.DISPOSE]() {this.deinit()}
 }
 
 export class RunRef extends WeakerRef {
@@ -162,6 +163,8 @@ export class Que extends l.Emp {
     this.prev.clear()
     this.next.clear()
   }
+
+  [l.DISPOSE]() {this.deinit()}
 }
 
 /*
@@ -186,6 +189,8 @@ export class ShardedQue extends l.Emp {
     for (const que of ques) que?.deinit()
     ques.length = 0
   }
+
+  [l.DISPOSE]() {this.deinit()}
 }
 
 export class ShedSync extends o.MixMain(ShardedQue) {
@@ -259,6 +264,8 @@ export class ShedAsync extends o.MixMain(ShardedQue) {
     this.unschedule()
     super.deinit()
   }
+
+  [l.DISPOSE]() {this.deinit()}
 }
 
 export class ShedMicro extends ShedAsync {
@@ -333,6 +340,7 @@ export class Obs extends l.Emp {
   enque(val) {this[QUE].enque(val)}
   flush() {this[QUE].flush()}
   deinit() {this[QUE].deinit()}
+  [l.DISPOSE]() {this.deinit()}
 }
 
 export function obsRef(val) {return new ObsRef(val)}
@@ -407,6 +415,8 @@ export class ObsCalc extends ObsRef {
     this.rec.deinit()
     super.deinit()
   }
+
+  [l.DISPOSE]() {this.deinit()}
 }
 
 function reqTarFun(tar, fun) {
@@ -422,15 +432,11 @@ export class MixinScheduleRun extends o.Mixin {
       get RunRef() {return RunRef}
       shedRef = new this.RunRef(this, this.schedule)
       runRef = new this.RunRef(this, this.run)
-
       schedule() {}
       run() {}
       depth() {return 0}
-
-      deinit() {
-        this.shedRef.deinit()
-        this.runRef.deinit()
-      }
+      deinit() {this.shedRef.deinit(); this.runRef.deinit()}
+      [l.DISPOSE]() {this.deinit()}
     }
   }
 }

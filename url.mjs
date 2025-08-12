@@ -85,6 +85,8 @@ They disagree on some terms.
 Reference: https://en.wikipedia.org/wiki/Uniform_Resource_Identifier
 */
 export class Url extends l.Emp {
+  get Query() {return Query}
+
   constructor(val) {
     super()
     this[schemeKey] = ``
@@ -339,11 +341,8 @@ export class Url extends l.Emp {
 
   clone() {return new this.constructor(this)}
   toURL() {return new this.URL(this.href)}
-  toString() {return this.href}
   toJSON() {return this.toString() || null}
-  valueOf() {return this.href}
-
-  get Query() {return Query}
+  toString() {return this.href}
 
   static join(val, ...vals) {return new this(val).addPath(...vals)}
 }

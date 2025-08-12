@@ -41,8 +41,8 @@ Proxy-based observables via `obs`:
 Since the most common and important use of observables is UI updates, we start with a higher-level example that involves this library's DOM rendering module `prax`.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obs.mjs'
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/prax.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obs.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/prax.mjs'
 
 const obs0 = ob.obs({val: `hello`})
 const obs1 = ob.obsRef(`world`)
@@ -95,8 +95,8 @@ For operations with side effects, you can use lower-level procedural tools such 
 The observer object returned by `recur` (instance of `ob.FunRecur`) is automatically deinitialized when garbage collected. Make sure to store it while you need it.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obs.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/dom_reg.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obs.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/dom_reg.mjs'
 
 const obs = ob.obs({msg: `hello world`})
 
@@ -117,7 +117,7 @@ setTimeout(() => {obs.msg = `welcome to the future`}, 1024)
 `recur` doesn't require an object, you can just pass a function:
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obs.mjs'
 
 const obs = ob.obs({msg: `hello world`})
 
@@ -219,7 +219,7 @@ By default, it uses "task" scheduling (`ob.ShedTask.main`) in browsers, and "mic
 The synchronous scheduler `ShedSync` can be paused to briefly prevent synchronous observers from running, and resumed to flush them all at once.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obs.mjs'
 
 const obs = ob.obs({one: 10, two: 20})
 
@@ -257,7 +257,7 @@ finally {
 Any class can become observable by wrapping the instance in `obs` straight in the constructor. Make sure to actually return the resulting object from the constructor.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obs.mjs'
 
 class MyCls {constructor() {return ob.obs(this)}}
 
@@ -275,7 +275,7 @@ In non-browser environments, exceptions in async scheduler callbacks crash the p
 Note that synchronous exceptions, such as during any initial call to `ob.recur`, are _not_ caught this way. This is intentional.
 
 ```js
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obs.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obs.mjs'
 
 ob.ShedMicro.main.onerror = console.error
 ob.ShedTask.main.onerror = console.error
@@ -353,24 +353,24 @@ The following APIs are exported but undocumented. Check [obs.mjs](../obs.mjs).
   * [`function preferTask`](../obs.mjs#L67)
   * [`function nodeDepth`](../obs.mjs#L69)
   * [`class WeakerRef`](../obs.mjs#L75)
-  * [`class RunRef`](../obs.mjs#L82)
-  * [`class Que`](../obs.mjs#L96)
-  * [`class ShardedQue`](../obs.mjs#L172)
-  * [`class ShedSync`](../obs.mjs#L191)
-  * [`class ShedAsync`](../obs.mjs#L213)
-  * [`class ShedMicro`](../obs.mjs#L264)
-  * [`class ShedTask`](../obs.mjs#L268)
-  * [`class ObsPh`](../obs.mjs#L282)
-  * [`class Obs`](../obs.mjs#L329)
-  * [`function obsRef`](../obs.mjs#L338)
-  * [`class ObsRef`](../obs.mjs#L345)
-  * [`class TypedObsRef`](../obs.mjs#L359)
-  * [`function calc`](../obs.mjs#L365)
-  * [`class ObsCalc`](../obs.mjs#L367)
-  * [`function MixScheduleRun`](../obs.mjs#L417)
-  * [`class MixinScheduleRun`](../obs.mjs#L419)
-  * [`function MixRecur`](../obs.mjs#L450)
-  * [`class MixinRecur`](../obs.mjs#L452)
-  * [`class Recur`](../obs.mjs#L488)
-  * [`class FunRecur`](../obs.mjs#L490)
-  * [`class CalcRecur`](../obs.mjs#L507)
+  * [`class RunRef`](../obs.mjs#L83)
+  * [`class Que`](../obs.mjs#L97)
+  * [`class ShardedQue`](../obs.mjs#L175)
+  * [`class ShedSync`](../obs.mjs#L196)
+  * [`class ShedAsync`](../obs.mjs#L218)
+  * [`class ShedMicro`](../obs.mjs#L271)
+  * [`class ShedTask`](../obs.mjs#L275)
+  * [`class ObsPh`](../obs.mjs#L289)
+  * [`class Obs`](../obs.mjs#L336)
+  * [`function obsRef`](../obs.mjs#L346)
+  * [`class ObsRef`](../obs.mjs#L353)
+  * [`class TypedObsRef`](../obs.mjs#L367)
+  * [`function calc`](../obs.mjs#L373)
+  * [`class ObsCalc`](../obs.mjs#L375)
+  * [`function MixScheduleRun`](../obs.mjs#L427)
+  * [`class MixinScheduleRun`](../obs.mjs#L429)
+  * [`function MixRecur`](../obs.mjs#L456)
+  * [`class MixinRecur`](../obs.mjs#L458)
+  * [`class Recur`](../obs.mjs#L494)
+  * [`class FunRecur`](../obs.mjs#L496)
+  * [`class CalcRecur`](../obs.mjs#L513)

@@ -122,6 +122,7 @@ export class Ctx extends AbortController {
   }
 
   deinit() {if (!this.aborted) this.abort()}
+  [l.DISPOSE]() {this.deinit()}
 }
 
 export function linkAbort(abc, sig) {

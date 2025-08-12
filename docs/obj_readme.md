@@ -14,7 +14,7 @@
 ## Usage
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obj.mjs'
 ```
 
 ## API
@@ -62,7 +62,7 @@ Links: [source](../obj.mjs#L147); [test/example](../test/obj_test.mjs#L755).
 Takes a class and hacks its prototype, converting all non-inherited getters to lazy/memoizing versions of themselves that only execute _once_. The resulting value replaces the getter. Inherited getters are unaffected.
 
 ```js
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obj.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obj.mjs'
 
 class StructLax extends o.MixStruct(l.Emp) {}
 
@@ -104,8 +104,8 @@ Performance characteristics:
 * When the number of declared fields is significantly smaller than the number of provided fields, this tends to be faster than the aforementioned assignment functions.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obj.mjs'
 
 class Person extends o.MixStruct(l.Emp) {
   static spec = {
@@ -145,8 +145,8 @@ Differences from [#`MixStruct`](#function-mixstruct):
 * Has slightly worse performance.
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/lang.mjs'
-import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obj.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/lang.mjs'
+import * as o from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obj.mjs'
 
 class Person extends o.MixStructLax(l.Emp) {
   static spec = {

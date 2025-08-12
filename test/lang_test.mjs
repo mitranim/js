@@ -1019,6 +1019,40 @@ t.test(function test_isCls() {
   // Known false positives.
   t.ok(l.isCls(Symbol))
   t.ok(l.isCls(BigInt))
+
+  t.test(function test_pseudo_class() {
+    function PseudoCls() {}
+
+    Object.setPrototypeOf(PseudoCls, Map)
+
+    PseudoCls.prototype = Object.create(Map.prototype, {
+      // Exactly matches `.prototype.constructor` in `class`.
+      constructor: {
+        value: PseudoCls,
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      }
+    })
+
+    t.no(l.isCls(PseudoCls))
+
+    Object.defineProperty(PseudoCls, `prototype`, {
+      // Exactly matches `.prototype` in `class`.
+      value: PseudoCls.prototype,
+      writable: false,
+      enumerable: false,
+      configurable: false,
+    })
+
+    // Old cached result.
+    t.no(l.isCls(PseudoCls))
+
+    // Busting the cache gets us the new result.
+    l.CLASSES.delete(PseudoCls)
+
+    t.ok(l.isCls(PseudoCls))
+  })
 })
 
 t.test(function test_isList() {

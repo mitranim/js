@@ -67,8 +67,10 @@ export function valuesCopy(val) {
   if (l.isList(val)) return listToArr(val)
   if (l.isSet(val)) return [...val]
   if (l.isMap(val)) return [...val.values()]
-  if (l.isIter(val) && l.hasMeth(val, `values`)) return iterToArr(val.values())
-  if (l.isIterator(val)) return iterToArr(val)
+  if (l.isIter(val)) {
+    if (l.hasMeth(val, `values`)) return iterToArr(val.values())
+    return iterToArr(val)
+  }
   if (isRecSync(val)) return valuesFromStruct(val)
   throw l.errConv(val, `values`)
 }

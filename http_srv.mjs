@@ -95,6 +95,7 @@ export class WritableReadableStream extends ReadableStream {
   write(val) {return this.ctr.enqueue(val)}
   close() {try {this.ctr.close()} catch {}}
   deinit() {return this.close()}
+  [l.DISPOSE]() {this.deinit()}
 }
 
 export class WritableReadableByteStream extends WritableReadableStream {
@@ -176,6 +177,8 @@ export class ConcatStreamSource extends l.Emp {
     for (const val of this.src) cancelOrDeinit(val, reason)
     this.src.length = 0
   }
+
+  [l.DISPOSE]() {this.deinit()}
 }
 
 function cancelOrDeinit(val, why) {
@@ -236,6 +239,8 @@ export class Broad extends l.Emp {
       wri.deinit()
     }
   }
+
+  [l.DISPOSE]() {this.deinit()}
 }
 
 /*

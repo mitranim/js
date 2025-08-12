@@ -136,7 +136,6 @@ export class Dur extends l.Emp {
 
   toJSON() {return this.toISOString()}
   toString() {return this.toISOString()}
-  valueOf() {return this.toString()}
 
   static isValid(val) {return l.isSome(val) && l.toInst(val, this).isValid()}
   static fromMilli(val) {return new this().resetFromMilli(val)}

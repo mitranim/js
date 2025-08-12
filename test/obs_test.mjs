@@ -1078,6 +1078,57 @@ async function test_recurSync(tar, swap) {
   })
 }
 
+t.test(function test_que_skip_current_dyn_ref() {
+  let runs = 0
+  const obs = ob.obsRef(0)
+
+  /*
+  This recurrent simultaneously monitors and modifies the same observable.
+  It's very easy to accidentally write such code. It's also very easy for
+  the observable system to accidentally enter an infinite loop in such
+  cases. To avoid that, we have two distinct mechanisms in `Que`. For
+  valid re-subscriptions, we rotate two sub-ques (sets of runnables).
+  In the degenerate case below, the que should simply skip this runnable
+  when flushing, resulting in just one run.
+  */
+  const _ = ob.recurSync(function run() {
+    runs++
+    obs.val++
+  })
+
+  testQueEmpty(ob.getQue(obs))
+
+  t.is(runs, 1)
+  t.is(obs.val, 1)
+
+  obs.val++
+  t.is(runs, 1)
+  t.is(obs.val, 2)
+
+  obs.val++
+  t.is(runs, 1)
+  t.is(obs.val, 3)
+})
+
+t.test(function test_recur_deinit_using_dispose() {
+  const one = ob.obsRef(1)
+  const two = ob.obsRef(undefined)
+
+  {
+    using _ = ob.recurSync(() => {two.val = one.val})
+    t.is(one.val, 1)
+    t.is(two.val, 1)
+
+    one.val++
+    t.is(one.val, 2)
+    t.is(two.val, 2)
+  }
+
+  one.val++
+  t.is(one.val, 3)
+  t.is(two.val, 2)
+})
+
 await t.test(async function test_hierarchical_scheduling() {
   const shed = new TestShedMicro()
 

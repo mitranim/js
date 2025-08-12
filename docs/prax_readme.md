@@ -45,7 +45,7 @@ For server-side rendering, see the section [SSR](#ssr) below.
 Browser example:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/prax.mjs'
 
 const {E} = p.Ren.main
 
@@ -70,8 +70,8 @@ The following elements (not strings) have been appended:
 Usage with custom elements:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/prax.mjs'
-import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/dom_reg.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/prax.mjs'
+import * as dr from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/dom_reg.mjs'
 
 const {E} = p.Ren.main
 
@@ -89,9 +89,9 @@ document.body.append(
 Reactivity:
 
 ```js
-import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/lang.mjs'
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/prax.mjs'
-import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/obs.mjs'
+import * as l from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/lang.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/prax.mjs'
+import * as ob from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/obs.mjs'
 
 const {E} = p.Ren.main
 const obs0 = ob.obs({val: `hello`})
@@ -151,8 +151,8 @@ by passing functions or observable references in place of props or child nodes.
 For SSR (server-side rendering), Prax needs our lightweight DOM shim:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/dom_global_shim.mjs'
 
 const ren = new p.Ren({env: dg.global})
 const {E} = ren
@@ -173,11 +173,11 @@ console.log(elem.outerHTML)
 For SSR/SPA hybrids, configure an [importmap](https://wicg.github.io/import-maps/) or [bundler](https://esbuild.github.io) to choose the right global "environment" and pass it to `Ren`. The rest will just work.
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/prax.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/prax.mjs'
 
 // Your bundler or importmap needs to choose the right one.
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/dom_global_shim.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/dom_global_native.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/dom_global_shim.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/dom_global_native.mjs'
 
 const ren = new p.Ren({env: dg.global})
 const {E} = ren
@@ -194,8 +194,8 @@ const elem = E(`div`, {
 Rendering a complete document with doctype:
 
 ```js
-import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/prax.mjs'
-import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.83/dom_global_shim.mjs'
+import * as p from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/prax.mjs'
+import * as dg from 'https://cdn.jsdelivr.net/npm/@mitranim/js@0.1.84/dom_global_shim.mjs'
 
 const ren = new p.Ren({env: dg.global})
 const {E} = ren
@@ -245,31 +245,31 @@ The following APIs are exported but undocumented. Check [prax.mjs](../prax.mjs).
   * [`const BOOL`](../prax.mjs#L18)
   * [`const VOID`](../prax.mjs#L26)
   * [`class Ren`](../prax.mjs#L32)
-  * [`function MixReiniter`](../prax.mjs#L410)
-  * [`class MixinReiniter`](../prax.mjs#L412)
-  * [`function MixRec`](../prax.mjs#L427)
-  * [`class MixinRec`](../prax.mjs#L429)
-  * [`function MixRecs`](../prax.mjs#L439)
-  * [`class MixinRecs`](../prax.mjs#L441)
-  * [`class RecMutFun`](../prax.mjs#L452)
-  * [`class RecPropFun`](../prax.mjs#L464)
-  * [`class RecBaseRef`](../prax.mjs#L481)
-  * [`class RecMutRef`](../prax.mjs#L501)
-  * [`class RecPropRef`](../prax.mjs#L505)
-  * [`function MixRecNode`](../prax.mjs#L513)
-  * [`class MixinRecNode`](../prax.mjs#L515)
-  * [`function MixRecNodeFun`](../prax.mjs#L586)
-  * [`class MixinRecNodeFun`](../prax.mjs#L588)
-  * [`function MixRecNodeRef`](../prax.mjs#L613)
-  * [`class MixinRecNodeRef`](../prax.mjs#L615)
-  * [`class PropBui`](../prax.mjs#L682)
-  * [`const DOCTYPE_HTML`](../prax.mjs#L812)
-  * [`function isNodable`](../prax.mjs#L814)
-  * [`function reqNodable`](../prax.mjs#L815)
-  * [`function isDocument`](../prax.mjs#L817)
-  * [`function optDocument`](../prax.mjs#L825)
-  * [`function reqDocument`](../prax.mjs#L826)
-  * [`function isDomEnv`](../prax.mjs#L828)
-  * [`function optDomEnv`](../prax.mjs#L837)
-  * [`function reqDomEnv`](../prax.mjs#L838)
-  * [`function isNamespaced`](../prax.mjs#L840)
+  * [`function MixReiniter`](../prax.mjs#L402)
+  * [`class MixinReiniter`](../prax.mjs#L404)
+  * [`function MixRec`](../prax.mjs#L419)
+  * [`class MixinRec`](../prax.mjs#L421)
+  * [`function MixRecs`](../prax.mjs#L431)
+  * [`class MixinRecs`](../prax.mjs#L433)
+  * [`class RecMutFun`](../prax.mjs#L444)
+  * [`class RecPropFun`](../prax.mjs#L456)
+  * [`class RecBaseRef`](../prax.mjs#L473)
+  * [`class RecMutRef`](../prax.mjs#L493)
+  * [`class RecPropRef`](../prax.mjs#L497)
+  * [`function MixRecNode`](../prax.mjs#L505)
+  * [`class MixinRecNode`](../prax.mjs#L507)
+  * [`function MixRecNodeFun`](../prax.mjs#L578)
+  * [`class MixinRecNodeFun`](../prax.mjs#L580)
+  * [`function MixRecNodeRef`](../prax.mjs#L606)
+  * [`class MixinRecNodeRef`](../prax.mjs#L608)
+  * [`class PropBui`](../prax.mjs#L675)
+  * [`const DOCTYPE_HTML`](../prax.mjs#L805)
+  * [`function isNodable`](../prax.mjs#L807)
+  * [`function reqNodable`](../prax.mjs#L808)
+  * [`function isDocument`](../prax.mjs#L810)
+  * [`function optDocument`](../prax.mjs#L818)
+  * [`function reqDocument`](../prax.mjs#L819)
+  * [`function isDomEnv`](../prax.mjs#L821)
+  * [`function optDomEnv`](../prax.mjs#L830)
+  * [`function reqDomEnv`](../prax.mjs#L831)
+  * [`function isNamespaced`](../prax.mjs#L833)

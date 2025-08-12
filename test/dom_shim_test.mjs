@@ -1692,6 +1692,36 @@ t.test(function test_HTMLAnchorElement() {
   t.is(tar.href, `one://two:three@four.five:123/six?seven#eight`)
 })
 
+t.test(function test_HTMLFieldSetElement() {
+  testFormElement(ds.document.createElement(`fieldset`))
+})
+
+t.test(function test_HTMLFormElement() {
+  testFormElement(ds.document.createElement(`form`))
+})
+
+function testFormElement(tar) {
+  t.eq([...tar.elements], [])
+
+  const one = ds.document.createElement(`input`)
+  tar.appendChild(one)
+  t.eq([...tar.elements], [one])
+
+  tar.appendChild(new ds.Text(`two`))
+  t.eq([...tar.elements], [one])
+
+  const three = ds.document.createElement(`three`)
+  tar.appendChild(three)
+  t.eq([...tar.elements], [one])
+
+  const four = ds.document.createElement(`input`)
+  three.appendChild(four)
+
+  t.eq([...tar.elements], [one, four])
+
+  t.ok(l.isIter(tar.elements))
+}
+
 t.test(function test_CustomElementRegistry() {
   const reg = new ds.CustomElementRegistry()
 

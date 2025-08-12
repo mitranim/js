@@ -1,6 +1,8 @@
 Error.stackTraceLimit = Infinity
 
 export const VAL = Symbol.for(`val`)
+export const DISPOSE = symPoly(`dispose`)
+export const ASYNC_DISPOSE = symPoly(`asyncDispose`)
 
 /* Typing */
 
@@ -621,6 +623,14 @@ export class Show extends Emp {
   vis() {return this.#vis ??= new Map()}
 }
 
+export function symPoly(key) {
+  let out = Symbol[reqStr(key)]
+  if (out) return out
+  out = Symbol.for(`Symbol.` + key)
+  Object.defineProperty(Symbol, key, {value: out})
+  return out
+}
+
 /* Math */
 
 // TODO consider type checking. `+` must require consistent types.
@@ -645,7 +655,7 @@ export function round(val) {
 
 /* Internal */
 
-const CLASSES = new WeakMap()
+export const CLASSES = new WeakMap()
 const arrPro = Array.prototype
 const objPro = Object.prototype
 const own = objPro.hasOwnProperty

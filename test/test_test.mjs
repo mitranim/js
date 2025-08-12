@@ -286,15 +286,40 @@ t.test(function test_TimeRunner() {
     const run = new t.Run(`name`)
     runner.run(advanceTime, run)
 
+    const time = run.time()
+    t.is(run.time(), time)
+
     l.reqFinPos(run.end)
     l.reqFinPos(run.runs)
-    l.reqFinPos(run.time())
+    l.reqFinPos(time)
 
-    t.ok(run.time() > runner.valueOf())
-    t.ok(run.time() < (runner.valueOf() * 2))
+    t.ok(time > runner.valueOf())
+    t.ok(time < (runner.valueOf() * 2))
 
-    t.ok(run.avg > 0)
-    t.ok(run.avg < (run.time() / run.runs))
+    const {avg} = run
+
+    /*
+    In V8 (tested between versions 9 and 13), we tend to consistently get
+    above-zero averages. In some versions of JSC (Bun 1.2.19), sometimes
+    the average can be slightly below 0. Needs more investigation.
+
+    The magnitude of the deviation into negatives, if any, depends on the total
+    elapsed time and possibly on the number of iterations within that period.
+    When benchmarking with `TimeRunner` in its default configuration (128ms),
+    the negative, if any, tends to be within single digit nanoseconds at worst.
+    In this test, the duration is much shorter, so the deviation is larger.
+    */
+    if (avg <= 0) {
+      if (avg < -0.001) {
+        throw Error(`unexpectedly low run average: ${avg}`)
+      }
+    }
+    else {
+      t.ok(avg > 0)
+    }
+
+    t.ok(avg < (time / run.runs))
+    t.is(run.time(), time)
   }
   finally {
     t.TimeRunner.defaultWarmupSize = defaultSize

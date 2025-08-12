@@ -52,19 +52,11 @@ export class Ren extends o.MixMain(l.Emp) {
   get RecNodeRef() {return o.pub(this, `RecNodeRef`, MixRecNodeRef(this.Text))}
 
   E(tar, src) {
-    // TODO remove this in a future version.
-    if (!this.lax && arguments.length > 2) {
-      throw Error(`child arguments are deprecated`)
-    }
-
     if (l.isStr(tar)) return this.elemHtml(tar, src)
 
     if (l.isFun(tar)) {
       const prev = ob.RUN_REF.swap()
-      try {
-        if (l.isCls(tar)) return new tar(src)
-        return tar(src)
-      }
+      try {return tar(src)}
       finally {ob.RUN_REF.swap(prev)}
     }
 
@@ -606,6 +598,7 @@ export class MixinRecNodeFun extends o.Mixin {
 
       init() {return this.rec.run(this, super.init)}
       deinit() {this.rec.deinit()}
+      [l.DISPOSE]() {this.deinit()}
     }
   }
 }
