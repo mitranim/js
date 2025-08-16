@@ -276,11 +276,6 @@ t.test(function test_ReqRou() {
   })
 })
 
-/*
-TODO:
-- Test GC-based cleanup. When child context is GC-d, event listener must be
-  removed from parent signal.
-*/
 await t.test(async function test_Ctx() {
   t.throws(() => new h.Ctx(`str`), TypeError, `expected instance of AbortSignal, got "str"`)
   t.throws(() => new h.Ctx({}), TypeError, `expected instance of AbortSignal, got instance of Object {}`)
@@ -328,17 +323,32 @@ await t.test(async function test_Ctx() {
     t.ok(ctx.signal.aborted)
   })
 
+  t.test(function test_using_deinit() {
+    let aborts = 0
+    let deinits = 0
+
+    class TestCtx extends h.Ctx {
+      abort() {aborts++; super.abort()}
+      deinit() {deinits++; super.deinit()}
+    }
+
+    {using _ = new TestCtx()}
+
+    t.is(aborts, 1)
+    t.is(deinits, 1)
+  })
+
   if (!iti.gc) return
 
   await t.test(async function test_gc_cleanup() {
     const abc = new AbortController()
 
-    class Ctx extends h.Ctx {
+    class TestCtx extends h.Ctx {
       abort() {throw Error(`unreachable`)}
       deinit() {throw Error(`unreachable`)}
     }
 
-    let ctx = new Ctx(abc.signal)
+    let ctx = new TestCtx(abc.signal)
     l.nop(ctx) // Shut up linters.
     ctx = undefined
     await iti.waitForGcAndFinalizers()

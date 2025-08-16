@@ -1110,7 +1110,7 @@ t.test(function test_que_skip_current_dyn_ref() {
   t.is(obs.val, 3)
 })
 
-t.test(function test_recur_deinit_using_dispose() {
+t.test(function test_recur_using_deinit() {
   const one = ob.obsRef(1)
   const two = ob.obsRef(undefined)
 

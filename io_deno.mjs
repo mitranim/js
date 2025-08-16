@@ -145,15 +145,16 @@ export function mkdirTempSync(opt) {return Deno.makeTempDirSync(l.optRec(opt))}
 export async function readDir(path) {
   const out = []
   for await (const val of Deno.readDir(validPath(path))) {
-    val.toString = toStringGetName
-    out.push(val)
+    out.push(normInfo(val))
   }
   return out
 }
 
 export function readDirSync(path) {
-  const out = [...Deno.readDirSync(validPath(path))]
-  for (const val of out) val.toString = toStringGetName
+  const out = []
+  for (const val of Deno.readDirSync(validPath(path))) {
+    out.push(normInfo(val))
+  }
   return out
 }
 
@@ -177,4 +178,11 @@ export async function* watchRel(base) {
 
 /* Internal */
 
-function toStringGetName() {return this.name}
+function normInfo(val) {
+  val.toString = getName
+  val.valueOf = getName
+  val.toJSON = getName
+  return val
+}
+
+function getName() {return this.name}
